@@ -8,7 +8,7 @@ Configuration and documentation for running a local LLM server on a Mac Studio M
 
 ## Architecture
 
-- **Mac Studio** (`192.168.1.181`, SSH alias `macstudio`): runs mlx-lm server (port 8080) and claude-code-proxy (port 4000)
+- **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs mlx-lm server (port 8080) and claude-code-proxy (port 4000)
 - **MacBook** (this machine): connects via `claude-local` alias using `~/.claude/macstudio-settings.json`
 - **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via MLX on Apple Silicon
 - **Proxy**: `claude-code-proxy` (fuergaosi233) translates Anthropic API → OpenAI API format. LiteLLM's `/v1/messages` does NOT translate — it's a pass-through only.
@@ -35,7 +35,7 @@ claude-local
 ssh macstudio
 
 # Quick health check
-curl -s http://192.168.1.181:8080/v1/models | python3 -m json.tool
+curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
 
 # Restart services on Mac Studio
 ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
@@ -48,7 +48,7 @@ ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
 
 ## Known Issues
 
-- **SSH timeouts**: Mac Studio SSH can be flaky over LAN. Use `-o ConnectTimeout=60` for long operations.
+- **SSH timeouts**: Fixed — was caused by macOS sleeping after 1 min idle. Fix applied: `sudo pmset -a sleep 0 disksleep 0 displaysleep 10`. If SSH flakiness returns, verify with `ssh macstudio "pmset -g | grep sleep"`.
 - **Proxy tool_use patch**: `server/fastapi.py` in site-packages has `is_claude_model = True` patch. This is lost on `pip install --upgrade claude-code-proxy` — reapply with:
   ```bash
   ssh macstudio "SITE=~/llm-server/venv/lib/python3.12/site-packages/server && sed -i '' 's/is_claude_model = clean_model.startswith(\"claude-\")/is_claude_model = True/' \$SITE/fastapi.py"

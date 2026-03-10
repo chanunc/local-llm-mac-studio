@@ -1,6 +1,6 @@
 # Connect a New Machine to the Mac Studio LLM Server
 
-This guide sets up Claude Code on a new machine to use the local LLM running on the Mac Studio M3 Ultra at `192.168.1.181`.
+This guide sets up Claude Code on a new machine to use the local LLM running on the Mac Studio M3 Ultra at `<MAC_STUDIO_IP>`.
 
 ## Prerequisites
 
@@ -12,10 +12,10 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 
 ```bash
 # Check the Mac Studio is reachable
-ping -c 2 192.168.1.181
+ping -c 2 <MAC_STUDIO_IP>
 
 # Check the proxy is responding
-curl -s http://192.168.1.181:4000/v1/messages \
+curl -s http://<MAC_STUDIO_IP>:4000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \
@@ -46,14 +46,14 @@ mkdir -p ~/.claude
 cat > ~/.claude/macstudio-settings.json << 'EOF'
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "http://192.168.1.181:4000",
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:4000",
     "ANTHROPIC_AUTH_TOKEN": "not-needed"
   }
 }
 EOF
 ```
 
-**Note:** If the Mac Studio's IP address is different on your network, replace `192.168.1.181` with the correct IP.
+**Note:** If the Mac Studio's IP address is different on your network, replace `<MAC_STUDIO_IP>` with the correct IP.
 
 ## Step 4: Add Shell Alias
 
@@ -93,13 +93,13 @@ If you want to manage the Mac Studio servers from this machine:
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
 
 # Copy key to Mac Studio (will prompt for password)
-ssh-copy-id chanunc@192.168.1.181
+ssh-copy-id chanunc@<MAC_STUDIO_IP>
 
 # Add SSH alias
 cat >> ~/.ssh/config << 'EOF'
 
 Host macstudio
-    HostName 192.168.1.181
+    HostName <MAC_STUDIO_IP>
     User chanunc
     IdentityFile ~/.ssh/id_ed25519
     ServerAliveInterval 60

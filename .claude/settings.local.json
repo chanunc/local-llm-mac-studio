@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(sw_vers:*)",
+      "Bash(ssh:*)",
+      "Bash(ping:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:docs.litellm.ai)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:medium.com)",
+      "Bash(git:*)",
+      "Bash(gh repo:*)",
+      "WebFetch(domain:unsloth.ai)",
+      "WebFetch(domain:opencode.ai)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(brew install:*)",
+      "Bash(opencode:*)",
+      "Bash(echo exit:$?:*)",
+      "Bash(gh api:*)",
+      "Bash(gh search:*)",
+      "Bash(npm install:*)",
+      "Bash(pi:*)",
+      "Bash(nc:*)",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "Bash(ssh-copy-id:*)"
+    ]
+  }
+}

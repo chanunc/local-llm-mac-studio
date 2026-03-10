@@ -16,7 +16,7 @@ MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ## Installation
 
 ```bash
-npm install -g @mariozechner/pi-coding-agent
+brew install pi-coding-agent
 ```
 
 Verify: `pi --version`

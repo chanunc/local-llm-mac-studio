@@ -317,6 +317,23 @@ ssh macstudio "tail -20 ~/llm-server/logs/mlx-lm-server.err"
 ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
 ```
 
+### Upgrade all tools
+```bash
+# MacBook — CLI tools (Homebrew)
+brew upgrade claude-code opencode pi-coding-agent
+
+# Mac Studio — proxy (pip in venv)
+ssh macstudio "~/llm-server/venv/bin/pip install --upgrade claude-code-proxy"
+# Then re-apply the tool_use patch (see below)
+
+# Mac Studio — mlx-lm (pip in venv)
+ssh macstudio "~/llm-server/venv/bin/pip install --upgrade mlx-lm"
+# Then restart: launchctl unload/load the mlx-lm plist
+
+# Linux (narutaki) — OpenClaw
+ssh narutaki "openclaw update"
+```
+
 ### After upgrading claude-code-proxy
 Re-apply the tool_use patch:
 ```bash

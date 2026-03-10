@@ -6,7 +6,7 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 
 - The Mac Studio LLM server is already running (mlx-lm on port 8080, claude-code-proxy on port 4000)
 - The new machine is on the same LAN as the Mac Studio
-- Node.js 18+ installed on the new machine
+- Homebrew installed on the new machine (or Node.js 18+ if not on macOS)
 
 ## Step 1: Verify Network Connectivity
 
@@ -28,7 +28,7 @@ You should see an Anthropic-format JSON response with `"type": "message"`. If no
 ## Step 2: Install Claude Code
 
 ```bash
-npm install -g @anthropic-ai/claude-code
+brew install claude-code
 ```
 
 Verify:

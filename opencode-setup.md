@@ -5,7 +5,7 @@ OpenCode connects **directly** to the mlx-lm server's OpenAI-compatible endpoint
 ## Architecture
 
 ```
-MacBook                                   Mac Studio M3 Ultra (192.168.1.181)
+MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
 │ OpenCode            │                   │ mlx-lm server (port 8080)       │
 │   openai-compatible │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
@@ -32,7 +32,7 @@ Global config at `~/.config/opencode/opencode.json`:
     "macstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "http://192.168.1.181:8080/v1",
+        "baseURL": "http://<MAC_STUDIO_IP>:8080/v1",
         "apiKey": "not-needed",
         "timeout": 600000
       },
@@ -40,7 +40,7 @@ Global config at `~/.config/opencode/opencode.json`:
         "mlx-community/Qwen3-Coder-Next-4bit": {
           "name": "Qwen3 Coder (Mac Studio)",
           "limit": {
-            "context": 32000,
+            "context": 16000,
             "output": 4096
           }
         }
@@ -64,7 +64,7 @@ alias oc='opencode'
 
 1. **Connectivity check**:
    ```bash
-   curl -s http://192.168.1.181:8080/v1/models | python3 -m json.tool
+   curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
    ```
 
 2. **Launch interactive TUI**:
@@ -84,7 +84,7 @@ alias oc='opencode'
 
 ### Can't connect to Mac Studio
 
-- Verify the server is running: `curl http://192.168.1.181:8080/v1/models`
+- Verify the server is running: `curl http://<MAC_STUDIO_IP>:8080/v1/models`
 - Check if mlx-lm is up: `ssh macstudio "launchctl list | grep mlx"`
 - Restart mlx-lm:
   ```bash
@@ -100,7 +100,18 @@ alias oc='opencode'
 ### Context limit errors
 
 - Qwen3-Coder-Next-4bit supports up to 32K context but large contexts use more memory
-- Reduce `limit.context` in config if you hit OOM errors
+- Client context is set to 16K by default (conservative for stability)
+- Increase `limit.context` in config up to 32000 if you need more but monitor memory
+
+### Server reliability
+
+The mlx-lm server has hardened settings to prevent memory exhaustion:
+- `--prompt-cache-size 4` — max 4 concurrent KV caches (was unbounded)
+- `--prompt-cache-bytes 4294967296` — max 4GB KV cache memory (was unbounded)
+- `--max-tokens 4096` — default output cap per request
+
+A health-check cron runs every 5 minutes on the Mac Studio (`~/llm-server/healthcheck.sh`).
+It auto-restarts the server if it becomes unresponsive. Logs: `~/llm-server/logs/healthcheck.log`
 
 ## Changing the Model
 

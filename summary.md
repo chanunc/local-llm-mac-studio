@@ -3,7 +3,7 @@
 ## Architecture
 
 ```
-MacBook (this machine)                    Mac Studio M3 Ultra (192.168.1.181)
+MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
 │ Claude Code         │                   │ mlx-lm server (port 8080)       │
 │   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
@@ -19,7 +19,7 @@ MacBook (this machine)                    Mac Studio M3 Ultra (192.168.1.181)
 ### Phase 1: SSH Setup
 - Generated ED25519 SSH key (`~/.ssh/id_ed25519`)
 - Copied public key to Mac Studio via `ssh-copy-id`
-- Created `~/.ssh/config` with alias `macstudio` for `192.168.1.181`
+- Created `~/.ssh/config` with alias `macstudio` for `<MAC_STUDIO_IP>`
 
 ### Phase 2: Mac Studio Base Setup
 - Installed Python 3.12 via Homebrew
@@ -30,6 +30,11 @@ MacBook (this machine)                    Mac Studio M3 Ultra (192.168.1.181)
 - Maximized GPU wired memory: `iogpu.wired_limit_mb=92160` (~90GB of 96GB)
 - Persisted in `/etc/sysctl.conf`
 - Disabled Spotlight indexing: `sudo mdutil -a -i off`
+- Disabled system sleep (keeps SSH and LLM server always reachable):
+  ```bash
+  sudo pmset -a sleep 0 disksleep 0 displaysleep 10
+  ```
+  Display still turns off after 10 min to save energy.
 
 ### Phase 4: Model Download
 - Downloaded `mlx-community/Qwen3-Coder-Next-4bit` (~42GB, 4-bit quantized)
@@ -42,6 +47,8 @@ MacBook (this machine)                    Mac Studio M3 Ultra (192.168.1.181)
 - Serves OpenAI-compatible `/v1/chat/completions` API
 - Supports native function/tool calling
 - Loads model into Apple Silicon unified memory
+- Hardened with: `--prompt-cache-size 4` (max 4 KV caches), `--prompt-cache-bytes 4294967296` (4GB cap), `--max-tokens 4096`
+- Health-check cron (`~/llm-server/healthcheck.sh`) runs every 5 min, auto-restarts if unresponsive
 
 **claude-code-proxy (port 4000):**
 - Receives Anthropic `/v1/messages` requests from Claude Code
@@ -83,7 +90,7 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 
 Test basic chat completion directly against the model:
 ```bash
-curl http://192.168.1.181:8080/v1/chat/completions \
+curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mlx-community/Qwen3-Coder-Next-4bit",
@@ -94,7 +101,7 @@ curl http://192.168.1.181:8080/v1/chat/completions \
 
 Test native function/tool calling:
 ```bash
-curl http://192.168.1.181:8080/v1/chat/completions \
+curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mlx-community/Qwen3-Coder-Next-4bit",
@@ -107,14 +114,14 @@ Expected: response with `"tool_calls"` array and `"finish_reason": "tool_calls"`
 
 List available models:
 ```bash
-curl http://192.168.1.181:8080/v1/models
+curl http://<MAC_STUDIO_IP>:8080/v1/models
 ```
 
 ### Layer 2: claude-code-proxy (Anthropic format, port 4000)
 
 Test basic message (Anthropic API format):
 ```bash
-curl http://192.168.1.181:4000/v1/messages \
+curl http://<MAC_STUDIO_IP>:4000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \
@@ -128,7 +135,7 @@ Expected: Anthropic-format response with `"type": "message"`, `"content": [{"typ
 
 Test tool use translation (critical for Claude Code):
 ```bash
-curl http://192.168.1.181:4000/v1/messages \
+curl http://<MAC_STUDIO_IP>:4000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \
@@ -144,7 +151,7 @@ If tool calls appear as text instead of `tool_use` blocks, the `is_claude_model`
 
 Test with system prompt:
 ```bash
-curl http://192.168.1.181:4000/v1/messages \
+curl http://<MAC_STUDIO_IP>:4000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \
@@ -177,16 +184,16 @@ claude-local
 ### Connectivity & health checks
 ```bash
 # Is Mac Studio reachable?
-ping -c 2 192.168.1.181
+ping -c 2 <MAC_STUDIO_IP>
 
 # Is SSH working?
 ssh macstudio "echo OK"
 
 # Is mlx-lm running?
-curl -s http://192.168.1.181:8080/v1/models | python3 -m json.tool
+curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
 
 # Is proxy running?
-curl -s http://192.168.1.181:4000/v1/messages \
+curl -s http://<MAC_STUDIO_IP>:4000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \
@@ -291,10 +298,10 @@ ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy
 ### Check health
 ```bash
 # mlx-lm server
-curl http://192.168.1.181:8080/v1/models
+curl http://<MAC_STUDIO_IP>:8080/v1/models
 
 # Proxy (Anthropic format)
-curl http://192.168.1.181:4000/v1/messages \
+curl http://<MAC_STUDIO_IP>:4000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \

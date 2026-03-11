@@ -4,7 +4,7 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 
 ## Prerequisites
 
-- The Mac Studio LLM server is already running (mlx-lm on port 8080, claude-code-proxy on port 4000)
+- The Mac Studio LLM server is already running (mlx-lm on port 8080, claude-code-router on port 3456)
 - The new machine is on the same LAN as the Mac Studio
 - Homebrew installed on the new machine (or Node.js 18+ if not on macOS)
 
@@ -15,7 +15,7 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 ping -c 2 <MAC_STUDIO_IP>
 
 # Check the proxy is responding
-curl -s http://<MAC_STUDIO_IP>:4000/v1/messages \
+curl -s http://<MAC_STUDIO_IP>:3456/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: not-needed" \
   -H "anthropic-version: 2023-06-01" \
@@ -38,15 +38,20 @@ claude --version
 
 ## Step 3: Create Settings File
 
-Create the directory and settings file:
+Copy the config from this repo:
 
 ```bash
 mkdir -p ~/.claude
+cp configs/claude-code-macstudio-settings.json ~/.claude/macstudio-settings.json
+```
 
+Or create it manually:
+
+```bash
 cat > ~/.claude/macstudio-settings.json << 'EOF'
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:4000",
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:3456",
     "ANTHROPIC_AUTH_TOKEN": "not-needed"
   }
 }
@@ -114,7 +119,7 @@ ssh macstudio "echo OK"
 
 ## Troubleshooting
 
-**"Connection refused" on port 4000:**
+**"Connection refused" on port 3456:**
 The proxy isn't running. SSH into the Mac Studio and start it:
 ```bash
 ssh macstudio "launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist"
@@ -132,13 +137,6 @@ The model may still be loading into GPU memory after a restart. Check logs:
 ssh macstudio "tail -10 ~/llm-server/logs/mlx-lm-server.err"
 ```
 Wait until you see `Uvicorn running` in the output.
-
-**Tool calls appear as text instead of working:**
-The proxy patch may have been lost. Reapply it:
-```bash
-ssh macstudio "SITE=~/llm-server/venv/lib/python3.12/site-packages/server && sed -i '' 's/is_claude_model = clean_model.startswith(\"claude-\")/is_claude_model = True/' \$SITE/fastapi.py"
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist"
-```
 
 **"Host unreachable" or ping fails:**
 The new machine is not on the same LAN, or the Mac Studio's IP has changed. Check the Mac Studio's current IP in System Settings > Network.

@@ -37,7 +37,7 @@ SSH key was copied with `ssh-copy-id` (or manual `authorized_keys` setup).
 
 Config file: `~/.openclaw/openclaw.json` on the Linux machine.
 
-The Mac Studio provider was added to the existing `models.providers` section (merged alongside DeepSeek and Kimi providers):
+The Mac Studio provider config is available at `configs/openclaw-macstudio-provider.json` in this repo. It was added to the existing `models.providers` section (merged alongside DeepSeek and Kimi providers):
 
 ```json
 {
@@ -52,8 +52,8 @@ The Mac Studio provider was added to the existing `models.providers` section (me
         "reasoning": false,
         "input": ["text"],
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-        "contextWindow": 32000,
-        "maxTokens": 4096
+        "contextWindow": 170000,
+        "maxTokens": 8192
       }
     ]
   }
@@ -103,6 +103,6 @@ Qwen3-Coder-Next-4bit may not handle OpenClaw's tool format perfectly. This is a
 | | Claude Code (MacBook) | OpenCode (MacBook) | OpenClaw (Linux) |
 |---|---|---|---|
 | API format | Anthropic (needs proxy) | OpenAI (direct) | OpenAI (direct) |
-| Proxy needed | Yes (claude-code-proxy) | No | No |
+| Proxy needed | Yes (claude-code-router) | No | No |
 | Config file | `~/.claude/macstudio-settings.json` | `~/.config/opencode/opencode.json` | `~/.openclaw/openclaw.json` |
 | Machine | MacBook | MacBook | Linux (<LINUX_CLIENT_IP>) |

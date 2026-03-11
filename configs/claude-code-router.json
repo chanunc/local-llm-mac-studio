@@ -1,0 +1,20 @@
+{
+  "APIKEY": "not-needed",
+  "HOST": "0.0.0.0",
+  "LOG": true,
+  "API_TIMEOUT_MS": 600000,
+  "Providers": [
+    {
+      "name": "mlx-local",
+      "api_base_url": "http://localhost:8080/v1/chat/completions",
+      "api_key": "not-needed",
+      "models": ["mlx-community/Qwen3-Coder-Next-4bit"],
+      "transformer": {
+        "use": ["enhancetool"]
+      }
+    }
+  ],
+  "Router": {
+    "default": "mlx-local,mlx-community/Qwen3-Coder-Next-4bit"
+  }
+}

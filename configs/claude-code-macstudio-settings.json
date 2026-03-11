@@ -1,0 +1,6 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:3456",
+    "ANTHROPIC_AUTH_TOKEN": "not-needed"
+  }
+}

@@ -23,6 +23,13 @@ Verify: `pi --version`
 
 ## Configuration
 
+Copy config from this repo, or create manually:
+
+```bash
+mkdir -p ~/.pi/agent
+cp configs/pi-models.json ~/.pi/agent/models.json
+```
+
 Custom model config at `~/.pi/agent/models.json`:
 
 ```json
@@ -42,8 +49,8 @@ Custom model config at `~/.pi/agent/models.json`:
           "name": "Qwen3 Coder (Mac Studio)",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 32000,
-          "maxTokens": 4096,
+          "contextWindow": 65536,
+          "maxTokens": 8192,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }
       ]
@@ -104,7 +111,7 @@ Key settings:
 
 - Check Mac Studio memory pressure: `ssh macstudio "memory_pressure"`
 - Reduce `contextWindow` in models.json if the model runs out of memory
-- The mlx-lm server has a 4096 max token default cap per request
+- The mlx-lm server has an 8192 max token default cap per request
 
 ## Changing the Model
 
@@ -119,6 +126,6 @@ Key settings:
 | | Claude Code | OpenCode | Pi |
 |---|---|---|---|
 | API format | Anthropic (needs proxy) | OpenAI (direct) | OpenAI (direct) |
-| Proxy needed | Yes (claude-code-proxy) | No | No |
+| Proxy needed | Yes (claude-code-router) | No | No |
 | Config file | `~/.claude/macstudio-settings.json` | `~/.config/opencode/opencode.json` | `~/.pi/agent/models.json` |
 | Launch command | `claude-local` | `opencode` / `oc` | `pi` |

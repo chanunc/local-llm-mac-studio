@@ -4,22 +4,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Configuration and documentation for running a local LLM server on a Mac Studio M3 Ultra (96GB) and connecting it to Claude Code on a MacBook via LAN.
+Configuration and documentation for running a local LLM server on a Mac Studio M3 Ultra (96GB) and connecting multiple machines and coding agents via LAN.
 
 ## Architecture
 
 - **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs mlx-lm server (port 8080) and claude-code-proxy (port 4000)
-- **MacBook** (this machine): connects via `claude-local` alias using `~/.claude/macstudio-settings.json`
+- **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
+- **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
 - **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via MLX on Apple Silicon
-- **Proxy**: `claude-code-proxy` (fuergaosi233) translates Anthropic API → OpenAI API format. LiteLLM's `/v1/messages` does NOT translate — it's a pass-through only.
+- **Proxy**: `claude-code-proxy` (fuergaosi233) translates Anthropic API → OpenAI API format (needed only by Claude Code; other tools connect directly to mlx-lm)
+
+## Docs
+
+| File | Purpose |
+|------|---------|
+| `summary.md` | Full setup documentation, testing, and maintenance |
+| `new-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
+| `opencode-setup.md` | OpenCode (MacBook) → Mac Studio |
+| `openclaw-setup.md` | OpenClaw (Linux) → Mac Studio |
+| `pi-setup.md` | Pi Coding Agent (MacBook) → Mac Studio |
 
 ## Key Files
 
 | Location | File | Purpose |
 |----------|------|---------|
-| This repo | `summary.md` | Full setup documentation, testing, and maintenance |
 | MacBook | `~/.claude/macstudio-settings.json` | Claude Code env config for local model |
-| MacBook | `~/.ssh/config` | SSH alias `macstudio` |
+| MacBook | `~/.config/opencode/opencode.json` | OpenCode config |
+| MacBook | `~/.pi/agent/models.json` | Pi Coding Agent config |
+| MacBook | `~/.ssh/config` | SSH aliases (`macstudio`, `narutaki`) |
+| Linux | `~/.openclaw/openclaw.json` | OpenClaw config with `macstudio` provider |
 | Mac Studio | `~/llm-server/` | Server project dir (venv, .env, logs) |
 | Mac Studio | `~/llm-server/.env` | Proxy config (BIG_MODEL, SMALL_MODEL, OPENAI_API_BASE) |
 | Mac Studio | `~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist` | mlx-lm launchd service |
@@ -31,8 +44,9 @@ Configuration and documentation for running a local LLM server on a Mac Studio M
 # Use local LLM via Claude Code
 claude-local
 
-# SSH to Mac Studio
+# SSH to machines
 ssh macstudio
+ssh narutaki
 
 # Quick health check
 curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
@@ -44,6 +58,11 @@ ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy
 # Check logs
 ssh macstudio "tail -20 ~/llm-server/logs/mlx-lm-server.err"
 ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
+
+# Upgrade all tools
+brew upgrade claude-code opencode pi-coding-agent
+ssh macstudio "~/llm-server/venv/bin/pip install --upgrade claude-code-proxy mlx-lm"
+ssh narutaki "openclaw update"
 ```
 
 ## Known Issues

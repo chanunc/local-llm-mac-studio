@@ -41,6 +41,7 @@ Linux (<LINUX_CLIENT_IP>)
 | `opencode-setup.md` | OpenCode (MacBook) → Mac Studio |
 | `openclaw-setup.md` | OpenClaw (Linux) → Mac Studio |
 | `pi-setup.md` | Pi Coding Agent (MacBook) → Mac Studio |
+| `wsl-opencode-setup.md` | OpenCode (WSL Linux) → Mac Studio |
 
 ## Config Files (`configs/`)
 

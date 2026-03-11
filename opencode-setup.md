@@ -1,11 +1,11 @@
-# OpenCode Setup: MacBook → Mac Studio LLM Server
+# OpenCode Setup: MacBook / WSL → Mac Studio LLM Server
 
 OpenCode connects **directly** to the mlx-lm server's OpenAI-compatible endpoint — no proxy needed.
 
 ## Architecture
 
 ```
-MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
+MacBook or WSL Linux                      Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
 │ OpenCode            │                   │ mlx-lm server (port 8080)       │
 │   openai-compatible │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
@@ -15,11 +15,47 @@ MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 
 ## Installation
 
+**Important**: Use `sst/opencode` (actively maintained). The older `opencode-ai/opencode` package was archived in September 2025 and has an unfixed `Error: agent coder not found` bug.
+
 ```bash
+# macOS (Homebrew)
 brew install opencode
+
+# Linux / WSL
+curl -fsSL https://opencode.ai/install | bash
+# or via npm
+npm i -g opencode-ai@latest
 ```
 
 Verify: `opencode --version`
+
+## WSL-Specific: Fix Routing
+
+WSL2 may route LAN traffic through the wrong interface. If `eth2` is on `192.168.31.x`, add the route:
+
+```bash
+sudo ip route add 192.168.31.0/24 dev eth2
+```
+
+Verify connectivity:
+```bash
+curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
+```
+
+### Make Route Persistent
+
+WSL2 loses `ip route` changes on restart. Add to `~/.bashrc` or `~/.zshrc`:
+
+```bash
+if ! ip route | grep -q "192.168.31.0/24"; then
+  sudo ip route add 192.168.31.0/24 dev eth2 2>/dev/null
+fi
+```
+
+Allow passwordless sudo for this via `sudo visudo`:
+```
+%sudo ALL=(ALL) NOPASSWD: /sbin/ip route add 192.168.31.0/24 dev eth2
+```
 
 ## Configuration
 
@@ -61,7 +97,7 @@ Global config at `~/.config/opencode/opencode.json`:
 
 ### Shell Alias
 
-Add to `~/.zshrc`:
+Add to `~/.zshrc` or `~/.bashrc`:
 
 ```bash
 alias oc='opencode'
@@ -88,6 +124,24 @@ alias oc='opencode'
 4. **Tool use test**: Create a test file, then ask OpenCode to read it.
 
 ## Troubleshooting
+
+### `Error: agent coder not found`
+
+You have the archived `opencode-ai/opencode` installed. Switch to the SST version:
+```bash
+npm uninstall -g opencode-ai
+curl -fsSL https://opencode.ai/install | bash
+```
+
+### WSL: curl to Mac Studio times out
+
+Check routing — traffic may be going through the wrong interface:
+```bash
+ip route get <MAC_STUDIO_IP>
+# Should show: dev eth2
+```
+
+If not, add the route (see WSL-Specific section above).
 
 ### Can't connect to Mac Studio
 
@@ -135,6 +189,6 @@ Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm"`
 | | Claude Code | OpenCode |
 |---|---|---|
 | API format | Anthropic (needs proxy) | OpenAI (direct) |
-| Proxy needed | Yes (claude-code-proxy) | No |
+| Proxy needed | Yes (claude-code-router) | No |
 | Config file | `~/.claude/macstudio-settings.json` | `~/.config/opencode/opencode.json` |
 | Launch command | `claude-local` | `opencode` / `oc` |

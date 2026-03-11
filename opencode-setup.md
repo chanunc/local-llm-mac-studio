@@ -23,6 +23,13 @@ Verify: `opencode --version`
 
 ## Configuration
 
+Copy config from this repo, or create manually:
+
+```bash
+mkdir -p ~/.config/opencode
+cp configs/opencode.json ~/.config/opencode/opencode.json
+```
+
 Global config at `~/.config/opencode/opencode.json`:
 
 ```json
@@ -105,13 +112,15 @@ alias oc='opencode'
 
 ### Server reliability
 
-The mlx-lm server has hardened settings to prevent memory exhaustion:
-- `--prompt-cache-size 4` — max 4 concurrent KV caches (was unbounded)
-- `--prompt-cache-bytes 4294967296` — max 4GB KV cache memory (was unbounded)
-- `--max-tokens 4096` — default output cap per request
+mlx-lm is installed via Homebrew on the Mac Studio (`brew install mlx-lm`). Server settings balance context size and memory safety:
+- `--prompt-cache-size 2` — max 2 concurrent KV caches
+- `--prompt-cache-bytes 17179869184` — max 16GB KV cache per slot (~170K tokens)
+- `--max-tokens 8192` — default output cap per request
 
 A health-check cron runs every 5 minutes on the Mac Studio (`~/llm-server/healthcheck.sh`).
 It auto-restarts the server if it becomes unresponsive. Logs: `~/llm-server/logs/healthcheck.log`
+
+Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm"`
 
 ## Changing the Model
 

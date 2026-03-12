@@ -88,6 +88,18 @@ Current model: `mlx-community/Qwen3-Coder-Next-4bit`
 
 **SSD cache (optional):** `--paged-ssd-cache-dir ~/.omlx/cache` enables tiered KV cache (hot RAM + cold SSD). Context persists across requests and server restarts. Useful for long-context workloads.
 
+**RAM Caching (Hot Cache):** For high-performance tiered caching, allocate a portion of the Mac Studio's RAM to serve as a "hot" buffer for the SSD cache. This keeps the most frequently used KV blocks in memory, significantly reducing disk I/O.
+- Configure in `~/.omlx/settings.json`:
+  - `cache.hot_cache_max_size`: e.g., `"40GB"` or `"60GB"` (default is `"0"`)
+- Example for a 96GB/128GB machine:
+  ```json
+  "cache": {
+    "enabled": true,
+    "hot_cache_max_size": "40GB"
+  }
+  ```
+- Restart service after changing: `ssh macstudio "brew services restart omlx"`
+
 Start for testing:
 ```bash
 omlx serve --host 0.0.0.0 --port 8000 --api-key <YOUR_API_KEY>

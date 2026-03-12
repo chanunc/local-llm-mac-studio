@@ -24,11 +24,16 @@ Linux (<LINUX_CLIENT_IP>)
 ┌─────────────────────┐
 │ OpenClaw            │───── LAN ────────> (connects to 8080 directly)
 └─────────────────────┘
+WSL Linux (192.168.31.x via eth2)
+┌─────────────────────┐
+│ OpenCode            │───── LAN ────────> (connects to 8080 directly)
+└─────────────────────┘
 ```
 
 - **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs mlx-lm server (port 8080) and claude-code-router (port 3456)
 - **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
 - **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
+- **WSL Linux** (`192.168.31.x` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `opencode-setup.md`)
 - **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via MLX on Apple Silicon
 - **Proxy**: `claude-code-router` (musistudio) translates Anthropic API → OpenAI API format (needed only by Claude Code; other tools connect directly to mlx-lm)
 
@@ -38,7 +43,7 @@ Linux (<LINUX_CLIENT_IP>)
 |------|---------|
 | `summary.md` | Full setup documentation, testing, and maintenance |
 | `new-client-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
-| `opencode-setup.md` | OpenCode (MacBook) → Mac Studio |
+| `opencode-setup.md` | OpenCode (MacBook / WSL) → Mac Studio |
 | `openclaw-setup.md` | OpenClaw (Linux) → Mac Studio |
 | `pi-setup.md` | Pi Coding Agent (MacBook) → Mac Studio |
 

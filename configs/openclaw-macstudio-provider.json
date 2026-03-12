@@ -1,7 +1,7 @@
 {
   "macstudio": {
-    "baseUrl": "http://<MAC_STUDIO_IP>:8080/v1",
-    "apiKey": "not-needed",
+    "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+    "apiKey": "<YOUR_API_KEY>",
     "api": "openai-completions",
     "models": [
       {

@@ -4,8 +4,8 @@
     "macstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "http://<MAC_STUDIO_IP>:8080/v1",
-        "apiKey": "not-needed",
+        "baseURL": "http://<MAC_STUDIO_IP>:8000/v1",
+        "apiKey": "<YOUR_API_KEY>",
         "timeout": 600000
       },
       "models": {

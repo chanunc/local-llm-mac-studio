@@ -1,6 +1,7 @@
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:3456",
-    "ANTHROPIC_AUTH_TOKEN": "not-needed"
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8000",
+    "ANTHROPIC_AUTH_TOKEN": "<YOUR_API_KEY>",
+    "ANTHROPIC_MODEL": "mlx-community/Qwen3-Coder-Next-4bit"
   }
 }

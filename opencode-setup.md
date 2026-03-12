@@ -1,13 +1,13 @@
 # OpenCode Setup: MacBook / WSL → Mac Studio LLM Server
 
-OpenCode connects **directly** to the mlx-lm server's OpenAI-compatible endpoint — no proxy needed.
+OpenCode connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 
 ## Architecture
 
 ```
 MacBook or WSL Linux                      Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
-│ OpenCode            │                   │ mlx-lm server (port 8080)       │
+│ OpenCode            │                   │ oMLX server (port 8000)         │
 │   openai-compatible │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
 │   direct connection │                   │   /v1/chat/completions          │
 └─────────────────────┘                   └──────────────────────────────────┘
@@ -37,7 +37,8 @@ sudo ip route add 192.168.31.0/24 dev eth2
 
 Verify connectivity:
 ```bash
-curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
 ```
 
 ### Make Route Persistent
@@ -73,8 +74,8 @@ Global config at `~/.config/opencode/opencode.json`:
     "macstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "http://<MAC_STUDIO_IP>:8080/v1",
-        "apiKey": "not-needed",
+        "baseURL": "http://<MAC_STUDIO_IP>:8000/v1",
+        "apiKey": "<YOUR_API_KEY>",
         "timeout": 600000
       },
       "models": {
@@ -105,7 +106,8 @@ alias oc='opencode'
 
 1. **Connectivity check**:
    ```bash
-   curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
+   curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+     -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
    ```
 
 2. **Launch interactive TUI**:
@@ -144,11 +146,10 @@ If not, add the route (see WSL-Specific section above).
 
 ### Can't connect to Mac Studio
 
-- Verify the server is running: `curl http://<MAC_STUDIO_IP>:8080/v1/models`
-- Check if mlx-lm is up: `ssh macstudio "launchctl list | grep mlx"`
-- Restart mlx-lm:
+- Verify the server is running: `curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H "Authorization: Bearer <YOUR_API_KEY>"`
+- Restart oMLX:
   ```bash
-  ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
+  ssh macstudio "brew services restart omlx"
   ```
 
 ### Slow or hanging responses
@@ -165,15 +166,13 @@ If not, add the route (see WSL-Specific section above).
 
 ### Server reliability
 
-mlx-lm is installed via Homebrew on the Mac Studio (`brew install mlx-lm`). Server settings balance context size and memory safety:
-- `--prompt-cache-size 2` — max 2 concurrent KV caches
-- `--prompt-cache-bytes 17179869184` — max 16GB KV cache per slot (~170K tokens)
-- `--max-tokens 8192` — default output cap per request
+oMLX is installed via Homebrew on the Mac Studio (`brew install omlx`). It natively serves both OpenAI and Anthropic API formats on a single port.
 
-A health-check cron runs every 5 minutes on the Mac Studio (`~/llm-server/healthcheck.sh`).
-It auto-restarts the server if it becomes unresponsive. Logs: `~/llm-server/logs/healthcheck.log`
+`brew services start omlx` auto-restarts on crash natively. Check status: `ssh macstudio 'brew services info omlx'`.
 
-Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm"`
+Logs: `/opt/homebrew/var/log/omlx.log` (service) and `~/.omlx/logs/server.log` (application).
+
+Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"`
 
 ## Changing the Model
 
@@ -187,7 +186,7 @@ Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm"`
 
 | | Claude Code | OpenCode |
 |---|---|---|
-| API format | Anthropic (needs proxy) | OpenAI (direct) |
-| Proxy needed | Yes (claude-code-router) | No |
+| API format | Anthropic (native) | OpenAI (native) |
+| Proxy needed | No | No |
 | Config file | `~/.claude/macstudio-settings.json` | `~/.config/opencode/opencode.json` |
 | Launch command | `claude-local` | `opencode` / `oc` |

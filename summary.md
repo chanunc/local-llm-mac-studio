@@ -5,12 +5,12 @@
 ```
 MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
-│ Claude Code         │                   │ mlx-lm server (port 8080)       │
+│ Claude Code         │                   │ oMLX server (port 8000)         │
 │   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
-│   ANTHROPIC_BASE_URL│                   │   OpenAI API format             │
-│   = :3456           │                   │                                 │
-│                     │                   │ claude-code-router (port 3456)  │
-│                     │                   │   Anthropic API → OpenAI API    │
+│   ANTHROPIC_BASE_URL│                   │   OpenAI + Anthropic API native │
+│   = :8000           │                   │                                 │
+│ OpenCode, Pi        │───── LAN ────────>│                                 │
+│   (direct to 8000)  │                   │                                 │
 └─────────────────────┘                   └──────────────────────────────────┘
 ```
 
@@ -38,12 +38,14 @@ EOF
 # On Mac Studio — install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# Install mlx-lm and claude-code-router via Homebrew
-brew install mlx-lm claude-code-router
-
-# Create logs dir
-mkdir -p ~/llm-server/logs
+# Install oMLX via Homebrew
+brew tap jundot/omlx https://github.com/jundot/omlx
+brew install omlx
 ```
+
+**Requirements:** macOS 15.0+ (Sequoia), Apple Silicon, Python 3.10+
+
+oMLX stores its configuration and data in `~/.omlx/` (logs, models, cache) — no manual directory setup needed.
 
 ### Phase 3: macOS Performance Tuning
 
@@ -62,149 +64,43 @@ sudo pmset -a sleep 0 disksleep 0 displaysleep 10
 
 ### Phase 4: Model Download
 
-```bash
-# On Mac Studio
-mlx_lm.manage --scan mlx-community/Qwen3-Coder-Next-4bit
-```
+Models are auto-discovered from `~/.omlx/models/` subdirectories (two-level org structure supported, e.g., `mlx-community/Qwen3-Coder-Next-4bit/`).
 
-- `Qwen3-Coder-Next-4bit` (~42GB, 4-bit quantized)
+**Easiest method:** Admin panel at `http://<MAC_STUDIO_IP>:8000/admin` has built-in HuggingFace search and one-click download.
+
+**Manual method:** Place or symlink a model directory into `~/.omlx/models/`. The model appears automatically on the next request — no restart needed.
+
+Current model: `mlx-community/Qwen3-Coder-Next-4bit`
+- ~42GB, 4-bit quantized
 - MoE architecture (only 3B params active per pass) — 4-bit quality loss is modest
 - Leaves ~50GB headroom for KV cache + OS
 
 ### Phase 5: Server Setup
 
-**mlx-lm server (port 8080):**
-- Installed via Homebrew (`brew install mlx-lm`)
-- Serves OpenAI-compatible `/v1/chat/completions` API
+**oMLX server (port 8000):**
+- Installed via Homebrew (`brew install omlx`)
+- Natively serves both OpenAI `/v1/chat/completions` and Anthropic `/v1/messages` API formats
 - Supports native function/tool calling
 - Loads model into Apple Silicon unified memory
-- Tuned for max context: `--prompt-cache-size 2` (2 concurrent KV caches), `--prompt-cache-bytes 17179869184` (16GB cap, ~170K tokens per cache), `--max-tokens 8192`
+- Single service replaces the old mlx-lm + claude-code-router two-service setup
+- API key authentication: `<YOUR_API_KEY>`
+- Supports LRU model eviction, model pinning, per-model TTL, and model aliases — configurable via admin panel or `~/.omlx/settings.json`
 
-**claude-code-router (port 3456):**
-- Installed via Homebrew (`brew install claude-code-router`)
-- Receives Anthropic `/v1/messages` requests from Claude Code
-- Translates to OpenAI `/v1/chat/completions` format and routes to mlx-lm
-- Built-in `enhancetool` transformer handles tool_use blocks (no manual patching needed)
+**SSD cache (optional):** `--paged-ssd-cache-dir ~/.omlx/cache` enables tiered KV cache (hot RAM + cold SSD). Context persists across requests and server restarts. Useful for long-context workloads.
 
-Create router config:
+Start for testing:
 ```bash
-mkdir -p ~/.claude-code-router
-cat > ~/.claude-code-router/config.json << 'EOF'
-{
-  "APIKEY": "not-needed",
-  "HOST": "0.0.0.0",
-  "LOG": true,
-  "API_TIMEOUT_MS": 600000,
-  "Providers": [
-    {
-      "name": "mlx-local",
-      "api_base_url": "http://localhost:8080/v1/chat/completions",
-      "api_key": "not-needed",
-      "models": ["mlx-community/Qwen3-Coder-Next-4bit"],
-      "transformer": {
-        "use": ["enhancetool"]
-      }
-    }
-  ],
-  "Router": {
-    "default": "mlx-local,mlx-community/Qwen3-Coder-Next-4bit"
-  }
-}
-EOF
+omlx serve --host 0.0.0.0 --port 8000 --api-key <YOUR_API_KEY>
 ```
 
-### Phase 6: Persistent Services (launchd)
+### Phase 6: Persistent Service
 
-**mlx-lm server plist** (`~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist`):
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
-    </dict>
-    <key>KeepAlive</key>
-    <true/>
-    <key>Label</key>
-    <string>com.chanunc.mlx-lm-server</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/opt/homebrew/bin/mlx_lm.server</string>
-        <string>--model</string>
-        <string>mlx-community/Qwen3-Coder-Next-4bit</string>
-        <string>--host</string>
-        <string>0.0.0.0</string>
-        <string>--port</string>
-        <string>8080</string>
-        <string>--prompt-cache-size</string>
-        <string>2</string>
-        <string>--prompt-cache-bytes</string>
-        <string>17179869184</string>
-        <string>--max-tokens</string>
-        <string>8192</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>StandardErrorPath</key>
-    <string>/Users/chanunc/llm-server/logs/mlx-lm-server.err</string>
-    <key>StandardOutPath</key>
-    <string>/Users/chanunc/llm-server/logs/mlx-lm-server.log</string>
-    <key>WorkingDirectory</key>
-    <string>/Users/chanunc/llm-server</string>
-</dict>
-</plist>
-```
-
-**claude-code-router plist** (`~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist`):
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.chanunc.litellm-proxy</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/opt/homebrew/bin/ccr</string>
-        <string>start</string>
-    </array>
-    <key>WorkingDirectory</key>
-    <string>/Users/chanunc/llm-server</string>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>StandardOutPath</key>
-    <string>/Users/chanunc/llm-server/logs/claude-code-proxy.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/chanunc/llm-server/logs/claude-code-proxy.err</string>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
-    </dict>
-</dict>
-</plist>
-```
-
-Load both services:
+Set up oMLX as a persistent service via Homebrew:
 ```bash
-launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
-# Wait for "Starting httpd" in logs before loading proxy
-tail -f ~/llm-server/logs/mlx-lm-server.err
-launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
+brew services start omlx
 ```
 
-**Health-check cron** (auto-restarts mlx-lm if unresponsive):
-```bash
-# Add to crontab on Mac Studio
-crontab -e
-# Add this line:
-*/5 * * * * /Users/chanunc/llm-server/healthcheck.sh
-```
+`brew services start omlx` auto-restarts on crash (via `KeepAlive` in the launchd plist). No custom healthcheck cron is needed.
 
 ### Phase 7: Claude Code Configuration
 
@@ -212,8 +108,9 @@ On MacBook, create `~/.claude/macstudio-settings.json`:
 ```json
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:3456",
-    "ANTHROPIC_AUTH_TOKEN": "not-needed"
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8000",
+    "ANTHROPIC_AUTH_TOKEN": "<YOUR_API_KEY>",
+    "ANTHROPIC_MODEL": "mlx-community/Qwen3-Coder-Next-4bit"
   }
 }
 ```
@@ -223,9 +120,13 @@ Add alias to `~/.zshrc`:
 alias claude-local="claude --settings ~/.claude/macstudio-settings.json"
 ```
 
+**Context scaling:** oMLX can scale reported token counts so Claude Code's auto-compact triggers correctly for smaller-context models. Configure in `~/.omlx/settings.json` on the Mac Studio:
+- `claude_code.context_scaling_enabled`: `true`/`false`
+- `claude_code.target_context_size`: integer (default `200000`)
+
 ## Key Discovery: LiteLLM Does NOT Translate
 
-The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This does not work.** LiteLLM's `/v1/messages` endpoint is a **pass-through** — it sends Anthropic-format requests directly to the backend without translation. The initial fix used `claude-code-proxy` (fuergaosi233) with a manual patch. This was later replaced by `claude-code-router` (musistudio), which handles tool_use natively via its `enhancetool` transformer — no patching needed.
+The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This does not work.** LiteLLM's `/v1/messages` endpoint is a **pass-through** — it sends Anthropic-format requests directly to the backend without translation. The initial fix used `claude-code-proxy` (fuergaosi233) with a manual patch. This was later replaced by `claude-code-router` (musistudio), which handles tool_use natively via its `enhancetool` transformer — no patching needed. The final migration to oMLX eliminated the need for any proxy entirely, as oMLX natively speaks both API formats.
 
 ## Files Modified
 
@@ -235,20 +136,18 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 | MacBook | `~/.ssh/config` | SSH alias `macstudio` |
 | MacBook | `~/.claude/macstudio-settings.json` | Claude Code local model config |
 | MacBook | `~/.zshrc` | `claude-local` alias |
-| Mac Studio | `~/llm-server/` | Server dir (logs, healthcheck) |
-| Mac Studio | `~/.claude-code-router/config.json` | Router config (providers, routing) |
-| Mac Studio | `~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist` | mlx-lm service |
-| Mac Studio | `~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist` | Router service |
+| Mac Studio | `~/.omlx/` | oMLX config, models, logs, and cache |
 | Mac Studio | `/etc/sysctl.conf` | GPU memory tuning |
 
 ## Testing
 
-### Layer 1: mlx-lm server (OpenAI format, port 8080)
+### Layer 1: oMLX server — OpenAI format (port 8000)
 
-Test basic chat completion directly against the model:
+Test basic chat completion:
 ```bash
-curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
+curl http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
   -d '{
     "model": "mlx-community/Qwen3-Coder-Next-4bit",
     "messages": [{"role": "user", "content": "Write a Python hello world"}],
@@ -258,8 +157,9 @@ curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
 
 Test native function/tool calling:
 ```bash
-curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
+curl http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
   -d '{
     "model": "mlx-community/Qwen3-Coder-Next-4bit",
     "messages": [{"role": "user", "content": "What is the weather in Tokyo?"}],
@@ -271,49 +171,49 @@ Expected: response with `"tool_calls"` array and `"finish_reason": "tool_calls"`
 
 List available models:
 ```bash
-curl http://<MAC_STUDIO_IP>:8080/v1/models
+curl http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>"
 ```
 
-### Layer 2: claude-code-router (Anthropic format, port 3456)
+### Layer 2: oMLX server — Anthropic format (port 8000)
 
 Test basic message (Anthropic API format):
 ```bash
-curl http://<MAC_STUDIO_IP>:3456/v1/messages \
+curl http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
-  -H "x-api-key: not-needed" \
+  -H "x-api-key: <YOUR_API_KEY>" \
   -H "anthropic-version: 2023-06-01" \
   -d '{
-    "model": "claude-sonnet-4-20250514",
+    "model": "mlx-community/Qwen3-Coder-Next-4bit",
     "max_tokens": 200,
     "messages": [{"role": "user", "content": "Write a Python hello world"}]
   }'
 ```
 Expected: Anthropic-format response with `"type": "message"`, `"content": [{"type": "text", ...}]`.
 
-Test tool use translation (critical for Claude Code):
+Test tool use (critical for Claude Code):
 ```bash
-curl http://<MAC_STUDIO_IP>:3456/v1/messages \
+curl http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
-  -H "x-api-key: not-needed" \
+  -H "x-api-key: <YOUR_API_KEY>" \
   -H "anthropic-version: 2023-06-01" \
   -d '{
-    "model": "claude-sonnet-4-20250514",
+    "model": "mlx-community/Qwen3-Coder-Next-4bit",
     "max_tokens": 1024,
     "tools": [{"name": "get_weather", "description": "Get weather for a location", "input_schema": {"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]}}],
     "messages": [{"role": "user", "content": "What is the weather in Tokyo?"}]
   }'
 ```
 Expected: `"content": [{"type": "tool_use", "id": "...", "name": "get_weather", "input": {"location": "Tokyo"}}]` and `"stop_reason": "tool_use"`.
-If tool calls appear as text instead of `tool_use` blocks, check the `enhancetool` transformer is configured in `~/.claude-code-router/config.json`.
 
 Test with system prompt:
 ```bash
-curl http://<MAC_STUDIO_IP>:3456/v1/messages \
+curl http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
-  -H "x-api-key: not-needed" \
+  -H "x-api-key: <YOUR_API_KEY>" \
   -H "anthropic-version: 2023-06-01" \
   -d '{
-    "model": "claude-sonnet-4-20250514",
+    "model": "mlx-community/Qwen3-Coder-Next-4bit",
     "max_tokens": 200,
     "system": "You are a helpful coding assistant. Always respond with code examples.",
     "messages": [{"role": "user", "content": "How do I read a file in Python?"}]
@@ -346,15 +246,16 @@ ping -c 2 <MAC_STUDIO_IP>
 # Is SSH working?
 ssh macstudio "echo OK"
 
-# Is mlx-lm running?
-curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
+# Is oMLX running? (OpenAI format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
 
-# Is proxy running?
-curl -s http://<MAC_STUDIO_IP>:3456/v1/messages \
+# Is oMLX running? (Anthropic format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
-  -H "x-api-key: not-needed" \
+  -H "x-api-key: <YOUR_API_KEY>" \
   -H "anthropic-version: 2023-06-01" \
-  -d '{"model":"claude-sonnet-4-20250514","max_tokens":10,"messages":[{"role":"user","content":"Hi"}]}' \
+  -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","max_tokens":10,"messages":[{"role":"user","content":"Hi"}]}' \
   | python3 -m json.tool
 
 # Memory pressure on Mac Studio
@@ -373,53 +274,23 @@ claude-local -p "Write a Python function that reverses a string"
 
 ## Changing the LLM Model
 
-To swap `Qwen3-Coder-Next-4bit` for a different model (e.g., upgrading to 8-bit or a different model entirely):
+To swap `Qwen3-Coder-Next-4bit` for a different model:
 
-### Step 1: Download the new model
+### Step 1: Load the new model
+
+Three methods:
+1. **Admin panel HuggingFace downloader:** Open `http://<MAC_STUDIO_IP>:8000/admin`, search for the model, and download with one click.
+2. **Manual placement:** Download or symlink the model directory into `~/.omlx/models/` on the Mac Studio.
+3. Models are auto-discovered on the next request — no restart required if using the admin panel or manual placement.
+
+### Step 2: Restart oMLX (if needed)
+
+A restart is usually not needed for new models (they are auto-discovered). If switching the default model or changing server config:
 ```bash
-ssh macstudio
-
-# Download (replace with your model name)
-mlx_lm.manage --scan mlx-community/YOUR-NEW-MODEL
+brew services restart omlx
 ```
 
-### Step 2: Update mlx-lm server plist
-Edit the model name in the launchd plist:
-```bash
-# On Mac Studio, edit ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
-# Change the <string> after --model to the new model name
-nano ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
-```
-Change:
-```xml
-<string>mlx-community/Qwen3-Coder-Next-4bit</string>
-```
-To:
-```xml
-<string>mlx-community/YOUR-NEW-MODEL</string>
-```
-
-### Step 3: Update router config
-Edit the model name in `~/.claude-code-router/config.json`:
-```bash
-# On Mac Studio — update the model in both "models" array and "Router.default"
-nano ~/.claude-code-router/config.json
-```
-
-### Step 4: Restart both services
-```bash
-# On Mac Studio
-launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
-launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
-sleep 5
-launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
-# Wait for model to load into GPU memory (check logs)
-tail -f ~/llm-server/logs/mlx-lm-server.err
-# Once "Uvicorn running" appears, start the proxy
-launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
-```
-
-### Step 5: Verify
+### Step 3: Verify
 Run the Layer 1 and Layer 2 tests above to confirm the new model works.
 
 ### Model sizing guide for 96GB Mac Studio
@@ -435,23 +306,23 @@ Filter by size to find models that fit your memory budget.
 
 ## Maintenance
 
-### Restart services
+### Restart service
 ```bash
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist"
+ssh macstudio "brew services restart omlx"
 ```
 
 ### Check health
 ```bash
-# mlx-lm server
-curl http://<MAC_STUDIO_IP>:8080/v1/models
+# oMLX server (OpenAI format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>"
 
-# Proxy (Anthropic format)
-curl http://<MAC_STUDIO_IP>:3456/v1/messages \
+# oMLX server (Anthropic format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
-  -H "x-api-key: not-needed" \
+  -H "x-api-key: <YOUR_API_KEY>" \
   -H "anthropic-version: 2023-06-01" \
-  -d '{"model":"claude-sonnet-4-20250514","max_tokens":50,"messages":[{"role":"user","content":"Hi"}]}'
+  -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","max_tokens":50,"messages":[{"role":"user","content":"Hi"}]}'
 
 # Memory pressure
 ssh macstudio "memory_pressure | head -20"
@@ -459,18 +330,28 @@ ssh macstudio "memory_pressure | head -20"
 
 ### Check logs
 ```bash
-ssh macstudio "tail -20 ~/llm-server/logs/mlx-lm-server.err"
-ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
+ssh macstudio "tail -20 /opt/homebrew/var/log/omlx.log"   # brew service log
+ssh macstudio "tail -20 ~/.omlx/logs/server.log"           # application log
 ```
+
+### Check service status and version
+```bash
+ssh macstudio "brew services info omlx"  # service status
+ssh macstudio "brew info omlx"           # check version
+```
+
+### Admin panel
+
+`http://<MAC_STUDIO_IP>:8000/admin` — real-time monitoring, model management, built-in chat, benchmarking, HuggingFace downloader, per-model settings.
 
 ### Upgrade all tools
 ```bash
 # MacBook — CLI tools (Homebrew)
 brew upgrade claude-code opencode pi-coding-agent
 
-# Mac Studio — server + router (Homebrew)
-ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm claude-code-router"
-# Then restart both services (see above)
+# Mac Studio — oMLX server (Homebrew)
+ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"
+# Then restart: ssh macstudio "brew services restart omlx"
 
 # Linux (narutaki) — OpenClaw
 ssh narutaki "openclaw update"

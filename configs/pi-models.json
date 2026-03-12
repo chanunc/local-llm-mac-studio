@@ -1,9 +1,9 @@
 {
   "providers": {
     "macstudio": {
-      "baseUrl": "http://<MAC_STUDIO_IP>:8080/v1",
+      "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
       "api": "openai-completions",
-      "apiKey": "not-needed",
+      "apiKey": "<YOUR_API_KEY>",
       "compat": {
         "supportsUsageInStreaming": false,
         "maxTokensField": "max_tokens"

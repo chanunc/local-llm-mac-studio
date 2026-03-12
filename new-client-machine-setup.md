@@ -4,7 +4,7 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 
 ## Prerequisites
 
-- The Mac Studio LLM server is already running (mlx-lm on port 8080, claude-code-router on port 3456)
+- The Mac Studio oMLX server is already running on port 8000
 - The new machine is on the same LAN as the Mac Studio
 - Homebrew installed on the new machine (or Node.js 18+ if not on macOS)
 
@@ -14,16 +14,16 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 # Check the Mac Studio is reachable
 ping -c 2 <MAC_STUDIO_IP>
 
-# Check the proxy is responding
-curl -s http://<MAC_STUDIO_IP>:3456/v1/messages \
+# Check oMLX is responding (Anthropic format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
-  -H "x-api-key: not-needed" \
+  -H "x-api-key: <YOUR_API_KEY>" \
   -H "anthropic-version: 2023-06-01" \
-  -d '{"model":"claude-sonnet-4-20250514","max_tokens":20,"messages":[{"role":"user","content":"Hi"}]}' \
+  -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","max_tokens":20,"messages":[{"role":"user","content":"Hi"}]}' \
   | python3 -m json.tool
 ```
 
-You should see an Anthropic-format JSON response with `"type": "message"`. If not, the Mac Studio servers may need to be started — see `summary.md`.
+You should see an Anthropic-format JSON response with `"type": "message"`. If not, the Mac Studio oMLX server may need to be started — see `summary.md`.
 
 ## Step 2: Install Claude Code
 
@@ -51,8 +51,9 @@ Or create it manually:
 cat > ~/.claude/macstudio-settings.json << 'EOF'
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:3456",
-    "ANTHROPIC_AUTH_TOKEN": "not-needed"
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8000",
+    "ANTHROPIC_AUTH_TOKEN": "<YOUR_API_KEY>",
+    "ANTHROPIC_MODEL": "mlx-community/Qwen3-Coder-Next-4bit"
   }
 }
 EOF
@@ -91,7 +92,7 @@ claude-local
 
 ## Optional: SSH Access to Mac Studio
 
-If you want to manage the Mac Studio servers from this machine:
+If you want to manage the Mac Studio server from this machine:
 
 ```bash
 # Generate SSH key (skip if you already have one)
@@ -119,24 +120,17 @@ ssh macstudio "echo OK"
 
 ## Troubleshooting
 
-**"Connection refused" on port 3456:**
-The proxy isn't running. SSH into the Mac Studio and start it:
+**"Connection refused" on port 8000:**
+The oMLX server isn't running. SSH into the Mac Studio and start it:
 ```bash
-ssh macstudio "launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist"
-```
-
-**"Connection refused" on port 8080:**
-The mlx-lm server isn't running:
-```bash
-ssh macstudio "launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
+ssh macstudio "brew services start omlx"
 ```
 
 **Slow or no response:**
 The model may still be loading into GPU memory after a restart. Check logs:
 ```bash
-ssh macstudio "tail -10 ~/llm-server/logs/mlx-lm-server.err"
+ssh macstudio "tail -10 ~/.omlx/logs/server.log"
 ```
-Wait until you see `Uvicorn running` in the output.
 
 **"Host unreachable" or ping fails:**
 The new machine is not on the same LAN, or the Mac Studio's IP has changed. Check the Mac Studio's current IP in System Settings > Network.

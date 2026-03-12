@@ -24,7 +24,15 @@
       "Bash(pi:*)",
       "Bash(nc:*)",
       "WebFetch(domain:docs.openclaw.ai)",
-      "Bash(ssh-copy-id:*)"
+      "Bash(ssh-copy-id:*)",
+      "Bash(which grip:*)",
+      "Bash(ssh macstudio:*)",
+      "Bash(curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m *)",
+      "Bash(brew *)",
+      "WebFetch(domain:musistudio.github.io)",
+      "Bash(sleep 5 && ssh macstudio *)",
+      "Bash(curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m*)",
+      "Bash(curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 *)"
     ]
   }
 }

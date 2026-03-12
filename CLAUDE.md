@@ -6,42 +6,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Configuration and documentation for running a local LLM server on a Mac Studio M3 Ultra (96GB) and connecting multiple machines and coding agents via LAN. This is a docs-only repo — no code to build, lint, or test.
 
-**Data flow**: Claude Code → claude-code-router (:3456, Anthropic format) → mlx-lm (:8080, OpenAI format). Other tools (OpenCode, Pi, OpenClaw) connect directly to mlx-lm on :8080.
+**Data flow**: All tools (Claude Code, OpenCode, Pi, OpenClaw) connect directly to oMLX (:8000), which natively serves both OpenAI and Anthropic API formats.
 
 ## Architecture
 
 ```
 MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
-│ Claude Code         │                   │ mlx-lm server (port 8080)       │
+│ Claude Code         │                   │ oMLX server (port 8000)         │
 │   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
-│   ANTHROPIC_BASE_URL│                   │   OpenAI API format             │
-│   = :3456           │                   │                                 │
-│ OpenCode, Pi        │───── LAN ────────>│ claude-code-router (port 3456)  │
-│   (direct to 8080)  │                   │   Anthropic API → OpenAI API    │
+│   ANTHROPIC_BASE_URL│                   │   OpenAI + Anthropic API native │
+│   = :8000           │                   │                                 │
+│ OpenCode, Pi        │───── LAN ────────>│                                 │
+│   (direct to 8000)  │                   │                                 │
 └─────────────────────┘                   └──────────────────────────────────┘
 Linux (<LINUX_CLIENT_IP>)
 ┌─────────────────────┐
-│ OpenClaw            │───── LAN ────────> (connects to 8080 directly)
+│ OpenClaw            │───── LAN ────────> (connects to 8000 directly)
 └─────────────────────┘
 WSL Linux (192.168.31.x via eth2)
 ┌─────────────────────┐
-│ OpenCode            │───── LAN ────────> (connects to 8080 directly)
+│ OpenCode            │───── LAN ────────> (connects to 8000 directly)
 └─────────────────────┘
 ```
 
-- **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs mlx-lm server (port 8080) and claude-code-router (port 3456)
+- **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs oMLX server (port 8000) — serves both OpenAI and Anthropic API formats natively
 - **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
 - **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
 - **WSL Linux** (`192.168.31.x` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `opencode-setup.md`)
-- **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via MLX on Apple Silicon
-- **Proxy**: `claude-code-router` (musistudio) translates Anthropic API → OpenAI API format (needed only by Claude Code; other tools connect directly to mlx-lm)
+- **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via oMLX on Apple Silicon
+- **Server**: oMLX natively speaks both OpenAI and Anthropic API formats — no proxy needed for any tool
 
 ## Docs
 
 | File | Purpose |
 |------|---------|
-| `summary.md` | Full setup documentation, testing, and maintenance |
+| `summary.md` | Full setup documentation, testing, and maintenance (oMLX) |
+| `summary-mlxlm.md` | Archived: old mlx-lm + claude-code-router setup |
 | `new-client-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
 | `opencode-setup.md` | OpenCode (MacBook / WSL) → Mac Studio |
 | `openclaw-setup.md` | OpenClaw (Linux) → Mac Studio |
@@ -57,7 +58,7 @@ Ready-to-use config files for setting up new machines. Copy to the appropriate l
 | `configs/opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 | `configs/pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `configs/openclaw-macstudio-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
-| `configs/claude-code-router.json` | `~/.claude-code-router/config.json` | Mac Studio server |
+| `configs/claude-code-router.json.archived` | N/A | Archived: old router config |
 
 ## Key Files
 
@@ -68,10 +69,7 @@ Ready-to-use config files for setting up new machines. Copy to the appropriate l
 | MacBook | `~/.pi/agent/models.json` | Pi Coding Agent config |
 | MacBook | `~/.ssh/config` | SSH aliases (`macstudio`, `narutaki`) |
 | Linux | `~/.openclaw/openclaw.json` | OpenClaw config with `macstudio` provider |
-| Mac Studio | `~/llm-server/` | Server dir (logs, healthcheck) |
-| Mac Studio | `~/.claude-code-router/config.json` | Router config (providers, routing) |
-| Mac Studio | `~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist` | mlx-lm launchd service |
-| Mac Studio | `~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist` | Router launchd service |
+| Mac Studio | `~/.omlx/` | oMLX config, models, logs, and cache |
 
 ## Common Commands
 
@@ -83,29 +81,34 @@ claude-local
 ssh macstudio
 ssh narutaki
 
-# Quick health check (mlx-lm)
-curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
+# Quick health check (OpenAI format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
 
-# Health check (router — Anthropic format)
-curl -s http://<MAC_STUDIO_IP>:3456/v1/messages \
-  -H "Content-Type: application/json" -H "x-api-key: not-needed" -H "anthropic-version: 2023-06-01" \
-  -d '{"model":"claude-sonnet-4-20250514","max_tokens":10,"messages":[{"role":"user","content":"Hi"}]}' \
+# Health check (Anthropic format)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
+  -H "Content-Type: application/json" -H "x-api-key: <YOUR_API_KEY>" -H "anthropic-version: 2023-06-01" \
+  -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","max_tokens":10,"messages":[{"role":"user","content":"Hi"}]}' \
   | python3 -m json.tool
 
 # Memory pressure on Mac Studio
 ssh macstudio "memory_pressure | head -20"
 
-# Restart services on Mac Studio
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist"
+# Restart oMLX on Mac Studio
+ssh macstudio "brew services restart omlx"
 
 # Check logs
-ssh macstudio "tail -20 ~/llm-server/logs/mlx-lm-server.err"
-ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
+ssh macstudio "tail -20 /opt/homebrew/var/log/omlx.log"
+ssh macstudio "tail -20 ~/.omlx/logs/server.log"
+
+# Service status
+ssh macstudio "brew services info omlx"
+
+# Admin panel: http://<MAC_STUDIO_IP>:8000/admin
 
 # Upgrade all tools
 brew upgrade claude-code opencode pi-coding-agent
-ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm claude-code-router"
+ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"
 ssh narutaki "openclaw update"
 ```
 

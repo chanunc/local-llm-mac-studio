@@ -1,13 +1,13 @@
 # Pi Coding Agent Setup: MacBook → Mac Studio LLM Server
 
-Pi connects **directly** to the mlx-lm server's OpenAI-compatible endpoint — no proxy needed.
+Pi connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 
 ## Architecture
 
 ```
 MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
-│ Pi Coding Agent     │                   │ mlx-lm server (port 8080)       │
+│ Pi Coding Agent     │                   │ oMLX server (port 8000)         │
 │   openai-completions│───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
 │   direct connection │                   │   /v1/chat/completions          │
 └─────────────────────┘                   └──────────────────────────────────┘
@@ -36,9 +36,9 @@ Custom model config at `~/.pi/agent/models.json`:
 {
   "providers": {
     "macstudio": {
-      "baseUrl": "http://<MAC_STUDIO_IP>:8080/v1",
+      "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
       "api": "openai-completions",
-      "apiKey": "not-needed",
+      "apiKey": "<YOUR_API_KEY>",
       "compat": {
         "supportsUsageInStreaming": false,
         "maxTokensField": "max_tokens"
@@ -60,10 +60,10 @@ Custom model config at `~/.pi/agent/models.json`:
 ```
 
 Key settings:
-- `api: "openai-completions"` — mlx-lm speaks OpenAI Chat Completions format
-- `apiKey` is required by Pi but mlx-lm ignores it
-- `supportsUsageInStreaming: false` — mlx-lm may not include usage data in streaming responses
-- `maxTokensField: "max_tokens"` — mlx-lm uses the older field name (not `max_completion_tokens`)
+- `api: "openai-completions"` — oMLX speaks OpenAI Chat Completions format
+- `apiKey` is required by Pi; oMLX uses it for authentication
+- `supportsUsageInStreaming: false` — oMLX may not include usage data in streaming responses
+- `maxTokensField: "max_tokens"` — oMLX uses the older field name (not `max_completion_tokens`)
 - Cost is all zeros (local model, no billing)
 - The `models.json` file hot-reloads — no restart needed when editing
 
@@ -71,7 +71,8 @@ Key settings:
 
 1. **Connectivity check**:
    ```bash
-   curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
+   curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+     -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
    ```
 
 2. **Launch Pi**:
@@ -89,12 +90,13 @@ Key settings:
 
 ### Can't connect to Mac Studio
 
-- Verify the server is running: `curl http://<MAC_STUDIO_IP>:8080/v1/models`
-- Check if mlx-lm is up: `ssh macstudio "launchctl list | grep mlx"`
-- Restart mlx-lm:
+- Verify the server is running: `curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H "Authorization: Bearer <YOUR_API_KEY>"`
+- Restart oMLX:
   ```bash
-  ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
+  ssh macstudio "brew services restart omlx"
   ```
+
+You can also verify server and model status via the admin panel at `http://<MAC_STUDIO_IP>:8000/admin`.
 
 ### Model not appearing in Pi
 
@@ -111,7 +113,6 @@ Key settings:
 
 - Check Mac Studio memory pressure: `ssh macstudio "memory_pressure"`
 - Reduce `contextWindow` in models.json if the model runs out of memory
-- The mlx-lm server has an 8192 max token default cap per request
 
 ## Changing the Model
 
@@ -125,7 +126,7 @@ Key settings:
 
 | | Claude Code | OpenCode | Pi |
 |---|---|---|---|
-| API format | Anthropic (needs proxy) | OpenAI (direct) | OpenAI (direct) |
-| Proxy needed | Yes (claude-code-router) | No | No |
+| API format | Anthropic (native) | OpenAI (native) | OpenAI (native) |
+| Proxy needed | No | No | No |
 | Config file | `~/.claude/macstudio-settings.json` | `~/.config/opencode/opencode.json` | `~/.pi/agent/models.json` |
 | Launch command | `claude-local` | `opencode` / `oc` | `pi` |

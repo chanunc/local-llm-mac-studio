@@ -6,7 +6,8 @@
       "options": {
         "baseURL": "http://<MAC_STUDIO_IP>:8000/v1",
         "apiKey": "<YOUR_API_KEY>",
-        "timeout": 600000
+        "timeout": 600000,
+        "compatibility": "strict"
       },
       "models": {
         "mlx-community/Qwen3-Coder-Next-4bit": {

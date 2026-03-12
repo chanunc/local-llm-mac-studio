@@ -107,7 +107,7 @@ ssh macstudio "brew services info omlx"
 # Admin panel: http://<MAC_STUDIO_IP>:8000/admin
 
 # Upgrade all tools
-brew upgrade claude-code opencode pi-coding-agent
+brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent
 ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"
 ssh narutaki "openclaw update"
 ```

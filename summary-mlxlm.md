@@ -462,14 +462,15 @@ ssh macstudio "memory_pressure | head -20"
 ssh macstudio "tail -20 ~/llm-server/logs/mlx-lm-server.err"
 ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
 ```
-
 ### Upgrade all tools
 ```bash
 # MacBook — CLI tools (Homebrew)
-brew upgrade claude-code opencode pi-coding-agent
+brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent
 
 # Mac Studio — server + router (Homebrew)
 ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm claude-code-router"
+```
+
 # Then restart both services (see above)
 
 # Linux (narutaki) — OpenClaw

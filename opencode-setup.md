@@ -15,14 +15,11 @@ MacBook or WSL Linux                      Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 
 ## Installation
 
-**Important**: Use `sst/opencode` (actively maintained). The older `opencode-ai/opencode` package was archived in September 2025 and has an unfixed `Error: agent coder not found` bug. Do **not** use the `anomalyco/tap` Homebrew tap on Linux — it installs the old version.
+**Important**: Use `anomalyco/tap/opencode` (actively maintained).
 
 ```bash
-# macOS (Homebrew)
-brew install opencode
-
-# Linux / WSL — use the official installer
-curl -fsSL https://opencode.ai/install | bash
+# macOS / Linux (Homebrew)
+brew install anomalyco/tap/opencode
 ```
 
 Verify: `opencode --version`
@@ -127,11 +124,10 @@ alias oc='opencode'
 
 ### `Error: agent coder not found`
 
-You have the old archived `opencode-ai/opencode` installed (version `0.0.x`). This happens if installed via the `anomalyco/tap` Homebrew tap on Linux/WSL. Switch to the SST version:
+You have the old archived `opencode-ai/opencode` installed (version `0.0.x`). Switch to the `anomalyco/tap` version:
 ```bash
 brew uninstall opencode
-brew untap anomalyco/tap
-curl -fsSL https://opencode.ai/install | bash
+brew install anomalyco/tap/opencode
 ```
 
 ### WSL: curl to Mac Studio times out

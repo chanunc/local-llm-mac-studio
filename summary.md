@@ -343,14 +343,15 @@ ssh macstudio "brew info omlx"           # check version
 ### Admin panel
 
 `http://<MAC_STUDIO_IP>:8000/admin` — real-time monitoring, model management, built-in chat, benchmarking, HuggingFace downloader, per-model settings.
-
 ### Upgrade all tools
 ```bash
 # MacBook — CLI tools (Homebrew)
-brew upgrade claude-code opencode pi-coding-agent
+brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent
 
 # Mac Studio — oMLX server (Homebrew)
 ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"
+```
+
 # Then restart: ssh macstudio "brew services restart omlx"
 
 # Linux (narutaki) — OpenClaw

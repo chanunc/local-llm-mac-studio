@@ -314,7 +314,15 @@ If a download is taking too long or you've accidentally queued too many versions
     - Go to the **Downloads** or **HuggingFace** tab.
     - Click **Cancel** on the active task. oMLX will handle the cleanup of partial files.
 
-2.  **Service Restart (Nuclear Option):**
+2.  **API Command (Advanced):**
+    - Find the `task_id` in the `server.log` (e.g., `6f4def05-...`).
+    - Run the following command from any machine on the LAN:
+    ```bash
+    curl -X POST http://<MAC_STUDIO_IP>:8000/admin/api/hf/cancel/<task_id> \
+      -H "x-api-key: <YOUR_API_KEY>"
+    ```
+
+3.  **Service Restart (Nuclear Option):**
     - Restarting the service will immediately kill all background download threads.
     ```bash
     ssh macstudio "brew services restart omlx"

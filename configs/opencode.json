@@ -10,16 +10,23 @@
         "compatibility": "strict"
       },
       "models": {
-        "mlx-community/Qwen3-Coder-Next-4bit": {
+        "mlx-community/Qwen3-Coder-Next-6bit": {
           "name": "Qwen3 Coder (Mac Studio)",
           "limit": {
             "context": 170000,
+            "output": 8192
+          }
+        },
+        "nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx": {
+          "name": "Qwen3.5 27B Claude Opus Distilled",
+          "limit": {
+            "context": 128000,
             "output": 8192
           }
         }
       }
     }
   },
-  "model": "macstudio/mlx-community/Qwen3-Coder-Next-4bit",
-  "small_model": "macstudio/mlx-community/Qwen3-Coder-Next-4bit"
+  "model": "macstudio/mlx-community/Qwen3-Coder-Next-6bit",
+  "small_model": "macstudio/mlx-community/Qwen3-Coder-Next-6bit"
 }

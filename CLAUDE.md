@@ -23,7 +23,7 @@ Local LLM infrastructure for a Mac Studio M3 Ultra (96GB). This repository provi
 MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
 │ Claude Code         │                   │ oMLX server (port 8000)         │
-│   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
+│   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-6bit         │
 │   ANTHROPIC_BASE_URL│                   │   OpenAI + Anthropic API native │
 │   = :8000           │                   │                                 │
 │ OpenCode, Pi        │───── LAN ────────>│                                 │
@@ -43,7 +43,7 @@ WSL Linux (<WSL_CLIENT_IP> via eth2)
 - **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
 - **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
 - **WSL Linux** (`<WSL_CLIENT_IP>` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `docs/clients/opencode-setup.md`)
-- **Models**: `Qwen3-Coder-Next` (4/6/8-bit) and `Qwen3.5-122B` served via oMLX on Apple Silicon
+- **Models**: `Qwen3-Coder-Next` (6/8-bit) and `Qwen3.5-122B` served via oMLX on Apple Silicon
 - **Server**: oMLX natively speaks both OpenAI and Anthropic API formats — no proxy needed for any tool
 
 ## Docs
@@ -98,7 +98,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 # Health check (Anthropic format)
 curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" -H "x-api-key: <YOUR_API_KEY>" -H "anthropic-version: 2023-06-01" \
-  -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","max_tokens":10,"messages":[{"role":"user","content":"Hi"}]}' \
+  -d '{"model":"mlx-community/Qwen3-Coder-Next-6bit","max_tokens":10,"messages":[{"role":"user","content":"Hi"}]}' \
   | python3 -m json.tool
 
 # Memory pressure on Mac Studio

@@ -10,7 +10,7 @@
       },
       "models": [
         {
-          "id": "mlx-community/Qwen3-Coder-Next-4bit",
+          "id": "mlx-community/Qwen3-Coder-Next-6bit",
           "name": "Qwen3 Coder (Mac Studio)",
           "reasoning": false,
           "input": ["text"],

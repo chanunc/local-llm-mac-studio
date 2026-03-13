@@ -2,6 +2,19 @@
 
 This guide sets up Claude Code on a new machine to use the local LLM running on the Mac Studio M3 Ultra at `<MAC_STUDIO_IP>`.
 
+## Index
+- [Prerequisites](#prerequisites)
+- [Step 1: Verify Network Connectivity](#step-1-verify-network-connectivity)
+- [Step 2: Install Claude Code](#step-2-install-claude-code)
+- [Step 3: Create Settings File](#step-3-create-settings-file)
+- [Step 4: Add Shell Alias](#step-4-add-shell-alias)
+- [Step 5: Test](#step-5-test)
+  - [Basic test](#basic-test)
+  - [Tool use test (verifies file reading works)](#tool-use-test-verifies-file-reading-works)
+  - [Interactive session](#interactive-session)
+- [Optional: SSH Access to Mac Studio](#optional-ssh-access-to-mac-studio)
+- [Troubleshooting](#troubleshooting)
+
 ## Prerequisites
 
 - The Mac Studio oMLX server is already running on port 8000

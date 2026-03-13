@@ -2,6 +2,19 @@
 
 Pi connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 
+## Index
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+  - [Can't connect to Mac Studio](#cant-connect-to-mac-studio)
+  - [Model not appearing in Pi](#model-not-appearing-in-pi)
+  - [Tool calling issues](#tool-calling-issues)
+  - [Slow or hanging responses](#slow-or-hanging-responses)
+- [Changing the Model](#changing-the-model)
+- [Comparison with Other Agent Setups](#comparison-with-other-agent-setups)
+
 ## Architecture
 
 ```
@@ -49,7 +62,7 @@ Custom model config at `~/.pi/agent/models.json`:
           "name": "Qwen3 Coder (Mac Studio)",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 65536,
+          "contextWindow": 170000,
           "maxTokens": 8192,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }

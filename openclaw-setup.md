@@ -2,6 +2,18 @@
 
 OpenClaw on the Linux machine connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 
+## Index
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [SSH Config (MacBook)](#ssh-config-macbook)
+- [OpenClaw Configuration](#openclaw-configuration)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+  - [Can't connect to Mac Studio from Linux](#cant-connect-to-mac-studio-from-linux)
+  - [API format issues](#api-format-issues)
+  - [Tool calling quality](#tool-calling-quality)
+- [Comparison with Other Setups](#comparison-with-other-setups)
+
 ## Architecture
 
 ```

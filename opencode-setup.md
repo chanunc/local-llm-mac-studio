@@ -2,6 +2,24 @@
 
 OpenCode connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 
+## Index
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [WSL-Specific: Fix Routing](#wsl-specific-fix-routing)
+  - [Make Route Persistent](#make-route-persistent)
+- [Configuration](#configuration)
+  - [Shell Alias](#shell-alias)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+  - [Error: agent coder not found](#error-agent-coder-not-found)
+  - [WSL: curl to Mac Studio times out](#wsl-curl-to-mac-studio-times-out)
+  - [Can't connect to Mac Studio](#cant-connect-to-mac-studio)
+  - [Slow or hanging responses](#slow-or-hanging-responses)
+  - [Context limit errors](#context-limit-errors)
+  - [Server reliability](#server-reliability)
+- [Changing the Model](#changing-the-model)
+- [Comparison with Claude Code Setup](#comparison-with-claude-code-setup)
+
 ## Architecture
 
 ```
@@ -79,8 +97,8 @@ Global config at `~/.config/opencode/opencode.json`:
         "mlx-community/Qwen3-Coder-Next-4bit": {
           "name": "Qwen3 Coder (Mac Studio)",
           "limit": {
-            "context": 16000,
-            "output": 4096
+            "context": 170000,
+            "output": 8192
           }
         }
       }
@@ -156,9 +174,9 @@ If not, add the route (see WSL-Specific section above).
 
 ### Context limit errors
 
-- Qwen3-Coder-Next-4bit supports up to 32K context but large contexts use more memory
-- Client context is set to 16K by default (conservative for stability)
-- Increase `limit.context` in config up to 32000 if you need more but monitor memory
+- Qwen3-Coder-Next-4bit supports up to 170,000 context but large contexts use more memory
+- Client context is set to 170,000 by default (conservative for stability)
+- Increase `limit.context` in config up to 170000 if you need more but monitor memory
 
 ### Server reliability
 
@@ -172,7 +190,7 @@ Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"`
 
 ## Changing the Model
 
-1. Load the new model on Mac Studio (see `summary.md` "Changing the LLM Model")
+1. Load the new model on Mac Studio (see `summary-omlx.md` "Changing the LLM Model")
 2. Update `opencode.json`:
    - Change model ID in `models` key and in `model`/`small_model` fields
    - Adjust `context` and `output` limits for the new model

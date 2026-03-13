@@ -11,9 +11,9 @@ Performance and context limits optimized for **96GB Unified Memory**.
 
 | Model | Quant | Size | Context (96GB) | **Hot Cache (RAM)** | Best For |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Qwen3-Coder-Next** | 4-bit | ~42GB | 170K - 200K | **40GB** | Large-scale refactoring |
-| **Qwen3-Coder-Next** | 6-bit | ~60GB | 128K - 170K | **30GB** | **Daily Driver** (Quality) |
+| **Qwen3-Coder-Next** | 6-bit | ~60GB | 128K - 170K | **30GB** | **Daily Driver** (Coding) |
 | **Qwen3-Coder-Next** | 8-bit | ~79GB | 16K - 32K | **8GB** | Maximum precision |
+| **Qwen3.5-27B Claude Opus Distilled** | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
 | **Qwen3.5-122B-A10B** | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
 
 *Note: Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*

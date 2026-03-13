@@ -44,6 +44,20 @@
             "context": 262144,
             "output": 8192
           }
+        },
+        "mlx-community/Qwen3.5-35B-A3B-8bit": {
+          "name": "Qwen3.5 35B-A3B 8-bit (SWE Agent)",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
+        },
+        "nightmedia/Qwen3.5-35B-A3B-Holodeck-qx86-hi-mlx": {
+          "name": "Qwen3.5 35B-A3B Holodeck qx86-hi",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }

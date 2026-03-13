@@ -42,7 +42,7 @@ WSL Linux (192.168.31.x via eth2)
 - **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs oMLX server (port 8000) — serves both OpenAI and Anthropic API formats natively
 - **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
 - **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
-- **WSL Linux** (`192.168.31.x` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `opencode-setup.md`)
+- **WSL Linux** (`192.168.31.x` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `docs/clients/opencode-setup.md`)
 - **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via oMLX on Apple Silicon
 - **Server**: oMLX natively speaks both OpenAI and Anthropic API formats — no proxy needed for any tool
 
@@ -50,13 +50,13 @@ WSL Linux (192.168.31.x via eth2)
 
 | File | Purpose |
 |------|---------|
-| `summary-omlx.md` | Full setup documentation, testing, and maintenance (oMLX) |
-| `maintenance-omlx.md` | Advanced troubleshooting, discovery fixes, and hard restarts |
-| `summary-mlxlm.md` | Archived: old mlx-lm + claude-code-router setup |
-| `new-client-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
-| `opencode-setup.md` | OpenCode (MacBook / WSL) → Mac Studio |
-| `openclaw-setup.md` | OpenClaw (Linux) → Mac Studio |
-| `pi-setup.md` | Pi Coding Agent (MacBook) → Mac Studio |
+| `docs/server/omlx-summary.md` | Full setup documentation, testing, and maintenance (oMLX) |
+| `docs/server/omlx-maintenance.md` | Advanced troubleshooting, discovery fixes, and hard restarts |
+| `docs/server/mlxlm-summary.md` | Alternative: native mlx-lm + claude-code-router setup |
+| `docs/clients/new-client-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
+| `docs/clients/opencode-setup.md` | OpenCode (MacBook / WSL) → Mac Studio |
+| `docs/clients/openclaw-setup.md` | OpenClaw (Linux) → Mac Studio |
+| `docs/clients/pi-setup.md` | Pi Coding Agent (MacBook) → Mac Studio |
 
 ## Config Files (`configs/`)
 
@@ -125,4 +125,4 @@ ssh narutaki "openclaw update"
 ## Known Issues
 
 - **SSH timeouts**: Fixed — was caused by macOS sleeping after 1 min idle. Fix applied: `sudo pmset -a sleep 0 disksleep 0 displaysleep 10`. If SSH flakiness returns, verify with `ssh macstudio "pmset -g | grep sleep"`.
-- **Model changes**: See "Changing the LLM Model" section in `summary-omlx.md` for step-by-step instructions.
+- **Model changes**: See "Changing the LLM Model" section in `docs/server/omlx-summary.md` for step-by-step instructions.

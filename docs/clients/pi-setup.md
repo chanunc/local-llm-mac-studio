@@ -129,7 +129,7 @@ You can also verify server and model status via the admin panel at `http://<MAC_
 
 ## Changing the Model
 
-1. Load the new model on Mac Studio (see `summary.md` "Changing the LLM Model")
+1. Load the new model on Mac Studio (see `../server/omlx-summary.md` "Changing the LLM Model")
 2. Update `~/.pi/agent/models.json`:
    - Change `id` to the new model identifier
    - Update `name`, `contextWindow`, and `maxTokens` as appropriate

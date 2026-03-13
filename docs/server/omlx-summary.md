@@ -375,7 +375,7 @@ Filter by size to find models that fit your memory budget.
 
 ## Maintenance
 
-For advanced troubleshooting, discovery fixes, and "hard restart" commands, see: **[maintenance-omlx.md](maintenance-omlx.md)**
+For advanced troubleshooting, discovery fixes, and "hard restart" commands, see: **[omlx-maintenance.md](omlx-maintenance.md)**
 
 ### Restart service
 ```bash

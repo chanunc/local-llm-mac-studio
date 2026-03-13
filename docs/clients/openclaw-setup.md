@@ -60,11 +60,38 @@ The Mac Studio provider config is available at `configs/openclaw-macstudio-provi
     "models": [
       {
         "id": "mlx-community/Qwen3-Coder-Next-4bit",
-        "name": "Qwen3 Coder (Mac Studio)",
+        "name": "Qwen3 Coder 4-bit (Fast)",
         "reasoning": false,
         "input": ["text"],
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
         "contextWindow": 170000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3-Coder-Next-6bit",
+        "name": "Qwen3 Coder 6-bit (Balanced)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 170000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3-Coder-Next-8bit",
+        "name": "Qwen3 Coder 8-bit (Precision)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 32000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3.5-122B-A10B-4bit",
+        "name": "Qwen 3.5 122B (Agentic)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 128000,
         "maxTokens": 8192
       }
     ]
@@ -86,8 +113,14 @@ Key decisions:
    ssh narutaki "curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H 'Authorization: Bearer <YOUR_API_KEY>'"
    ```
 
-2. **Switch to Mac Studio model in OpenClaw**:
-   Use `/model qwen3-local` or `/model macstudio/mlx-community/Qwen3-Coder-Next-4bit`
+2. **Switch to Mac Studio models in OpenClaw**:
+   Use the `/model` command to choose your preferred quantization:
+   - `/model qwen3-4bit`
+   - `/model qwen3-6bit`
+   - `/model qwen3-8bit`
+   - `/model qwen3.5-122b`
+   
+   *(Note: Ensure these aliases are configured in your OpenClaw model settings).*
 
 3. **Test a simple prompt** to verify end-to-end flow.
 

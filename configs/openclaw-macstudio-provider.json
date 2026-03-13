@@ -6,11 +6,38 @@
     "models": [
       {
         "id": "mlx-community/Qwen3-Coder-Next-4bit",
-        "name": "Qwen3 Coder (Mac Studio)",
+        "name": "Qwen3 Coder 4-bit (Fast)",
         "reasoning": false,
         "input": ["text"],
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
         "contextWindow": 170000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3-Coder-Next-6bit",
+        "name": "Qwen3 Coder 6-bit (Balanced)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 170000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3-Coder-Next-8bit",
+        "name": "Qwen3 Coder 8-bit (Precision)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 32000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3.5-122B-A10B-4bit",
+        "name": "Qwen 3.5 122B (Agentic)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 128000,
         "maxTokens": 8192
       }
     ]

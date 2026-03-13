@@ -9,14 +9,14 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 ## 🤖 Models & Benchmarks
 Performance and context limits optimized for **96GB Unified Memory**.
 
-| Model | Quant | Size | Speed | Context (96GB RAM) | Best For |
+| Model | Quant | Size | Context (96GB) | **Hot Cache (RAM)** | Best For |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Qwen3-Coder-Next** | 4-bit | ~42GB | ~74 t/s | **170K - 200K** | Large-scale refactoring |
-| **Qwen3-Coder-Next** | 6-bit | ~60GB | ~66 t/s | **128K - 170K** | **Daily Driver** (Quality) |
-| **Qwen3-Coder-Next** | 8-bit | ~79GB | ~55 t/s | **16K - 32K** | Maximum precision |
-| **Qwen3.5-122B-A10B** | 4-bit | ~65GB | ~40 t/s | **64K - 128K** | Agentic reasoning |
+| **Qwen3-Coder-Next** | 4-bit | ~42GB | 170K - 200K | **40GB** | Large-scale refactoring |
+| **Qwen3-Coder-Next** | 6-bit | ~60GB | 128K - 170K | **30GB** | **Daily Driver** (Quality) |
+| **Qwen3-Coder-Next** | 8-bit | ~79GB | 16K - 32K | **8GB** | Maximum precision |
+| **Qwen3.5-122B-A10B** | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
 
-*Context limits assume no heavy SSD swapping. Speed measured on M3 Ultra hardware.*
+*Note: Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*
 
 ## 🛠️ Tools & Agents
 - **Claude Code**: Anthropic's official CLI ([Setup](docs/clients/new-client-machine-setup.md))

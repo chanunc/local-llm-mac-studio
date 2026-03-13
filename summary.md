@@ -134,7 +134,7 @@ alias claude-local="claude --settings ~/.claude/macstudio-settings.json"
 
 **Context scaling:** oMLX can scale reported token counts so Claude Code's auto-compact triggers correctly for smaller-context models. Configure in `~/.omlx/settings.json` on the Mac Studio:
 - `claude_code.context_scaling_enabled`: `true`/`false`
-- `claude_code.target_context_size`: integer (default `200000`)
+- `claude_code.target_context_size`: integer (default `170000`)
 
 ## Key Discovery: LiteLLM Does NOT Translate
 
@@ -304,6 +304,22 @@ brew services restart omlx
 
 ### Step 3: Verify
 Run the Layer 1 and Layer 2 tests above to confirm the new model works.
+
+### Stopping or Cancelling Model Downloads
+
+If a download is taking too long or you've accidentally queued too many versions (e.g., multiple GGUF quantizations):
+
+1.  **Admin Panel (Recommended):**
+    - Open `http://<MAC_STUDIO_IP>:8000/admin`.
+    - Go to the **Downloads** or **HuggingFace** tab.
+    - Click **Cancel** on the active task. oMLX will handle the cleanup of partial files.
+
+2.  **Service Restart (Nuclear Option):**
+    - Restarting the service will immediately kill all background download threads.
+    ```bash
+    ssh macstudio "brew services restart omlx"
+    ```
+    - **Note:** After a restart, you may need to manually delete any `.incomplete` or `.lock` files in `~/.omlx/models/` or its `.cache` subdirectories to free up space.
 
 ### Model sizing guide for 96GB Mac Studio
 | Quantization | Approx Size | Headroom for KV cache | Recommendation |

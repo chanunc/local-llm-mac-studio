@@ -112,14 +112,14 @@ If you want to manage the Mac Studio server from this machine:
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
 
 # Copy key to Mac Studio (will prompt for password)
-ssh-copy-id chanunc@<MAC_STUDIO_IP>
+ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_IP>
 
 # Add SSH alias
 cat >> ~/.ssh/config << 'EOF'
 
 Host macstudio
     HostName <MAC_STUDIO_IP>
-    User chanunc
+    User <YOUR_USERNAME>
     IdentityFile ~/.ssh/id_ed25519
     ServerAliveInterval 60
     ServerAliveCountMax 3

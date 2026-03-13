@@ -33,7 +33,7 @@ Linux (<LINUX_CLIENT_IP>)
 ┌─────────────────────┐
 │ OpenClaw            │───── LAN ────────> (connects to 8000 directly)
 └─────────────────────┘
-WSL Linux (192.168.31.x via eth2)
+WSL Linux (<WSL_CLIENT_IP> via eth2)
 ┌─────────────────────┐
 │ OpenCode            │───── LAN ────────> (connects to 8000 directly)
 └─────────────────────┘
@@ -42,7 +42,7 @@ WSL Linux (192.168.31.x via eth2)
 - **Mac Studio** (`<MAC_STUDIO_IP>`, SSH alias `macstudio`): runs oMLX server (port 8000) — serves both OpenAI and Anthropic API formats natively
 - **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
 - **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
-- **WSL Linux** (`192.168.31.x` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `docs/clients/opencode-setup.md`)
+- **WSL Linux** (`<WSL_CLIENT_IP>` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `docs/clients/opencode-setup.md`)
 - **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via oMLX on Apple Silicon
 - **Server**: oMLX natively speaks both OpenAI and Anthropic API formats — no proxy needed for any tool
 

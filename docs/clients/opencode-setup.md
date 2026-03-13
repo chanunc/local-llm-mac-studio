@@ -44,10 +44,10 @@ Verify: `opencode --version`
 
 ## WSL-Specific: Fix Routing
 
-WSL2 may route LAN traffic through the wrong interface. If `eth2` is on `192.168.31.x`, add the route:
+WSL2 may route LAN traffic through the wrong interface. If `eth2` is on `<WSL_CLIENT_IP>`, add the route:
 
 ```bash
-sudo ip route add 192.168.31.0/24 dev eth2
+sudo ip route add <YOUR_SUBNET_IP>/24 dev eth2
 ```
 
 Verify connectivity:
@@ -61,14 +61,14 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 WSL2 loses `ip route` changes on restart. Add to `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-if ! ip route | grep -q "192.168.31.0/24"; then
-  sudo ip route add 192.168.31.0/24 dev eth2 2>/dev/null
+if ! ip route | grep -q "<YOUR_SUBNET_IP>/24"; then
+  sudo ip route add <YOUR_SUBNET_IP>/24 dev eth2 2>/dev/null
 fi
 ```
 
 Allow passwordless sudo for this via `sudo visudo`:
 ```
-%sudo ALL=(ALL) NOPASSWD: /sbin/ip route add 192.168.31.0/24 dev eth2
+%sudo ALL=(ALL) NOPASSWD: /sbin/ip route add <YOUR_SUBNET_IP>/24 dev eth2
 ```
 
 ## Configuration

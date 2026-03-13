@@ -11,11 +11,11 @@ Performance and context limits optimized for **96GB Unified Memory**.
 
 | Model | Quant | Size | Context (96GB) | **Hot Cache (RAM)** | Best For |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Qwen3-Coder-Next** | 6-bit | ~60GB | 128K - 170K | **30GB** | **Daily Driver** (Coding) |
-| **Qwen3-Coder-Next** | 8-bit | ~79GB | 16K - 32K | **8GB** | Maximum precision |
-| **Qwen3.5-27B Claude Opus Distilled** | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
-| **Qwen3.5-122B-A10B** | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
-| **OmniCoder-9B** | 8-bit | ~9.5GB | 262K | **8GB** | Agentic coding / tool use |
+| [**Qwen3-Coder-Next**](https://huggingface.co/mlx-community/Qwen3-Coder-Next-6bit) | 6-bit | ~60GB | 128K - 170K | **30GB** | **Daily Driver** (Coding) |
+| [**Qwen3-Coder-Next**](https://huggingface.co/mlx-community/Qwen3-Coder-Next-8bit) | 8-bit | ~79GB | 16K - 32K | **8GB** | Maximum precision |
+| [**Qwen3.5-27B Claude Opus Distilled**](https://huggingface.co/nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx) | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
+| [**Qwen3.5-122B-A10B**](https://huggingface.co/mlx-community/Qwen3.5-122B-A10B-4bit) | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
+| [**OmniCoder-9B**](https://huggingface.co/NexVeridian/OmniCoder-9B-8bit) | 8-bit | ~9.5GB | 262K | **8GB** | Agentic coding · tool use · terminal ops · LSP diagnostics · error recovery · multi-step planning · minimal diff edits |
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit.*
 *Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*

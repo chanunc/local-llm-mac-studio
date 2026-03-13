@@ -58,17 +58,54 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 
 ### Make Route Persistent
 
-WSL2 loses `ip route` changes on restart. Add to `~/.bashrc` or `~/.zshrc`:
+WSL2 loses `ip route` changes on restart. The `~/.bashrc` approach is unreliable — it only runs for interactive shells and misses non-interactive processes and early-boot sessions.
+
+#### Recommended: `/etc/wsl.conf` boot command
+
+Edit `/etc/wsl.conf` (create if it doesn't exist):
+
+```ini
+[boot]
+command = ip route add <YOUR_SUBNET_IP>/24 dev eth2 2>/dev/null || true
+```
+
+Runs as root on every WSL startup before any user session — no sudo prompt, no race conditions. Apply with:
 
 ```bash
-if ! ip route | grep -q "<YOUR_SUBNET_IP>/24"; then
-  sudo ip route add <YOUR_SUBNET_IP>/24 dev eth2 2>/dev/null
-fi
+wsl --shutdown   # from Windows PowerShell/CMD
+# then relaunch WSL
 ```
 
-Allow passwordless sudo for this via `sudo visudo`:
+Verify:
+```bash
+ip route | grep eth2
+# Should show: <YOUR_SUBNET_IP>/24 dev eth2
 ```
-%sudo ALL=(ALL) NOPASSWD: /sbin/ip route add <YOUR_SUBNET_IP>/24 dev eth2
+
+#### Alternative: systemd service (if systemd is enabled)
+
+Check: `systemctl --version` — if it responds, systemd is on.
+
+Create `/etc/systemd/system/lan-route-eth2.service`:
+
+```ini
+[Unit]
+Description=Add LAN route via eth2
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip route add <YOUR_SUBNET_IP>/24 dev eth2
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable:
+```bash
+sudo systemctl enable lan-route-eth2
+sudo systemctl start lan-route-eth2
 ```
 
 ## Configuration

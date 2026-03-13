@@ -16,7 +16,8 @@ Performance and context limits optimized for **96GB Unified Memory**.
 | **Qwen3.5-27B Claude Opus Distilled** | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
 | **Qwen3.5-122B-A10B** | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
 
-*Note: Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*
+*Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit.*
+*Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*
 
 ## 🛠️ Tools & Agents
 - **Claude Code**: Anthropic's official CLI ([Setup](docs/clients/new-client-machine-setup.md))

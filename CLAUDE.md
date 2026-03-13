@@ -107,6 +107,9 @@ ssh macstudio "memory_pressure | head -20"
 # Restart oMLX on Mac Studio
 ssh macstudio "brew services restart omlx"
 
+# Hard Restart (force kill zombie processes)
+ssh macstudio "pkill -9 -f omlx && sleep 2 && brew services restart omlx"
+
 # Check logs
 ssh macstudio "tail -20 /opt/homebrew/var/log/omlx.log"
 ssh macstudio "tail -20 ~/.omlx/logs/server.log"

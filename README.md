@@ -15,7 +15,7 @@ Performance and context limits optimized for **96GB Unified Memory**.
 | [**Qwen3-Coder-Next**](https://huggingface.co/mlx-community/Qwen3-Coder-Next-8bit) | 8-bit | ~79GB | 16K - 32K | **8GB** | Maximum precision |
 | [**Qwen3.5-27B Claude Opus Distilled**](https://huggingface.co/nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx) | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
 | [**Qwen3.5-122B-A10B**](https://huggingface.co/mlx-community/Qwen3.5-122B-A10B-4bit) | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
-| [**OmniCoder-9B**](https://huggingface.co/NexVeridian/OmniCoder-9B-8bit) | 8-bit | ~9.5GB | 262K | **8GB** | Autonomous agents · frontier-trace trained · read-before-write recovery · minimal diffs · scaffolding-aware (Claude Code, OpenCode, Codex) |
+| [**OmniCoder-9B**](https://huggingface.co/NexVeridian/OmniCoder-9B-8bit) | 8-bit | ~9.5GB | 262K | **8GB** | Coding Agent — trained on 425K+ curated agentic coding trajectories |
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit.*
 *Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*

@@ -39,6 +39,15 @@
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
         "contextWindow": 128000,
         "maxTokens": 8192
+      },
+      {
+        "id": "NexVeridian/OmniCoder-9B-8bit",
+        "name": "OmniCoder 9B 8-bit (Agentic)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 262144,
+        "maxTokens": 8192
       }
     ]
   }

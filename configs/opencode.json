@@ -23,6 +23,13 @@
             "context": 128000,
             "output": 8192
           }
+        },
+        "NexVeridian/OmniCoder-9B-8bit": {
+          "name": "OmniCoder 9B (Agentic)",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }

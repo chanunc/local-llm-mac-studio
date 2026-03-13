@@ -15,6 +15,7 @@ Performance and context limits optimized for **96GB Unified Memory**.
 | **Qwen3-Coder-Next** | 8-bit | ~79GB | 16K - 32K | **8GB** | Maximum precision |
 | **Qwen3.5-27B Claude Opus Distilled** | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
 | **Qwen3.5-122B-A10B** | 4-bit | ~65GB | 64K - 128K | **25GB** | Agentic reasoning |
+| **OmniCoder-9B** | 8-bit | ~9.5GB | 262K | **8GB** | Agentic coding / tool use |
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit.*
 *Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*
@@ -28,6 +29,15 @@ Performance and context limits optimized for **96GB Unified Memory**.
 ## 📡 Connectivity
 - **Health Check**: `curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H "Authorization: Bearer <YOUR_API_KEY>"`
 - **Admin Panel**: `http://<MAC_STUDIO_IP>:8000/admin`
+
+## ⚠️ oMLX Limitations
+
+Known compatibility gaps with oMLX as of v0.2.10:
+
+- **MXFP8 quantization**: Models quantized with the `mxfp8` format (e.g. `arthurcollet/OmniCoder-9B-mlx-mxfp8`) are not confirmed to load in oMLX. Use standard `4-bit`, `6-bit`, or `8-bit` MLX quantizations instead.
+- **GGUF format**: oMLX only serves MLX safetensors models. GGUF models (e.g. from `llama.cpp`) are not supported — use `llama-server` or LM Studio for those.
+- **Vision / multimodal models**: VLM support exists but is limited. Multi-request concurrency for vision models had blocking issues (fixed in recent releases); verify before relying on VLMs in production.
+- **Qwen3.5-122B + OpenClaw**: Known HTTP 500 errors when this MoE model is used with OpenClaw's large system prompts. Tracked upstream in [oMLX issue #42](https://github.com/jundot/omlx/issues/42).
 
 ---
 *For advanced troubleshooting and discovery fixes, see the [Maintenance Guide](docs/server/omlx-maintenance.md).*

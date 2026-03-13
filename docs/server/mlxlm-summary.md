@@ -53,13 +53,13 @@ MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ```bash
 # On MacBook
 ssh-keygen -t ed25519
-ssh-copy-id chanunc@<MAC_STUDIO_IP>
+ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_IP>
 
 # Add to ~/.ssh/config
 cat >> ~/.ssh/config << 'EOF'
 Host macstudio
     HostName <MAC_STUDIO_IP>
-    User chanunc
+    User <YOUR_USERNAME>
     IdentityFile ~/.ssh/id_ed25519
 EOF
 ```
@@ -147,7 +147,7 @@ EOF
 
 ### Phase 6: Persistent Services (launchd)
 
-**mlx-lm server plist** (`~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist`):
+**mlx-lm server plist** (`~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist`):
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -161,7 +161,7 @@ EOF
     <key>KeepAlive</key>
     <true/>
     <key>Label</key>
-    <string>com.chanunc.mlx-lm-server</string>
+    <string>com.<YOUR_USERNAME>.mlx-lm-server</string>
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/bin/mlx_lm.server</string>
@@ -181,38 +181,38 @@ EOF
     <key>RunAtLoad</key>
     <true/>
     <key>StandardErrorPath</key>
-    <string>/Users/chanunc/llm-server/logs/mlx-lm-server.err</string>
+    <string>/Users/<YOUR_USERNAME>/llm-server/logs/mlx-lm-server.err</string>
     <key>StandardOutPath</key>
-    <string>/Users/chanunc/llm-server/logs/mlx-lm-server.log</string>
+    <string>/Users/<YOUR_USERNAME>/llm-server/logs/mlx-lm-server.log</string>
     <key>WorkingDirectory</key>
-    <string>/Users/chanunc/llm-server</string>
+    <string>/Users/<YOUR_USERNAME>/llm-server</string>
 </dict>
 </plist>
 ```
 
-**claude-code-router plist** (`~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist`):
+**claude-code-router plist** (`~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist`):
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.chanunc.litellm-proxy</string>
+    <string>com.<YOUR_USERNAME>.litellm-proxy</string>
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/bin/ccr</string>
         <string>start</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/chanunc/llm-server</string>
+    <string>/Users/<YOUR_USERNAME>/llm-server</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/Users/chanunc/llm-server/logs/claude-code-proxy.log</string>
+    <string>/Users/<YOUR_USERNAME>/llm-server/logs/claude-code-proxy.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/chanunc/llm-server/logs/claude-code-proxy.err</string>
+    <string>/Users/<YOUR_USERNAME>/llm-server/logs/claude-code-proxy.err</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
@@ -224,10 +224,10 @@ EOF
 
 Load both services:
 ```bash
-launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
+launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist
 # Wait for "Starting httpd" in logs before loading proxy
 tail -f ~/llm-server/logs/mlx-lm-server.err
-launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
+launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist
 ```
 
 **Health-check cron** (auto-restarts mlx-lm if unresponsive):
@@ -235,7 +235,7 @@ launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
 # Add to crontab on Mac Studio
 crontab -e
 # Add this line:
-*/5 * * * * /Users/chanunc/llm-server/healthcheck.sh
+*/5 * * * * /Users/<YOUR_USERNAME>/llm-server/healthcheck.sh
 ```
 
 ### Phase 7: Claude Code Configuration
@@ -269,8 +269,8 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 | MacBook | `~/.zshrc` | `claude-local` alias |
 | Mac Studio | `~/llm-server/` | Server dir (logs, healthcheck) |
 | Mac Studio | `~/.claude-code-router/config.json` | Router config (providers, routing) |
-| Mac Studio | `~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist` | mlx-lm service |
-| Mac Studio | `~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist` | Router service |
+| Mac Studio | `~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist` | mlx-lm service |
+| Mac Studio | `~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist` | Router service |
 | Mac Studio | `/etc/sysctl.conf` | GPU memory tuning |
 
 ## Testing
@@ -418,9 +418,9 @@ mlx_lm.manage --scan mlx-community/YOUR-NEW-MODEL
 ### Step 2: Update mlx-lm server plist
 Edit the model name in the launchd plist:
 ```bash
-# On Mac Studio, edit ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
+# On Mac Studio, edit ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist
 # Change the <string> after --model to the new model name
-nano ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
+nano ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist
 ```
 Change:
 ```xml
@@ -441,14 +441,14 @@ nano ~/.claude-code-router/config.json
 ### Step 4: Restart both services
 ```bash
 # On Mac Studio
-launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
-launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
+launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist
+launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist
 sleep 5
-launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist
+launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist
 # Wait for model to load into GPU memory (check logs)
 tail -f ~/llm-server/logs/mlx-lm-server.err
 # Once "Uvicorn running" appears, start the proxy
-launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist
+launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist
 ```
 
 ### Step 5: Verify
@@ -469,8 +469,8 @@ Filter by size to find models that fit your memory budget.
 
 ### Restart services
 ```bash
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.mlx-lm-server.plist"
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.chanunc.litellm-proxy.plist"
+ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist"
+ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist"
 ```
 
 ### Check health

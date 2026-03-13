@@ -54,13 +54,13 @@ MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ```bash
 # On MacBook
 ssh-keygen -t ed25519
-ssh-copy-id chanunc@<MAC_STUDIO_IP>
+ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_IP>
 
 # Add to ~/.ssh/config
 cat >> ~/.ssh/config << 'EOF'
 Host macstudio
     HostName <MAC_STUDIO_IP>
-    User chanunc
+    User <YOUR_USERNAME>
     IdentityFile ~/.ssh/id_ed25519
 EOF
 ```
@@ -116,8 +116,19 @@ Current model: `mlx-community/Qwen3-Coder-Next-4bit`
 - Supports native function/tool calling
 - Loads model into Apple Silicon unified memory
 - Single service replaces the old mlx-lm + claude-code-router two-service setup
-- API key authentication: `<YOUR_API_KEY>`
 - Supports LRU model eviction, model pinning, per-model TTL, and model aliases — configurable via admin panel or `~/.omlx/settings.json`
+
+**API Key Authentication:**
+oMLX requires an API key for access. You can configure this in two ways:
+1. **Via `settings.json`:**
+   Edit `~/.omlx/settings.json` and set your desired key:
+   ```json
+   "auth": {
+     "api_key": "<YOUR_API_KEY>"
+   }
+   ```
+2. **Via Admin Panel (First Launch):**
+   When you first navigate to `http://<MAC_STUDIO_IP>:8000/admin`, you will be prompted to create an admin password and generate an API key. Save this key, as you will need it for all client connections.
 
 **SSD cache (optional):** `--paged-ssd-cache-dir ~/.omlx/cache` enables tiered KV cache (hot RAM + cold SSD). Context persists across requests and server restarts. Useful for long-context workloads.
 

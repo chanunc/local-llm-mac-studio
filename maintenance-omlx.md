@@ -2,6 +2,15 @@
 
 This guide covers advanced maintenance tasks and troubleshooting for the oMLX server on the Mac Studio.
 
+## Index
+- [1. Model Discovery Issues](#1-model-discovery-issues)
+  - [Method A: Verify Directory Naming](#method-a-verify-directory-naming)
+  - [Method B: The "Hard Restart" (Process Persistence)](#method-b-the-hard-restart-process-persistence)
+  - [Method C: Clear Discovery Cache](#method-c-clear-discovery-cache)
+- [2. Managing Model Aliases](#2-managing-model-aliases)
+- [3. Monitoring Downloads](#3-monitoring-downloads)
+- [4. Port Conflicts](#4-port-conflicts)
+
 ## 1. Model Discovery Issues
 
 If you add a new model to `~/.omlx/models/` but it does not appear in the dashboard or API:

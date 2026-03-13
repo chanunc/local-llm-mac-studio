@@ -1,5 +1,37 @@
 # Mac Studio M3 Ultra — Local LLM Server for Claude Code
 
+## Index
+- [Architecture](#architecture)
+- [What Was Done](#what-was-done)
+  - [Phase 1: SSH Setup](#phase-1-ssh-setup)
+  - [Phase 2: Mac Studio Base Setup](#phase-2-mac-studio-base-setup)
+  - [Phase 3: macOS Performance Tuning](#phase-3-macos-performance-tuning)
+  - [Phase 4: Model Download](#phase-4-model-download)
+  - [Phase 5: Server Setup](#phase-5-server-setup)
+  - [Phase 6: Persistent Services (launchd)](#phase-6-persistent-services-launchd)
+  - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
+- [Key Discovery: LiteLLM Does NOT Translate](#key-discovery-litellm-does-not-translate)
+- [Files Modified](#files-modified)
+- [Testing](#testing)
+  - [Layer 1: mlx-lm server (OpenAI format, port 8080)](#layer-1-mlx-lm-server-openai-format-port-8080)
+  - [Layer 2: claude-code-router (Anthropic format, port 3456)](#layer-2-claude-code-router-anthropic-format-port-3456)
+  - [Layer 3: Claude Code end-to-end](#layer-3-claude-code-end-to-end)
+  - [Connectivity & health checks](#connectivity--health-checks)
+- [Usage](#usage)
+- [Changing the LLM Model](#changing-the-llm-model)
+  - [Step 1: Download the new model](#step-1-download-the-new-model)
+  - [Step 2: Update mlx-lm server plist](#step-2-update-mlx-lm-server-plist)
+  - [Step 3: Update router config](#step-3-update-router-config)
+  - [Step 4: Restart both services](#step-4-restart-both-services)
+  - [Step 5: Verify](#step-5-verify)
+  - [Model sizing guide for 96GB Mac Studio](#model-sizing-guide-for-96gb-mac-studio)
+  - [Finding models](#finding-models)
+- [Maintenance](#maintenance)
+  - [Restart services](#restart-services)
+  - [Check health](#check-health)
+  - [Check logs](#check-logs)
+  - [Upgrade all tools](#upgrade-all-tools)
+
 ## Architecture
 
 ```

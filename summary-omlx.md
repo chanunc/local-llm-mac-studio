@@ -1,5 +1,38 @@
 # Mac Studio M3 Ultra — Local LLM Server for Claude Code
 
+## Index
+- [Architecture](#architecture)
+- [What Was Done](#what-was-done)
+  - [Phase 1: SSH Setup](#phase-1-ssh-setup)
+  - [Phase 2: Mac Studio Base Setup](#phase-2-mac-studio-base-setup)
+  - [Phase 3: macOS Performance Tuning](#phase-3-macos-performance-tuning)
+  - [Phase 4: Model Download](#phase-4-model-download)
+  - [Phase 5: Server Setup](#phase-5-server-setup)
+  - [Phase 6: Persistent Service](#phase-6-persistent-service)
+  - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
+- [Key Discovery: LiteLLM Does NOT Translate](#key-discovery-litellm-does-not-translate)
+- [Files Modified](#files-modified)
+- [Testing](#testing)
+  - [Layer 1: oMLX server — OpenAI format (port 8000)](#layer-1-omlx-server--openai-format-port-8000)
+  - [Layer 2: oMLX server — Anthropic format (port 8000)](#layer-2-omlx-server--anthropic-format-port-8000)
+  - [Layer 3: Claude Code end-to-end](#layer-3-claude-code-end-to-end)
+  - [Connectivity & health checks](#connectivity--health-checks)
+- [Usage](#usage)
+- [Changing the LLM Model](#changing-the-llm-model)
+  - [Step 1: Load the new model](#step-1-load-the-new-model)
+  - [Step 2: Restart oMLX (if needed)](#step-2-restart-omlx-if-needed)
+  - [Step 3: Verify](#step-3-verify)
+  - [Stopping or Cancelling Model Downloads](#stopping-or-cancelling-model-downloads)
+  - [Model sizing guide for 96GB Mac Studio](#model-sizing-guide-for-96gb-mac-studio)
+  - [Finding models](#finding-models)
+- [Maintenance](#maintenance)
+  - [Restart service](#restart-service)
+  - [Check health](#check-health)
+  - [Check logs](#check-logs)
+  - [Check service status and version](#check-service-status-and-version)
+  - [Admin panel](#admin-panel)
+  - [Upgrade all tools](#upgrade-all-tools)
+
 ## Architecture
 
 ```

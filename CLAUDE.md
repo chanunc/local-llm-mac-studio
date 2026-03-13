@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Index
+- [Project](#project)
+- [Architecture](#architecture)
+- [Docs](#docs)
+- [Config Files](#config-files-configs)
+- [Key Files](#key-files)
+- [Common Commands](#common-commands)
+- [Known Issues](#known-issues)
+
 ## Project
 
 Configuration and documentation for running a local LLM server on a Mac Studio M3 Ultra (96GB) and connecting multiple machines and coding agents via LAN. This is a docs-only repo — no code to build, lint, or test.
@@ -41,7 +50,7 @@ WSL Linux (192.168.31.x via eth2)
 
 | File | Purpose |
 |------|---------|
-| `summary.md` | Full setup documentation, testing, and maintenance (oMLX) |
+| `summary-omlx.md` | Full setup documentation, testing, and maintenance (oMLX) |
 | `maintenance-omlx.md` | Advanced troubleshooting, discovery fixes, and hard restarts |
 | `summary-mlxlm.md` | Archived: old mlx-lm + claude-code-router setup |
 | `new-client-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
@@ -116,4 +125,4 @@ ssh narutaki "openclaw update"
 ## Known Issues
 
 - **SSH timeouts**: Fixed — was caused by macOS sleeping after 1 min idle. Fix applied: `sudo pmset -a sleep 0 disksleep 0 displaysleep 10`. If SSH flakiness returns, verify with `ssh macstudio "pmset -g | grep sleep"`.
-- **Model changes**: See "Changing the LLM Model" section in `summary.md` for step-by-step instructions.
+- **Model changes**: See "Changing the LLM Model" section in `summary-omlx.md` for step-by-step instructions.

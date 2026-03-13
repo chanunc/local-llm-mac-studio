@@ -42,6 +42,7 @@ WSL Linux (192.168.31.x via eth2)
 | File | Purpose |
 |------|---------|
 | `summary.md` | Full setup documentation, testing, and maintenance (oMLX) |
+| `maintenance-omlx.md` | Advanced troubleshooting, discovery fixes, and hard restarts |
 | `summary-mlxlm.md` | Archived: old mlx-lm + claude-code-router setup |
 | `new-client-machine-setup.md` | Connect a new machine to the Mac Studio LLM |
 | `opencode-setup.md` | OpenCode (MacBook / WSL) → Mac Studio |

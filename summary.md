@@ -342,6 +342,8 @@ Filter by size to find models that fit your memory budget.
 
 ## Maintenance
 
+For advanced troubleshooting, discovery fixes, and "hard restart" commands, see: **[maintenance-omlx.md](maintenance-omlx.md)**
+
 ### Restart service
 ```bash
 ssh macstudio "brew services restart omlx"

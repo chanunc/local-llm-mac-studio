@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Configuration and documentation for running a local LLM server on a Mac Studio M3 Ultra (96GB) and connecting multiple machines and coding agents via LAN. This is a docs-only repo — no code to build, lint, or test.
+Local LLM infrastructure for a Mac Studio M3 Ultra (96GB). This repository provides documentation and configuration for running an oMLX server and connecting multiple coding agents via LAN.
 
 **Data flow**: All tools (Claude Code, OpenCode, Pi, OpenClaw) connect directly to oMLX (:8000), which natively serves both OpenAI and Anthropic API formats.
 
@@ -43,7 +43,7 @@ WSL Linux (<WSL_CLIENT_IP> via eth2)
 - **MacBook** (this machine): runs Claude Code, OpenCode, and Pi — connects via LAN
 - **Linux** (`<LINUX_CLIENT_IP>`, SSH alias `narutaki`): runs OpenClaw — connects via LAN
 - **WSL Linux** (`<WSL_CLIENT_IP>` via `eth2`): runs OpenCode — requires `ip route add` for LAN routing (see `docs/clients/opencode-setup.md`)
-- **Model**: `mlx-community/Qwen3-Coder-Next-4bit` (~42GB) served via oMLX on Apple Silicon
+- **Models**: `Qwen3-Coder-Next` (4/6/8-bit) and `Qwen3.5-122B` served via oMLX on Apple Silicon
 - **Server**: oMLX natively speaks both OpenAI and Anthropic API formats — no proxy needed for any tool
 
 ## Docs

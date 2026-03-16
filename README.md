@@ -39,6 +39,7 @@ Known compatibility gaps with oMLX as of v0.2.10:
 - **MXFP8 quantization**: Models quantized with the `mxfp8` format (e.g. `arthurcollet/OmniCoder-9B-mlx-mxfp8`) are not confirmed to load in oMLX. Use standard `4-bit`, `6-bit`, or `8-bit` MLX quantizations instead.
 - **GGUF format**: oMLX only serves MLX safetensors models. GGUF models (e.g. from `llama.cpp`) are not supported — use `llama-server` or LM Studio for those.
 - **Vision / multimodal models**: VLM support exists but is limited. Multi-request concurrency for vision models had blocking issues (fixed in recent releases); verify before relying on VLMs in production.
+- **Qwen3.5-27B Claude Opus Distilled + OpenClaw**: `nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx` is a dense 27B model — every token requires all 27B parameters, too slow for OpenClaw.
 - **Qwen3.5-122B + OpenClaw**: Known HTTP 500 errors when this MoE model is used with OpenClaw's large system prompts. Tracked upstream in [oMLX issue #42](https://github.com/jundot/omlx/issues/42).
 
 ---

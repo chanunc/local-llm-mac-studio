@@ -11,6 +11,7 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
 - [Qwen3.5-35B-A3B (8-bit)](#qwen35-35b-a3b-8-bit) — SWE agent
 - [Qwen3.5-35B-A3B Holodeck (qx86-hi)](#qwen35-35b-a3b-holodeck-qx86-hi--hybrid-variant) — Hybrid precision MoE
+- [Nemotron 3 Nano 30B-A3B (8-bit)](#nemotron-3-nano-30b-a3b-8-bit) — NVIDIA MoE · efficient inference
 
 ---
 
@@ -145,3 +146,25 @@ Hybrid-precision variant of Qwen3.5-35B-A3B with higher-quality attention layers
 **Caveats:**
 - ~2GB larger than standard 8-bit variant
 - Vision/multimodal concurrency limited
+
+---
+
+## Nemotron 3 Nano 30B-A3B (8-bit)
+
+NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trained on Nemotron-CC datasets with strong multilingual coverage across 6 languages.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) |
+| MLX 8-bit | [mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit](https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit) |
+| Vendor | NVIDIA; MLX by mlx-community |
+| Parameters | 32B total, 3B active (MoE) |
+| Density | Sparse MoE |
+| Specialties | Text generation, multilingual (6 languages), efficient inference |
+| Tokens/sec | TBD on M3 Ultra; ~33.6GB on disk |
+| Cache | Standard KV cache |
+| Key Benchmarks | TBD |
+
+**Caveats:**
+- oMLX serves this model without the `mlx-community/` prefix — use ID `NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit` in client configs
+- Invalid JSON config warning on HuggingFace model card (cosmetic, does not affect inference)

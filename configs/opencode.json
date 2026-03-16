@@ -58,6 +58,13 @@
             "context": 262144,
             "output": 8192
           }
+        },
+        "NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit": {
+          "name": "Nemotron 3 Nano 30B-A3B 8-bit",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }

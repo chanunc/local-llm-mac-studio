@@ -18,6 +18,7 @@ Performance and context limits optimized for **96GB Unified Memory**.
 | [**OmniCoder-9B**](https://huggingface.co/NexVeridian/OmniCoder-9B-8bit) | 8-bit | ~9.5GB | 262K | **8GB** | Coding Agent — trained on 425K+ curated agentic coding trajectories |
 | [**Qwen3.5-35B-A3B**](https://huggingface.co/mlx-community/Qwen3.5-35B-A3B-8bit) | 8-bit | ~35GB | 262K | **20GB** | SWE agent · 69.2% SWE-bench · fast MoE (3B active) |
 | [**Qwen3.5-35B-A3B Holodeck**](https://huggingface.co/nightmedia/Qwen3.5-35B-A3B-Holodeck-qx86-hi-mlx) | qx86-hi (8-bit) | ~37GB | 262K | **20GB** | Hybrid precision MoE · higher-quality attention layers |
+| [**Nemotron 3 Nano 30B-A3B**](https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit) | 8-bit | ~34GB | 262K | **20GB** | NVIDIA MoE · 32B total, 3B active |
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit.*
 *Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*

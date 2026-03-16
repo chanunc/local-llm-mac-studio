@@ -4,6 +4,14 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 
 *Sources: HuggingFace model cards, dev.to, Medium, Reddit, community benchmarks.*
 
+## Index
+- [Qwen3-Coder-Next (6-bit / 8-bit)](#qwen3-coder-next-6-bit--8-bit) — Daily driver (coding)
+- [Qwen3.5-27B Claude Opus Distilled (qx64-hi)](#qwen35-27b-claude-opus-distilled-qx64-hi) — Reasoning / chain-of-thought
+- [Qwen3.5-122B-A10B (4-bit)](#qwen35-122b-a10b-4-bit) — Agentic reasoning
+- [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
+- [Qwen3.5-35B-A3B (8-bit)](#qwen35-35b-a3b-8-bit) — SWE agent
+- [Qwen3.5-35B-A3B Holodeck (qx86-hi)](#qwen35-35b-a3b-holodeck-qx86-hi--hybrid-variant) — Hybrid precision MoE
+
 ---
 
 ## Qwen3-Coder-Next (6-bit / 8-bit)

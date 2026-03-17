@@ -29,6 +29,7 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 | Density | Sparse MoE |
 | Specialties | Code generation, agentic reasoning, tool use, long-horizon recovery |
 | Tokens/sec | ~40-60 tok/s on M3 Ultra (6-bit); ~60 tok/s on M4 Pro (4-bit) |
+| Context Size | 262,144 tokens native (256K); reduce to 32K if server fails to start |
 | Cache | KV cache on 12/48 Gated Attention layers; supports q8/q4/FP8 cache quantization |
 | Key Benchmarks | SWE-Bench Verified 42.8%, SWE-Bench Pro 44.3% |
 
@@ -52,6 +53,7 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 | Density | Dense (all params per token) |
 | Specialties | Chain-of-thought reasoning (`<think>` tags), autonomous coding agent |
 | Tokens/sec | ~29-35 tok/s on Apple Silicon (qx64-hi); peak memory 26.6GB |
+| Context Size | 262,144 tokens native (256K) |
 | Cache | KV cache on 16/64 layers only; 48 DeltaNet layers use fixed-size recurrent state (~4x context capacity) |
 | Key Benchmarks | ARC 0.434, BoolQ 0.850, WinoGrande 0.721, Perplexity 4.149 |
 
@@ -75,6 +77,7 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 | Density | Sparse MoE |
 | Specialties | Multimodal (text+image+video), agentic reasoning, 201 languages |
 | Tokens/sec | TBD on M3 Ultra; 4-bit model is ~69.6GB on disk |
+| Context Size | 262,144 tokens native (256K); extensible to 1,010,000 tokens via YaRN |
 | Cache | Full VLM KV cache; YaRN scaling to 1M+ tokens |
 | Key Benchmarks | MMLU-Pro 86.7, GPQA Diamond 86.6, SWE-Bench 72.0 |
 
@@ -97,6 +100,7 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 | Density | Dense |
 | Specialties | Agentic coding, error recovery, LSP diagnostics, read-before-write patterns |
 | Tokens/sec | ~3,076 tok/s prompt eval; generation TBD on M3 Ultra |
+| Context Size | 262,144 tokens native (256K); extensible to 1M+ via YaRN |
 | Cache | Standard KV cache; YaRN scaling to 1M+ |
 | Key Benchmarks | GPQA Diamond 83.8% (pass@1), AIME 2025 90% (pass@5) |
 
@@ -119,6 +123,7 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 | Density | Sparse MoE |
 | Specialties | SWE agent tasks, efficient high-throughput inference, thinking mode |
 | Tokens/sec | ~80.6 tok/s on M3 Ultra (8-bit, 39.3GB memory) |
+| Context Size | 262,144 tokens native (256K); extensible to 1,010,000 tokens via YaRN |
 | Cache | Native KV cache; q4 weight + KV cache quantization available |
 | Key Benchmarks | SWE-bench 69.2% |
 
@@ -140,6 +145,7 @@ Hybrid-precision variant of Qwen3.5-35B-A3B with higher-quality attention layers
 | Density | Sparse MoE |
 | Specialties | Same as standard variant with improved attention precision |
 | Tokens/sec | Similar to 8-bit; ~37GB memory (vs ~35GB standard) |
+| Context Size | 262,144 tokens native (256K); extensible to 1,010,000 tokens via YaRN |
 | Cache | Same as standard variant |
 | Key Benchmarks | Same base model as standard 8-bit |
 
@@ -162,6 +168,7 @@ NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trai
 | Density | Sparse MoE |
 | Specialties | Text generation, multilingual (6 languages), efficient inference |
 | Tokens/sec | TBD on M3 Ultra; ~33.6GB on disk |
+| Context Size | 256K default; up to 1M tokens (requires VLLM_ALLOW_LONG_MAX_MODEL_LEN=1 in vLLM) |
 | Cache | Standard KV cache |
 | Key Benchmarks | TBD |
 

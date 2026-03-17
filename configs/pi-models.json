@@ -10,62 +10,8 @@
       },
       "models": [
         {
-          "id": "mlx-community/Qwen3-Coder-Next-6bit",
-          "name": "Qwen3 Coder 6-bit (Mac Studio)",
-          "reasoning": false,
-          "input": ["text"],
-          "contextWindow": 170000,
-          "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-        },
-        {
-          "id": "mlx-community/Qwen3-Coder-Next-8bit",
-          "name": "Qwen3 Coder 8-bit (Precision)",
-          "reasoning": false,
-          "input": ["text"],
-          "contextWindow": 32000,
-          "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-        },
-        {
-          "id": "mlx-community/Qwen3.5-122B-A10B-4bit",
-          "name": "Qwen3.5 122B (Agentic)",
-          "reasoning": true,
-          "input": ["text"],
-          "contextWindow": 128000,
-          "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-        },
-        {
-          "id": "nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx",
-          "name": "Qwen3.5 27B Claude Opus Distilled",
-          "reasoning": true,
-          "input": ["text"],
-          "contextWindow": 128000,
-          "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-        },
-        {
-          "id": "NexVeridian/OmniCoder-9B-8bit",
-          "name": "OmniCoder 9B (Agentic)",
-          "reasoning": true,
-          "input": ["text"],
-          "contextWindow": 262144,
-          "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-        },
-        {
           "id": "mlx-community/Qwen3.5-35B-A3B-8bit",
           "name": "Qwen3.5 35B-A3B 8-bit (SWE Agent)",
-          "reasoning": true,
-          "input": ["text"],
-          "contextWindow": 262144,
-          "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-        },
-        {
-          "id": "nightmedia/Qwen3.5-35B-A3B-Holodeck-qx86-hi-mlx",
-          "name": "Qwen3.5 35B-A3B Holodeck qx86-hi",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 262144,
@@ -77,7 +23,7 @@
           "name": "Nemotron 3 Nano 30B-A3B 8-bit",
           "reasoning": true,
           "input": ["text"],
-          "contextWindow": 262144,
+          "contextWindow": 650000,
           "maxTokens": 8192,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }

@@ -2,6 +2,16 @@
 
 High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96GB)**. This repository provides setup guides to run massive LLMs locally and connect multiple coding agents over LAN.
 
+## Index
+- [Server Options](#-server-options)
+  - [oMLX](docs/server/omlx-summary.md) · [mlx-lm](docs/server/mlxlm-summary.md)
+- [Models & Benchmarks](#-models--benchmarks)
+  - [Qwen3-Coder-Next](docs/models/model-summary.md#qwen3-coder-next-6-bit--8-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Qwen3.5-35B-A3B](docs/models/model-summary.md#qwen35-35b-a3b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit)
+- [Tools & Agents](#-tools--agents)
+  - [Claude Code](docs/clients/new-client-machine-setup.md) · [OpenCode](docs/clients/opencode-setup.md) · [OpenClaw](docs/clients/openclaw-setup.md) · [Pi](docs/clients/pi-setup.md)
+- [Connectivity](#-connectivity)
+- [oMLX Limitations](#-omlx-limitations)
+
 ## 🚀 Server Options
 - **Primary: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md)) — Optimized server with native OpenAI/Anthropic API support.
 - **Alternative: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlxlm-summary.md)) — Native MLX implementation with custom routing.

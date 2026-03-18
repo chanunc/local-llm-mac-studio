@@ -6,7 +6,7 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 - [Server Options](#-server-options)
   - [oMLX](docs/server/omlx-summary.md) · [mlx-lm](docs/server/mlxlm-summary.md)
 - [Models & Benchmarks](#-models--benchmarks)
-  - [Qwen3-Coder-Next](docs/models/model-summary.md#qwen3-coder-next-6-bit--8-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Qwen3.5-35B-A3B](docs/models/model-summary.md#qwen35-35b-a3b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit)
+  - [Qwen3-Coder-Next](docs/models/model-summary.md#qwen3-coder-next-6-bit--8-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Qwen3.5-35B-A3B](docs/models/model-summary.md#qwen35-35b-a3b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) · [Huihui 35B Abliterated 8-bit](docs/models/model-summary.md#huihui-qwen35-35b-a3b-abliterated-8-bit)
 - [Tools & Agents](#-tools--agents)
   - [Claude Code](docs/clients/new-client-machine-setup.md) · [OpenCode](docs/clients/opencode-setup.md) · [OpenClaw](docs/clients/openclaw-setup.md) · [Pi](docs/clients/pi-setup.md)
 - [Connectivity](#-connectivity)
@@ -29,6 +29,7 @@ Performance and context limits optimized for **96GB Unified Memory**.
 | [**Qwen3.5-35B-A3B**](https://huggingface.co/mlx-community/Qwen3.5-35B-A3B-8bit) | 8-bit | ~35GB | 262K | **20GB** | SWE agent · 69.2% SWE-bench · fast MoE (3B active) |
 | [**Qwen3.5-35B-A3B Holodeck**](https://huggingface.co/nightmedia/Qwen3.5-35B-A3B-Holodeck-qx86-hi-mlx) | qx86-hi (8-bit) | ~37GB | 262K | **20GB** | Hybrid precision MoE · higher-quality attention layers |
 | [**Nemotron 3 Nano 30B-A3B**](https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit) | 8-bit | ~34GB | 262K | **20GB** | NVIDIA MoE · 32B total, 3B active |
+| [**Huihui Qwen3.5-35B-A3B Abliterated**](https://huggingface.co/huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated) | 8-bit | ~35GB | 262K | **20GB** | Uncensored / abliterated · converted from BF16 source |
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit.*
 *Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*

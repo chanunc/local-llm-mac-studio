@@ -23,6 +23,13 @@
             "context": 650000,
             "output": 8192
           }
+        },
+        "Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx": {
+          "name": "Huihui Qwen3.5-35B-A3B Abliterated 8-bit",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }

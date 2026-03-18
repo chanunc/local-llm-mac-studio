@@ -5,6 +5,7 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 *Sources: HuggingFace model cards, dev.to, Medium, Reddit, community benchmarks.*
 
 ## Index
+- [Adding a Model to oMLX](#adding-a-model-to-omlx)
 - [Qwen3-Coder-Next (6-bit / 8-bit)](#qwen3-coder-next-6-bit--8-bit) — Daily driver (coding)
 - [Qwen3.5-27B Claude Opus Distilled (qx64-hi)](#qwen35-27b-claude-opus-distilled-qx64-hi) — Reasoning / chain-of-thought
 - [Qwen3.5-122B-A10B (4-bit)](#qwen35-122b-a10b-4-bit) — Agentic reasoning
@@ -12,6 +13,84 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 - [Qwen3.5-35B-A3B (8-bit)](#qwen35-35b-a3b-8-bit) — SWE agent
 - [Qwen3.5-35B-A3B Holodeck (qx86-hi)](#qwen35-35b-a3b-holodeck-qx86-hi--hybrid-variant) — Hybrid precision MoE
 - [Nemotron 3 Nano 30B-A3B (8-bit)](#nemotron-3-nano-30b-a3b-8-bit) — NVIDIA MoE · efficient inference
+- [Huihui Qwen3.5-35B-A3B Abliterated (8-bit)](#huihui-qwen35-35b-a3b-abliterated-8-bit) — Uncensored / abliterated (converted from BF16)
+
+---
+
+## Adding a Model to oMLX
+
+### Step 1: Find a model
+
+Browse MLX-format models on HuggingFace. oMLX only supports MLX safetensors — not GGUF. Good sources:
+- [`mlx-community`](https://huggingface.co/mlx-community) — official MLX conversions
+- [`nightmedia`](https://huggingface.co/nightmedia) — hybrid-precision MLX quantizations (qx64-hi, qx86-hi)
+
+Look for repos where the files end in `.safetensors` and include a `config.json`.
+
+### Step 2: Download the model
+
+**Option A — Admin panel (easiest):**
+1. Open `http://<MAC_STUDIO_IP>:8000/admin`
+2. Go to the **HuggingFace** tab
+3. Search for the model ID (e.g., `mlx-community/Qwen3.5-35B-A3B-8bit`)
+4. Click **Download** — oMLX streams it directly into `~/.omlx/models/`
+
+**Option B — CLI on Mac Studio:**
+```bash
+ssh macstudio
+pip install huggingface-hub   # if not already installed
+huggingface-cli download mlx-community/Qwen3.5-35B-A3B-8bit \
+  --local-dir ~/.omlx/models/mlx-community/Qwen3.5-35B-A3B-8bit
+```
+
+oMLX expects the two-level org/repo directory structure: `~/.omlx/models/<org>/<repo>/`.
+
+**Option C — Symlink an existing download:**
+```bash
+ssh macstudio
+ln -s /path/to/existing/model ~/.omlx/models/mlx-community/my-model
+```
+
+Models are auto-discovered on the next API request — **no restart needed**.
+
+### Step 3: Configure per-model settings (optional)
+
+To set context size, hot cache, or TTL per model, edit `~/.omlx/model_settings.json` on Mac Studio:
+
+```json
+{
+  "mlx-community/Qwen3.5-35B-A3B-8bit": {
+    "context_size": 32768,
+    "hot_cache_max_size": "8GB",
+    "ttl": 3600
+  }
+}
+```
+
+Common settings:
+| Key | Description | Example |
+|:----|:------------|:--------|
+| `context_size` | Max context tokens (reduce if OOM) | `32768` |
+| `hot_cache_max_size` | RAM hot cache for KV blocks | `"8GB"` |
+| `ttl` | Seconds before idle model is evicted | `3600` |
+
+Restart oMLX after editing model_settings.json:
+```bash
+ssh macstudio "brew services restart omlx"
+```
+
+### Step 4: Update client configs
+
+After adding a model, update all client configs to make it available. See the **Editing Workflow** section in [CLAUDE.md](../../CLAUDE.md) for the full checklist.
+
+### Step 5: Verify
+
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
+```
+
+The new model ID should appear in the list.
 
 ---
 
@@ -175,3 +254,37 @@ NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trai
 **Caveats:**
 - oMLX serves this model without the `mlx-community/` prefix — use ID `NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit` in client configs
 - Invalid JSON config warning on HuggingFace model card (cosmetic, does not affect inference)
+
+---
+
+## Huihui Qwen3.5-35B-A3B Abliterated (8-bit)
+
+Higher-quality 8-bit conversion of the Huihui abliterated variant, self-converted from BF16 source using `mlx_lm.convert` on Mac Studio M3 Ultra. Same MoE architecture as the standard 35B-A3B with ~3B active parameters per token. This variant trades ~15 GB extra disk vs the 4-bit AITRADER build for improved weight precision.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) |
+| Abliterated source | [huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated](https://huggingface.co/huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated) |
+| MLX 8-bit | Self-converted — `~/.omlx/models/huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx` |
+| Conversion tool | `mlx_lm.convert --q-bits 8 --q-group-size 64` |
+| Vendor | Alibaba Qwen; abliteration by huihui-ai; MLX conversion local |
+| Parameters | 35B total, ~3B active (MoE) |
+| Density | Sparse MoE |
+| Specialties | Uncensored responses, all tasks the base model handles, higher precision than 4-bit |
+| Tokens/sec | TBD on M3 Ultra; expected similar to mlx-community 8-bit (~80 tok/s) |
+| On-disk size | ~35 GB (8-bit MLX) |
+| Context Size | 262K (262,144 tokens — native model limit) |
+
+**oMLX model ID:** `Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx`
+
+**Caveats:**
+- oMLX strips the `huihui-ai/` org prefix — use ID `Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx` in client configs (same behavior as 4-bit AITRADER variant)
+
+**Conversion notes:**
+- BF16 source (~70 GB download) converted with oMLX stopped to maximize free RAM (~90–92 GB available, ~80 GB peak needed)
+- Used `mlx_lm.convert` v0.31.1 with transformers 5.3.0
+- See [model-conversion-gguf-mlx.md](model-conversion-gguf-mlx.md) for broader conversion context
+
+**Caveats:**
+- Context set to 262K (native model limit) — 8-bit MoE model uses ~35 GB + KV cache only on ~16/64 layers, so 262K is feasible on 96 GB
+- VLM capable per base model card but vision support in oMLX is unverified

@@ -4,7 +4,7 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 
 ## Index
 - [Server Options](#-server-options)
-  - [oMLX](docs/server/omlx-summary.md) · [mlx-lm](docs/server/mlxlm-summary.md)
+  - [oMLX](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md) · [mlx-lm](docs/server/mlxlm-summary.md)
 - [Models & Benchmarks](#-models--benchmarks)
   - [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [Qwen3.5-122B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) · [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) · [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) · [Qwen3.5-35B JANG 4-bit](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision)
 - [Tools & Agents](#-tools--agents)
@@ -13,7 +13,7 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 - [oMLX Limitations](#-omlx-limitations)
 
 ## 🚀 Server Options
-- **Primary: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md)) — Optimized server with native OpenAI/Anthropic API support.
+- **Primary: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md)) — Optimized server with native OpenAI/Anthropic API support. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx-jang-fork.md).
 - **Alternative: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlxlm-summary.md)) — Native MLX implementation with custom routing.
 
 ## 🤖 Models & Benchmarks

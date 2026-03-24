@@ -77,7 +77,7 @@ def main():
             # --- INJECTED HOOK for per-model hot cache ---
             try:
                 if model_settings and getattr(model_settings, 'hot_cache_max_size', None):
-                    from .utils import parse_size
+                    from .config import parse_size
                     cache_str = model_settings.hot_cache_max_size
                     logger.info(f"Using per-model hot_cache_max_size: {cache_str} for {model_id}")
                     self._scheduler_config.hot_cache_max_size = parse_size(cache_str)

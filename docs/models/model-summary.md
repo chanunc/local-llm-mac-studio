@@ -6,14 +6,15 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
-- [Qwen3-Coder-Next (6-bit / 8-bit)](#qwen3-coder-next-6-bit--8-bit) — Daily driver (coding)
+- [Qwen3-Coder-Next (6-bit)](#qwen3-coder-next-6-bit) — Daily driver (coding)
 - [Qwen3.5-27B Claude Opus Distilled (qx64-hi)](#qwen35-27b-claude-opus-distilled-qx64-hi) — Reasoning / chain-of-thought
 - [Qwen3.5-122B-A10B (4-bit)](#qwen35-122b-a10b-4-bit) — Agentic reasoning
+- [Qwen3.5-122B-A10B JANG 2S](#qwen35-122b-a10b-jang-2s) — Compact 122B · 46% smaller than MLX 4-bit
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
-- [Qwen3.5-35B-A3B (8-bit)](#qwen35-35b-a3b-8-bit) — SWE agent
-- [Qwen3.5-35B-A3B Holodeck (qx86-hi)](#qwen35-35b-a3b-holodeck-qx86-hi--hybrid-variant) — Hybrid precision MoE
 - [Nemotron 3 Nano 30B-A3B (8-bit)](#nemotron-3-nano-30b-a3b-8-bit) — NVIDIA MoE · efficient inference
-- [Huihui Qwen3.5-35B-A3B Abliterated (8-bit)](#huihui-qwen35-35b-a3b-abliterated-8-bit) — Uncensored / abliterated (converted from BF16)
+- [Nemotron 3 Super 120B-A12B (4.5-bit)](#nemotron-3-super-120b-a12b-45-bit) — NVIDIA 120B MoE · Mamba-2 + Attention hybrid
+- [Nemotron Cascade 2 30B-A3B (nvfp4)](#nemotron-cascade-2-30b-a3b-nvfp4) — Mamba-2 + MoE + Attention hybrid · 3B active
+- [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
 
 ---
 
@@ -21,9 +22,11 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 
 ### Step 1: Find a model
 
-Browse MLX-format models on HuggingFace. oMLX only supports MLX safetensors — not GGUF. Good sources:
+Browse MLX-format models on HuggingFace. oMLX supports MLX safetensors and JANG format (with fork) — not GGUF. Good sources:
 - [`mlx-community`](https://huggingface.co/mlx-community) — official MLX conversions
 - [`nightmedia`](https://huggingface.co/nightmedia) — hybrid-precision MLX quantizations (qx64-hi, qx86-hi)
+- [`JANGQ-AI`](https://huggingface.co/JANGQ-AI) — JANG adaptive mixed-precision quantizations (requires fork overlay)
+- [`inferencerlabs`](https://huggingface.co/inferencerlabs) — MLX quantizations for large models (Nemotron-H, etc.)
 
 Look for repos where the files end in `.safetensors` and include a `config.json`.
 
@@ -94,28 +97,27 @@ The new model ID should appear in the list.
 
 ---
 
-## Qwen3-Coder-Next (6-bit / 8-bit)
+## Qwen3-Coder-Next (6-bit)
 
-80B sparse MoE with only 3B active params. Optimized for coding agents and IDE integration. Performance comparable to Claude Sonnet 4.0 on SWE tasks. This is the **daily driver** model.
+80B sparse MoE with only 3B active params. Optimized for coding agents and IDE integration. Performance comparable to Claude Sonnet 4.0 on SWE tasks. This is the **daily driver** model. The 6-bit quantization provides the best quality/size balance with 128-170K context on 96GB.
 
 | Spec | Value |
 |:-----|:------|
 | Base Model | [Qwen/Qwen3-Coder-Next](https://huggingface.co/Qwen/Qwen3-Coder-Next) |
 | MLX 6-bit | [mlx-community/Qwen3-Coder-Next-6bit](https://huggingface.co/mlx-community/Qwen3-Coder-Next-6bit) |
-| MLX 8-bit | [mlx-community/Qwen3-Coder-Next-8bit](https://huggingface.co/mlx-community/Qwen3-Coder-Next-8bit) |
 | Vendor | Alibaba Qwen team; MLX by mlx-community |
 | Parameters | 80B total, 3B active (512 experts, 10 routed + 1 shared) |
 | Density | Sparse MoE |
 | Specialties | Code generation, agentic reasoning, tool use, long-horizon recovery |
-| Tokens/sec | ~40-60 tok/s on M3 Ultra (6-bit); ~60 tok/s on M4 Pro (4-bit) |
-| Context Size | 262,144 tokens native (256K); reduce to 32K if server fails to start |
+| Tokens/sec | ~40-60 tok/s on M3 Ultra (6-bit) |
+| Context Size | 128K - 170K on 96GB (262K native limit) |
+| On-disk size | ~60 GB |
 | Cache | KV cache on 12/48 Gated Attention layers; supports q8/q4/FP8 cache quantization |
 | Key Benchmarks | SWE-Bench Verified 42.8%, SWE-Bench Pro 44.3% |
 
 **Caveats:**
 - Non-thinking mode only (no `<think>` blocks)
 - MLX KV cache issues during conversation branching
-- 8-bit variant limited to 16K-32K context due to ~79GB memory footprint
 
 ---
 
@@ -166,6 +168,32 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 
 ---
 
+## Qwen3.5-122B-A10B JANG 2S
+
+JANG 2-bit quantization of the 122B MoE model. Uses aggressive mixed-precision: 6-bit for critical parameters, 4-bit for important parameters, 2-bit for 98% of expert MLP layers. **46% smaller** than MLX 4-bit (35 GB vs 65 GB) with only 6% MMLU drop, freeing ~30 GB extra for KV cache and dramatically extending context.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) |
+| JANG 2S | [JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S](https://huggingface.co/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S) |
+| Vendor | Alibaba Qwen; JANG quantization by JANGQ-AI |
+| Parameters | 122B total, ~10B active (256 experts, 8 routed) |
+| Density | Sparse MoE + GatedDeltaNet SSM |
+| Bits per weight | 2.x avg (attention 6-bit, important 4-bit, experts 2-bit) |
+| Specialties | Agentic reasoning at compact size, thinking mode |
+| Tokens/sec | ~54 tok/s |
+| On-disk size | ~35 GB |
+| Context Size | 200K+ (with 95 GB memory limit, ~60 GB available for KV cache) |
+| Cache | Native KV cache on attention layers |
+| Key Benchmarks | MMLU 79% (vs 85% MLX 4-bit, vs 56.5% MLX native 2-bit) |
+
+**Caveats:**
+- 6% MMLU drop vs MLX 4-bit — acceptable trade-off for 46% size reduction
+- Requires JANG fork overlay (AlexTzk PR #364) on oMLX
+- VLM capable per base model but vision support in oMLX is unverified
+
+---
+
 ## OmniCoder-9B (8-bit)
 
 9B dense model fine-tuned on 425K+ curated agentic coding trajectories from Claude Opus 4.6, GPT-5.3/5.4, and Gemini 3.1 Pro. Expert at error recovery and targeted edit diffs.
@@ -186,51 +214,6 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 **Caveats:**
 - Non-English performance not extensively evaluated
 - Best with temperature 0.6 general / 0.2-0.4 agentic
-
----
-
-## Qwen3.5-35B-A3B (8-bit)
-
-35B MoE with only 3B active params — frontier-class reasoning at efficient compute. 69.2% SWE-bench Verified.
-
-| Spec | Value |
-|:-----|:------|
-| Base Model | [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) |
-| MLX 8-bit | [mlx-community/Qwen3.5-35B-A3B-8bit](https://huggingface.co/mlx-community/Qwen3.5-35B-A3B-8bit) |
-| Vendor | Alibaba Qwen team; MLX by mlx-community |
-| Parameters | 35B total, 3B active (256 experts, 8 routed + 1 shared) |
-| Density | Sparse MoE |
-| Specialties | SWE agent tasks, efficient high-throughput inference, thinking mode |
-| Tokens/sec | ~80.6 tok/s on M3 Ultra (8-bit, 39.3GB memory) |
-| Context Size | 262,144 tokens native (256K); extensible to 1,010,000 tokens via YaRN |
-| Cache | Native KV cache; q4 weight + KV cache quantization available |
-| Key Benchmarks | SWE-bench 69.2% |
-
-**Caveats:**
-- Vision/multimodal concurrency limited
-- KV cache reuse disabled in llama.cpp (not an issue for oMLX/MLX)
-
----
-
-## Qwen3.5-35B-A3B Holodeck (qx86-hi) — Hybrid Variant
-
-Hybrid-precision variant of Qwen3.5-35B-A3B with higher-quality attention layers (qx86-hi quantization). Same MoE architecture (3B active) but better quality in critical layers at +2GB cost.
-
-| Spec | Value |
-|:-----|:------|
-| MLX qx86-hi | [nightmedia/Qwen3.5-35B-A3B-Holodeck-qx86-hi-mlx](https://huggingface.co/nightmedia/Qwen3.5-35B-A3B-Holodeck-qx86-hi-mlx) |
-| Vendor | nightmedia (hybrid MLX quantization) |
-| Parameters | 35B total, 3B active (same architecture as standard 8-bit) |
-| Density | Sparse MoE |
-| Specialties | Same as standard variant with improved attention precision |
-| Tokens/sec | Similar to 8-bit; ~37GB memory (vs ~35GB standard) |
-| Context Size | 262,144 tokens native (256K); extensible to 1,010,000 tokens via YaRN |
-| Cache | Same as standard variant |
-| Key Benchmarks | Same base model as standard 8-bit |
-
-**Caveats:**
-- ~2GB larger than standard 8-bit variant
-- Vision/multimodal concurrency limited
 
 ---
 
@@ -257,34 +240,89 @@ NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trai
 
 ---
 
-## Huihui Qwen3.5-35B-A3B Abliterated (8-bit)
+## Nemotron 3 Super 120B-A12B (4.5-bit)
 
-Higher-quality 8-bit conversion of the Huihui abliterated variant, self-converted from BF16 source using `mlx_lm.convert` on Mac Studio M3 Ultra. Same MoE architecture as the standard 35B-A3B with ~3B active parameters per token. This variant trades ~15 GB extra disk vs the 4-bit AITRADER build for improved weight precision.
+NVIDIA's 120B sparse MoE with 12B active params, using a hybrid Mamba-2 SSM + Attention architecture. Only ~55 of 88 layers use KV cache (attention layers); Mamba layers use fixed-size recurrent state, making context very memory-efficient.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) |
+| MLX 4.5-bit | [inferencerlabs/NVIDIA-Nemotron-3-Super-120B-A12B-MLX-4.5bit](https://huggingface.co/inferencerlabs/NVIDIA-Nemotron-3-Super-120B-A12B-MLX-4.5bit) |
+| Vendor | NVIDIA; MLX quantization by inferencerlabs |
+| Parameters | 120B total, 12B active (512 routed experts, 22 active + 1 shared) |
+| Architecture | Hybrid Mamba-2 SSM + Transformer Attention (88 layers: ~33 Mamba + ~55 Attention) |
+| Density | Sparse MoE |
+| Specialties | Large-scale reasoning, broad knowledge, multilingual |
+| Tokens/sec | ~49.6 tok/s (tested on M3 Ultra 512GB); ~50 tok/s expected on 96GB |
+| On-disk size | ~66.5 GB |
+| Context Size | 262K native; configured to 200K (memory-safe with 12GB hot cache) |
+| Hot Cache | **12GB** (per-model override; gives ~228K max context) |
+| Key Benchmarks | 91.65% token accuracy, 1.336 perplexity (inferencerlabs coding test) |
+
+**oMLX model ID:** `inferencerlabs/NVIDIA-Nemotron-3-Super-120B-A12B-MLX-4.5bit`
+
+**Caveats:**
+- Requires oMLX v0.2.20+ (Nemotron-H support via mlx-lm PR #992)
+- At 66.5GB, leaves only ~29GB for OS + KV cache on 96GB; process enforcer at 88GB
+- 9-bit variant (127GB) does NOT fit in 96GB — only the 4.5-bit is viable
+- KV cache only on attention layers (~55 of 88); Mamba layers use fixed state = ~55 KB/token
+
+---
+
+## Nemotron Cascade 2 30B-A3B (nvfp4)
+
+NVIDIA's second-generation Cascade model with a triple-hybrid architecture: Mamba-2 SSM + Mixture of Experts + Dense Attention. 30B total parameters with only 3B active per token. The nvfp4 (NVIDIA FP4, group size 16) quantization keeps the model at just 17GB with minimal quality loss.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [NVIDIA/Nemotron-Cascade-2-30B-A3B](https://huggingface.co/nvidia/Nemotron-Cascade-2-30B-A3B) |
+| MLX nvfp4 | [RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4](https://huggingface.co/RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4) |
+| Vendor | NVIDIA; MLX nvfp4 by RepublicOfKorokke |
+| Parameters | 30B total, 3B active (128 experts, top-6 routed) |
+| Density | Sparse MoE + Mamba-2 SSM hybrid |
+| Architecture | 52 layers (46 Mamba-2 + MoE, 6 dense attention) |
+| Specialties | Efficient hybrid inference, reasoning mode |
+| Tokens/sec | ~55 tok/s generation, ~154 tok/s prefill |
+| On-disk size | ~17 GB |
+| Context Size | 32K |
+| Cache | KV cache only on 6 attention layers (~0.2 GB at 32K) |
+| Key Benchmarks | MMLU 93.0% (reasoning), 69.0% (no-think) |
+
+**Caveats:**
+- 32K max context (much smaller than Qwen MoE models at 262K)
+- nvfp4 is a less common MLX quantization format — confirmed working on oMLX v0.2.20 + fork
+- JANG-quantized variants of this model do NOT work (matmul shape mismatch at MoE gate — use nvfp4/mxfp4 MLX instead)
+
+---
+
+## Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)
+
+First JANG-format model on the oMLX server. Uses adaptive mixed-precision quantization (JANG_4K profile): attention layers at 8-bit for coherence, MoE expert layers at 4-bit for compression. Same base architecture as the MLX 8-bit variant but **48% smaller** (19GB vs 37GB) with sub-second model loading via zero-copy mmap.
 
 | Spec | Value |
 |:-----|:------|
 | Base Model | [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) |
-| Abliterated source | [huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated](https://huggingface.co/huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated) |
-| MLX 8-bit | Self-converted — `~/.omlx/models/huihui-ai/Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx` |
-| Conversion tool | `mlx_lm.convert --q-bits 8 --q-group-size 64` |
-| Vendor | Alibaba Qwen; abliteration by huihui-ai; MLX conversion local |
+| JANG 4-bit | [JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K](https://huggingface.co/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K) |
+| Format | JANG v2 mixed-precision (requires oMLX JANG fork) |
+| Vendor | Alibaba Qwen; JANG quantization by JANGQ-AI |
 | Parameters | 35B total, ~3B active (MoE) |
 | Density | Sparse MoE |
-| Specialties | Uncensored responses, all tasks the base model handles, higher precision than 4-bit |
-| Tokens/sec | TBD on M3 Ultra; expected similar to mlx-community 8-bit (~80 tok/s) |
-| On-disk size | ~35 GB (8-bit MLX) |
-| Context Size | 262K (262,144 tokens — native model limit) |
+| Quantization | JANG_4K: 4-bit average, attention at 8-bit, experts at 4-bit |
+| Specialties | Same as MLX 8-bit variant; much smaller footprint |
+| Model Load | **0.8 seconds** (zero-copy mmap) vs 15-30s for standard MLX |
+| On-disk size | ~19 GB (vs ~37 GB for MLX 8-bit) |
+| Context Size | 262K (262,144 tokens — full context fits easily at 19GB model weight) |
+| Hot Cache | 24GB (global default; total ~43GB at full context, well within 96GB) |
+| Key Benchmarks | Same base model as MLX 8-bit; JANG_4K retains attention coherence |
 
-**oMLX model ID:** `Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx`
+**oMLX model ID:** `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
+
+**Requirements:**
+- oMLX with AlexTzk fork overlay ([PR #364](https://github.com/jundot/omlx/pull/364))
+- `jang[mlx]>=0.1.0` pip package installed in oMLX venv
 
 **Caveats:**
-- oMLX strips the `huihui-ai/` org prefix — use ID `Huihui-Qwen3.5-35B-A3B-abliterated-8bit-mlx` in client configs (same behavior as 4-bit AITRADER variant)
-
-**Conversion notes:**
-- BF16 source (~70 GB download) converted with oMLX stopped to maximize free RAM (~90–92 GB available, ~80 GB peak needed)
-- Used `mlx_lm.convert` v0.31.1 with transformers 5.3.0
-- See [model-conversion-gguf-mlx.md](model-conversion-gguf-mlx.md) for broader conversion context
-
-**Caveats:**
-- Context set to 262K (native model limit) — 8-bit MoE model uses ~35 GB + KV cache only on ~16/64 layers, so 262K is feasible on 96 GB
-- VLM capable per base model card but vision support in oMLX is unverified
+- JANG format is not supported by upstream oMLX — requires the fork overlay
+- JANG ecosystem is early stage; no community validation of quality claims
+- Future `brew upgrade omlx` will overwrite the fork — must re-apply after upgrades
+- Detected as VLM model type (`qwen3_5_moe`) in oMLX discovery

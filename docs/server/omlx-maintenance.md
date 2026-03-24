@@ -75,3 +75,78 @@ If the server fails to start, check if another process is holding port 8000:
 ssh macstudio "lsof -i :8000"
 ```
 If you see a process, use `kill -9 <PID>` to free the port.
+
+## 5. JANG Fork Overlay Management
+
+oMLX currently runs with the [AlexTzk/omlx fork](https://github.com/AlexTzk/omlx) (PR #364) pip-installed over the Homebrew v0.2.20 base to add JANG model support.
+
+**After `brew upgrade omlx`**, re-apply the full stack:
+```bash
+# 1. Stop service
+ssh macstudio "/opt/homebrew/bin/brew services stop jundot/omlx/omlx"
+
+# 2. Move old omlx package aside
+ssh macstudio "SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv \$SITE/omlx \$SITE/omlx.bak"
+
+# 3. Install JANG dependency + fork
+ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'"
+ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=\$SITE git+https://github.com/AlexTzk/omlx.git@main"
+
+# 4. Re-apply hot cache patch
+scp scripts/patch_omlx_cache.py macstudio:/tmp/patch_omlx_cache.py
+ssh macstudio "python3 /tmp/patch_omlx_cache.py"
+
+# 5. Fix starlette dashboard bug
+ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
+
+# 6. Restart
+ssh macstudio "/opt/homebrew/bin/brew services start jundot/omlx/omlx"
+```
+
+**Known JANG limitations:**
+- Nemotron-H architecture fails (matmul shape mismatch at latent MoE gate)
+- Qwen3.5 MoE models work correctly
+- JANG models are detected with `engine: jang` in discovery logs
+
+## 6. Starlette Dashboard Fix
+
+oMLX v0.2.20 pulls starlette 1.0.0 which breaks the admin dashboard ([#361](https://github.com/jundot/omlx/issues/361)):
+```
+GET /admin/dashboard → 500 (unhandled): unhashable type: 'dict'
+```
+
+Fix:
+```bash
+ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
+ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
+```
+
+## 7. Debug Logging
+
+To trace incoming requests and model responses:
+```bash
+# Enable debug logging
+ssh macstudio "python3 -c \"
+import json
+with open('/Users/chanunc/.omlx/settings.json') as f:
+    cfg = json.load(f)
+cfg['server']['log_level'] = 'debug'
+with open('/Users/chanunc/.omlx/settings.json', 'w') as f:
+    json.dump(cfg, f, indent=4)
+\""
+ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
+
+# Watch live
+ssh macstudio "tail -f ~/.omlx/logs/server.log"
+
+# Revert to info when done
+ssh macstudio "python3 -c \"
+import json
+with open('/Users/chanunc/.omlx/settings.json') as f:
+    cfg = json.load(f)
+cfg['server']['log_level'] = 'info'
+with open('/Users/chanunc/.omlx/settings.json', 'w') as f:
+    json.dump(cfg, f, indent=4)
+\""
+ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
+```

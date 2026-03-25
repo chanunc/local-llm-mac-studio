@@ -127,58 +127,68 @@ ssh macstudio "~/vllm-mlx-env/bin/python -c 'import mlx.core as mx; print(f\"{mx
 
 ---
 
-## 6. Persistent Service Setup
+## 6. Service Management
 
-To run vllm-mlx as a persistent launchd service (auto-start on boot):
+vllm-mlx runs as a launchd service with a convenience script (`~/bin/vllm-service`) that handles oMLX port conflicts automatically.
 
-Create `~/Library/LaunchAgents/com.chanunc.vllm-mlx.plist` on Mac Studio:
+**Components:**
+- **Plist:** `~/Library/LaunchAgents/com.chanunc.vllm-mlx.plist` (launchd service definition)
+- **Script:** `~/bin/vllm-service` (start/stop/restart/status/log)
+- **Wrapper:** `~/run_vllm_jang.py` (JANG monkey-patch + vllm-mlx CLI)
+- **Log:** `/opt/homebrew/var/log/vllm-mlx.log`
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.chanunc.vllm-mlx</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/Users/chanunc/vllm-mlx-env/bin/python</string>
-        <string>/Users/chanunc/run_vllm_jang.py</string>
-        <string>serve</string>
-        <string>/Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K</string>
-        <string>--port</string>
-        <string>8000</string>
-        <string>--host</string>
-        <string>0.0.0.0</string>
-    </array>
-    <key>RunAtLoad</key>
-    <false/>
-    <key>KeepAlive</key>
-    <false/>
-    <key>StandardOutPath</key>
-    <string>/Users/chanunc/llm-server/logs/vllm-mlx.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/chanunc/llm-server/logs/vllm-mlx.err</string>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
-    </dict>
-</dict>
-</plist>
-```
+**Source files in repo:** `configs/vllm-mlx.plist`, `scripts/vllm-mlx-service.sh`
 
-**Note:** `RunAtLoad` and `KeepAlive` are set to `false` to avoid conflict with oMLX (which is the default production server). Start manually when needed:
+### Quick Reference
 
 ```bash
-# Start vllm-mlx (stop oMLX first)
-ssh macstudio "/opt/homebrew/bin/brew services stop omlx"
-ssh macstudio "launchctl load ~/Library/LaunchAgents/com.chanunc.vllm-mlx.plist"
+# Switch from oMLX to vllm-mlx (stops oMLX, starts vllm-mlx)
+ssh macstudio "~/bin/vllm-service start"
 
-# Stop vllm-mlx and restore oMLX
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.chanunc.vllm-mlx.plist"
-ssh macstudio "/opt/homebrew/bin/brew services start omlx"
+# Switch back to oMLX (stops vllm-mlx, starts oMLX)
+ssh macstudio "~/bin/vllm-service stop"
+
+# Restart vllm-mlx (no oMLX swap)
+ssh macstudio "~/bin/vllm-service restart"
+
+# Check status and health
+ssh macstudio "~/bin/vllm-service status"
+
+# Tail logs
+ssh macstudio "~/bin/vllm-service log"
 ```
+
+### How It Works
+
+- **`start`** checks if oMLX is running on port 8000 and stops it first, then loads the vllm-mlx launchd plist. The service has `KeepAlive: true` so launchd auto-restarts it on crash.
+- **`stop`** unloads the plist and automatically restarts oMLX (the production default).
+- **`RunAtLoad: false`** — vllm-mlx does NOT start on boot. oMLX is the default production server and owns port 8000 at boot time. Start vllm-mlx explicitly when needed.
+- **`status`** shows PID, port owner, and runs a `/v1/models` health check.
+
+### Re-deploying After Changes
+
+If you modify the plist or service script in the repo:
+```bash
+# Update plist
+scp configs/vllm-mlx.plist macstudio:~/Library/LaunchAgents/com.chanunc.vllm-mlx.plist
+
+# Update service script
+scp scripts/vllm-mlx-service.sh macstudio:~/bin/vllm-service
+ssh macstudio "chmod +x ~/bin/vllm-service"
+
+# If vllm-mlx is running, restart to pick up plist changes
+ssh macstudio "~/bin/vllm-service restart"
+```
+
+### Changing the Model
+
+Edit the plist to change the model path:
+```bash
+ssh macstudio "sed -i '' 's|JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K|NEW-MODEL-DIR|' ~/Library/LaunchAgents/com.chanunc.vllm-mlx.plist"
+ssh macstudio "~/bin/vllm-service restart"
+```
+
+Or for standard (non-JANG) models, edit `ProgramArguments` in the plist to use `~/vllm-mlx-env/bin/vllm-mlx` directly instead of the JANG wrapper.
 
 ---
 
@@ -187,20 +197,18 @@ ssh macstudio "/opt/homebrew/bin/brew services start omlx"
 ### Server logs
 
 ```bash
-# Live logs (foreground mode)
-ssh macstudio "tail -f /tmp/vllm_jang.log"
+# Live logs (via service script)
+ssh macstudio "~/bin/vllm-service log"
 
-# Or if using launchd
-ssh macstudio "tail -f ~/llm-server/logs/vllm-mlx.err"
+# Or directly
+ssh macstudio "tail -f /opt/homebrew/var/log/vllm-mlx.log"
 ```
 
 ### Verbose startup
 
-Add `--log-level debug` to the serve command:
+Edit the plist to add `--log-level` `debug` to ProgramArguments, then restart:
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
-  /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
-  --port 8000 --host 0.0.0.0 --log-level debug"
+ssh macstudio "~/bin/vllm-service restart"
 ```
 
 ### Cache statistics

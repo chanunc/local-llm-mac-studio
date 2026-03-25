@@ -1,54 +1,52 @@
-# Configs — Active Model Reference
+# Client Configs
 
-**Last updated: 2026-03-16**
+**Last updated: 2026-03-25**
 
-This directory contains ready-to-use client config files for connecting to the Mac Studio M3 Ultra oMLX server. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` and `<YOUR_API_KEY>` with real values.
+Client config files for connecting to the Mac Studio M3 Ultra. Organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
-## Currently Active Models
+## Server Roles
 
-Two models are loaded in RAM on the Mac Studio (96GB unified memory). Both run fully in-memory with no SSD KV cache spill.
+| Server | Port | Role | Model | API Key |
+|--------|------|------|-------|---------|
+| **vllm-mlx** | 8000 | **Primary** — fastest inference, single model | Qwen3-Coder-Next 6-bit | Not needed |
+| **oMLX** | 8000 | **Multi-model** — SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required |
 
-| Model | ID | Context | Memory | Role |
-|-------|----|---------|--------|------|
-| Qwen3.5 35B-A3B 8-bit | `mlx-community/Qwen3.5-35B-A3B-8bit` | **262,144** tokens | 36.9 GB | Default / SWE agent |
-| Nemotron 3 Nano 30B-A3B 8-bit | `NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit` | **650,000** tokens | 32.8 GB | Long-context tasks |
-
-### Qwen3.5 35B-A3B 8-bit
-- **Vendor:** Alibaba Qwen team; MLX by mlx-community
-- **Architecture:** 35B sparse MoE, 3B active params (256 experts, 8 routed + 1 shared)
-- **Context:** 262,144 tokens native (256K)
-- **Strengths:** SWE-bench 69.2%, efficient high-throughput, thinking mode
-- **Default model** — pinned in oMLX, loads on startup
-
-### Nemotron 3 Nano 30B-A3B 8-bit
-- **Vendor:** NVIDIA; MLX by mlx-community
-- **Architecture:** 32B hybrid MoE — 23 Mamba2 layers + 23 attention layers, 3B active params, 2 KV heads
-- **Context:** 650,000 tokens *(RAM-optimised: calculated from 16.3 GB available KV headroom at bfloat16; avoids SSD spill)*
-- **Strengths:** Efficient long-context inference, multilingual (6 languages), KV-efficient hybrid architecture
-- **Note:** Use model ID without `mlx-community/` prefix in client configs
-
-## Context Size Notes
-
-Nemotron's 650K context limit is derived from the available RAM after both models are loaded:
-
-```
-Process limit:   88.0 GB
-Both models:    −69.7 GB
-Overhead:        −2.0 GB
-─────────────────────────
-KV headroom:    ~16.3 GB
-
-KV per token = 2 × 23 attn layers × 2 KV heads × 128 head_dim × 2 bytes = 23 KB
-16.3 GB ÷ 23 KB × 90% safety = ~650,000 tokens
-```
-
-Qwen3.5 35B-A3B context is capped at its native 262,144 — the remainder is used by Nemotron's KV pool.
+Only one server runs at a time on port 8000. vllm-mlx is the default for daily coding; switch to oMLX when you need model variety or the admin dashboard.
 
 ## Config Files
 
+### `vllm-mlx/` — Primary Server (Single Model)
+
 | File | Copy to | Used by |
 |------|---------|---------|
-| `claude-code-macstudio-settings.json` | `~/.claude/macstudio-settings.json` | Claude Code |
+| `claude-code-settings.json` | `~/.claude/settings.json` | Claude Code |
 | `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
-| `openclaw-macstudio-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
+| `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
+
+**Model:** `mlx-community/Qwen3-Coder-Next-6bit` — 60GB dense, 131K context, 51-69 tok/s generation.
+
+### `omlx/` — Multi-Model Server (SSD Cache)
+
+| File | Copy to | Used by |
+|------|---------|---------|
+| `claude-code-settings.json` | `~/.claude/settings.json` | Claude Code |
+| `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
+| `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
+| `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
+
+**Models:** Qwen3-Coder-Next, Qwen3.5-122B, Qwen3.5-27B Opus Distilled, OmniCoder-9B, Nemotron Nano/Super/Cascade, JANG variants. Requires API key (`<YOUR_API_KEY>`).
+
+## Switching Servers
+
+```bash
+# Switch to oMLX (multi-model)
+ssh macstudio "pkill -f vllm-mlx; sleep 2; /opt/homebrew/bin/brew services start omlx"
+
+# Switch to vllm-mlx (primary, fastest)
+ssh macstudio "/opt/homebrew/bin/brew services stop omlx; sleep 2"
+ssh macstudio "nohup ~/vllm-mlx-env/bin/vllm-mlx serve \
+  ~/.omlx/models/mlx-community--Qwen3-Coder-Next-6bit \
+  --served-model-name mlx-community/Qwen3-Coder-Next-6bit \
+  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &"
+```

@@ -114,7 +114,7 @@ Copy config from this repo, or create manually:
 
 ```bash
 mkdir -p ~/.config/opencode
-cp configs/opencode.json ~/.config/opencode/opencode.json
+cp configs/omlx/opencode.json ~/.config/opencode/opencode.json
 ```
 
 Global config at `~/.config/opencode/opencode.json`:

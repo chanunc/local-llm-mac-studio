@@ -274,9 +274,9 @@ This frees ~70 GB. Do this after confirming inference works.
 ### Step 9: Update client configs and docs
 
 After confirming the model works, update all client configs per the **Editing Workflow** in [CLAUDE.md](../../CLAUDE.md):
-- `configs/opencode.json`
-- `configs/pi-models.json`
-- `configs/openclaw-macstudio-provider.json`
+- `configs/omlx/opencode.json`
+- `configs/omlx/pi-models.json`
+- `configs/omlx/openclaw-provider.json`
 - `README.md` — Models & Benchmarks table
 - `docs/models/model-summary.md` — add model spec entry
 

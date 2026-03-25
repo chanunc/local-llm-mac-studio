@@ -4,7 +4,7 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 
 ## Index
 - [Server Options](#-server-options)
-  - [oMLX](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md) · [mlx-lm](docs/server/mlxlm-summary.md) · [vllm-mlx](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md)
+  - [vllm-mlx](docs/server/vllm-mlx-summary.md) (primary) · [Maintenance](docs/server/vllm-mlx-maintenance.md) · [oMLX](docs/server/omlx-summary.md) (multi-model) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md) · [mlx-lm](docs/server/mlxlm-summary.md)
   - JANG patches: [mlx-lm](docs/server/mlxlm-jang-patch.md) · [vllm-mlx](docs/server/vllm-mlx-jang-patch.md)
 - [Models & Benchmarks](#-models--benchmarks)
   - [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [Qwen3.5-122B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) · [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) · [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) · [Qwen3.5-35B JANG 4-bit](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision)
@@ -16,8 +16,8 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 - [oMLX Limitations](#-omlx-limitations)
 
 ## 🚀 Server Options
-- **Primary: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md)) — Production server with native OpenAI/Anthropic API, multi-model hot-swapping, admin dashboard. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx-jang-fork.md).
-- **Fastest: [vllm-mlx](https://github.com/waybarrios/vllm-mlx)** ([Summary](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md) · [JANG Patch](docs/server/vllm-mlx-jang-patch.md)) — vLLM port for Apple Silicon. Only 3-4% overhead vs raw standalone. Native OpenAI + Anthropic API. JANG support via monkey-patch.
+- **Primary: [vllm-mlx](https://github.com/waybarrios/vllm-mlx)** ([Summary](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md) · [JANG Patch](docs/server/vllm-mlx-jang-patch.md)) — Fastest server for Apple Silicon. Only 3-4% overhead vs raw standalone. Runs Qwen3-Coder-Next 6-bit as single dedicated model. Native OpenAI + Anthropic API.
+- **Multi-model: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md)) — SSD-cached multi-model server with hot-swapping, admin dashboard. 9 models available. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx-jang-fork.md).
 - **Lightweight: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlxlm-summary.md) · [JANG Patch](docs/server/mlxlm-jang-patch.md)) — Apple's built-in server. 7-13% overhead. JANG support via monkey-patch.
 
 ## 🤖 Models & Benchmarks
@@ -40,14 +40,24 @@ Performance and context limits optimized for **96GB Unified Memory**.
 
 ## 📊 Benchmarks
 
-Server generation speed comparison on Qwen3.5-35B-A3B (March 25, 2026):
+### Qwen3-Coder-Next 6-bit (Primary Model, Dense 60GB)
+
+| Server | 512 Gen t/s | 8K Gen t/s | 32K Gen t/s | 64K Gen t/s |
+|:-------|:----------:|:----------:|:----------:|:----------:|
+| **[vllm-mlx](docs/server/vllm-mlx-summary.md)** (primary) | 68.8 | 63.8 | **56.4** | **51.7** |
+| **[mlx-lm.server](docs/server/mlxlm-summary.md)** | 68.4 | 62.7 | 54.0 | 47.7 |
+| **[oMLX](docs/server/omlx-summary.md)** | 66.5 | 56.9 | 40.4 | 34.8 |
+
+vllm-mlx is **40-49% faster** than oMLX at 32K-64K context on this dense model.
+
+### Qwen3.5-35B-A3B (MoE, JANG vs 4-bit)
 
 | Server | 32K Gen t/s | 64K Gen t/s | Overhead vs Standalone |
 |:-------|:----------:|:----------:|:----------------------:|
 | **Standalone** (`mlx_lm.generate`) | 90.3 | 76.3 | — |
-| **[vllm-mlx](docs/server/vllm-mlx-summary.md)** | 86.5 | 74.3 | 3-4% |
-| **[mlx-lm.server](docs/server/mlxlm-summary.md)** | 80.1 | 66.4 | 7-13% |
-| **[oMLX](docs/server/omlx-summary.md)** | 59.9 | 49.0 | 31-36% |
+| **vllm-mlx** | 86.5 | 74.3 | 3-4% |
+| **mlx-lm.server** | 80.1 | 66.4 | 7-13% |
+| **oMLX** | 59.9 | 49.0 | 31-36% |
 
 JANG model (same architecture, adaptive mixed-precision quantization):
 

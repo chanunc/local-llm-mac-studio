@@ -8,7 +8,7 @@ Client config files for connecting to the Mac Studio M3 Ultra. Organized by serv
 
 | Server | Port | Role | Model(s) | API Key |
 |--------|------|------|----------|---------|
-| **vllm-mlx** | 8000 | **Primary** -- fastest inference, single model | Qwen3-Coder-Next 6-bit (~60GB) | Not needed |
+| **vllm-mlx** | 8000 | **Primary** -- fastest inference, single model | Qwen3.5-122B-A10B JANG 2S (~35GB) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 
 Only one server runs at a time on port 8000. vllm-mlx is the default for daily coding; switch to oMLX when you need model variety or the admin dashboard.
@@ -37,7 +37,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Model:** `mlx-community/Qwen3-Coder-Next-6bit` -- 60GB dense, 131K context, 51-69 tok/s generation. Uses `--served-model-name` so clients see the clean HuggingFace-style model ID.
+**Model:** `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` -- [JANG](https://jangq.ai/) 2-bit adaptive mixed-precision, ~35GB, 200K+ context, 122B total / 10B active MoE. Uses `run_vllm_jang.py` wrapper for JANG model loading and `--served-model-name` so clients see the clean HuggingFace-style model ID.
 
 ### `omlx/` -- Multi-Model Server (SSD Cache)
 
@@ -72,8 +72,8 @@ ssh macstudio "pkill -f vllm-mlx; sleep 2; /opt/homebrew/bin/brew services start
 
 # Switch to vllm-mlx (primary, fastest)
 ssh macstudio "/opt/homebrew/bin/brew services stop omlx; sleep 2"
-ssh macstudio "nohup ~/vllm-mlx-env/bin/vllm-mlx serve \
-  ~/.omlx/models/mlx-community--Qwen3-Coder-Next-6bit \
-  --served-model-name mlx-community/Qwen3-Coder-Next-6bit \
+ssh macstudio "nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+  ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
+  --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
   --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &"
 ```

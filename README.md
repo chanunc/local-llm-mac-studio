@@ -16,7 +16,7 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 - [oMLX Limitations](#-omlx-limitations)
 
 ## 🚀 Server Options
-- **Primary: [vllm-mlx](https://github.com/waybarrios/vllm-mlx)** ([Summary](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md) · [JANG Patch](docs/server/vllm-mlx-jang-patch.md)) — Fastest server for Apple Silicon. Only 3-4% overhead vs raw standalone. Runs Qwen3-Coder-Next 6-bit as single dedicated model. Native OpenAI + Anthropic API.
+- **Primary: [vllm-mlx](https://github.com/waybarrios/vllm-mlx)** ([Summary](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md) · [JANG Patch](docs/server/vllm-mlx-jang-patch.md)) — Fastest server for Apple Silicon. Only 3-4% overhead vs raw standalone. Runs Qwen3.5-122B-A10B [JANG](https://jangq.ai/) 2S as single dedicated model. Native OpenAI + Anthropic API.
 - **Multi-model: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md)) — SSD-cached multi-model server with hot-swapping, admin dashboard. 9 models available. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx-jang-fork.md).
 - **Lightweight: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlxlm-summary.md) · [JANG Patch](docs/server/mlxlm-jang-patch.md)) — Apple's built-in server. 7-13% overhead. JANG support via monkey-patch.
 

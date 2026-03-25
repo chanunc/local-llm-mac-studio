@@ -4,17 +4,21 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 
 ## Index
 - [Server Options](#-server-options)
-  - [oMLX](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md) · [mlx-lm](docs/server/mlxlm-summary.md)
+  - [oMLX](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md) · [mlx-lm](docs/server/mlxlm-summary.md) · [vllm-mlx](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md)
+  - JANG patches: [mlx-lm](docs/server/mlxlm-jang-patch.md) · [vllm-mlx](docs/server/vllm-mlx-jang-patch.md)
 - [Models & Benchmarks](#-models--benchmarks)
   - [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [Qwen3.5-122B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) · [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) · [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) · [Qwen3.5-35B JANG 4-bit](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision)
+- [Benchmarks](#-benchmarks)
+  - [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant.md)
 - [Tools & Agents](#-tools--agents)
   - [Claude Code](docs/clients/new-client-machine-setup.md) · [OpenCode](docs/clients/opencode-setup.md) · [OpenClaw](docs/clients/openclaw-setup.md) · [Pi](docs/clients/pi-setup.md)
 - [Connectivity](#-connectivity)
 - [oMLX Limitations](#-omlx-limitations)
 
 ## 🚀 Server Options
-- **Primary: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md)) — Optimized server with native OpenAI/Anthropic API support. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx-jang-fork.md).
-- **Alternative: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlxlm-summary.md)) — Native MLX implementation with custom routing.
+- **Primary: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx-summary.md) · [JANG Fork](docs/server/omlx-jang-fork.md) · [Maintenance](docs/server/omlx-maintenance.md)) — Production server with native OpenAI/Anthropic API, multi-model hot-swapping, admin dashboard. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx-jang-fork.md).
+- **Fastest: [vllm-mlx](https://github.com/vllm-project/vllm-mlx)** ([Summary](docs/server/vllm-mlx-summary.md) · [Maintenance](docs/server/vllm-mlx-maintenance.md) · [JANG Patch](docs/server/vllm-mlx-jang-patch.md)) — vLLM port for Apple Silicon. Only 3-4% overhead vs raw standalone. Native OpenAI + Anthropic API. JANG support via monkey-patch.
+- **Lightweight: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlxlm-summary.md) · [JANG Patch](docs/server/mlxlm-jang-patch.md)) — Apple's built-in server. 7-13% overhead. JANG support via monkey-patch.
 
 ## 🤖 Models & Benchmarks
 Performance and context limits optimized for **96GB Unified Memory**.
@@ -33,6 +37,27 @@ Performance and context limits optimized for **96GB Unified Memory**.
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit. **JANG** = adaptive mixed-precision (attention 6-8 bit, experts 2-4 bit) via [jangq.ai](https://jangq.ai), requires fork overlay.*
 *Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*
+
+## 📊 Benchmarks
+
+Server generation speed comparison on Qwen3.5-35B-A3B (March 25, 2026):
+
+| Server | 32K Gen t/s | 64K Gen t/s | Overhead vs Standalone |
+|:-------|:----------:|:----------:|:----------------------:|
+| **Standalone** (`mlx_lm.generate`) | 90.3 | 76.3 | — |
+| **[vllm-mlx](docs/server/vllm-mlx-summary.md)** | 86.5 | 74.3 | 3-4% |
+| **[mlx-lm.server](docs/server/mlxlm-summary.md)** | 80.1 | 66.4 | 7-13% |
+| **[oMLX](docs/server/omlx-summary.md)** | 59.9 | 49.0 | 31-36% |
+
+JANG model (same architecture, adaptive mixed-precision quantization):
+
+| Server | 32K Gen t/s | 64K Gen t/s | vs oMLX |
+|:-------|:----------:|:----------:|:-------:|
+| **vllm-mlx + JANG** | 83.8 | 71.4 | +40% |
+| **mlx-lm.server + JANG** | 77.6 | 65.1 | +30% |
+| **oMLX + JANG** | 59.9 | 49.0 | baseline |
+
+Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant.md)
 
 ## 🛠️ Tools & Agents
 - **Claude Code**: Anthropic's official CLI ([Setup](docs/clients/new-client-machine-setup.md))

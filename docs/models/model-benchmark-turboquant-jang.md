@@ -72,6 +72,17 @@ Model: `mlx-community/Qwen3.5-35B-A3B-4bit` (~18.6 GB weights, 40 layers: 10 ful
 
 Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` (~17.5 GB weights, adaptive mixed-precision).
 
+### What is JANG?
+
+[JANG](https://jangq.ai/) is an adaptive mixed-precision quantization format by [JANGQ-AI](https://github.com/jjang-ai/jangq). Unlike uniform quantization (e.g., all weights at 4-bit), JANG assigns different bit widths per layer based on sensitivity analysis: attention layers get 6-8 bit precision while MoE expert layers get 2-4 bit. This achieves 48% smaller model size than standard MLX 8-bit with minimal quality loss.
+
+**Key properties:**
+- **Instant mmap load** -- memory-mapped weight files load in <1 second (vs 5-15s for standard MLX safetensors)
+- **Same inference path** -- once loaded via `jang_tools.load_jang_model()`, the model runs through standard `mlx_lm` generation with no runtime overhead
+- **Requires integration** -- oMLX needs the [AlexTzk fork overlay](../server/omlx-jang-fork.md) (PR #364); mlx-lm and vllm-mlx use a [monkey-patch wrapper](../server/vllm-mlx-jang-patch.md)
+
+This benchmark tests whether TurboQuant's KV cache compression stacks with JANG weight quantization.
+
 | Context | Method | Prefill t/s | Gen t/s | KV Mem MB | Peak GB |
 |---------|--------|------------|---------|-----------|---------|
 | 512 | baseline | 1688.5 | 103.6 | 77.4 | 19.15 |
@@ -93,7 +104,7 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` (~17.5 GB weights, adaptive mixed-prec
 |-------|-------------------|----------------|---------|----------------|
 | 122B-4bit | 49.8 t/s | 16.5 t/s | -67% | 2.6x |
 | 35B-4bit | 90.3 t/s | 24.4 t/s | -73% | 3.0x |
-| 35B-JANG | 86.5 t/s | 23.9 t/s | -72% | 3.0x |
+| 35B-[JANG](https://jangq.ai/) | 86.5 t/s | 23.9 t/s | -72% | 3.0x |
 
 ### Why the Large Speed Penalty?
 

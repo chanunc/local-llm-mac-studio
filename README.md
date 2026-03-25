@@ -9,7 +9,7 @@ High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96G
 - [Models & Benchmarks](#-models--benchmarks)
   - [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [Qwen3.5-122B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) · [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) · [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) · [Qwen3.5-35B JANG 4-bit](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision)
 - [Benchmarks](#-benchmarks)
-  - [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant.md)
+  - [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant-jang.md)
 - [Tools & Agents](#-tools--agents)
   - [Claude Code](docs/clients/new-client-machine-setup.md) · [OpenCode](docs/clients/opencode-setup.md) · [OpenClaw](docs/clients/openclaw-setup.md) · [Pi](docs/clients/pi-setup.md)
 - [Connectivity](#-connectivity)
@@ -67,7 +67,7 @@ JANG model (same architecture, adaptive mixed-precision quantization):
 | **mlx-lm.server + JANG** | 77.6 | 65.1 | +30% |
 | **oMLX + JANG** | 59.9 | 49.0 | baseline |
 
-Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant.md)
+Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant-jang.md)
 
 ## 🛠️ Tools & Agents
 - **Claude Code**: Anthropic's official CLI ([Setup](docs/clients/new-client-machine-setup.md))

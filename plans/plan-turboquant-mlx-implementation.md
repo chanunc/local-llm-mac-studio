@@ -221,9 +221,9 @@ Tasks:
 
 **Output comparison:** Both baseline and TurboQuant produced identical text explaining the JL lemma -- word-for-word match in first 300 characters.
 
-### Phase 3: Long-Context Benchmarks -- COMPLETED
+### Phase 3: Long-Context Benchmarks -- COMPLETED (Extended to 64K)
 
-Tested at 512, 2048, 8192, and 16384 token contexts (50 generated tokens each):
+Tested at 512 to 65536 token contexts (50 generated tokens each):
 
 | Context | Method | Prefill t/s | Gen t/s | Mem delta MB | Peak GB |
 |---------|--------|------------|---------|-------------|---------|
@@ -235,13 +235,20 @@ Tested at 512, 2048, 8192, and 16384 token contexts (50 generated tokens each):
 | 8192 | turbo | 613.9 | 16.7 | +306.3 | 76.75 |
 | 16384 | baseline | 728.2 | 54.5 | +429.9 | 76.75 |
 | 16384 | turbo | 543.4 | 14.7 | +459.9 | 81.26 |
+| **32768** | **baseline** | **644.6** | **50.7** | **+777.9** | **75.74** |
+| **32768** | **turbo** | **430.8** | **12.3** | **+766.6** | **89.14** |
+| **65536** | **baseline** | **503.6** | **42.6** | **+1473.9** | **89.14** |
+| **65536** | **turbo** | **OOM** | **—** | **—** | **>96 GB** |
+| 131072 | either | — | — | Not attempted (64K turbo already OOMs) | — |
 
-**Key finding: TurboQuant is NOT beneficial for Qwen3.5-122B-A10B.**
+**Key finding: TurboQuant is NOT beneficial for Qwen3.5-122B-A10B at any context length.**
 
 Reasons:
-1. **Memory: turbo uses MORE memory** at all context lengths (+30 to +70 MB). The rotation/sketch matrix overhead (per-head: 256x256 rotation + 256x256 sketch) exceeds KV cache savings because the model has only 2 KV heads across 12 full-attention layers.
-2. **Throughput: 70% slower decode** (14.7-18.5 vs 54-61 tok/s). Unoptimized Python quantize/dequantize path without fused MLX kernels creates high per-token overhead.
+1. **Memory: turbo uses MORE memory** at all context lengths. At short contexts (+30 to +70 MB overhead). At 32K the delta converges (766.6 vs 777.9 MB) but **peak memory is 13.4 GB higher** (89.14 vs 75.74 GB) due to intermediate computation buffers. At 64K, TurboQuant OOMs even when run alone — baseline works fine at 89.14 GB peak.
+2. **Throughput: 70-76% slower decode** (12.3-18.5 vs 42.6-61 tok/s). Unoptimized Python quantize/dequantize path without fused MLX kernels creates high per-token overhead.
 3. **Architecture mismatch**: The hybrid design (36/48 layers are linear attention with fixed-size recurrent state) already keeps KV cache tiny. TurboQuant's value only emerges for models with standard full-attention across all layers and many KV heads.
+4. **Keys-only compression**: The ananyasingh7 implementation only compresses keys (not values), capping max theoretical compression at ~1.7x. Prince Canuma's implementation (4.9x on Qwen3.5-35B) likely compresses both K and V — code not yet public.
+5. **Intermediate buffer overhead**: TurboQuant's rotation matrix multiplication, residual computation, and sign packing create large temporary allocations that dominate at long contexts, making it counterproductive for memory-constrained scenarios — exactly where it's supposed to help.
 
 ### Phase 4: oMLX Integration -- DEFERRED (Architecture Documented)
 
@@ -272,8 +279,9 @@ Updated plan document (this file) with all results and conclusions.
 1. **TurboQuant algorithm is sound**: Validated on Llama-3.2-3B with only 3.2% throughput loss and identical output quality.
 2. **MLX port works**: The ananyasingh7/turboquant-mlx- implementation is correct and complete.
 3. **Qwen3.5 patch works**: Our `qwen_patch.py` correctly handles hybrid attention, GQA, gated output, and Q/K normalization. Outputs are identical to baseline.
-4. **Not beneficial for Qwen3.5-122B-A10B**: The hybrid architecture with 2 KV heads makes the KV cache too small for TurboQuant to help. Rotation/sketch matrix overhead dominates.
+4. **Not beneficial for Qwen3.5-122B-A10B**: Tested from 512 to 64K tokens. TurboQuant uses more memory at every length, is 70-76% slower at generation, and OOMs at 64K while baseline runs fine. The hybrid architecture with 2 KV heads makes the KV cache too small for compression to help, and the ananyasingh7 implementation only compresses keys (not values).
 5. **Best candidates**: Pure full-attention models with many KV heads (8+) and long context windows. On our Mac Studio, Nemotron-3-Super-120B-A12B (if it had standard attention) would benefit most.
+6. **Revisit when**: Prince Canuma's implementation (which compresses both K and V, achieving 4.9x on Qwen3.5-35B) becomes publicly available, or when fused MLX kernels for quantized attention eliminate the intermediate buffer overhead.
 
 ---
 
@@ -285,7 +293,7 @@ Updated plan document (this file) with all results and conclusions.
 4. **A/B quality test**: Identical output with and without TurboQuant ✅
 5. **Memory profiling at multiple context lengths**: 512-16K tokens ✅
 6. **Latency benchmarking**: Baseline 54-61 tok/s, TurboQuant 14.7-18.5 tok/s ✅
-7. **Long-context stress test**: Covered by 16K benchmark (128K+ deferred -- model fits easily without TQ) ✅
+7. **Long-context stress test**: Extended to 32K and 64K. TurboQuant OOMs at 64K while baseline runs fine. 128K not attempted. ✅
 
 ---
 

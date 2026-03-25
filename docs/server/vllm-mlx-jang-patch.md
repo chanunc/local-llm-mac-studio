@@ -225,7 +225,7 @@ ssh macstudio "/opt/homebrew/bin/brew services start omlx"
 - **Model name is the full path:** The API model ID is the local filesystem path.
 - **v0.2.6 return bug:** Must patch `vllm_mlx/utils/tokenizer.py` after install (see step 3 above). Future versions may fix this.
 - **No admin dashboard:** No web UI for model management.
-- **Not a persistent service:** Must be started manually. For persistent deployment, create a launchd plist.
+- **Not a persistent service:** Must be started manually via CLI commands above.
 
 ---
 

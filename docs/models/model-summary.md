@@ -300,11 +300,39 @@ NVIDIA's second-generation Cascade model with a triple-hybrid architecture: Mamb
 
 All Nemotron models (Nano, Super, Cascade 2) share the same server compatibility constraints due to NVIDIA's tokenizer implementation.
 
-**Root cause:** Nemotron models store their ChatML chat template in tokenizer Python code, not in `tokenizer_config.json` (which is empty). Servers that rely on `tokenizer_config.json` for the chat template cannot format messages correctly — prompts lack `<|im_start|>`/`<|im_end|>` wrapping, degrading even basic chat.
+### Nemotron vs Qwen 3.5: Why the Difference?
 
-Additionally, Nemotron uses ChatML with Qwen3-style tool XML (`<tool_call><function=name><parameter=...>`) and requires specialized parsers:
-- **Reasoning:** `nemotron_v3` parser for `<think>` tag extraction
-- **Tool calling:** `qwen3_coder` parser for tool-call detection and structured output
+Nemotron and Qwen 3.5 use the **same ChatML format** (`<|im_start|>`/`<|im_end|>`) and the **same tool-call XML** (`<tool_call><function=name><parameter=...>`). The incompatibility isn't about model capabilities — it's a **packaging problem**.
+
+| | Qwen 3.5 | Nemotron |
+|---|---|---|
+| Chat template in `tokenizer_config.json` | Full Jinja2 template (~200 lines) | Empty string |
+| Template location | Standard HuggingFace convention | Embedded in tokenizer Python code |
+| Primary target runtime | HuggingFace ecosystem (any server) | vLLM (CUDA) with built-in handling |
+| Any mlx-lm server works? | Yes | No — needs fallback logic |
+| Tool format | Qwen3-style XML | Same Qwen3-style XML |
+
+NVIDIA's primary target is **vLLM on CUDA GPUs**, which handles Nemotron templates internally. They didn't ship the template in `tokenizer_config.json` where the broader HuggingFace ecosystem (including mlx-lm, mlx-openai-server, oMLX) expects it. The architectural differences (Mamba-2 SSM hybrid, sparse attention) are irrelevant to this issue — it's purely about how the chat template is distributed.
+
+**If someone contributed the Nemotron chat template as a fallback** to mlx-openai-server or oMLX (like vllm-mlx did), those servers would work with Nemotron too.
+
+### Architecture Comparison
+
+| | Qwen 3.5 (122B/35B) | Nemotron Cascade 2 | Nemotron Super 120B |
+|---|---|---|---|
+| Type | Transformer MoE + GatedDeltaNet | Mamba-2 + MoE + Attention | Mamba-2 + MoE + Attention |
+| KV cache layers | All layers | 6 of 52 | ~55 of 88 |
+| SSM layers | GatedDeltaNet (fixed state) | 46 Mamba-2 layers | ~33 Mamba-2 layers |
+| Tool format | Qwen3-style XML | Qwen3-style XML | Qwen3-style XML |
+| Reasoning | `<think>` tags | `<think>` tags | `<think>` tags |
+
+### Server Compatibility
+
+Servers that rely on `tokenizer_config.json` for the chat template cannot format messages correctly — prompts lack `<|im_start|>`/`<|im_end|>` wrapping, degrading even basic chat.
+
+Nemotron also requires specialized parsers:
+- **Reasoning:** `think` parser for `<think>` tag extraction
+- **Tool calling:** `nemotron` parser for tool-call detection and structured output
 
 | Server | Chat Template | Tool Parser | Reasoning Parser | Status |
 |--------|--------------|-------------|-----------------|--------|

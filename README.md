@@ -1,4 +1,4 @@
-# 🧠 Local LLM Agent Network
+# 🦙 Local LLM Agent Network
 
 Run large language models locally on a **Mac Studio M3 Ultra (96GB)** and connect coding agents over LAN.
 

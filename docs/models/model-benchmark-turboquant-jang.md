@@ -25,6 +25,7 @@ We monkey-patched `Qwen3NextAttention.__call__` to route decode steps through `T
 - [Google blog post](https://research.google/blog/turboquant-redefining-ai-efficiency-with-extreme-compression)
 - [Prince Canuma's PR #858](https://github.com/Blaizzy/mlx-vlm/pull/858) -- MLX implementation with Metal kernels
 - [ananyasingh7/turboquant-mlx-](https://github.com/ananyasingh7/turboquant-mlx-) -- Alternative MLX port (keys-only, no Metal kernels)
+- [flovflo/turboquant-mlx-qwen35-kv](https://huggingface.co/flovflo/turboquant-mlx-qwen35-kv) -- Standalone prototype using MLX built-ins (no custom kernels, no PolarQuant/QJL)
 
 ---
 
@@ -115,10 +116,84 @@ This benchmark tests whether TurboQuant's KV cache compression stacks with JANG 
 
 ### When TurboQuant Would Help
 
-- Pure full-attention models (all layers, not hybrid) with 8+ KV heads
+- Hybrid-attention models where only a fraction of layers use full-attention KV cache (current sweet spot)
+- Pure full-attention models once the per-layer rotation fix lands (see [PR #858 discussion](#pr-858-status--community-findings))
 - Concurrent request serving where KV cache pressure is the memory bottleneck
 - When fused Metal kernels for quantized attention eliminate intermediate buffer overhead
 - Models where KV cache dominates total memory (not the case for Qwen3.5's 2-head hybrid design)
+
+---
+
+## PR #858 Status & Community Findings
+
+As of March 27, 2026, [PR #858](https://github.com/Blaizzy/mlx-vlm/pull/858) is still **open** with no new commits since March 25 (the day of our benchmark). Prince Canuma noted in the PR that "this implementation is far from optimal" and he's still working on matching the paper's claimed 8x speedup.
+
+### Full-Attention Model Quality Bug
+
+[kikoncuo](https://github.com/Blaizzy/mlx-vlm/pull/858#issuecomment-4133882463) ran perplexity and passkey-retrieval evaluations and discovered a critical quality issue:
+
+| Model | Architecture | Layers Quantized | PPL (baseline) | PPL (TurboQuant 4-bit) | Passkey Retrieval |
+|-------|-------------|-----------------|----------------|------------------------|-------------------|
+| Qwen2.5-3B | Full attention (36 layers) | 36/36 (100%) | 11.74 | **243.71** | 0% (was 100%) |
+| Qwen3.5-4B | Hybrid (8 attn + 24 SSM) | 8/36 (22%) | 12.03 | **12.14** (+0.10) | 100% |
+
+**Root cause:** The same rotation matrix is shared across all layers, causing quantization errors to accumulate linearly (e1 + e2 + ... + e36 = 36e). With independent rotations per layer, errors would partially cancel (√36·e).
+
+### Layer-Selective Quantization Fix
+
+kikoncuo found that skipping the first and last layers dramatically recovers quality:
+
+| Strategy | Layers Quantized | PPL | Delta vs Baseline |
+|----------|-----------------|-----|-------------------|
+| FP16 baseline | 0/36 | 12.23 | — |
+| **Odd + skip first/last 2** | **16/36 (44%)** | **12.74** | **+0.50** |
+| Odd layers only | 18/36 (50%) | 12.78 | +0.55 |
+| Skip first/last 2 | 32/36 (89%) | 13.16 | +0.93 |
+| All layers | 36/36 (100%) | 255.22 | +242.99 |
+
+**Prince Canuma confirmed** he has a fix in a separate branch with per-layer independent rotations, but hasn't merged it yet. The fix will also slightly improve hybrid model quality (though Qwen3.5 already shows near-zero degradation).
+
+### Implications for Our Benchmark
+
+Our benchmarks used Qwen3.5 (hybrid architecture, 25% full-attention layers), which falls into the "safe" category. The per-layer rotation bug would only affect us if we benchmarked pure full-attention models like Llama, Mistral, or Qwen2.5. When the fix lands, it should be safe to apply TurboQuant to all model architectures.
+
+---
+
+## Alternative Implementation: flovflo/turboquant-mlx-qwen35-kv
+
+[flovflo/turboquant-mlx-qwen35-kv](https://huggingface.co/flovflo/turboquant-mlx-qwen35-kv) is a standalone TurboQuant-inspired implementation released March 25, 2026. It takes a fundamentally different approach from PR #858.
+
+### Key Differences from PR #858
+
+| Aspect | flovflo (standalone) | PR #858 (our implementation) |
+|--------|---------------------|------------------------------|
+| **Metal kernels** | **None** — pure MLX built-ins | **9+ custom Metal GPU kernels** |
+| **Quantizer** | MLX built-in affine (`mx.quantize`) | **PolarQuant MSE** (rotation-aware, Lloyd-Max optimal) |
+| **Rotation** | Random sign-flip + permutation | **Randomized orthogonal** (proper decorrelation) |
+| **Residual correction** | Coordinate sampling (4 random coords, sign×RMS) | **QJL** (Johnson-Lindenstrauss, 1-bit signs) |
+| **Value compression** | Optional MLX affine | **Full TurboQuant pipeline** |
+| **Sign storage** | bf16 ±1.0 (2 bytes each) | Packed bits via Metal kernels |
+| **Code size** | ~400 lines Python | 3,077 lines + Metal shaders |
+| **Prefill/decode** | Same path, cache converted post-prefill | Separate optimized paths |
+
+### What flovflo Does Well
+
+- **Clean pip-installable package** with Typer CLI (`tqkv` command)
+- **Chunked prefill** with post-prefill cache conversion (avoids quantizing during prefill)
+- **Configurable group size** (auto-selects largest power-of-2 dividing head_dim)
+- **`from_kvcache()` converter** — cleanly converts standard KVCache to TurboQuant after prefill
+
+### What flovflo Is Missing
+
+1. **No PolarQuant** — uses MLX's generic affine quantizer instead of MSE-optimal rotation-aware codebooks
+2. **No real QJL** — picks 4 random coordinates and stores sign×RMS, not a proper Johnson-Lindenstrauss random projection (extremely low expressiveness)
+3. **No custom kernels** — all ops through `mx.quantize`/`mx.quantized_matmul` built-ins, adding Python-level per-token overhead
+4. **Weaker rotation** — sign-flip + permutation doesn't decorrelate dimensions as effectively as Walsh-Hadamard or structured orthogonal transforms
+5. **Sign bits not packed** — packing module exists but is unused in the main path
+
+### Verdict
+
+flovflo is a **lightweight TurboQuant-inspired prototype** useful as a reference for the integration pattern (cache subclass, attention dispatch, post-prefill conversion) but is **not a faithful implementation** of the paper's algorithms. PR #858 is significantly more complete with proper PolarQuant, QJL, and fused Metal kernels.
 
 ---
 

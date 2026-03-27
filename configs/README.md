@@ -68,12 +68,12 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 
 ```bash
 # Switch to oMLX (multi-model)
-ssh macstudio "pkill -f vllm-mlx; sleep 2; /opt/homebrew/bin/brew services start omlx"
+pkill -f vllm-mlx; sleep 2; /opt/homebrew/bin/brew services start omlx
 
 # Switch to vllm-mlx (primary, fastest)
-ssh macstudio "/opt/homebrew/bin/brew services stop omlx; sleep 2"
-ssh macstudio "nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+/opt/homebrew/bin/brew services stop omlx; sleep 2
+nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
-  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &"
+  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &
 ```

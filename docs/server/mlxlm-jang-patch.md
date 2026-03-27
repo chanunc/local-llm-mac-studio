@@ -89,7 +89,7 @@ sys.exit(main())
 #### 1. Stop oMLX (frees port 8000 and GPU memory)
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services stop omlx"
+/opt/homebrew/bin/brew services stop omlx
 ```
 
 #### 2. Copy the wrapper script
@@ -100,20 +100,20 @@ scp run_mlx_server_jang.py macstudio:~/run_mlx_server_jang.py
 
 Or create it directly:
 ```bash
-ssh macstudio "cat > ~/run_mlx_server_jang.py << 'PYEOF'
+cat > ~/run_mlx_server_jang.py << 'PYEOF'
 # paste the script above
-PYEOF"
+PYEOF
 ```
 
 #### 3. Verify jang_tools is installed
 
 ```bash
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/python -c 'from jang_tools.loader import is_jang_model; print(\"OK\")'"
+/opt/homebrew/opt/omlx/libexec/bin/python -c 'from jang_tools.loader import is_jang_model; print("OK")'
 ```
 
 If not installed:
 ```bash
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'"
+/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'
 ```
 
 ---
@@ -123,27 +123,27 @@ ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'
 ### Foreground (for testing)
 
 ```bash
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/python ~/run_mlx_server_jang.py \
+/opt/homebrew/opt/omlx/libexec/bin/python ~/run_mlx_server_jang.py \
   --model /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
-  --port 8000 --host 0.0.0.0"
+  --port 8000 --host 0.0.0.0
 ```
 
 ### Background (for benchmarking)
 
 ```bash
-ssh macstudio "nohup /opt/homebrew/opt/omlx/libexec/bin/python ~/run_mlx_server_jang.py \
+nohup /opt/homebrew/opt/omlx/libexec/bin/python ~/run_mlx_server_jang.py \
   --model /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
-  --port 8000 --host 0.0.0.0 > /tmp/mlx_jang.log 2>&1 &"
+  --port 8000 --host 0.0.0.0 > /tmp/mlx_jang.log 2>&1 &
 ```
 
 ### With tuning options
 
 ```bash
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/python ~/run_mlx_server_jang.py \
+/opt/homebrew/opt/omlx/libexec/bin/python ~/run_mlx_server_jang.py \
   --model /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
   --port 8000 --host 0.0.0.0 \
   --prompt-cache-size 2 \
-  --prompt-cache-bytes 17179869184"
+  --prompt-cache-bytes 17179869184
 ```
 
 Expected startup log:
@@ -180,13 +180,13 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 ### Stop the server
 
 ```bash
-ssh macstudio "pkill -f run_mlx_server_jang"
+pkill -f run_mlx_server_jang
 ```
 
 ### Restore oMLX
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services start omlx"
+/opt/homebrew/bin/brew services start omlx
 ```
 
 ---

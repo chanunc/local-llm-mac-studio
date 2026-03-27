@@ -57,15 +57,15 @@ Client (MacBook / Linux / WSL)          Mac Studio M3 Ultra
 ### Create dedicated venv
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/python3.12 -m venv ~/mlx-openai-server-env"
-ssh macstudio "~/mlx-openai-server-env/bin/pip install --upgrade pip"
-ssh macstudio "~/mlx-openai-server-env/bin/pip install mlx-openai-server"
+/opt/homebrew/bin/python3.12 -m venv ~/mlx-openai-server-env
+~/mlx-openai-server-env/bin/pip install --upgrade pip
+~/mlx-openai-server-env/bin/pip install mlx-openai-server
 ```
 
 ### Install JANG support
 
 ```bash
-ssh macstudio "~/mlx-openai-server-env/bin/pip install jang"
+~/mlx-openai-server-env/bin/pip install jang
 ```
 
 The JANG wrapper script (`~/run_mlx_openai_jang.py`) monkey-patches `mlx_lm.utils.load` before the server imports it. See [JANG Model Support](#jang-model-support) for details.
@@ -77,32 +77,32 @@ The JANG wrapper script (`~/run_mlx_openai_jang.py`) monkey-patches `mlx_lm.util
 ### Start server (standard MLX model)
 
 ```bash
-ssh macstudio "~/mlx-openai-server-env/bin/mlx-openai-server launch \
+~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --model-path mlx-community/Qwen3.5-35B-A3B-4bit \
   --served-model-name mlx-community/Qwen3.5-35B-A3B-4bit \
-  --port 8000 --host 0.0.0.0"
+  --port 8000 --host 0.0.0.0
 ```
 
 ### Start server (JANG model)
 
 ```bash
-ssh macstudio "nohup ~/mlx-openai-server-env/bin/python ~/run_mlx_openai_jang.py launch \
+nohup ~/mlx-openai-server-env/bin/python ~/run_mlx_openai_jang.py launch \
   --model-path ~/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
   --served-model-name JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K \
   --port 8000 --host 0.0.0.0 \
   --reasoning-parser qwen3_5 \
   --no-log-file \
-  > /tmp/mlx-openai-server.log 2>&1 &"
+  > /tmp/mlx-openai-server.log 2>&1 &
 ```
 
 ### Start with speculative decoding
 
 ```bash
-ssh macstudio "~/mlx-openai-server-env/bin/mlx-openai-server launch \
+~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --model-path mlx-community/Qwen3.5-35B-A3B-4bit \
   --draft-model-path mlx-community/Qwen3-0.6B-4bit \
   --num-draft-tokens 3 \
-  --port 8000 --host 0.0.0.0"
+  --port 8000 --host 0.0.0.0
 ```
 
 ### Start with YAML config (multi-model)
@@ -124,8 +124,8 @@ models:
 ```
 
 ```bash
-ssh macstudio "~/mlx-openai-server-env/bin/mlx-openai-server launch \
-  --config ~/mlx-openai-server-config.yaml"
+~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-config.yaml
 ```
 
 ### Key CLI flags
@@ -143,15 +143,15 @@ ssh macstudio "~/mlx-openai-server-env/bin/mlx-openai-server launch \
 ### Stop server
 
 ```bash
-ssh macstudio "pkill -f mlx-openai-server"
+pkill -f mlx-openai-server
 # or for JANG wrapper
-ssh macstudio "pkill -f run_mlx_openai_jang"
+pkill -f run_mlx_openai_jang
 ```
 
 ### View logs
 
 ```bash
-ssh macstudio "tail -20 /tmp/mlx-openai-server.log"
+tail -20 /tmp/mlx-openai-server.log
 ```
 
 ---

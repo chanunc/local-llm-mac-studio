@@ -39,55 +39,54 @@ These steps install the fork into the existing Homebrew oMLX venv. Run from your
 
 ### 1. Stop oMLX
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services stop jundot/omlx/omlx"
+/opt/homebrew/bin/brew services stop jundot/omlx/omlx
 ```
 
 ### 2. Back up original package
 ```bash
-ssh macstudio "SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv \$SITE/omlx \$SITE/omlx.bak"
+SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv $SITE/omlx $SITE/omlx.bak
 ```
 
 ### 3. Install JANG dependency
 ```bash
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'"
+/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'
 ```
 
 ### 4. Install fork (no-deps to preserve existing packages)
 ```bash
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=\$(ssh macstudio 'echo /opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages') git+https://github.com/AlexTzk/omlx.git@main"
+/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages git+https://github.com/AlexTzk/omlx.git@main
 ```
 
 ### 5. Re-apply hot cache patch
 The fork overwrites `engine_pool.py` and `model_settings.py`, so the per-model hot cache patch must be reapplied:
 ```bash
-scp scripts/patch_omlx_cache.py macstudio:/tmp/patch_omlx_cache.py
-ssh macstudio "python3 /tmp/patch_omlx_cache.py"
+python3 /tmp/patch_omlx_cache.py
 ```
 
 ### 6. Fix starlette dashboard bug
 oMLX v0.2.20 pulls starlette 1.0.0 which breaks the admin dashboard ([#361](https://github.com/jundot/omlx/issues/361)):
 ```bash
-ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
+/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed
 ```
 
 ### 7. Start oMLX
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services start jundot/omlx/omlx"
+/opt/homebrew/bin/brew services start jundot/omlx/omlx
 ```
 
 ### 8. Verify
 ```bash
 # Check all models discovered
-ssh macstudio "curl -s http://localhost:8000/v1/models -H 'Authorization: Bearer <YOUR_API_KEY>' | python3 -c 'import sys,json; [print(m[\"id\"]) for m in json.load(sys.stdin)[\"data\"]]'"
+curl -s http://localhost:8000/v1/models -H 'Authorization: Bearer <YOUR_API_KEY>' | python3 -c 'import sys,json; [print(m["id"]) for m in json.load(sys.stdin)["data"]]'
 
 # Check JANG models detected
-ssh macstudio "grep -i jang ~/.omlx/logs/server.log | tail -5"
+grep -i jang ~/.omlx/logs/server.log | tail -5
 
 # Test inference on a JANG model
-ssh macstudio "curl -s http://localhost:8000/v1/chat/completions \
+curl -s http://localhost:8000/v1/chat/completions \
   -H 'Authorization: Bearer <YOUR_API_KEY>' \
   -H 'Content-Type: application/json' \
-  -d '{\"model\": \"JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}], \"max_tokens\": 10}'"
+  -d '{"model": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}'
 ```
 
 ---
@@ -131,24 +130,23 @@ After `brew upgrade omlx`, the fork is overwritten. Re-apply the full stack:
 
 ```bash
 # 1. Stop service
-ssh macstudio "/opt/homebrew/bin/brew services stop jundot/omlx/omlx"
+/opt/homebrew/bin/brew services stop jundot/omlx/omlx
 
 # 2. Move new omlx package aside
-ssh macstudio "SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv \$SITE/omlx \$SITE/omlx.bak"
+SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv $SITE/omlx $SITE/omlx.bak
 
 # 3. Install JANG dependency + fork
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'"
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=\$SITE git+https://github.com/AlexTzk/omlx.git@main"
+/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'
+/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=$SITE git+https://github.com/AlexTzk/omlx.git@main
 
 # 4. Re-apply hot cache patch
-scp scripts/patch_omlx_cache.py macstudio:/tmp/patch_omlx_cache.py
-ssh macstudio "python3 /tmp/patch_omlx_cache.py"
+python3 /tmp/patch_omlx_cache.py
 
 # 5. Fix starlette dashboard bug
-ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
+/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed
 
 # 6. Restart
-ssh macstudio "/opt/homebrew/bin/brew services start jundot/omlx/omlx"
+/opt/homebrew/bin/brew services start jundot/omlx/omlx
 ```
 
 ---
@@ -159,18 +157,17 @@ To revert to stock Homebrew oMLX (removes JANG support):
 
 ```bash
 # 1. Stop service
-ssh macstudio "/opt/homebrew/bin/brew services stop jundot/omlx/omlx"
+/opt/homebrew/bin/brew services stop jundot/omlx/omlx
 
 # 2. Reinstall clean oMLX from Homebrew
-ssh macstudio "/opt/homebrew/bin/brew reinstall omlx"
+/opt/homebrew/bin/brew reinstall omlx
 
 # 3. Re-apply non-fork patches
-ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
-scp scripts/patch_omlx_cache.py macstudio:/tmp/patch_omlx_cache.py
-ssh macstudio "python3 /tmp/patch_omlx_cache.py"
+/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed
+python3 /tmp/patch_omlx_cache.py
 
 # 4. Restart
-ssh macstudio "/opt/homebrew/bin/brew services start jundot/omlx/omlx"
+/opt/homebrew/bin/brew services start jundot/omlx/omlx
 ```
 
 JANG and nvfp4 models will no longer load after rollback. Standard MLX safetensors models are unaffected.

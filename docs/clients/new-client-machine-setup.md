@@ -128,7 +128,7 @@ EOF
 chmod 600 ~/.ssh/config
 
 # Verify
-ssh macstudio "echo OK"
+echo OK
 ```
 
 ## Troubleshooting
@@ -136,13 +136,13 @@ ssh macstudio "echo OK"
 **"Connection refused" on port 8000:**
 The oMLX server isn't running. SSH into the Mac Studio and start it:
 ```bash
-ssh macstudio "brew services start omlx"
+brew services start omlx
 ```
 
 **Slow or no response:**
 The model may still be loading into GPU memory after a restart. Check logs:
 ```bash
-ssh macstudio "tail -10 ~/.omlx/logs/server.log"
+tail -10 ~/.omlx/logs/server.log
 ```
 
 **"Host unreachable" or ping fails:**

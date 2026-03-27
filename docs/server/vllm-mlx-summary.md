@@ -59,9 +59,9 @@ vllm-mlx wraps `mlx_lm` model loading and `stream_generate()` with an async Uvic
 vllm-mlx requires Python 3.10+. Mac Studio's system Python is 3.9.6, so use Homebrew Python:
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/python3.12 -m venv ~/vllm-mlx-env"
-ssh macstudio "~/vllm-mlx-env/bin/pip install --upgrade pip"
-ssh macstudio "~/vllm-mlx-env/bin/pip install 'git+https://github.com/waybarrios/vllm-mlx.git'"
+/opt/homebrew/bin/python3.12 -m venv ~/vllm-mlx-env
+~/vllm-mlx-env/bin/pip install --upgrade pip
+~/vllm-mlx-env/bin/pip install 'git+https://github.com/waybarrios/vllm-mlx.git'
 ```
 
 ### Fix missing return bug (v0.2.6)
@@ -71,7 +71,7 @@ vllm-mlx v0.2.6 has a bug where `load_model_with_fallback()` in `vllm_mlx/utils/
 ### Install JANG support (optional)
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/pip install 'jang[mlx]>=0.1.0'"
+~/vllm-mlx-env/bin/pip install 'jang[mlx]>=0.1.0'
 ```
 
 See [vllm-mlx-jang-patch.md](vllm-mlx-jang-patch.md) for the full JANG wrapper setup.
@@ -83,37 +83,37 @@ See [vllm-mlx-jang-patch.md](vllm-mlx-jang-patch.md) for the full JANG wrapper s
 ### Start server (standard MLX model)
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/vllm-mlx serve \
+~/vllm-mlx-env/bin/vllm-mlx serve \
   mlx-community/Qwen3.5-35B-A3B-4bit \
-  --port 8000 --host 0.0.0.0"
+  --port 8000 --host 0.0.0.0
 ```
 
 ### Start server (JANG model)
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
-  --port 8000 --host 0.0.0.0"
+  --port 8000 --host 0.0.0.0
 ```
 
 ### CLI chat
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/vllm-mlx-chat mlx-community/Qwen3.5-35B-A3B-4bit"
+~/vllm-mlx-env/bin/vllm-mlx-chat mlx-community/Qwen3.5-35B-A3B-4bit
 ```
 
 ### CLI benchmark
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/vllm-mlx-bench mlx-community/Qwen3.5-35B-A3B-4bit"
+~/vllm-mlx-env/bin/vllm-mlx-bench mlx-community/Qwen3.5-35B-A3B-4bit
 ```
 
 ### Stop server
 
 ```bash
-ssh macstudio "pkill -f vllm-mlx"
+pkill -f vllm-mlx
 # or
-ssh macstudio "pkill -f run_vllm_jang"
+pkill -f run_vllm_jang
 ```
 
 ---

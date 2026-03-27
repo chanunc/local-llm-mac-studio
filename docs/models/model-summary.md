@@ -40,7 +40,6 @@ Look for repos where the files end in `.safetensors` and include a `config.json`
 
 **Option B — CLI on Mac Studio:**
 ```bash
-ssh macstudio
 pip install huggingface-hub   # if not already installed
 huggingface-cli download mlx-community/Qwen3.5-35B-A3B-8bit \
   --local-dir ~/.omlx/models/mlx-community/Qwen3.5-35B-A3B-8bit
@@ -50,7 +49,6 @@ oMLX expects the two-level org/repo directory structure: `~/.omlx/models/<org>/<
 
 **Option C — Symlink an existing download:**
 ```bash
-ssh macstudio
 ln -s /path/to/existing/model ~/.omlx/models/mlx-community/my-model
 ```
 
@@ -79,7 +77,7 @@ Common settings:
 
 Restart oMLX after editing model_settings.json:
 ```bash
-ssh macstudio "brew services restart omlx"
+brew services restart omlx
 ```
 
 ### Step 4: Update client configs

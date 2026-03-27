@@ -300,7 +300,7 @@ claude-local
 ping -c 2 <MAC_STUDIO_IP>
 
 # Is SSH working?
-ssh macstudio "echo OK"
+echo OK
 
 # Is oMLX running? (OpenAI format)
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
@@ -315,7 +315,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   | python3 -m json.tool
 
 # Memory pressure on Mac Studio
-ssh macstudio "memory_pressure | head -20"
+memory_pressure | head -20
 ```
 
 ## Usage
@@ -369,7 +369,7 @@ If a download is taking too long or you've accidentally queued too many versions
 3.  **Service Restart (Nuclear Option):**
     - Restarting the service will immediately kill all background download threads.
     ```bash
-    ssh macstudio "brew services restart omlx"
+    brew services restart omlx
     ```
     - **Note:** After a restart, you may need to manually delete any `.incomplete` or `.lock` files in `~/.omlx/models/` or its `.cache` subdirectories to free up space.
 
@@ -390,7 +390,7 @@ For advanced troubleshooting, discovery fixes, and "hard restart" commands, see:
 
 ### Restart service
 ```bash
-ssh macstudio "brew services restart omlx"
+brew services restart omlx
 ```
 
 ### Check health
@@ -407,19 +407,19 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","max_tokens":50,"messages":[{"role":"user","content":"Hi"}]}'
 
 # Memory pressure
-ssh macstudio "memory_pressure | head -20"
+memory_pressure | head -20
 ```
 
 ### Check logs
 ```bash
-ssh macstudio "tail -20 /opt/homebrew/var/log/omlx.log"   # brew service log
-ssh macstudio "tail -20 ~/.omlx/logs/server.log"           # application log
+tail -20 /opt/homebrew/var/log/omlx.log   # brew service log
+tail -20 ~/.omlx/logs/server.log           # application log
 ```
 
 ### Check service status and version
 ```bash
-ssh macstudio "brew services info omlx"  # service status
-ssh macstudio "brew info omlx"           # check version
+brew services info omlx  # service status
+brew info omlx           # check version
 ```
 
 ### Admin panel
@@ -431,10 +431,10 @@ ssh macstudio "brew info omlx"           # check version
 brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent
 
 # Mac Studio — oMLX server (Homebrew)
-ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"
+/opt/homebrew/bin/brew upgrade omlx
 ```
 
-# Then restart: ssh macstudio "brew services restart omlx"
+# Then restart: brew services restart omlx
 
 # Linux (narutaki) — OpenClaw
 ssh narutaki "openclaw update"

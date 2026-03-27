@@ -67,10 +67,10 @@ Need a model in oMLX?
 
 ```bash
 # Install mlx-lm on Mac Studio
-ssh macstudio "/opt/homebrew/bin/pip3.11 install mlx-lm"
+/opt/homebrew/bin/pip3.11 install mlx-lm
 
 # Upgrade (recommended before converting)
-ssh macstudio "/opt/homebrew/bin/pip3.11 install --upgrade mlx-lm transformers"
+/opt/homebrew/bin/pip3.11 install --upgrade mlx-lm transformers
 ```
 
 **Version requirements for Qwen3.5 models:**
@@ -148,7 +148,7 @@ This example converts `huihui-ai/Qwen3.5-35B-A3B-abliterated` to 4-bit MLX. Adap
 ### Step 1: Check disk space
 
 ```bash
-ssh macstudio "df -h ~"
+df -h ~
 ```
 
 **Need:** BF16 source size + output size + 10 GB headroom. For a 35B MoE: ~90 GB free minimum.
@@ -156,7 +156,7 @@ ssh macstudio "df -h ~"
 ### Step 2: Install/upgrade mlx-lm
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/pip3.11 install --upgrade mlx-lm transformers"
+/opt/homebrew/bin/pip3.11 install --upgrade mlx-lm transformers
 ```
 
 ### Step 3: Download HF BF16 source
@@ -164,7 +164,6 @@ ssh macstudio "/opt/homebrew/bin/pip3.11 install --upgrade mlx-lm transformers"
 Find the original HuggingFace model the GGUF was derived from. For the abliterated variant:
 
 ```bash
-ssh macstudio
 /opt/homebrew/bin/hf download \
   huihui-ai/Qwen3.5-35B-A3B-abliterated \
   --local-dir ~/tmp/source-hf
@@ -176,7 +175,6 @@ ssh macstudio
 
 **4-bit (default — smaller, fast):**
 ```bash
-ssh macstudio
 /opt/homebrew/bin/mlx_lm.convert \
   --hf-path ~/tmp/source-hf \
   --mlx-path ~/.omlx/models/huihui-ai/Qwen3.5-35B-A3B-abliterated-4bit-mlx \
@@ -226,10 +224,6 @@ ssh macstudio
 
 ### Step 5: Register in oMLX model_settings.json
 
-```bash
-ssh macstudio
-```
-
 Edit `~/.omlx/model_settings.json` and add inside the `"models"` object:
 
 ```json
@@ -246,27 +240,27 @@ Edit `~/.omlx/model_settings.json` and add inside the `"models"` object:
 ### Step 6: Restart oMLX
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services restart omlx"
+/opt/homebrew/bin/brew services restart omlx
 ```
 
 ### Step 7: Verify
 
 ```bash
 # Model should appear in list
-ssh macstudio "curl -s http://localhost:8000/v1/models \
-  -H 'Authorization: Bearer test-key-123' | python3 -m json.tool | grep id"
+curl -s http://localhost:8000/v1/models \
+  -H 'Authorization: Bearer test-key-123' | python3 -m json.tool | grep id
 
 # Quick inference test
-ssh macstudio "curl -s http://localhost:8000/v1/chat/completions \
+curl -s http://localhost:8000/v1/chat/completions \
   -H 'Authorization: Bearer test-key-123' \
   -H 'Content-Type: application/json' \
-  -d '{\"model\":\"huihui-ai/Qwen3.5-35B-A3B-abliterated-4bit-mlx\",\"max_tokens\":30,\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}]}'"
+  -d '{"model":"huihui-ai/Qwen3.5-35B-A3B-abliterated-4bit-mlx","max_tokens":30,"messages":[{"role":"user","content":"Hi"}]}'
 ```
 
 ### Step 8: Clean up BF16 source
 
 ```bash
-ssh macstudio "rm -rf ~/tmp/source-hf"
+rm -rf ~/tmp/source-hf
 ```
 
 This frees ~70 GB. Do this after confirming inference works.

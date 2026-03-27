@@ -376,7 +376,7 @@ claude-local
 ping -c 2 <MAC_STUDIO_IP>
 
 # Is SSH working?
-ssh macstudio "echo OK"
+echo OK
 
 # Is mlx-lm running?
 curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool
@@ -390,7 +390,7 @@ curl -s http://<MAC_STUDIO_IP>:3456/v1/messages \
   | python3 -m json.tool
 
 # Memory pressure on Mac Studio
-ssh macstudio "memory_pressure | head -20"
+memory_pressure | head -20
 ```
 
 ## Usage
@@ -409,8 +409,6 @@ To swap `Qwen3-Coder-Next-4bit` for a different model (e.g., upgrading to 8-bit 
 
 ### Step 1: Download the new model
 ```bash
-ssh macstudio
-
 # Download (replace with your model name)
 mlx_lm.manage --scan mlx-community/YOUR-NEW-MODEL
 ```
@@ -469,8 +467,8 @@ Filter by size to find models that fit your memory budget.
 
 ### Restart services
 ```bash
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist"
-ssh macstudio "launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist"
+launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist && launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.mlx-lm-server.plist
+launchctl unload ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist && launchctl load ~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist
 ```
 
 ### Check health
@@ -486,13 +484,13 @@ curl http://<MAC_STUDIO_IP>:3456/v1/messages \
   -d '{"model":"claude-sonnet-4-20250514","max_tokens":50,"messages":[{"role":"user","content":"Hi"}]}'
 
 # Memory pressure
-ssh macstudio "memory_pressure | head -20"
+memory_pressure | head -20
 ```
 
 ### Check logs
 ```bash
-ssh macstudio "tail -20 ~/llm-server/logs/mlx-lm-server.err"
-ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
+tail -20 ~/llm-server/logs/mlx-lm-server.err
+tail -20 ~/llm-server/logs/claude-code-proxy.err
 ```
 ### Upgrade all tools
 ```bash
@@ -500,7 +498,7 @@ ssh macstudio "tail -20 ~/llm-server/logs/claude-code-proxy.err"
 brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent
 
 # Mac Studio — server + router (Homebrew)
-ssh macstudio "/opt/homebrew/bin/brew upgrade mlx-lm claude-code-router"
+/opt/homebrew/bin/brew upgrade mlx-lm claude-code-router
 ```
 
 # Then restart both services (see above)

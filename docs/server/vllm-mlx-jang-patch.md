@@ -85,15 +85,15 @@ sys.exit(main())
 vllm-mlx requires Python 3.10+. Use Homebrew Python 3.12:
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/python3.12 -m venv ~/vllm-mlx-env"
-ssh macstudio "~/vllm-mlx-env/bin/pip install --upgrade pip"
-ssh macstudio "~/vllm-mlx-env/bin/pip install 'git+https://github.com/waybarrios/vllm-mlx.git'"
+/opt/homebrew/bin/python3.12 -m venv ~/vllm-mlx-env
+~/vllm-mlx-env/bin/pip install --upgrade pip
+~/vllm-mlx-env/bin/pip install 'git+https://github.com/waybarrios/vllm-mlx.git'
 ```
 
 #### 2. Install jang_tools in the venv
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/pip install 'jang[mlx]>=0.1.0'"
+~/vllm-mlx-env/bin/pip install 'jang[mlx]>=0.1.0'
 ```
 
 #### 3. Fix the missing return bug (v0.2.6)
@@ -101,7 +101,7 @@ ssh macstudio "~/vllm-mlx-env/bin/pip install 'jang[mlx]>=0.1.0'"
 vllm-mlx v0.2.6 has a bug where `load_model_with_fallback()` does not return the model after a successful `mlx_lm.load()` call. Patch it:
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/python3.12 -c \"
+/opt/homebrew/bin/python3.12 -c "
 path = '/Users/chanunc/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/utils/tokenizer.py'
 with open(path) as f:
     content = f.read()
@@ -113,12 +113,12 @@ content = content.replace(old, new)
 with open(path, 'w') as f:
     f.write(content)
 print('Patched successfully')
-\""
+"
 ```
 
 Verify the patch:
 ```bash
-ssh macstudio "grep -A1 'model, tokenizer = load(model_name' ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/utils/tokenizer.py"
+grep -A1 'model, tokenizer = load(model_name' ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/utils/tokenizer.py
 ```
 
 Expected output:
@@ -130,7 +130,7 @@ Expected output:
 #### 4. Stop oMLX (frees port 8000)
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services stop omlx"
+/opt/homebrew/bin/brew services stop omlx
 ```
 
 #### 5. Copy the wrapper script
@@ -146,17 +146,17 @@ scp run_vllm_jang.py macstudio:~/run_vllm_jang.py
 ### Foreground (for testing)
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
-  --port 8000 --host 0.0.0.0"
+  --port 8000 --host 0.0.0.0
 ```
 
 ### Background (for benchmarking)
 
 ```bash
-ssh macstudio "nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
-  --port 8000 --host 0.0.0.0 > /tmp/vllm_jang.log 2>&1 &"
+  --port 8000 --host 0.0.0.0 > /tmp/vllm_jang.log 2>&1 &
 ```
 
 Expected startup log:
@@ -207,13 +207,13 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
 ### Stop the server
 
 ```bash
-ssh macstudio "pkill -f run_vllm_jang"
+pkill -f run_vllm_jang
 ```
 
 ### Restore oMLX
 
 ```bash
-ssh macstudio "/opt/homebrew/bin/brew services start omlx"
+/opt/homebrew/bin/brew services start omlx
 ```
 
 ---

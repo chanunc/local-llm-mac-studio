@@ -200,7 +200,7 @@ If not, add the route (see WSL-Specific section above).
 - Verify the server is running: `curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H "Authorization: Bearer <YOUR_API_KEY>"`
 - Restart oMLX:
   ```bash
-  ssh macstudio "brew services restart omlx"
+  brew services restart omlx
   ```
 
 ### Slow or hanging responses

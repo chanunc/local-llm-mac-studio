@@ -26,13 +26,13 @@ Sometimes `brew services restart omlx` fails to kill the existing Python process
 **Run this command to force a clean reload:**
 ```bash
 # Hard kill all oMLX processes and restart the service
-ssh macstudio "pkill -9 -f omlx && sleep 2 && brew services restart omlx"
+pkill -9 -f omlx && sleep 2 && brew services restart omlx
 ```
 
 ### Method C: Clear Discovery Cache
 If the server is stuck on an old list of models, clear the internal metadata cache:
 ```bash
-ssh macstudio "rm -rf ~/.omlx/cache/* && brew services restart omlx"
+rm -rf ~/.omlx/cache/* && brew services restart omlx
 ```
 
 ## 2. Managing Model Aliases
@@ -58,21 +58,21 @@ Since background downloads via the API can be opaque, use these commands to moni
 **Check Log Files:**
 ```bash
 # Check the last few lines of active download logs
-ssh macstudio "tail -n 5 ~/download_6bit.log"
-ssh macstudio "tail -n 5 ~/download_8bit.log"
+tail -n 5 ~/download_6bit.log
+tail -n 5 ~/download_8bit.log
 ```
 
 **Check Disk Usage:**
 ```bash
 # Monitor the Hugging Face cache size
-ssh macstudio "du -sh ~/.cache/huggingface/hub/models--mlx-community--Qwen*"
+du -sh ~/.cache/huggingface/hub/models--mlx-community--Qwen*
 ```
 
 ## 4. Port Conflicts
 
 If the server fails to start, check if another process is holding port 8000:
 ```bash
-ssh macstudio "lsof -i :8000"
+lsof -i :8000
 ```
 If you see a process, use `kill -9 <PID>` to free the port.
 
@@ -83,24 +83,23 @@ oMLX currently runs with the [AlexTzk/omlx fork](https://github.com/AlexTzk/omlx
 **After `brew upgrade omlx`**, re-apply the full stack:
 ```bash
 # 1. Stop service
-ssh macstudio "/opt/homebrew/bin/brew services stop jundot/omlx/omlx"
+/opt/homebrew/bin/brew services stop jundot/omlx/omlx
 
 # 2. Move old omlx package aside
-ssh macstudio "SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv \$SITE/omlx \$SITE/omlx.bak"
+SITE=/opt/homebrew/opt/omlx/libexec/lib/python3.11/site-packages && mv $SITE/omlx $SITE/omlx.bak
 
 # 3. Install JANG dependency + fork
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'"
-ssh macstudio "/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=\$SITE git+https://github.com/AlexTzk/omlx.git@main"
+/opt/homebrew/opt/omlx/libexec/bin/pip install 'jang[mlx]>=0.1.0'
+/opt/homebrew/opt/omlx/libexec/bin/pip install --no-deps --target=$SITE git+https://github.com/AlexTzk/omlx.git@main
 
 # 4. Re-apply hot cache patch
-scp scripts/patch_omlx_cache.py macstudio:/tmp/patch_omlx_cache.py
-ssh macstudio "python3 /tmp/patch_omlx_cache.py"
+python3 /tmp/patch_omlx_cache.py
 
 # 5. Fix starlette dashboard bug
-ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
+/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed
 
 # 6. Restart
-ssh macstudio "/opt/homebrew/bin/brew services start jundot/omlx/omlx"
+/opt/homebrew/bin/brew services start jundot/omlx/omlx
 ```
 
 **Known JANG limitations:**
@@ -117,8 +116,8 @@ GET /admin/dashboard → 500 (unhandled): unhashable type: 'dict'
 
 Fix:
 ```bash
-ssh macstudio '/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed'
-ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
+/opt/homebrew/opt/omlx/libexec/bin/pip install "starlette==0.46.2" --ignore-installed
+/opt/homebrew/bin/brew services restart jundot/omlx/omlx
 ```
 
 ## 7. Debug Logging
@@ -126,27 +125,27 @@ ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
 To trace incoming requests and model responses:
 ```bash
 # Enable debug logging
-ssh macstudio "python3 -c \"
+python3 -c "
 import json
 with open('/Users/chanunc/.omlx/settings.json') as f:
     cfg = json.load(f)
 cfg['server']['log_level'] = 'debug'
 with open('/Users/chanunc/.omlx/settings.json', 'w') as f:
     json.dump(cfg, f, indent=4)
-\""
-ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
+"
+/opt/homebrew/bin/brew services restart jundot/omlx/omlx
 
 # Watch live
-ssh macstudio "tail -f ~/.omlx/logs/server.log"
+tail -f ~/.omlx/logs/server.log
 
 # Revert to info when done
-ssh macstudio "python3 -c \"
+python3 -c "
 import json
 with open('/Users/chanunc/.omlx/settings.json') as f:
     cfg = json.load(f)
 cfg['server']['log_level'] = 'info'
 with open('/Users/chanunc/.omlx/settings.json', 'w') as f:
     json.dump(cfg, f, indent=4)
-\""
-ssh macstudio "/opt/homebrew/bin/brew services restart jundot/omlx/omlx"
+"
+/opt/homebrew/bin/brew services restart jundot/omlx/omlx
 ```

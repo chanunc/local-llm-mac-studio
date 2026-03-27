@@ -22,13 +22,13 @@ nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &
 
 # mlx-openai-server (multi-model, low overhead)
-pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2
+# stop other servers first: pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2
 JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
   > /tmp/mlx-openai-server.log 2>&1 &
 
 # oMLX (9 models, hot-swap)
-pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2
+# stop other servers first: pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2
 /opt/homebrew/bin/brew services start omlx
 ```
 

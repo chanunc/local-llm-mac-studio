@@ -31,7 +31,9 @@ JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch 
 # oMLX — 9 models, hot-swap
 /opt/homebrew/bin/brew services start omlx
 
-# stop servers: pkill -f vllm-mlx; pkill -f mlx-openai-server; brew services stop omlx
+pkill -f vllm-mlx                                                                # stop vllm-mlx
+pkill -f mlx-openai-server                                                       # stop mlx-openai-server
+/opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
 ```
 
 ### 🩺 Health Check

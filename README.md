@@ -13,11 +13,51 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
 ## ⚡ Quick Start
 
 ```bash
-# Health check
+# Health check (no auth — vllm-mlx / mlx-openai-server)
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool
+
+# Health check (with auth — oMLX)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
 
 # Admin dashboard (oMLX only)
 open http://<MAC_STUDIO_IP>:8000/admin
+```
+
+### Quick Test by Server
+
+**vllm-mlx** (no auth required):
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
+    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
+    "max_tokens": 50
+  }' | python3 -m json.tool
+```
+
+**oMLX** (auth required):
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -d '{
+    "model": "mlx-community/Qwen3-Coder-Next-4bit",
+    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
+    "max_tokens": 50
+  }' | python3 -m json.tool
+```
+
+**mlx-openai-server** (no auth required):
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
+    "max_tokens": 50
+  }' | python3 -m json.tool
 ```
 
 ---

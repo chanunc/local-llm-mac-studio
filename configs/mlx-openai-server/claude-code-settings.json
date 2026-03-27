@@ -1,0 +1,9 @@
+{
+  "_comment": "mlx-openai-server does NOT support Anthropic API. Claude Code requires claude-code-router for Anthropic-to-OpenAI translation, or use OpenAI-compatible provider mode.",
+  "env": {
+    "OPENAI_BASE_URL": "http://<MAC_STUDIO_IP>:8000/v1",
+    "OPENAI_API_KEY": "not-needed",
+    "CLAUDE_CODE_USE_OPENAI": "1",
+    "CLAUDE_CODE_OPENAI_MODEL": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
+  }
+}

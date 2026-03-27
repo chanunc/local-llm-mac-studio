@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:8000/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K": {
+          "name": "Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
+        },
+        "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4": {
+          "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid, On-Demand)",
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+  "small_model": "macstudio/RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4"
+}

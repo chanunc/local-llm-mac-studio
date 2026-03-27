@@ -174,14 +174,7 @@ tail -20 /tmp/mlx-openai-server.log
 
 ## JANG Model Support
 
-Not supported natively. Requires a monkey-patch wrapper script (`~/run_mlx_openai_jang.py`) that:
-
-1. Patches `mlx_lm.utils.load` before any server imports
-2. Patches the already-imported `load` reference in `app.models.mlx_lm`
-3. Detects JANG model paths via `jang_tools.loader.is_jang_model()`
-4. Delegates to `jang_tools.load_jang_model()` which returns the standard `mlx_lm.models.qwen3_5_moe.Model` class
-
-The wrapper is at `~/run_mlx_openai_jang.py` on the Mac Studio. Unlike vllm-mlx (which only needs `mlx_lm.load` patched), mlx-openai-server uses `from mlx_lm.utils import load` directly, so both `mlx_lm.utils.load` and the module-level `load` reference must be patched.
+Not supported natively. Requires a `.pth`-based patch in the venv that intercepts `mlx_lm.load()` at Python startup — works in `multiprocessing.spawn` subprocesses and survives pip upgrades. See [Maintenance](mlx-openai-server-maintenance.md) for patch installation, multi-model YAML config, and upgrade instructions.
 
 ---
 
@@ -241,7 +234,7 @@ Tested on Mac Studio M3 Ultra with Qwen3.5-35B-A3B JANG 4K. Full results in [mod
 1. **64K context performance drop**: 15% overhead vs standalone at 64K context, compared to vllm-mlx's 3%. The overhead likely comes from the inference worker queue and reasoning parser processing.
 2. **No Anthropic API**: Clients expecting Anthropic format (Claude Code) need a translation layer like `claude-code-router`.
 3. **Single-request concurrency**: The InferenceWorker processes one request at a time. Multiple simultaneous clients will queue.
-4. **JANG not native**: Requires monkey-patch wrapper with two-level patching (module + import reference).
+4. **JANG not native**: Requires `.pth`-based patch in the venv (`jang_patch.pth` + `jang_mlx_patch.py`). Survives pip upgrades but must be reinstalled if the venv is recreated.
 5. **Streaming format**: Uses `reasoning_content` field for think tokens instead of `content`. Benchmark scripts and clients expecting `content` or `reasoning` fields will miss these tokens.
 6. **Separate venv**: Cannot share the vllm-mlx or oMLX venvs due to dependency conflicts.
 
@@ -252,5 +245,7 @@ Tested on Mac Studio M3 Ultra with Qwen3.5-35B-A3B JANG 4K. Full results in [mod
 | File | Purpose |
 |------|---------|
 | `~/mlx-openai-server-env/` | Python 3.12 venv |
-| `~/run_mlx_openai_jang.py` | JANG monkey-patch wrapper |
+| `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config |
 | `/tmp/mlx-openai-server.log` | Server log (when started with redirect) |
+
+Full file list including JANG patch files: [Maintenance](mlx-openai-server-maintenance.md#files-on-mac-studio)

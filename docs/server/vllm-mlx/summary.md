@@ -110,24 +110,13 @@ See [jang-patch.md](jang-patch.md) for the full JANG wrapper setup.
 
 ### Debug logging
 
-vllm-mlx has no built-in log level flag. The JANG wrapper supports `VLLM_MLX_LOG_LEVEL`:
+vllm-mlx has no `--log-level` flag. Apply the patch once (see [maintenance guide](maintenance.md#7-debug-logging)), then use `VLLM_MLX_LOG_LEVEL` with any launch method:
 
 ```bash
 VLLM_MLX_LOG_LEVEL=DEBUG ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
   --port 8000 --host 0.0.0.0
-```
-
-Since `logging.basicConfig()` only applies on the first call, the wrapper's level takes effect before vllm-mlx's `server.py` imports — so DEBUG output covers both the JANG patch and vllm-mlx internals.
-
-For standard (non-JANG) models, there is no built-in log level control. Set the root logger level via Python:
-
-```bash
-~/vllm-mlx-env/bin/python -c "
-import logging; logging.basicConfig(level=logging.DEBUG)
-from vllm_mlx.cli import main; main()
-" serve mlx-community/Qwen3.5-35B-A3B-4bit --port 8000 --host 0.0.0.0
 ```
 
 ### Stop server

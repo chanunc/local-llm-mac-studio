@@ -226,9 +226,17 @@ tail -f /tmp/vllm-mlx.log
 tail -50 /tmp/vllm-mlx.log
 ```
 
-### Verbose startup
+### Enable DEBUG level
 
-vllm-mlx has no `--log-level` flag. Use the `VLLM_MLX_LOG_LEVEL` env var (supported by the JANG wrapper):
+vllm-mlx has no `--log-level` flag. Apply the patch once to make `VLLM_MLX_LOG_LEVEL` work natively with any launch method:
+
+```bash
+~/vllm-mlx-env/bin/python scripts/patch_vllm_mlx_log_level.py
+```
+
+Re-run after every `pip install --upgrade vllm-mlx` (upgrades overwrite `server.py`). Idempotent — safe to re-run at any time.
+
+Then use the env var with any server start command:
 
 ```bash
 VLLM_MLX_LOG_LEVEL=DEBUG ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
@@ -237,7 +245,7 @@ VLLM_MLX_LOG_LEVEL=DEBUG ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   --port 8000 --host 0.0.0.0
 ```
 
-The wrapper calls `logging.basicConfig()` before vllm-mlx imports, so the level applies to all loggers including vllm-mlx internals.
+**Note:** The JANG wrapper (`run_vllm_jang.py`) already supports `VLLM_MLX_LOG_LEVEL` independently — it calls `logging.basicConfig()` before importing vllm-mlx so the patch is a no-op in JANG scenarios. The patch closes the gap for direct `vllm-mlx serve` (standard MLX models).
 
 ### Health checks
 

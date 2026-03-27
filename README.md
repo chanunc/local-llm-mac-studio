@@ -71,17 +71,17 @@ Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 
 | Server | 512 | 8K | 32K | 64K |
 |:-------|:---:|:--:|:---:|:---:|
-| vllm-mlx | **68.8** | **63.8** | **56.4** | **51.7** |
-| mlx-lm | 68.4 | 62.7 | 54.0 | 47.7 |
+| vllm-mlx | **68.8** 🥇 | **63.8** 🥇 | **56.4** 🥇 | **51.7** 🥇 |
+| mlx-lm | 68.4 🥈 | 62.7 🥈 | 54.0 🥈 | 47.7 🥈 |
 | oMLX | 66.5 | 56.9 | 40.4 | 34.8 |
 
 **Qwen3.5-35B-A3B JANG** (MoE, primary architecture):
 
 | Server | 32K | 64K |
 |:-------|:---:|:---:|
-| vllm-mlx | **83.8** | **71.6** |
-| mlx-openai-server | 81.3 | 62.8 |
-| mlx-lm | 77.6 | 65.1 |
+| vllm-mlx | **83.8** 🥇 | **71.6** 🥇 |
+| mlx-openai-server | 81.3 🥈 | 62.8 |
+| mlx-lm | 77.6 | 65.1 🥈 |
 | oMLX | 59.9 | 49.0 |
 
 Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/model-benchmark-turboquant-jang.md)

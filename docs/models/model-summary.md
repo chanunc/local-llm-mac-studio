@@ -15,6 +15,7 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 - [Nemotron 3 Super 120B-A12B (4.5-bit)](#nemotron-3-super-120b-a12b-45-bit) — NVIDIA 120B MoE · Mamba-2 + Attention hybrid
 - [Nemotron Cascade 2 30B-A3B (nvfp4)](#nemotron-cascade-2-30b-a3b-nvfp4) — Mamba-2 + MoE + Attention hybrid · 3B active
 - [Nemotron Server Compatibility](#nemotron-server-compatibility) — vllm-mlx only; mlx-openai-server and oMLX broken
+- [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
 
 ---
@@ -349,6 +350,55 @@ Nemotron also requires specialized parsers:
 ```
 
 On mlx-openai-server and oMLX, Nemotron models may work for simple direct chat (without tools), but responses will be degraded due to missing ChatML formatting. Tool-using clients (OpenClaw, Pi) will see the model echo raw XML tags instead of answering.
+
+---
+
+## Mistral Small 4 119B-A6B JANG 2L
+
+Mistral's 119B sparse MoE with 6B active params and Pixtral vision encoder. JANG_2L quantization compresses to just 30 GB — 52% smaller than MLX Community 4-bit (63 GB) — while achieving 94% MMLU and **5x faster prefill** (216 vs 43 tok/s). Uses MLA (Multi-Head Latent Attention) and 128 routed MoE experts with top-4 routing.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [MistralAI/Mistral-Small-4-119B-2603](https://huggingface.co/mistralai/Mistral-Small-4-119B-2603) |
+| JANG 2L | [JANGQ-AI/Mistral-Small-4-119B-A6B-JANG_2L](https://huggingface.co/JANGQ-AI/Mistral-Small-4-119B-A6B-JANG_2L) |
+| Vendor | Mistral AI; JANG quantization by JANGQ-AI |
+| Parameters | 119B total, 6B active (128 experts, top-4 routed + shared) |
+| Density | Sparse MoE |
+| Architecture | 36 MoE layers, MLA attention (kv_lora_rank=256, q_lora_rank=1024) |
+| Vision | Pixtral encoder, 1540px max image resolution |
+| Quantization | JANG_2L: 2.14-bit avg — attention 8-bit, shared experts 6-bit, routed experts 2-bit, router 16-bit |
+| Tokens/sec | **82 tok/s** gen, **216 tok/s** prefill (M3 Ultra) |
+| On-disk size | ~30 GB |
+| Peak RAM | 40 GB |
+| Context Size | Not specified (base model supports 128K) |
+| Reasoning | `[THINK]`/`[/THINK]` tags via `reasoning_effort: "high"` |
+| Key Benchmarks | MMLU 94% (200Q, reasoning mode), 5 subjects at 100% |
+
+**JANG variant comparison:**
+
+| Variant | Bits | Size | RAM | Gen tok/s | Prefill tok/s | Fits on |
+|---------|------|------|-----|-----------|---------------|---------|
+| **JANG_2L** | 2.14 | 30 GB | 40 GB | 82 | 216 | 48 GB+ |
+| JANG_4M | 4.08 | 57 GB | 68 GB | 80 | 202 | 96 GB+ |
+| JANG_6M | 6.04 | 84 GB | 95 GB | 74 | 160 | 128 GB+ |
+| MLX Community 4-bit | 4.0 | 63 GB | 68 GB | 84 | 43 | 96 GB+ |
+
+**Server compatibility:**
+
+| Server | Chat + Tools | Reasoning (`[THINK]`) | Status |
+|--------|-------------|----------------------|--------|
+| vllm-mlx | Works | Needs `[THINK]` parser | Chat + tools work |
+| mlx-openai-server | Works | No `[THINK]` parser | Chat + tools work |
+| oMLX | Works | TBD | Chat + tools work |
+
+Chat template is in `tokenizer_config.json` (5,919 chars) with full tool support using Mistral native format (`[INST]`, `[TOOL_CALLS]`, `[ARGS]`). No Nemotron-style compatibility issues.
+
+**Caveats:**
+- Must use `temperature=1.0` — greedy decoding (temp=0) causes infinite thinking loops
+- Recommended sampling: `top_p=0.95`, `top_k=40`
+- JANG is the only working quantization for this model — MLX uniform 2/3/4-bit all produce ~25% MMLU (broken)
+- Reasoning uses `[THINK]`/`[/THINK]` (Mistral format), not `<think>`/`</think>` (Qwen format) — streaming reasoning parsing may not work on all servers
+- MMLU benchmark used reasoning mode enabled — single-pass without reasoning would score lower
 
 ---
 

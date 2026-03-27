@@ -7,8 +7,6 @@
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
 - [JANG Model Support](#jang-model-support)
-- [Performance](#performance)
-- [Comparison with vllm-mlx](#comparison-with-vllm-mlx)
 - [Known Issues](#known-issues)
 
 ---
@@ -85,7 +83,7 @@ The JANG wrapper script (`~/run_mlx_openai_jang.py`) monkey-patches `mlx_lm.util
 
 ### Start server (JANG model)
 
-**Important:** Any command that loads a JANG model must be prefixed with `JANG_PATCH_ENABLED=1`. Without it, the `.pth` patch is dormant and JANG models will fail with a shape mismatch error. See [Maintenance](mlx-openai-server-maintenance.md) for patch details.
+**Important:** Any command that loads a JANG model must be prefixed with `JANG_PATCH_ENABLED=1`. Without it, the `.pth` patch is dormant and JANG models will fail with a shape mismatch error. See [Maintenance](maintenance.md) for patch details.
 
 ```bash
 JANG_PATCH_ENABLED=1 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
@@ -159,6 +157,14 @@ tail -20 /tmp/mlx-openai-server.log
 
 ---
 
+## Quick Test
+
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K","messages":[{"role":"user","content":"Say hello in one sentence"}],"max_tokens":50}' | python3 -m json.tool
+```
+
+---
+
 ## API Endpoints
 
 | Endpoint | Model Types | Purpose |
@@ -177,58 +183,7 @@ tail -20 /tmp/mlx-openai-server.log
 
 ## JANG Model Support
 
-Not supported natively. Requires a `.pth`-based patch in the venv that intercepts `mlx_lm.load()` at Python startup — works in `multiprocessing.spawn` subprocesses and survives pip upgrades. See [Maintenance](mlx-openai-server-maintenance.md) for patch installation, multi-model YAML config, and upgrade instructions.
-
----
-
-## Performance
-
-Tested on Mac Studio M3 Ultra with Qwen3.5-35B-A3B JANG 4K. Full results in [model-benchmark-api-server.md](../models/model-benchmark-api-server.md).
-
-### Generation Speed (tok/s)
-
-| Context | mlx-openai-server | vllm-mlx | mlx-lm.server | oMLX | Standalone |
-|---------|-------------------|---------|---------------|------|-----------|
-| 512 | 99.4 | **100.7** | 96.3 | 80.8 | 103.6 |
-| 8K | 93.9 | **95.6** | 90.7 | 76.2 | 98.0 |
-| 32K | 81.3 | **83.8** | 77.6 | 59.9 | 86.5 |
-| 64K | 62.8 | **71.6** | 65.1 | 49.0 | 73.9 |
-
-### Server Overhead vs Standalone
-
-| Context | mlx-openai-server | vllm-mlx | mlx-lm.server | oMLX |
-|---------|-------------------|---------|---------------|------|
-| 512 | -4% | -3% | -7% | -22% |
-| 8K | -4% | -2% | -7% | -22% |
-| 32K | -6% | -3% | -10% | -31% |
-| 64K | **-15%** | -3% | -12% | -34% |
-
-### Time to First Token (seconds)
-
-| Context | mlx-openai-server | vllm-mlx | mlx-lm.server |
-|---------|-------------------|---------|---------------|
-| 512 | **0.44** | 0.56 | 0.62 |
-| 8K | 3.11 | **3.10** | 3.17 |
-| 32K | 15.17 | **15.15** | 15.33 |
-| 64K | 39.47 | **39.30** | 39.55 |
-
----
-
-## Comparison with vllm-mlx
-
-| Feature | mlx-openai-server v1.7 | vllm-mlx v0.2.6 |
-|---------|------------------------|------------------|
-| **Generation speed** | 4-15% overhead (worse at 64K) | **3-4% overhead (consistent)** |
-| **TTFT** | Slightly faster at 512 | Slightly faster at 8K+ |
-| **Prompt caching** | **Trie-based LRU, byte limits, Qwen3.5-specific** | Basic KV cache reuse |
-| **Speculative decoding** | **Built-in (`--draft-model-path`)** | Not documented |
-| **Reasoning parser** | **Native Qwen3.5 think-tag parser** | Generic |
-| **Multi-model** | **Native YAML config, on-demand loading** | Single model only |
-| **Continuous batching** | No (single-request queue) | **Yes** |
-| **Anthropic API** | No (OpenAI only) | **Native `/v1/messages`** |
-| **Multimodal** | **Vision, image gen, whisper** | Vision, audio |
-
-**Bottom line:** vllm-mlx is faster for raw single-stream throughput. mlx-openai-server has richer features (speculative decoding, prompt cache, multi-model) that could help in interactive multi-turn workflows, but at a generation speed cost — especially at long contexts.
+Not supported natively. Requires a `.pth`-based patch in the venv that intercepts `mlx_lm.load()` at Python startup — works in `multiprocessing.spawn` subprocesses and survives pip upgrades. Supports simultaneous JANG + non-JANG multi-model deployment. See [JANG Patch](jang-patch.md) for installation, multi-model config, and details.
 
 ---
 
@@ -251,4 +206,4 @@ Tested on Mac Studio M3 Ultra with Qwen3.5-35B-A3B JANG 4K. Full results in [mod
 | `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config |
 | `/tmp/mlx-openai-server.log` | Server log (when started with redirect) |
 
-Full file list including JANG patch files: [Maintenance](mlx-openai-server-maintenance.md#files-on-mac-studio)
+Full file list including JANG patch files: [JANG Patch](jang-patch.md#files-on-mac-studio)

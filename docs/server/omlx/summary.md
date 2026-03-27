@@ -195,6 +195,14 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 | Mac Studio | `~/.omlx/` | oMLX config, models, logs, and cache |
 | Mac Studio | `/etc/sysctl.conf` | GPU memory tuning |
 
+## Quick Test
+
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer <YOUR_API_KEY>" -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","messages":[{"role":"user","content":"Say hello in one sentence"}],"max_tokens":50}' | python3 -m json.tool
+```
+
+---
+
 ## Testing
 
 ### Layer 1: oMLX server — OpenAI format (port 8000)
@@ -386,7 +394,7 @@ Filter by size to find models that fit your memory budget.
 
 ## Maintenance
 
-For advanced troubleshooting, discovery fixes, and "hard restart" commands, see: **[omlx-maintenance.md](omlx-maintenance.md)**
+For advanced troubleshooting, discovery fixes, and "hard restart" commands, see: **[maintenance.md](maintenance.md)**
 
 ### Restart service
 ```bash

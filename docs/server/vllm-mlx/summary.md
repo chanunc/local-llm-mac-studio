@@ -7,7 +7,6 @@
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
 - [JANG Model Support](#jang-model-support)
-- [Performance](#performance)
 - [Known Issues](#known-issues)
 
 ---
@@ -66,7 +65,7 @@ vllm-mlx requires Python 3.10+. Mac Studio's system Python is 3.9.6, so use Home
 
 ### Fix missing return bug (v0.2.6)
 
-vllm-mlx v0.2.6 has a bug where `load_model_with_fallback()` in `vllm_mlx/utils/tokenizer.py` does not return the model tuple after a successful `mlx_lm.load()`. See [vllm-mlx-jang-patch.md](vllm-mlx-jang-patch.md#3-fix-the-missing-return-bug-v026) for the one-line fix.
+vllm-mlx v0.2.6 has a bug where `load_model_with_fallback()` in `vllm_mlx/utils/tokenizer.py` does not return the model tuple after a successful `mlx_lm.load()`. See [jang-patch.md](jang-patch.md#3-fix-the-missing-return-bug-v026) for the one-line fix.
 
 ### Install JANG support (optional)
 
@@ -74,7 +73,7 @@ vllm-mlx v0.2.6 has a bug where `load_model_with_fallback()` in `vllm_mlx/utils/
 ~/vllm-mlx-env/bin/pip install 'jang[mlx]>=0.1.0'
 ```
 
-See [vllm-mlx-jang-patch.md](vllm-mlx-jang-patch.md) for the full JANG wrapper setup.
+See [jang-patch.md](jang-patch.md) for the full JANG wrapper setup.
 
 ---
 
@@ -118,6 +117,14 @@ pkill -f run_vllm_jang
 
 ---
 
+## Quick Test
+
+```bash
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S","messages":[{"role":"user","content":"Say hello in one sentence"}],"max_tokens":50}' | python3 -m json.tool
+```
+
+---
+
 ## API Endpoints
 
 | Endpoint | Format | Purpose |
@@ -140,29 +147,7 @@ pkill -f run_vllm_jang
 
 ## JANG Model Support
 
-Not supported natively. Requires a monkey-patch wrapper script. See [vllm-mlx-jang-patch.md](vllm-mlx-jang-patch.md) for step-by-step instructions.
-
----
-
-## Performance
-
-Tested on Mac Studio M3 Ultra with Qwen3.5-35B-A3B. Full results in [model-benchmark-api-server.md](../models/model-benchmark-api-server.md).
-
-### Generation Speed (tok/s)
-
-| Context | vllm-mlx (4bit) | vllm-mlx (JANG) | oMLX (JANG) | Standalone |
-|---------|-----------------|-----------------|-------------|-----------|
-| 512 | 106.4 | 100.7 | -- | 109.7 |
-| 8K | 100.1 | 95.6 | -- | 103.0 |
-| 32K | 86.5 | 83.8 | 59.9 | 90.3 |
-| 64K | 74.3 | 71.4 | 49.0 | 76.3 |
-
-### Server Overhead vs Standalone
-
-| Context | vllm-mlx overhead | oMLX overhead |
-|---------|------------------|---------------|
-| 32K | -4% | -34% |
-| 64K | -3% | -36% |
+Not supported natively. Requires a monkey-patch wrapper script. See [jang-patch.md](jang-patch.md) for step-by-step instructions.
 
 ---
 

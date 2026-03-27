@@ -54,6 +54,7 @@ Custom model config at `~/.pi/agent/models.json`:
       "apiKey": "<YOUR_API_KEY>",
       "compat": {
         "supportsUsageInStreaming": false,
+        "supportsDeveloperRole": false,
         "maxTokensField": "max_tokens"
       },
       "models": [
@@ -122,6 +123,12 @@ You can also verify server and model status via the admin panel at `http://<MAC_
 - This is a model quality issue, not a configuration problem
 - If tool calls fail, try simpler prompts or test with a different model
 
+### 422 Unprocessable Entity with reasoning models
+
+Pi sends `role: "developer"` (OpenAI's newer role) for system prompts when `model.reasoning: true`. Local servers (oMLX, mlx-openai-server, vllm-mlx) only accept `system | user | assistant | tool`, causing a 422 validation error.
+
+**Fix:** Add `"supportsDeveloperRole": false` to the provider's `compat` block in `~/.pi/agent/models.json`. This tells Pi to use `role: "system"` instead.
+
 ### Slow or hanging responses
 
 - Check Mac Studio memory pressure: `ssh macstudio "memory_pressure"`
@@ -129,7 +136,7 @@ You can also verify server and model status via the admin panel at `http://<MAC_
 
 ## Changing the Model
 
-1. Load the new model on Mac Studio (see `../server/omlx-summary.md` "Changing the LLM Model")
+1. Load the new model on Mac Studio (see `../server/omlx/summary.md` "Changing the LLM Model")
 2. Update `~/.pi/agent/models.json`:
    - Change `id` to the new model identifier
    - Update `name`, `contextWindow`, and `maxTokens` as appropriate

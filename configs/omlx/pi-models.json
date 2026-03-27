@@ -6,6 +6,7 @@
       "apiKey": "<YOUR_API_KEY>",
       "compat": {
         "supportsUsageInStreaming": false,
+        "supportsDeveloperRole": false,
         "maxTokensField": "max_tokens"
       },
       "models": [

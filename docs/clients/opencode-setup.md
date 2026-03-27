@@ -227,7 +227,7 @@ Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"`
 
 ## Changing the Model
 
-1. Load the new model on Mac Studio (see `../server/omlx-summary.md` "Changing the LLM Model")
+1. Load the new model on Mac Studio (see `../server/omlx/summary.md` "Changing the LLM Model")
 2. Update `opencode.json`:
    - Change model ID in `models` key and in `model`/`small_model` fields
    - Adjust `context` and `output` limits for the new model

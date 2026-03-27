@@ -11,6 +11,7 @@ Pi connects **directly** to the oMLX server's OpenAI-compatible endpoint.
   - [Can't connect to Mac Studio](#cant-connect-to-mac-studio)
   - [Model not appearing in Pi](#model-not-appearing-in-pi)
   - [Tool calling issues](#tool-calling-issues)
+  - [422 Unprocessable Entity with reasoning models](#422-unprocessable-entity-with-reasoning-models)
   - [Slow or hanging responses](#slow-or-hanging-responses)
 - [Changing the Model](#changing-the-model)
 - [Comparison with Other Agent Setups](#comparison-with-other-agent-setups)

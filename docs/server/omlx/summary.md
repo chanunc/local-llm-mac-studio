@@ -12,6 +12,7 @@
   - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
 - [Key Discovery: LiteLLM Does NOT Translate](#key-discovery-litellm-does-not-translate)
 - [Files Modified](#files-modified)
+- [Quick Test](#quick-test)
 - [Testing](#testing)
   - [Layer 1: oMLX server — OpenAI format (port 8000)](#layer-1-omlx-server--openai-format-port-8000)
   - [Layer 2: oMLX server — Anthropic format (port 8000)](#layer-2-omlx-server--anthropic-format-port-8000)

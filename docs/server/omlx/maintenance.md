@@ -10,6 +10,9 @@ This guide covers advanced maintenance tasks and troubleshooting for the oMLX se
 - [2. Managing Model Aliases](#2-managing-model-aliases)
 - [3. Monitoring Downloads](#3-monitoring-downloads)
 - [4. Port Conflicts](#4-port-conflicts)
+- [5. JANG Fork Overlay Management](#5-jang-fork-overlay-management)
+- [6. Starlette Dashboard Fix](#6-starlette-dashboard-fix)
+- [7. Debug Logging](#7-debug-logging)
 
 ## 1. Model Discovery Issues
 

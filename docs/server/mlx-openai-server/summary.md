@@ -5,6 +5,7 @@
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Quick Test](#quick-test)
 - [API Endpoints](#api-endpoints)
 - [JANG Model Support](#jang-model-support)
 - [Known Issues](#known-issues)

@@ -16,20 +16,20 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
 
 ```bash
 # vllm-mlx (fastest, single model)
-ssh macstudio "nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
-  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &"
+  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &
 
 # mlx-openai-server (multi-model, low overhead)
-ssh macstudio "pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2; \
-  JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2
+JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
-  > /tmp/mlx-openai-server.log 2>&1 &"
+  > /tmp/mlx-openai-server.log 2>&1 &
 
 # oMLX (9 models, hot-swap)
-ssh macstudio "pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2; \
-  /opt/homebrew/bin/brew services start omlx"
+pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2
+/opt/homebrew/bin/brew services start omlx
 ```
 
 ### 🩺 Health Check

@@ -24,7 +24,7 @@
           "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid, On-Demand)",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 32768,
+          "contextWindow": 262144,
           "maxTokens": 8192,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }

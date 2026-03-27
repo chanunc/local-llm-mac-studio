@@ -18,7 +18,7 @@
         "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4": {
           "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid, On-Demand)",
           "limit": {
-            "context": 32768,
+            "context": 262144,
             "output": 8192
           }
         }

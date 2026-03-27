@@ -33,7 +33,7 @@ Performance and context limits optimized for **96GB Unified Memory**.
 | [**OmniCoder-9B**](https://huggingface.co/NexVeridian/OmniCoder-9B-8bit) | 8-bit | ~9.5GB | 262K | **8GB** | Coding Agent — trained on 425K+ curated agentic coding trajectories |
 | [**Nemotron 3 Nano 30B-A3B**](https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit) | 8-bit | ~34GB | 262K | **20GB** | NVIDIA MoE · 32B total, 3B active |
 | [**Nemotron 3 Super 120B-A12B**](https://huggingface.co/inferencerlabs/NVIDIA-Nemotron-3-Super-120B-A12B-MLX-4.5bit) | 4.5-bit | ~66.5GB | 200K | **12GB** | 120B MoE (12B active) · Mamba-2 + Attention hybrid |
-| [**Nemotron Cascade 2 30B-A3B**](https://huggingface.co/RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4) | nvfp4 | ~17GB | 32K | **12GB** | Mamba-2 + MoE + Attention hybrid · 30B total, 3B active · 55 tok/s |
+| [**Nemotron Cascade 2 30B-A3B**](https://huggingface.co/RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4) | nvfp4 | ~17GB | 262K | **12GB** | Mamba-2 + MoE + Attention hybrid · 30B total, 3B active · 55 tok/s |
 | [**Qwen3.5-35B-A3B JANG**](https://huggingface.co/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K) | JANG 4-bit | ~19GB | 262K | **24GB** | JANG mixed-precision · 48% smaller than MLX 8-bit · 0.8s load |
 
 *Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit. **JANG** = adaptive mixed-precision (attention 6-8 bit, experts 2-4 bit) via [jangq.ai](https://jangq.ai), requires fork overlay.*

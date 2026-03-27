@@ -282,12 +282,11 @@ NVIDIA's second-generation Cascade model with a triple-hybrid architecture: Mamb
 | Specialties | Efficient hybrid inference, reasoning mode |
 | Tokens/sec | ~55 tok/s generation, ~154 tok/s prefill |
 | On-disk size | ~17 GB |
-| Context Size | 32K |
+| Context Size | 262K |
 | Cache | KV cache only on 6 attention layers (~0.2 GB at 32K) |
 | Key Benchmarks | MMLU 93.0% (reasoning), 69.0% (no-think) |
 
 **Caveats:**
-- 32K max context (much smaller than Qwen MoE models at 262K)
 - nvfp4 is a less common MLX quantization format — confirmed working on oMLX v0.2.20 + fork
 - JANG-quantized variants of this model do NOT work (matmul shape mismatch at MoE gate — use nvfp4/mxfp4 MLX instead)
 

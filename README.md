@@ -1,4 +1,4 @@
-# 🦙 Local LLM Agent Network
+# 🦙 Mac Studio AI Stack Playground
 
 Run large language models locally on a **Mac Studio M3 Ultra (96GB)** and connect coding agents over LAN.
 

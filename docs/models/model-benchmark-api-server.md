@@ -57,8 +57,8 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 
 | Context | Standalone | vllm-mlx | mlx-openai-server | mlx-lm.server | oMLX |
 |---------|-----------|---------|-------------------|---------------|------|
-| 512 | **103.6** 🏆 | 100.7 🥈 | 99.4 | 96.3 | -- |
-| 8K | **98.0** 🏆 | 95.6 🥈 | 93.9 | 90.7 | -- |
+| 512 | **103.6** 🏆 | 100.7 🥈 | 99.4 | 96.3 | 80.8 |
+| 8K | **98.0** 🏆 | 95.6 🥈 | 93.9 | 90.7 | 76.2 |
 | 16K | -- | -- | -- | -- | 67.8 |
 | 32K | **86.5** 🏆 | 83.8 🥈 | 81.3 | 77.6 | 59.9 |
 | 64K | **73.9** 🏆 | 71.6 🥈 | 62.8 | 65.1 | 49.0 |
@@ -68,8 +68,8 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 
 | Context | Standalone | vllm-mlx | mlx-openai-server | mlx-lm.server | oMLX |
 |---------|-----------|---------|-------------------|---------------|------|
-| 512 | **1688.5** 🏆 | 831.0 | 1164.0 🥈 | 824.1 | -- |
-| 8K | 2456.8 | **2643.9** 🏆 | 2632.0 🥈 | 2582.2 | -- |
+| 512 | **1688.5** 🏆 | 831.0 | 1164.0 🥈 | 824.1 | 310.3 |
+| 8K | 2456.8 | **2643.9** 🏆 | 2632.0 🥈 | 2582.2 | 430.7 |
 | 16K | -- | -- | -- | -- | 378.5 |
 | 32K | 1952.6 | **2164.7** 🏆 | 2160.0 🥈 | 2137.5 | 366.8 |
 | 64K | 1485.6 | **1668.4** 🏆 | 1660.0 🥈 | 1657.1 | 341.5 |
@@ -79,12 +79,12 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 
 | Context | vllm-mlx | mlx-openai-server | mlx-lm.server | oMLX |
 |---------|---------|-------------------|---------------|------|
-| 512 | 0.56 🥈 | **0.44** 🏆 | 0.62 | -- |
-| 8K | **3.10** 🏆 | 3.11 🥈 | 3.17 | -- |
-| 32K | **15.15** 🏆 | 15.17 🥈 | 15.33 | -- |
-| 64K | **39.30** 🏆 | 39.47 🥈 | 39.55 | -- |
+| 512 | 0.56 🥈 | **0.44** 🏆 | 0.62 | 1.65 |
+| 8K | **3.10** 🏆 | 3.11 🥈 | 3.17 | 19.02 |
+| 32K | **15.15** 🏆 | 15.17 🥈 | 15.33 | 62.76 |
+| 64K | **39.30** 🏆 | 39.47 🥈 | 39.55 | 89.48 |
 
-oMLX results from [omlx.ai leaderboard](https://omlx.ai) (submitted March 24, 2026).
+oMLX 16K/128K and 4-bit results from [omlx.ai leaderboard](https://omlx.ai) (March 24, 2026). JANG 512/8K and TTFT from local benchmarks (March 27, 2026).
 
 ---
 
@@ -96,8 +96,8 @@ Percentage slower than raw standalone at each context length:
 
 | Context | vllm-mlx (4bit) | mlx-lm (4bit) | oMLX (4bit) | vllm-mlx (JANG) | mlx-openai (JANG) | mlx-lm (JANG) | oMLX (JANG) |
 |---------|----------------|---------------|-------------|-----------------|-------------------|---------------|-------------|
-| 512 | **-3%** 🏆 | -8% 🥈 | -- | **-2%** 🏆 | -4% 🥈 | -7% | -- |
-| 8K | **-3%** 🏆 | -8% 🥈 | -- | **-2%** 🏆 | -4% 🥈 | -7% | -- |
+| 512 | **-3%** 🏆 | -8% 🥈 | -- | **-2%** 🏆 | -4% 🥈 | -7% | -22% |
+| 8K | **-3%** 🏆 | -8% 🥈 | -- | **-2%** 🏆 | -4% 🥈 | -7% | -22% |
 | 32K | **-4%** 🏆 | -11% 🥈 | -34% | **-3%** 🏆 | -6% 🥈 | -10% | -31% |
 | 64K | **-3%** 🏆 | -13% 🥈 | -36% | **-3%** 🏆 | -12% 🥈 | -15% | -34% |
 
@@ -155,6 +155,7 @@ vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with
 |------|---------|
 | `/tmp/benchmark_server.py` | API benchmark client (SSE streaming, original) |
 | `/tmp/benchmark_server2.py` | API benchmark client (SSE streaming, +reasoning_content support) |
+| `/tmp/benchmark_server3.py` | API benchmark client (SSE streaming, +API key auth) |
 | `/tmp/run_mlx_server_jang.py` | mlx-lm.server JANG wrapper |
 | `/tmp/run_vllm_jang.py` | vllm-mlx JANG wrapper |
 | `~/run_mlx_openai_jang.py` | mlx-openai-server JANG wrapper |

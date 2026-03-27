@@ -45,8 +45,8 @@ Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](do
 
 All models fit in **96GB unified memory**.
 
-| Model | Type | Size (GB) | Context | Best For |
-|:------|:-----|---------:|--------:|:---------|
+| Model | Type | Size&#124;GB | Context | Best For |
+|:--------------------------------------|:------------|----------:|--------:|:---------|
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
 | [Qwen3.5-122B-A10B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65 | 128K | Full-precision alternative |

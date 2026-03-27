@@ -1,0 +1,3 @@
+[submodule "docs/models/uncen-model"]
+	path = docs/models/uncen-model
+	url = https://github.com/chanunc/local-uncen-llm-model.git

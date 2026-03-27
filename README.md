@@ -14,53 +14,47 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
 
 ### 🚀 Start a Server
 
+Pick one — all serve on port 8000. Stop others first if switching.
+
 ```bash
-# vllm-mlx (fastest, single model)
+# vllm-mlx — fastest, single model
 nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
   --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &
 
-# mlx-openai-server (multi-model, low overhead)
-# stop other servers first: pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2
+# mlx-openai-server — multi-model, low overhead
 JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
   > /tmp/mlx-openai-server.log 2>&1 &
 
-# oMLX (9 models, hot-swap)
-# stop other servers first: pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2
+# oMLX — 9 models, hot-swap
 /opt/homebrew/bin/brew services start omlx
+
+# stop servers: pkill -f vllm-mlx; pkill -f mlx-openai-server; brew services stop omlx
 ```
 
 ### 🩺 Health Check
 
 ```bash
-# No auth (vllm-mlx / mlx-openai-server)
-curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool
-
-# With auth (oMLX)
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool            # vllm-mlx / mlx-openai-server
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
-  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
 
-# Admin dashboard (oMLX only)
-open http://<MAC_STUDIO_IP>:8000/admin
+open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
 
-# View logs — vllm-mlx: /tmp/vllm-mlx.log · mlx-openai-server: /tmp/mlx-openai-server.log · oMLX: ~/.omlx/logs/server.log
-tail -20 /tmp/vllm-mlx.log
+# logs: /tmp/vllm-mlx.log · /tmp/mlx-openai-server.log · ~/.omlx/logs/server.log
 ```
 
 ### 💬 Quick Test
 
-Same command works across all servers — swap in the model name from `/v1/models`. Add `-H "Authorization: Bearer <YOUR_API_KEY>"` for oMLX only.
+Works on all servers — swap `<MODEL_NAME>` from `/v1/models`. Add auth header for oMLX.
 
 ```bash
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{
-    "model": "<MODEL_NAME>",
-    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
-    "max_tokens": 50
-  }' | python3 -m json.tool
+  -d '{"model":"<MODEL_NAME>","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
+  | python3 -m json.tool
 ```
 
 ---

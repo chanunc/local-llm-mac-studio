@@ -1,97 +1,108 @@
-# 🧠 Local LLM Agent Network
+# Local LLM Agent Network
 
-High-performance local AI infrastructure powered by a **Mac Studio M3 Ultra (96GB)**. This repository provides setup guides to run massive LLMs locally and connect multiple coding agents over LAN.
+Run large language models locally on a **Mac Studio M3 Ultra (96GB)** and connect coding agents over LAN.
 
-## Index
-- [Server Options](#-server-options)
-  - [vllm-mlx](docs/server/vllm-mlx/summary.md) (primary) · [Maintenance](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/summary.md) (multi-model) · [JANG Fork](docs/server/omlx/jang-fork.md) · [Maintenance](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/summary.md) · [Maintenance](docs/server/mlx-openai-server/maintenance.md) · [mlx-lm](docs/server/mlx-lm/summary.md)
-  - [JANG](https://jangq.ai/) patches: [mlx-lm](docs/server/mlx-lm/jang-patch.md) · [vllm-mlx](docs/server/vllm-mlx/jang-patch.md) · [mlx-openai-server](docs/server/mlx-openai-server/jang-patch.md)
-- [Models & Benchmarks](#-models--benchmarks)
-  - [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) · [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) · [Qwen3.5-122B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) · [Qwen3.5-122B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) · [OmniCoder-9B](docs/models/model-summary.md#omnicoder-9b-8-bit) · [Nemotron 3 Nano](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) · [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) · [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) · [Qwen3.5-35B JANG 4-bit](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision)
-- [Benchmarks](#-benchmarks)
-  - [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant-jang.md)
-- [Tools & Agents](#-tools--agents)
-  - [Claude Code](docs/clients/new-client-machine-setup.md) · [OpenCode](docs/clients/opencode-setup.md) · [OpenClaw](docs/clients/openclaw-setup.md) · [Pi](docs/clients/pi-setup.md)
-- [Connectivity](#-connectivity)
-- [oMLX Limitations](#-omlx-limitations)
+```
+MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB)
+  Claude Code                            vllm-mlx (primary) :8000
+  OpenCode                               or oMLX (multi-model) :8000
+  OpenClaw                               OpenAI + Anthropic API
+  Pi
+```
 
-## 🚀 Server Options
-- **Primary: [vllm-mlx](https://github.com/waybarrios/vllm-mlx)** ([Summary](docs/server/vllm-mlx/summary.md) · [Maintenance](docs/server/vllm-mlx/maintenance.md) · [JANG Patch](docs/server/vllm-mlx/jang-patch.md)) — Fastest server for Apple Silicon. Only 3-4% overhead vs raw standalone. Runs Qwen3.5-122B-A10B JANG 2S as single dedicated model. Native OpenAI + Anthropic API.
-- **Multi-model: [oMLX](https://github.com/jundot/omlx)** ([Setup Guide](docs/server/omlx/summary.md) · [JANG Fork](docs/server/omlx/jang-fork.md) · [Maintenance](docs/server/omlx/maintenance.md)) — SSD-cached multi-model server with hot-swapping, admin dashboard. 9 models available. JANG and nvfp4 format support via [AlexTzk fork overlay](docs/server/omlx/jang-fork.md).
-- **Feature-rich: [mlx-openai-server](https://github.com/cubist38/mlx-openai-server)** ([Summary](docs/server/mlx-openai-server/summary.md) · [JANG Patch](docs/server/mlx-openai-server/jang-patch.md) · [Maintenance](docs/server/mlx-openai-server/maintenance.md)) — Trie-based prompt caching, speculative decoding, Qwen3.5 reasoning parser, multi-model YAML config with process isolation. 4-15% overhead. OpenAI API only. JANG via `.pth` patch (`JANG_PATCH_ENABLED=1`).
-- **Lightweight: [mlx-lm](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm)** ([Setup Guide](docs/server/mlx-lm/summary.md) · [JANG Patch](docs/server/mlx-lm/jang-patch.md)) — Apple's built-in server. 7-13% overhead. JANG support via monkey-patch.
+## Quick Start
 
-## 🤖 Models & Benchmarks
-Performance and context limits optimized for **96GB Unified Memory**.
+```bash
+# Health check
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool
 
-| Model | Quant | Size | Context (96GB) | **Hot Cache (RAM)** | Best For |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| [**Qwen3-Coder-Next**](https://huggingface.co/mlx-community/Qwen3-Coder-Next-6bit) | 6-bit | ~60GB | 128K - 170K | **20GB** | **Daily Driver** (Coding) |
-| [**Qwen3.5-27B Claude Opus Distilled**](https://huggingface.co/nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx) | qx64-hi (6-bit) | ~19GB | 128K | **20GB** | Reasoning / Chain-of-thought |
-| [**Qwen3.5-122B-A10B**](https://huggingface.co/mlx-community/Qwen3.5-122B-A10B-4bit) | 4-bit | ~65GB | 64K - 128K | **20GB** | Agentic reasoning |
-| [**Qwen3.5-122B-A10B JANG**](https://huggingface.co/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S) | JANG 2-bit | ~35GB | 200K+ | **12GB** | Compact 122B · 46% smaller than MLX 4-bit · instant mmap load |
-| [**OmniCoder-9B**](https://huggingface.co/NexVeridian/OmniCoder-9B-8bit) | 8-bit | ~9.5GB | 262K | **8GB** | Coding Agent — trained on 425K+ curated agentic coding trajectories |
-| [**Nemotron 3 Nano 30B-A3B**](https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit) | 8-bit | ~34GB | 262K | **20GB** | NVIDIA MoE · 32B total, 3B active |
-| [**Nemotron 3 Super 120B-A12B**](https://huggingface.co/inferencerlabs/NVIDIA-Nemotron-3-Super-120B-A12B-MLX-4.5bit) | 4.5-bit | ~66.5GB | 200K | **12GB** | 120B MoE (12B active) · Mamba-2 + Attention hybrid |
-| [**Nemotron Cascade 2 30B-A3B**](https://huggingface.co/RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4) | nvfp4 | ~17GB | 262K | **12GB** | Mamba-2 + MoE + Attention hybrid · 30B total, 3B active · 55 tok/s |
-| [**Qwen3.5-35B-A3B JANG**](https://huggingface.co/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K) | JANG 4-bit | ~19GB | 262K | **24GB** | JANG mixed-precision · 48% smaller than MLX 8-bit · 0.8s load |
-
-*Quant notes: **6-bit** = best quality/size balance for daily use. **8-bit** ≈ full precision, limited context. **qx64-hi** = hybrid 6-bit with higher-precision attention layers, smaller footprint than standard 6-bit. **JANG** = adaptive mixed-precision (attention 6-8 bit, experts 2-4 bit) via [jangq.ai](https://jangq.ai), requires fork overlay.*
-*Hot Cache requires the [per-model patch](plans/plan-hot-cache-max-size-per-model.md) to be applied.*
-
-## 📊 Benchmarks
-
-### Qwen3-Coder-Next 6-bit (Primary Model, Dense 60GB)
-
-| Server | 512 Gen t/s | 8K Gen t/s | 32K Gen t/s | 64K Gen t/s |
-|:-------|:----------:|:----------:|:----------:|:----------:|
-| **[vllm-mlx](docs/server/vllm-mlx/summary.md)** (primary) | **68.8** 🏆 | **63.8** 🏆 | **56.4** 🏆 | **51.7** 🏆 |
-| **[mlx-lm.server](docs/server/mlx-lm/summary.md)** | 68.4 🥈 | 62.7 🥈 | 54.0 🥈 | 47.7 🥈 |
-| **[oMLX](docs/server/omlx/summary.md)** | 66.5 | 56.9 | 40.4 | 34.8 |
-
-vllm-mlx is **40-49% faster** than oMLX at 32K-64K context on this dense model.
-
-### Qwen3.5-35B-A3B (MoE, JANG vs 4-bit)
-
-| Server | 32K Gen t/s | 64K Gen t/s | Overhead vs Standalone |
-|:-------|:----------:|:----------:|:----------------------:|
-| **Standalone** (`mlx_lm.generate`) | **90.3** 🏆 | **76.3** 🏆 | — |
-| **vllm-mlx** | 86.5 🥈 | 74.3 🥈 | **3-4%** 🏆 |
-| **mlx-openai-server** | -- | -- | 4-15% |
-| **mlx-lm.server** | 80.1 | 66.4 | 7-13% |
-| **oMLX** | 59.9 | 49.0 | 31-36% |
-
-JANG model (same architecture, adaptive mixed-precision quantization):
-
-| Server | 32K Gen t/s | 64K Gen t/s | vs oMLX |
-|:-------|:----------:|:----------:|:-------:|
-| **vllm-mlx + JANG** | **83.8** 🏆 | **71.6** 🏆 | **+40%** 🏆 |
-| **mlx-openai-server + JANG** | 81.3 🥈 | 62.8 | +28% |
-| **mlx-lm.server + JANG** | 77.6 | 65.1 🥈 | +30% 🥈 |
-| **oMLX + JANG** | 59.9 | 49.0 | baseline |
-
-Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant-jang.md)
-
-## 🛠️ Tools & Agents
-- **Claude Code**: Anthropic's official CLI ([Setup](docs/clients/new-client-machine-setup.md))
-- **OpenCode**: Autonomous coding agent ([Setup](docs/clients/opencode-setup.md))
-- **OpenClaw**: Multi-agent framework ([Setup](docs/clients/openclaw-setup.md))
-- **Pi**: Coding assistant ([Setup](docs/clients/pi-setup.md))
-
-## 📡 Connectivity
-- **Health Check**: `curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H "Authorization: Bearer <YOUR_API_KEY>"`
-- **Admin Panel**: `http://<MAC_STUDIO_IP>:8000/admin`
-
-## ⚠️ oMLX Limitations
-
-Known compatibility gaps with oMLX as of v0.2.20 (+ AlexTzk JANG fork):
-
-- **GGUF format**: oMLX only serves MLX safetensors and JANG models. GGUF models (e.g. from `llama.cpp`) are not supported — use `llama-server` or LM Studio for those.
-- **JANG + Nemotron-H**: JANG-quantized Nemotron-H models fail with matmul shape mismatch at the latent MoE gate — bug in PR #364's weight mapping. Non-Nemotron JANG models (Qwen3.5, etc.) work fine.
-- **MXFP8 quantization**: Models quantized with the `mxfp8` format are not confirmed to load. Use standard `4-bit`, `6-bit`, `8-bit` MLX or JANG quantizations instead.
-- **Starlette dashboard bug**: oMLX v0.2.20 pulls starlette 1.0.0 which breaks the admin dashboard with "unhashable type: dict" error. Fix: `pip install "starlette==0.46.2"` in the oMLX venv ([#361](https://github.com/jundot/omlx/issues/361)).
-- **Qwen3.5-27B Claude Opus Distilled + OpenClaw**: Dense 27B model — every token requires all 27B parameters, too slow for OpenClaw.
-- **Qwen3.5-122B + OpenClaw**: Known HTTP 500 errors with large system prompts. Tracked in [oMLX #42](https://github.com/jundot/omlx/issues/42).
+# Admin dashboard (oMLX only)
+open http://<MAC_STUDIO_IP>:8000/admin
+```
 
 ---
-*For advanced troubleshooting and discovery fixes, see the [Maintenance Guide](docs/server/omlx/maintenance.md).*
+
+## Servers
+
+| Server | Overhead | Models | API | Best For |
+|:-------|:--------:|:------:|:----|:---------|
+| **[vllm-mlx](docs/server/vllm-mlx/summary.md)** | 3-4% | Single | OpenAI + Anthropic | Daily use — fastest on Apple Silicon |
+| **[oMLX](docs/server/omlx/summary.md)** | 31-36% | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
+| **[mlx-openai-server](docs/server/mlx-openai-server/summary.md)** | 4-15% | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
+| **[mlx-lm](docs/server/mlx-lm/summary.md)** | 7-13% | Single | OpenAI | Lightweight dev/testing |
+
+All servers support [JANG](https://jangq.ai/) mixed-precision models via patches:
+[vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·
+[oMLX](docs/server/omlx/jang-fork.md) ·
+[mlx-openai-server](docs/server/mlx-openai-server/jang-patch.md) ·
+[mlx-lm](docs/server/mlx-lm/jang-patch.md)
+
+Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
+
+---
+
+## Models
+
+All models fit in **96GB unified memory**. The primary model is **Qwen3.5-122B JANG 2S** on vllm-mlx.
+
+| Model | Type | Size | Context | Best For |
+|:------|:-----|-----:|--------:|:---------|
+| [Qwen3.5-122B-A10B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35GB | 200K+ | **Primary** — compact 122B, instant load |
+| [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) | Dense 80B | 60GB | 170K | Coding specialist |
+| [Qwen3.5-122B-A10B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65GB | 128K | Full-precision alternative |
+| [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19GB | 128K | Reasoning / chain-of-thought |
+| [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5GB | 262K | Lightweight coding agent |
+| [Qwen3.5-35B-A3B JANG 4K](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19GB | 262K | Fast small MoE |
+| [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5GB | 200K | Mamba-2 hybrid |
+| [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34GB | 262K | NVIDIA MoE |
+| [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17GB | 262K | Mamba-2 + MoE, 55 tok/s |
+
+Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
+
+**Quantization key**: *JANG* = adaptive mixed-precision ([jangq.ai](https://jangq.ai)), *MoE* = Mixture of Experts (total/active params), *nvfp4* = NVIDIA 4-bit float.
+
+---
+
+## Benchmarks
+
+### Generation Speed (tokens/sec)
+
+**Qwen3-Coder-Next 6-bit** (dense 60GB):
+
+| Server | 512 | 8K | 32K | 64K |
+|:-------|:---:|:--:|:---:|:---:|
+| vllm-mlx | **68.8** | **63.8** | **56.4** | **51.7** |
+| mlx-lm | 68.4 | 62.7 | 54.0 | 47.7 |
+| oMLX | 66.5 | 56.9 | 40.4 | 34.8 |
+
+**Qwen3.5-35B-A3B JANG** (MoE, primary architecture):
+
+| Server | 32K | 64K |
+|:-------|:---:|:---:|
+| vllm-mlx | **83.8** | **71.6** |
+| mlx-openai-server | 81.3 | 62.8 |
+| mlx-lm | 77.6 | 65.1 |
+| oMLX | 59.9 | 49.0 |
+
+Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/model-benchmark-turboquant-jang.md)
+
+---
+
+## Coding Agents
+
+| Agent | Description | Setup |
+|:------|:------------|:------|
+| **Claude Code** | Anthropic's official CLI | [Guide](docs/clients/new-client-machine-setup.md) |
+| **OpenCode** | Autonomous coding agent | [Guide](docs/clients/opencode-setup.md) |
+| **OpenClaw** | Multi-agent framework | [Guide](docs/clients/openclaw-setup.md) |
+| **Pi** | Coding assistant | [Guide](docs/clients/pi-setup.md) |
+
+---
+
+## Known Limitations
+
+See [oMLX Maintenance](docs/server/omlx/maintenance.md) for detailed troubleshooting. Key issues:
+
+- **oMLX**: No GGUF support, JANG+Nemotron-H broken (matmul mismatch), starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361))
+- **Nemotron family**: Requires vllm-mlx — chat template not packaged in MLX weights ([details](docs/models/model-summary.md#server-compatibility))
+- **Qwen3.5-122B + OpenClaw**: HTTP 500 with large system prompts ([#42](https://github.com/jundot/omlx/issues/42))

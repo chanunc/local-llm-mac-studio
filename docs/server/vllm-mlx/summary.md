@@ -121,7 +121,13 @@ pkill -f run_vllm_jang
 ## Quick Test
 
 ```bash
-curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S","messages":[{"role":"user","content":"Say hello in one sentence"}],"max_tokens":50}' | python3 -m json.tool
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
+    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
+    "max_tokens": 50
+  }' | python3 -m json.tool
 ```
 
 ---

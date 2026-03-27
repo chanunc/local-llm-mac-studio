@@ -199,7 +199,14 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 ## Quick Test
 
 ```bash
-curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer <YOUR_API_KEY>" -d '{"model":"mlx-community/Qwen3-Coder-Next-4bit","messages":[{"role":"user","content":"Say hello in one sentence"}],"max_tokens":50}' | python3 -m json.tool
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -d '{
+    "model": "mlx-community/Qwen3-Coder-Next-4bit",
+    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
+    "max_tokens": 50
+  }' | python3 -m json.tool
 ```
 
 ---

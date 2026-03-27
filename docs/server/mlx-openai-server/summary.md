@@ -161,7 +161,13 @@ tail -20 /tmp/mlx-openai-server.log
 ## Quick Test
 
 ```bash
-curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K","messages":[{"role":"user","content":"Say hello in one sentence"}],"max_tokens":50}' | python3 -m json.tool
+curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
+    "max_tokens": 50
+  }' | python3 -m json.tool
 ```
 
 ---

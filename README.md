@@ -1,4 +1,4 @@
-# Local LLM Agent Network
+# 🧠 Local LLM Agent Network
 
 Run large language models locally on a **Mac Studio M3 Ultra (96GB)** and connect coding agents over LAN.
 
@@ -10,7 +10,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
   Pi
 ```
 
-## Quick Start
+## ⚡ Quick Start
 
 ```bash
 # Health check
@@ -22,7 +22,7 @@ open http://<MAC_STUDIO_IP>:8000/admin
 
 ---
 
-## Servers
+## 🖥️ Servers
 
 | Server | Overhead | Models | API | Best For |
 |:-------|:--------:|:------:|:----|:---------|
@@ -41,7 +41,7 @@ Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](do
 
 ---
 
-## Models
+## 🤖 Models
 
 All models fit in **96GB unified memory**.
 
@@ -63,7 +63,7 @@ Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 
 ---
 
-## Benchmarks
+## 📊 Benchmarks
 
 ### Generation Speed (tokens/sec)
 
@@ -88,7 +88,7 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 
 ---
 
-## Coding Agents
+## 🛠️ Coding Agents
 
 | Agent | Description | Setup |
 |:------|:------------|:------|
@@ -99,7 +99,7 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 
 ---
 
-## Known Limitations
+## ⚠️ Known Limitations
 
 See [oMLX Maintenance](docs/server/omlx/maintenance.md) for detailed troubleshooting. Key issues:
 

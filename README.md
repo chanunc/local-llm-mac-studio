@@ -45,9 +45,9 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
 
-tail -50 /tmp/vllm-mlx.log                                                       # vllm-mlx logs
-tail -50 /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
-tail -50 ~/.omlx/logs/server.log                                                 # oMLX logs
+tail -f /tmp/vllm-mlx.log                                                       # vllm-mlx logs
+tail -f /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
+tail -f ~/.omlx/logs/server.log                                                 # oMLX logs
 ```
 
 ### 💬 Quick Test

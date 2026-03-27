@@ -85,14 +85,15 @@ The JANG wrapper script (`~/run_mlx_openai_jang.py`) monkey-patches `mlx_lm.util
 
 ### Start server (JANG model)
 
+**Important:** Any command that loads a JANG model must be prefixed with `JANG_PATCH_ENABLED=1`. Without it, the `.pth` patch is dormant and JANG models will fail with a shape mismatch error. See [Maintenance](mlx-openai-server-maintenance.md) for patch details.
+
 ```bash
-nohup ~/mlx-openai-server-env/bin/python ~/run_mlx_openai_jang.py launch \
+JANG_PATCH_ENABLED=1 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --model-path ~/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
   --served-model-name JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K \
   --port 8000 --host 0.0.0.0 \
   --reasoning-parser qwen3_5 \
-  --no-log-file \
-  > /tmp/mlx-openai-server.log 2>&1 &
+  --no-log-file
 ```
 
 ### Start with speculative decoding
@@ -108,24 +109,26 @@ nohup ~/mlx-openai-server-env/bin/python ~/run_mlx_openai_jang.py launch \
 ### Start with YAML config (multi-model)
 
 ```yaml
-# ~/mlx-openai-server-config.yaml
+# ~/mlx-openai-server-multimodel.yaml
 server:
   host: 0.0.0.0
   port: 8000
 models:
-  - model_path: mlx-community/Qwen3.5-35B-A3B-4bit
+  - model_path: /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K
     model_type: lm
-    served_model_name: qwen3.5-35b
-  - model_path: mlx-community/Qwen3-0.6B-4bit
+    served_model_name: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
+    reasoning_parser: qwen3_5
+  - model_path: /Users/chanunc/.omlx/models/RepublicOfKorokke--Nemotron-Cascade-2-30B-A3B-mlx-nvfp4
     model_type: lm
-    served_model_name: qwen3-0.6b
+    served_model_name: RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4
     on_demand: true
-    idle_timeout: 60
+    on_demand_idle_timeout: 120
 ```
 
 ```bash
-~/mlx-openai-server-env/bin/mlx-openai-server launch \
-  --config ~/mlx-openai-server-config.yaml
+# JANG_PATCH_ENABLED=1 required if any model in the config is JANG format
+JANG_PATCH_ENABLED=1 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-multimodel.yaml
 ```
 
 ### Key CLI flags

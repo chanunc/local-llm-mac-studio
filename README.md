@@ -45,17 +45,17 @@ Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](do
 
 All models fit in **96GB unified memory**.
 
-| Model | Type | Size | Context | Best For |
-|:------|:-----|-----:|--------:|:---------|
-| [Qwen3.5-122B-A10B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35GB | 200K+ | Compact 122B, instant load |
-| [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) | Dense 80B | 60GB | 170K | Coding specialist |
-| [Qwen3.5-122B-A10B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65GB | 128K | Full-precision alternative |
-| [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19GB | 128K | Reasoning / chain-of-thought |
-| [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5GB | 262K | Lightweight coding agent |
-| [Qwen3.5-35B-A3B JANG 4K](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19GB | 262K | Fast small MoE |
-| [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5GB | 200K | Mamba-2 hybrid |
-| [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34GB | 262K | NVIDIA MoE |
-| [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17GB | 262K | Mamba-2 + MoE |
+| Model | Type | Size (GB) | Context | Best For |
+|:------|:-----|---------:|--------:|:---------|
+| [Qwen3.5-122B-A10B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
+| [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
+| [Qwen3.5-122B-A10B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65 | 128K | Full-precision alternative |
+| [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19 | 128K | Reasoning / chain-of-thought |
+| [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5 | 262K | Lightweight coding agent |
+| [Qwen3.5-35B-A3B JANG 4K](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19 | 262K | Fast small MoE |
+| [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
+| [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
+| [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
 
 Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 

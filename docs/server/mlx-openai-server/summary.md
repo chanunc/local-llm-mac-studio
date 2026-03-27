@@ -117,9 +117,11 @@ models:
     model_type: lm
     served_model_name: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
     reasoning_parser: qwen3_5
+    context_length: 262144
   - model_path: /Users/chanunc/.omlx/models/RepublicOfKorokke--Nemotron-Cascade-2-30B-A3B-mlx-nvfp4
     model_type: lm
     served_model_name: RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4
+    context_length: 262144
     on_demand: true
     on_demand_idle_timeout: 120
 ```

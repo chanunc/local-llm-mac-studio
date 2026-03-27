@@ -138,8 +138,17 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 
 ## ⚠️ Known Limitations
 
-See [oMLX Maintenance](docs/server/omlx/maintenance.md) for detailed troubleshooting. Key issues:
+**Server constraints:**
+- **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/server/omlx/jang-fork.md)). [Maintenance](docs/server/omlx/maintenance.md)
+- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
+- **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. [Maintenance](docs/server/vllm-mlx/maintenance.md)
 
-- **oMLX**: No GGUF support, JANG+Nemotron-H broken (matmul mismatch), starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361))
-- **Nemotron family**: Requires vllm-mlx — chat template not packaged in MLX weights ([details](docs/models/model-summary.md#server-compatibility))
-- **Qwen3.5-122B + OpenClaw**: HTTP 500 with large system prompts ([#42](https://github.com/jundot/omlx/issues/42))
+**Model compatibility:**
+- **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/model-summary.md#nemotron-server-compatibility)
+- **Mistral Small 4** — Broken on all MLX servers (missing MLA attention in mlx-lm). [Details](docs/models/model-summary.md#mistral-small-4-119b-a6b-jang-2-bit)
+- **Qwen3.5-122B + OpenClaw** — HTTP 500 with large system prompts ([#42](https://github.com/jundot/omlx/issues/42))
+
+**Maintenance:**
+- **JANG fork overlay** — `brew upgrade omlx` overwrites the fork; re-apply after every upgrade. [Guide](docs/server/omlx/jang-fork.md)
+- **Hot cache patch** — `scripts/patch_omlx_cache.py` must re-run after every `brew upgrade omlx`. [Guide](docs/server/omlx/maintenance.md)
+- **SSH timeouts** — Fix: `sudo pmset -a sleep 0 disksleep 0 displaysleep 10` on Mac Studio

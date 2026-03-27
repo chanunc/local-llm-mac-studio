@@ -44,6 +44,9 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 
 # Admin dashboard (oMLX only)
 open http://<MAC_STUDIO_IP>:8000/admin
+
+# View logs — vllm-mlx: /tmp/vllm-mlx.log · mlx-openai-server: /tmp/mlx-openai-server.log · oMLX: ~/.omlx/logs/server.log
+tail -20 /tmp/vllm-mlx.log
 ```
 
 ### 💬 Quick Test

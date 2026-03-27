@@ -64,12 +64,12 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 
 ## 🖥️ Servers
 
-| Server | Overhead | Models | API | Best For |
-|:-------|:--------:|:------:|:----|:---------|
-| **[vllm-mlx](docs/server/vllm-mlx/summary.md)** | 3-4% | Single | OpenAI + Anthropic | Daily use — fastest on Apple Silicon |
-| **[oMLX](docs/server/omlx/summary.md)** | 31-36% | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
-| **[mlx-openai-server](docs/server/mlx-openai-server/summary.md)** | 4-15% | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
-| **[mlx-lm](docs/server/mlx-lm/summary.md)** | 7-13% | Single | OpenAI | Lightweight dev/testing |
+| Server | Speed | Models | API | Best For |
+|:-------|:-----:|:------:|:----|:---------|
+| **[vllm-mlx](docs/server/vllm-mlx/summary.md)** | ⚡ Fastest | Single | OpenAI + Anthropic | Daily use — lowest overhead on Apple Silicon |
+| **[mlx-openai-server](docs/server/mlx-openai-server/summary.md)** | 🟢 Fast | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
+| **[mlx-lm](docs/server/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
+| **[oMLX](docs/server/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 
 All servers support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·

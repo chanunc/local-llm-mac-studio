@@ -45,8 +45,8 @@ Performance and context limits optimized for **96GB Unified Memory**.
 
 | Server | 512 Gen t/s | 8K Gen t/s | 32K Gen t/s | 64K Gen t/s |
 |:-------|:----------:|:----------:|:----------:|:----------:|
-| **[vllm-mlx](docs/server/vllm-mlx-summary.md)** (primary) | 68.8 | 63.8 | **56.4** | **51.7** |
-| **[mlx-lm.server](docs/server/mlxlm-summary.md)** | 68.4 | 62.7 | 54.0 | 47.7 |
+| **[vllm-mlx](docs/server/vllm-mlx-summary.md)** (primary) | **68.8** 🏆 | **63.8** 🏆 | **56.4** 🏆 | **51.7** 🏆 |
+| **[mlx-lm.server](docs/server/mlxlm-summary.md)** | 68.4 🥈 | 62.7 🥈 | 54.0 🥈 | 47.7 🥈 |
 | **[oMLX](docs/server/omlx-summary.md)** | 66.5 | 56.9 | 40.4 | 34.8 |
 
 vllm-mlx is **40-49% faster** than oMLX at 32K-64K context on this dense model.
@@ -55,8 +55,8 @@ vllm-mlx is **40-49% faster** than oMLX at 32K-64K context on this dense model.
 
 | Server | 32K Gen t/s | 64K Gen t/s | Overhead vs Standalone |
 |:-------|:----------:|:----------:|:----------------------:|
-| **Standalone** (`mlx_lm.generate`) | 90.3 | 76.3 | — |
-| **vllm-mlx** | 86.5 | 74.3 | 3-4% |
+| **Standalone** (`mlx_lm.generate`) | **90.3** 🏆 | **76.3** 🏆 | — |
+| **vllm-mlx** | 86.5 🥈 | 74.3 🥈 | **3-4%** 🏆 |
 | **mlx-openai-server** | -- | -- | 4-15% |
 | **mlx-lm.server** | 80.1 | 66.4 | 7-13% |
 | **oMLX** | 59.9 | 49.0 | 31-36% |
@@ -65,9 +65,9 @@ JANG model (same architecture, adaptive mixed-precision quantization):
 
 | Server | 32K Gen t/s | 64K Gen t/s | vs oMLX |
 |:-------|:----------:|:----------:|:-------:|
-| **vllm-mlx + JANG** | 83.8 | 71.6 | +40% |
-| **mlx-openai-server + JANG** | 81.3 | 62.8 | +28% |
-| **mlx-lm.server + JANG** | 77.6 | 65.1 | +30% |
+| **vllm-mlx + JANG** | **83.8** 🏆 | **71.6** 🏆 | **+40%** 🏆 |
+| **mlx-openai-server + JANG** | 81.3 🥈 | 62.8 | +28% |
+| **mlx-lm.server + JANG** | 77.6 | 65.1 🥈 | +30% 🥈 |
 | **oMLX + JANG** | 59.9 | 49.0 | baseline |
 
 Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant](docs/models/model-benchmark-turboquant-jang.md)

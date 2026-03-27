@@ -24,37 +24,15 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 open http://<MAC_STUDIO_IP>:8000/admin
 ```
 
-### Quick Test by Server
+### Quick Test
 
-**vllm-mlx** (no auth required):
+Same command works across all servers — swap in the model name from `/v1/models`. Add `-H "Authorization: Bearer <YOUR_API_KEY>"` for oMLX only.
+
 ```bash
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
-    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
-    "max_tokens": 50
-  }' | python3 -m json.tool
-```
-
-**oMLX** (auth required):
-```bash
-curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <YOUR_API_KEY>" \
-  -d '{
-    "model": "mlx-community/Qwen3-Coder-Next-4bit",
-    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
-    "max_tokens": 50
-  }' | python3 -m json.tool
-```
-
-**mlx-openai-server** (no auth required):
-```bash
-curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+    "model": "<MODEL_NAME>",
     "messages": [{"role": "user", "content": "Say hello in one sentence"}],
     "max_tokens": 50
   }' | python3 -m json.tool

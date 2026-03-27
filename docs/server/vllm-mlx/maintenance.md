@@ -228,13 +228,16 @@ tail -50 /tmp/vllm-mlx.log
 
 ### Verbose startup
 
-Add `--log-level debug` to the serve command:
+vllm-mlx has no `--log-level` flag. Use the `VLLM_MLX_LOG_LEVEL` env var (supported by the JANG wrapper):
+
 ```bash
-~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+VLLM_MLX_LOG_LEVEL=DEBUG ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
-  --port 8000 --host 0.0.0.0 --log-level debug
+  --port 8000 --host 0.0.0.0
 ```
+
+The wrapper calls `logging.basicConfig()` before vllm-mlx imports, so the level applies to all loggers including vllm-mlx internals.
 
 ### Health checks
 

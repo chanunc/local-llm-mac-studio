@@ -12,11 +12,33 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
 
 ## ⚡ Quick Start
 
+### 🚀 Start a Server
+
 ```bash
-# Health check (no auth — vllm-mlx / mlx-openai-server)
+# vllm-mlx (fastest, single model)
+ssh macstudio "nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+  ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
+  --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
+  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &"
+
+# mlx-openai-server (multi-model, low overhead)
+ssh macstudio "pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2; \
+  JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
+  > /tmp/mlx-openai-server.log 2>&1 &"
+
+# oMLX (9 models, hot-swap)
+ssh macstudio "pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2; \
+  /opt/homebrew/bin/brew services start omlx"
+```
+
+### 🩺 Health Check
+
+```bash
+# No auth (vllm-mlx / mlx-openai-server)
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool
 
-# Health check (with auth — oMLX)
+# With auth (oMLX)
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
 
@@ -24,7 +46,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 open http://<MAC_STUDIO_IP>:8000/admin
 ```
 
-### Quick Test
+### 💬 Quick Test
 
 Same command works across all servers — swap in the model name from `/v1/models`. Add `-H "Authorization: Bearer <YOUR_API_KEY>"` for oMLX only.
 

@@ -14,6 +14,7 @@ Detailed specs, benchmarks, and caveats for each model served by the oMLX server
 - [Nemotron 3 Nano 30B-A3B (8-bit)](#nemotron-3-nano-30b-a3b-8-bit) — NVIDIA MoE · efficient inference
 - [Nemotron 3 Super 120B-A12B (4.5-bit)](#nemotron-3-super-120b-a12b-45-bit) — NVIDIA 120B MoE · Mamba-2 + Attention hybrid
 - [Nemotron Cascade 2 30B-A3B (nvfp4)](#nemotron-cascade-2-30b-a3b-nvfp4) — Mamba-2 + MoE + Attention hybrid · 3B active
+- [Nemotron Server Compatibility](#nemotron-server-compatibility) — vllm-mlx only; mlx-openai-server and oMLX broken
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
 
 ---
@@ -235,6 +236,7 @@ NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trai
 **Caveats:**
 - oMLX serves this model without the `mlx-community/` prefix — use ID `NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-8Bit` in client configs
 - Invalid JSON config warning on HuggingFace model card (cosmetic, does not affect inference)
+- See [Nemotron Server Compatibility](#nemotron-server-compatibility) for server limitations
 
 ---
 
@@ -264,6 +266,7 @@ NVIDIA's 120B sparse MoE with 12B active params, using a hybrid Mamba-2 SSM + At
 - At 66.5GB, leaves only ~29GB for OS + KV cache on 96GB; process enforcer at 88GB
 - 9-bit variant (127GB) does NOT fit in 96GB — only the 4.5-bit is viable
 - KV cache only on attention layers (~55 of 88); Mamba layers use fixed state = ~55 KB/token
+- See [Nemotron Server Compatibility](#nemotron-server-compatibility) for server limitations
 
 ---
 
@@ -289,6 +292,35 @@ NVIDIA's second-generation Cascade model with a triple-hybrid architecture: Mamb
 **Caveats:**
 - nvfp4 is a less common MLX quantization format — confirmed working on oMLX v0.2.20 + fork
 - JANG-quantized variants of this model do NOT work (matmul shape mismatch at MoE gate — use nvfp4/mxfp4 MLX instead)
+- See [Nemotron Server Compatibility](#nemotron-server-compatibility) for server limitations
+
+---
+
+## Nemotron Server Compatibility
+
+All Nemotron models (Nano, Super, Cascade 2) share the same server compatibility constraints due to NVIDIA's tokenizer implementation.
+
+**Root cause:** Nemotron models store their ChatML chat template in tokenizer Python code, not in `tokenizer_config.json` (which is empty). Servers that rely on `tokenizer_config.json` for the chat template cannot format messages correctly — prompts lack `<|im_start|>`/`<|im_end|>` wrapping, degrading even basic chat.
+
+Additionally, Nemotron uses ChatML with Qwen3-style tool XML (`<tool_call><function=name><parameter=...>`) and requires specialized parsers:
+- **Reasoning:** `nemotron_v3` parser for `<think>` tag extraction
+- **Tool calling:** `qwen3_coder` parser for tool-call detection and structured output
+
+| Server | Chat Template | Tool Parser | Reasoning Parser | Status |
+|--------|--------------|-------------|-----------------|--------|
+| **vllm-mlx** | Built-in `NEMOTRON_CHAT_TEMPLATE` fallback, auto-detected by model name | `nemotron` tool parser | `think_parser` (generic `<think>` tags) | **Works** |
+| **mlx-openai-server** | No fallback — empty template used as-is | None | None | **Broken** — echoes raw tool XML |
+| **oMLX** | No fallback — relies on `tokenizer.apply_chat_template()` | None | None | **Broken** — malformed prompts |
+
+**Recommendation:** Serve Nemotron models exclusively via **vllm-mlx** with:
+```bash
+~/vllm-mlx-env/bin/vllm-mlx serve <model-path> \
+  --reasoning-parser think \
+  --enable-auto-tool-choice --tool-call-parser nemotron \
+  --port 8000 --host 0.0.0.0
+```
+
+On mlx-openai-server and oMLX, Nemotron models may work for simple direct chat (without tools), but responses will be degraded due to missing ChatML formatting. Tool-using clients (OpenClaw, Pi) will see the model echo raw XML tags instead of answering.
 
 ---
 

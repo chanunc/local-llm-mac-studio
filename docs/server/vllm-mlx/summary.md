@@ -188,3 +188,7 @@ Not supported natively. Requires a monkey-patch wrapper script. See [jang-patch.
 4. **Separate venv from oMLX:** Cannot share the oMLX Homebrew Python environment (version conflict).
 5. **JANG not native:** Requires monkey-patch wrapper for JANG models.
 6. **Model ID is full path:** When using local model paths, the API model ID is the filesystem path.
+
+## Nemotron Support
+
+vllm-mlx is the **only local server** with full Nemotron support — built-in chat template fallback, `nemotron` tool parser, and `think` reasoning parser. mlx-openai-server and oMLX cannot serve Nemotron models correctly. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.

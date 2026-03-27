@@ -205,7 +205,7 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 5. **Streaming format**: Uses `reasoning_content` field for think tokens instead of `content`. Benchmark scripts and clients expecting `content` or `reasoning` fields will miss these tokens.
 6. **Separate venv**: Cannot share the vllm-mlx or oMLX venvs due to dependency conflicts.
 7. **Tool call arguments as string**: OpenAI API clients (OpenClaw, etc.) send `tool_call.arguments` as a JSON string, but Qwen3.5's chat template expects a dict — causes `"Can only get item pairs from a mapping"` error. Fixed by `scripts/patch_mlx_openai_tool_args.py` (see [Maintenance](maintenance.md#tool-call-arguments-patch)). Must re-apply after upgrades.
-8. **Nemotron family incompatible**: All Nemotron models (Cascade 2, Nano, Super, etc.) store their ChatML chat template in tokenizer Python code — not in `tokenizer_config.json` (which is empty). mlx-lm can't invoke this code path, so messages lack proper `<|im_start|>`/`<|im_end|>` wrapping, degrading even basic chat. mlx-openai-server also lacks the `nemotron_v3` reasoning parser and `qwen3_coder` tool-call parser that vLLM provides, so tool use (OpenClaw) and think-tag streaming are broken — the model echoes raw tool XML (`<parameter=path>...`) instead of answering. Nemotron models require vLLM with `--reasoning-parser nemotron_v3 --tool-call-parser qwen3_coder`.
+8. **Nemotron family incompatible**: No chat template fallback, no reasoning/tool parsers for Nemotron. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.
 
 ---
 

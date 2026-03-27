@@ -204,6 +204,7 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 4. **JANG not native**: Requires `.pth`-based patch in the venv (`jang_patch.pth` + `jang_mlx_patch.py`). Survives pip upgrades but must be reinstalled if the venv is recreated.
 5. **Streaming format**: Uses `reasoning_content` field for think tokens instead of `content`. Benchmark scripts and clients expecting `content` or `reasoning` fields will miss these tokens.
 6. **Separate venv**: Cannot share the vllm-mlx or oMLX venvs due to dependency conflicts.
+7. **Tool call arguments as string**: OpenAI API clients (OpenClaw, etc.) send `tool_call.arguments` as a JSON string, but Qwen3.5's chat template expects a dict — causes `"Can only get item pairs from a mapping"` error. Fixed by `scripts/patch_mlx_openai_tool_args.py` (see [Maintenance](maintenance.md#tool-call-arguments-patch)). Must re-apply after upgrades.
 
 ---
 

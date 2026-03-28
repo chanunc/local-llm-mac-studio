@@ -95,6 +95,18 @@ JANG_PATCH_ENABLED=1 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --no-log-file
 ```
 
+### Start server (Mistral Small 4 local patch)
+
+Preferred from a client machine with repo access:
+
+```bash
+./scripts/deploy_mistral4_mlx_openai_server.sh --host macstudio-ts
+# or on LAN:
+./scripts/deploy_mistral4_mlx_openai_server.sh --host macstudio
+```
+
+This stages the local `mistral4` patch, checks the installed package versions, reapplies the patch if needed, restarts `mlx-openai-server` on the Mac Studio, waits for readiness, and runs the smoke test. Manual patch details remain in [Maintenance](maintenance.md#mistral-4-mla-patch).
+
 ### Start with speculative decoding
 
 ```bash
@@ -206,6 +218,7 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 6. **Separate venv**: Cannot share the vllm-mlx or oMLX venvs due to dependency conflicts.
 7. **Tool call arguments as string**: OpenAI API clients (OpenClaw, etc.) send `tool_call.arguments` as a JSON string, but Qwen3.5's chat template expects a dict — causes `"Can only get item pairs from a mapping"` error. Fixed by `scripts/patch_mlx_openai_tool_args.py` (see [Maintenance](maintenance.md#tool-call-arguments-patch)). Must re-apply after upgrades.
 8. **Nemotron family incompatible**: No chat template fallback, no reasoning/tool parsers for Nemotron. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.
+9. **Mistral Small 4 is still patch-based**: Upstream `mlx-lm` does not yet ship native `mistral4` support. Use `scripts/deploy_mistral4_mlx_openai_server.sh` or the manual maintenance flow. See [Maintenance](maintenance.md#mistral-4-mla-patch).
 
 ---
 

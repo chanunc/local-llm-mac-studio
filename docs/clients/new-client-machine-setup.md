@@ -111,14 +111,24 @@ If you want to manage the Mac Studio server from this machine:
 # Generate SSH key (skip if you already have one)
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
 
-# Copy key to Mac Studio (will prompt for password)
+# Copy key to Mac Studio over LAN (will prompt for password)
 ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_IP>
 
-# Add SSH alias
+# Or over Tailscale (if enabled on both machines)
+ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_TAILSCALE_IP_OR_NAME>
+
+# Add SSH aliases
 cat >> ~/.ssh/config << 'EOF'
 
 Host macstudio
     HostName <MAC_STUDIO_IP>
+    User <YOUR_USERNAME>
+    IdentityFile ~/.ssh/id_ed25519
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+Host macstudio-ts
+    HostName <MAC_STUDIO_TAILSCALE_IP_OR_NAME>
     User <YOUR_USERNAME>
     IdentityFile ~/.ssh/id_ed25519
     ServerAliveInterval 60
@@ -128,8 +138,11 @@ EOF
 chmod 600 ~/.ssh/config
 
 # Verify
-echo OK
+ssh macstudio true
+ssh macstudio-ts true
 ```
+
+Use `macstudio` on the local LAN and `macstudio-ts` when you are remote but both machines are connected to Tailscale.
 
 ## Troubleshooting
 

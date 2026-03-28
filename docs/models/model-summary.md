@@ -389,15 +389,17 @@ Mistral's 119B sparse MoE with 6B active params and Pixtral vision encoder. JANG
 | Server | Status | Notes |
 |--------|--------|-------|
 | vllm-mlx | **Broken** | mlx-lm 0.31.1 `mistral3.py` lacks MLA attention — loads but outputs garbage |
-| mlx-openai-server | **Broken** | Same mlx-lm limitation |
+| mlx-openai-server | **Experimental local patch works** | This repo includes `scripts/patch_mlx_openai_mistral4.py` + `patches/mlx_lm/mistral4.py`; smoke-tested on March 28, 2026 |
 | oMLX | **Broken** | Same mlx-lm limitation |
 
-**Root cause:** Mistral Small 4 uses `mistral4` text architecture with **MLA (Multi-Head Latent Attention)** — `kv_lora_rank=256`, `q_lora_rank=1024`. mlx-lm 0.31.1 only has `mistral3.py` which implements standard GQA, not MLA. The model loads (weights fit in memory) but attention computations are wrong, producing repetitive nonsense output. DeepSeek V3's `deepseek_v3.py` has MLA support, but there's no `mistral4.py` equivalent yet.
+**Root cause:** Mistral Small 4 uses `mistral4` text architecture with **MLA (Multi-Head Latent Attention)** — `kv_lora_rank=256`, `q_lora_rank=1024`. Upstream `mlx-lm` only has `mistral3.py`, which implements standard GQA, not MLA. Unpatched MLX servers therefore load the weights but produce incorrect output. This repo now carries a local patched `mlx-openai-server` path with a vendored `mlx_lm.models.mistral4` text backend and server-side `reasoning_effort` fixes.
 
 Chat template is in `tokenizer_config.json` (5,919 chars) with full tool support using Mistral native format (`[INST]`, `[TOOL_CALLS]`, `[ARGS]`). No Nemotron-style template issues — the blocker is purely the missing MLA architecture implementation in mlx-lm.
 
 **Caveats:**
-- **Not usable on any MLX server** until mlx-lm adds `mistral4` model support with MLA attention
+- **Unpatched MLX servers are not usable** until upstream `mlx-lm` adds native `mistral4` support with MLA attention
+- **Patched `mlx-openai-server` support is local to this repo** — re-apply `scripts/patch_mlx_openai_mistral4.py` after upgrades and run `scripts/smoke_test_mlx_openai_mistral4.py`
+- **Current known-good patch target** is `mlx-lm 0.31.1` + `mlx-openai-server 1.7.0`
 - Must use `temperature=1.0` — greedy decoding (temp=0) causes infinite thinking loops
 - Recommended sampling: `top_p=0.95`, `top_k=40`
 - JANG is the only working quantization for this model — MLX uniform 2/3/4-bit all produce ~25% MMLU (broken)

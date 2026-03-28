@@ -36,6 +36,10 @@ pkill -f mlx-openai-server                                                      
 /opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
 ```
 
+For **Mistral Small 4** on `mlx-openai-server`, use the repo wrapper instead of the raw launch command:
+`./scripts/deploy_mistral4_mlx_openai_server.sh --host macstudio-ts`
+or `./scripts/deploy_mistral4_mlx_openai_server.sh --host macstudio` on LAN.
+
 ### 🩺 Health Check
 
 ```bash
@@ -144,12 +148,12 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 
 **Server constraints:**
 - **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/server/omlx/jang-fork.md)). [Maintenance](docs/server/omlx/maintenance.md)
-- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
+- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patch_mlx_openai_tool_args.py)). Experimental local Mistral 4 MLA support is available via [deploy_mistral4_mlx_openai_server.sh](scripts/deploy_mistral4_mlx_openai_server.sh). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. [Maintenance](docs/server/vllm-mlx/maintenance.md)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/model-summary.md#nemotron-server-compatibility)
-- **Mistral Small 4** — Broken on all MLX servers (missing MLA attention in mlx-lm). [Details](docs/models/model-summary.md#mistral-small-4-119b-a6b-jang-2-bit)
+- **Mistral Small 4** — Broken on unpatched MLX servers (missing native `mistral4` MLA support in upstream `mlx-lm`). This repo carries an experimental local patch for `mlx-openai-server`. [Details](docs/models/model-summary.md#mistral-small-4-119b-a6b-jang-2-bit)
 - **Qwen3.5-122B + OpenClaw** — HTTP 500 with large system prompts ([#42](https://github.com/jundot/omlx/issues/42))
 
 **Maintenance:**

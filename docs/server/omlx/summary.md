@@ -56,6 +56,7 @@ MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 # On MacBook
 ssh-keygen -t ed25519
 ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_IP>
+ssh-copy-id <YOUR_USERNAME>@<MAC_STUDIO_TAILSCALE_IP_OR_NAME>
 
 # Add to ~/.ssh/config
 cat >> ~/.ssh/config << 'EOF'
@@ -63,8 +64,15 @@ Host macstudio
     HostName <MAC_STUDIO_IP>
     User <YOUR_USERNAME>
     IdentityFile ~/.ssh/id_ed25519
+
+Host macstudio-ts
+    HostName <MAC_STUDIO_TAILSCALE_IP_OR_NAME>
+    User <YOUR_USERNAME>
+    IdentityFile ~/.ssh/id_ed25519
 EOF
 ```
+
+Use `macstudio` for the LAN path and `macstudio-ts` when connecting through Tailscale.
 
 ### Phase 2: Mac Studio Base Setup
 
@@ -190,7 +198,7 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 | Machine | File | Purpose |
 |---------|------|---------|
 | MacBook | `~/.ssh/id_ed25519` | SSH key |
-| MacBook | `~/.ssh/config` | SSH alias `macstudio` |
+| MacBook | `~/.ssh/config` | SSH aliases `macstudio` and `macstudio-ts` |
 | MacBook | `~/.claude/macstudio-settings.json` | Claude Code local model config |
 | MacBook | `~/.zshrc` | `claude-local` alias |
 | Mac Studio | `~/.omlx/` | oMLX config, models, logs, and cache |

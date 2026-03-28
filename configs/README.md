@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-03-27**
+**Last updated: 2026-03-28**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -9,7 +9,7 @@ Client config files for connecting to the Mac Studio M3 Ultra. Organized by serv
 | Server | Port | Role | Model(s) | API Key |
 |--------|------|------|----------|---------|
 | **vllm-mlx** | 8000 | **Primary** -- fastest inference, single model | Qwen3.5-122B-A10B JANG 2S (~35GB) | Not needed |
-| **mlx-openai-server** | 8000 | **Multi-model** -- process isolation, prompt cache, speculative decoding | 3 models (see below) | Not needed |
+| **mlx-openai-server** | 8000 | **Multi-model** -- process isolation, prompt cache, speculative decoding | 2 models (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 
 Only one server runs at a time on port 8000. vllm-mlx is the default for daily coding; switch to mlx-openai-server for multi-model with low overhead, or oMLX when you need the full 9-model roster and admin dashboard.
@@ -49,12 +49,11 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**3 models available:**
+**2 models available:**
 
 | Model | Quant | Size | Context | Best For |
 |-------|-------|------|---------|----------|
 | Qwen3.5-35B-A3B JANG 4K | [JANG](https://jangq.ai/) 4-bit | ~19GB | 262K | Mixed-precision MoE (always loaded) |
-| Mistral Small 4 119B-A6B JANG 2L | [JANG](https://jangq.ai/) 2-bit | ~30GB | 128K | Experimental patched Mistral Small 4 |
 | Nemotron Cascade 2 30B-A3B | nvfp4 | ~17GB | 32K | Mamba-2 hybrid (on-demand, 120s idle timeout) |
 
 No API key needed. OpenAI API only (no Anthropic API). Claude Code requires OpenAI-compatible provider mode. Features: trie-based prompt caching, Qwen3.5 reasoning parser, speculative decoding support.

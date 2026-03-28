@@ -388,23 +388,24 @@ Mistral's 119B sparse MoE with 6B active params and Pixtral vision encoder. JANG
 
 | Server | Status | Notes |
 |--------|--------|-------|
-| vllm-mlx | **Broken** | mlx-lm 0.31.1 `mistral3.py` lacks MLA attention — loads but outputs garbage |
-| mlx-openai-server | **Experimental local patch works** | This repo includes `scripts/patch_mlx_openai_mistral4.py` + `patches/mlx_lm/mistral4.py`; smoke-tested on March 28, 2026 |
-| oMLX | **Broken** | Same mlx-lm limitation |
+| vllm-mlx | **Broken** | Current local MLX stack still lacks native `mistral4` MLA support |
+| mlx-openai-server | **Broken** | Same upstream `mlx-lm` limitation; no repo-managed local patch is maintained |
+| oMLX | **Broken** | Same upstream `mlx-lm` limitation |
 
-**Root cause:** Mistral Small 4 uses `mistral4` text architecture with **MLA (Multi-Head Latent Attention)** — `kv_lora_rank=256`, `q_lora_rank=1024`. Upstream `mlx-lm` only has `mistral3.py`, which implements standard GQA, not MLA. Unpatched MLX servers therefore load the weights but produce incorrect output. This repo now carries a local patched `mlx-openai-server` path with a vendored `mlx_lm.models.mistral4` text backend and server-side `reasoning_effort` fixes.
+**Root cause:** Mistral Small 4 uses `mistral4` text architecture with **MLA (Multi-Head Latent Attention)** — `kv_lora_rank=256`, `q_lora_rank=1024`. Upstream `mlx-lm` only has `mistral3.py`, which implements standard GQA, not MLA. Current MLX servers here therefore load the weights but do not support correct inference for this model family.
 
 Chat template is in `tokenizer_config.json` (5,919 chars) with full tool support using Mistral native format (`[INST]`, `[TOOL_CALLS]`, `[ARGS]`). No Nemotron-style template issues — the blocker is purely the missing MLA architecture implementation in mlx-lm.
 
 **Caveats:**
-- **Unpatched MLX servers are not usable** until upstream `mlx-lm` adds native `mistral4` support with MLA attention
-- **Patched `mlx-openai-server` support is local to this repo** — re-apply `scripts/patch_mlx_openai_mistral4.py` after upgrades and run `scripts/smoke_test_mlx_openai_mistral4.py`
-- **Current known-good patch target** is `mlx-lm 0.31.1` + `mlx-openai-server 1.7.0`
+- **Current MLX servers in this repo are not usable for Mistral Small 4** until upstream `mlx-lm` adds native `mistral4` support with MLA attention
 - Must use `temperature=1.0` — greedy decoding (temp=0) causes infinite thinking loops
 - Recommended sampling: `top_p=0.95`, `top_k=40`
 - JANG is the only working quantization for this model — MLX uniform 2/3/4-bit all produce ~25% MMLU (broken)
 - Reasoning uses `[THINK]`/`[/THINK]` (Mistral format), not `<think>`/`</think>` (Qwen format)
 - MMLU benchmark used reasoning mode enabled — single-pass without reasoning would score lower
+- **Official full-feature deployment guidance points to `vLLM`**, not MLX. See Mistral's [self-deployment docs](https://docs.mistral.ai/deployment/self-deployment) and the base model card's `vLLM` section: [mistralai/Mistral-Small-4-119B-2603](https://huggingface.co/mistralai/Mistral-Small-4-119B-2603)
+- **For Apple Silicon local use, the practical community path is `GGUF` on `llama.cpp` / `LM Studio` / `Ollama`**, not MLX. See [LM Studio community GGUF](https://huggingface.co/lmstudio-community/Mistral-Small-4-119B-2603-GGUF), [Unsloth GGUF](https://huggingface.co/unsloth/Mistral-Small-4-119B-2603-GGUF), and [AaryanK GGUF notes](https://huggingface.co/AaryanK/Mistral-Small-4-119B-2603-GGUF)
+- **For this 96 GB Mac Studio, `Q4_K_M` is the realistic GGUF starting point** (~72 GB on disk from the LM Studio build); larger `Q6_K` / `Q8_0` builds are likely too tight or too large for comfortable local use
 
 ---
 

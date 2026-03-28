@@ -15,13 +15,6 @@
             "output": 8192
           }
         },
-        "JANGQ-AI/Mistral-Small-4-119B-A6B-JANG_2L": {
-          "name": "Mistral Small 4 119B-A6B JANG 2L (Experimental Patch)",
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        },
         "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4": {
           "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid, On-Demand)",
           "limit": {

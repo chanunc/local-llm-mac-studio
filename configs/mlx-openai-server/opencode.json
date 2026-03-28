@@ -15,8 +15,8 @@
             "output": 8192
           }
         },
-        "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4": {
-          "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid, On-Demand)",
+        "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit": {
+          "name": "Qwen3-Coder-30B-A3B Instruct 4-bit",
           "limit": {
             "context": 262144,
             "output": 8192
@@ -26,5 +26,5 @@
     }
   },
   "model": "macstudio/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
-  "small_model": "macstudio/RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4"
+  "small_model": "macstudio/mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit"
 }

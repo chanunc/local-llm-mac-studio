@@ -20,8 +20,8 @@
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         },
         {
-          "id": "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4",
-          "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid, On-Demand)",
+          "id": "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
+          "name": "Qwen3-Coder-30B-A3B Instruct 4-bit",
           "reasoning": false,
           "input": ["text"],
           "contextWindow": 262144,

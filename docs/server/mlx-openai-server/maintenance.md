@@ -49,6 +49,6 @@ For Apple Silicon local use, prefer `GGUF` on `llama.cpp` / `LM Studio` / `Ollam
 | `~/mlx-openai-server-env/` | Python 3.12 venv |
 | `~/mlx-openai-server-env/.../jang_patch.pth` | Triggers JANG patch at Python startup |
 | `~/mlx-openai-server-env/.../jang_mlx_patch.py` | JANG detection and loading logic |
-| `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config (JANG + nvfp4) |
+| `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config (JANG + Qwen coder 30B 4-bit) |
 | `~/run_mlx_openai_jang.py` | Legacy single-model JANG wrapper |
 | `/tmp/mlx-openai-server.log` | Server log (when started with redirect) |

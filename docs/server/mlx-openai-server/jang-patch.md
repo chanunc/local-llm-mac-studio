@@ -153,12 +153,11 @@ models:
     served_model_name: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
     reasoning_parser: qwen3_5
     context_length: 262144
-  - model_path: /Users/chanunc/.omlx/models/RepublicOfKorokke--Nemotron-Cascade-2-30B-A3B-mlx-nvfp4
+  - model_path: /Users/chanunc/.omlx/models/mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit
     model_type: lm
-    served_model_name: RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4
+    served_model_name: mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit
+    reasoning_parser: qwen3
     context_length: 262144
-    on_demand: true
-    on_demand_idle_timeout: 120
 ```
 
 ### Adding models
@@ -195,12 +194,12 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   }'
 ```
 
-### Test non-JANG model (on-demand)
+### Test non-JANG model
 ```bash
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4",
+    "model": "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
     "messages": [{"role": "user", "content": "Hello"}],
     "max_tokens": 20
   }'
@@ -263,6 +262,6 @@ See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) 
 | `~/mlx-openai-server-env/` | Python 3.12 venv |
 | `~/mlx-openai-server-env/.../jang_patch.pth` | Triggers JANG patch at Python startup |
 | `~/mlx-openai-server-env/.../jang_mlx_patch.py` | JANG detection and loading logic |
-| `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config (JANG + nvfp4) |
+| `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config (JANG + Qwen coder 30B 4-bit) |
 | `~/run_mlx_openai_jang.py` | Legacy single-model JANG wrapper |
 | `/tmp/mlx-openai-server.log` | Server log (when started with redirect) |

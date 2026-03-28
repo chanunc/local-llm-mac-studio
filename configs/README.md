@@ -54,7 +54,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | Model | Quant | Size | Context | Best For |
 |-------|-------|------|---------|----------|
 | Qwen3.5-35B-A3B JANG 4K | [JANG](https://jangq.ai/) 4-bit | ~19GB | 262K | Mixed-precision MoE (always loaded) |
-| Nemotron Cascade 2 30B-A3B | nvfp4 | ~17GB | 32K | Mamba-2 hybrid (on-demand, 120s idle timeout) |
+| Qwen3-Coder-30B-A3B Instruct | 4-bit | ~16GB | 262K | Compact coding model |
 
 No API key needed. OpenAI API only (no Anthropic API). Claude Code requires OpenAI-compatible provider mode. Features: trie-based prompt caching, Qwen3.5 reasoning parser, speculative decoding support.
 

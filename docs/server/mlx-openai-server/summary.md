@@ -116,6 +116,8 @@ models:
   - model_path: /Users/chanunc/.omlx/models/mlx-community/Qwen3-Coder-Next-6bit
     model_type: lm
     served_model_name: mlx-community/Qwen3-Coder-Next-6bit
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
     reasoning_parser: qwen3_next
     context_length: 170000
 ```
@@ -124,6 +126,19 @@ models:
 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml --no-log-file
 ```
+
+Repo-managed reference config for the models currently supportable on this Mac Studio:
+- [macstudio-supported-models.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/macstudio-supported-models.yaml)
+
+Included there:
+- Qwen3.5 JANG 122B / 35B with `qwen3_coder` + `qwen3_5`
+- Qwen3-Coder-30B-A3B-Instruct with `qwen3_coder`
+- Hermes 4 70B with `hermes`
+- Qwen3.5-VL 122B as a medium-confidence multimodal entry
+
+Excluded there:
+- Nemotron family, which this repo still routes to `vllm-mlx`
+- Mistral Small 4 JANG, which is not currently supportable on this `mlx-openai-server` stack
 
 ### Key CLI flags
 

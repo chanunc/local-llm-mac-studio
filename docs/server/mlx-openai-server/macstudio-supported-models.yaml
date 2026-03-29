@@ -1,0 +1,63 @@
+# Repo-managed reference for the downloaded models currently supportable on
+# this Mac Studio's mlx-openai-server install.
+#
+# Start with:
+#   JANG_PATCH_ENABLED=1 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+#     --config ~/mlx-openai-server-multimodel.yaml --no-log-file
+#
+# Then copy the model entries you want into ~/mlx-openai-server-multimodel.yaml.
+#
+# Included here:
+# - Qwen3.5 JANG models: require qwen3_coder tool parsing + qwen3_5 reasoning parsing
+# - Qwen3-Coder 30B: requires qwen3_coder tool parsing
+# - Hermes 4: requires hermes tool + reasoning parsing
+#
+# Excluded here on purpose:
+# - Nemotron family: use vllm-mlx instead on this repo
+# - Mistral Small 4 JANG: not currently supportable on this mlx-openai-server stack
+
+server:
+  host: 0.0.0.0
+  port: 8000
+
+models:
+  - model_path: /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S
+    model_type: lm
+    served_model_name: JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
+    reasoning_parser: qwen3_5
+    context_length: 200000
+
+  - model_path: /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K
+    model_type: lm
+    served_model_name: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
+    reasoning_parser: qwen3_5
+    context_length: 262144
+
+  - model_path: /Users/chanunc/.omlx/models/mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit
+    model_type: lm
+    served_model_name: mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
+    context_length: 262144
+
+  - model_path: /Users/chanunc/.omlx/models/lmstudio-community--Hermes-4-70B-MLX-6bit
+    model_type: lm
+    served_model_name: lmstudio-community/Hermes-4-70B-MLX-6bit
+    enable_auto_tool_choice: true
+    tool_call_parser: hermes
+    reasoning_parser: hermes
+    context_length: 131072
+
+  # Medium-confidence multimodal entry. Keep only if you intend to serve VLMs
+  # from this stack and have verified image inputs locally.
+  - model_path: /Users/chanunc/.omlx/models/dealignai--Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK
+    model_type: multimodal
+    served_model_name: dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
+    reasoning_parser: qwen3_vl
+    context_length: 131072

@@ -125,7 +125,7 @@ The new model ID should appear in the list.
 
 ## Qwen3-Coder-30B-A3B Instruct (4-bit)
 
-Smaller Qwen coder MoE tuned for agentic coding and tool use. This is the compact coding model now paired with `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` on `mlx-openai-server`.
+Smaller Qwen coder MoE tuned for agentic coding and tool use. This is a compact coding option for local MLX servers when you want something smaller than Qwen3-Coder-Next.
 
 | Spec | Value |
 |:-----|:------|
@@ -138,7 +138,7 @@ Smaller Qwen coder MoE tuned for agentic coding and tool use. This is the compac
 | Specialties | Agentic coding, browser use, function calling |
 | Context Size | 262,144 tokens native (256K) |
 | On-disk size | 17.2 GB |
-| Current server use | `mlx-openai-server` compact coding model |
+| Current server use | Not in the default live server roster |
 | Key Notes | Non-thinking mode only; does not emit `<think></think>` blocks |
 
 **Caveats:**

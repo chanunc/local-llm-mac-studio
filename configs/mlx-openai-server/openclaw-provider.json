@@ -5,18 +5,63 @@
     "api": "openai-completions",
     "models": [
       {
-        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
-        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)",
-        "reasoning": true,
+        "id": "mlx-community/Qwen3-Coder-Next-6bit",
+        "name": "Qwen3-Coder-Next 6-bit (Daily Driver)",
+        "reasoning": false,
         "input": ["text"],
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-        "contextWindow": 262144,
+        "contextWindow": 170000,
         "maxTokens": 8192
       },
       {
         "id": "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
         "name": "Qwen3-Coder-30B-A3B Instruct 4-bit",
         "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 262144,
+        "maxTokens": 8192
+      },
+      {
+        "id": "nightmedia/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx",
+        "name": "Qwen3.5-27B Claude Opus Distilled (Reasoning)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 131072,
+        "maxTokens": 8192
+      },
+      {
+        "id": "mlx-community/Qwen3.5-122B-A10B-4bit",
+        "name": "Qwen3.5-122B-A10B 4-bit (Agentic Reasoning)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 131072,
+        "maxTokens": 8192
+      },
+      {
+        "id": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
+        "name": "Qwen3.5-122B-A10B JANG 2S (Compact 122B)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 200000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "NexVeridian/OmniCoder-9B-8bit",
+        "name": "OmniCoder 9B 8-bit (Coding Agent)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 262144,
+        "maxTokens": 8192
+      },
+      {
+        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)",
+        "reasoning": true,
         "input": ["text"],
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
         "contextWindow": 262144,

@@ -82,7 +82,7 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 
 Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
 
-Current `mlx-openai-server` roster: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` and `mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit`.
+Current `mlx-openai-server` roster: `mlx-community/Qwen3-Coder-Next-6bit`.
 
 ---
 

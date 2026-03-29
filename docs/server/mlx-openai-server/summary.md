@@ -113,22 +113,16 @@ server:
   host: 0.0.0.0
   port: 8000
 models:
-  - model_path: /Users/chanunc/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K
+  - model_path: /Users/chanunc/.omlx/models/mlx-community/Qwen3-Coder-Next-6bit
     model_type: lm
-    served_model_name: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
-    reasoning_parser: qwen3_5
-    context_length: 262144
-  - model_path: /Users/chanunc/.omlx/models/mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit
-    model_type: lm
-    served_model_name: mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit
-    reasoning_parser: qwen3
-    context_length: 262144
+    served_model_name: mlx-community/Qwen3-Coder-Next-6bit
+    reasoning_parser: qwen3_next
+    context_length: 170000
 ```
 
 ```bash
-# JANG_PATCH_ENABLED=1 required if any model in the config is JANG format
-JANG_PATCH_ENABLED=1 ~/mlx-openai-server-env/bin/mlx-openai-server launch \
-  --config ~/mlx-openai-server-multimodel.yaml
+~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-multimodel.yaml --no-log-file
 ```
 
 ### Key CLI flags
@@ -165,15 +159,14 @@ tail -20 /tmp/mlx-openai-server.log
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+    "model": "mlx-community/Qwen3-Coder-Next-6bit",
     "messages": [{"role": "user", "content": "Say hello in one sentence"}],
     "max_tokens": 50
   }' | python3 -m json.tool
 ```
 
-Current multi-model roster on the Mac Studio:
-- `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
-- `mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit`
+Current live roster on the Mac Studio:
+- `mlx-community/Qwen3-Coder-Next-6bit`
 
 ---
 

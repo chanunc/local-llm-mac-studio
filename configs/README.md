@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-03-28**
+**Last updated: 2026-03-29**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -9,7 +9,7 @@ Client config files for connecting to the Mac Studio M3 Ultra. Organized by serv
 | Server | Port | Role | Model(s) | API Key |
 |--------|------|------|----------|---------|
 | **vllm-mlx** | 8000 | **Primary** -- fastest inference, single model | Qwen3.5-122B-A10B JANG 2S (~35GB) | Not needed |
-| **mlx-openai-server** | 8000 | **Multi-model** -- process isolation, prompt cache, speculative decoding | 2 models (see below) | Not needed |
+| **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 
 Only one server runs at a time on port 8000. vllm-mlx is the default for daily coding; switch to mlx-openai-server for multi-model with low overhead, or oMLX when you need the full 9-model roster and admin dashboard.
@@ -49,14 +49,25 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**2 models available:**
+**Superset model list for clients:**
 
 | Model | Quant | Size | Context | Best For |
 |-------|-------|------|---------|----------|
-| Qwen3.5-35B-A3B JANG 4K | [JANG](https://jangq.ai/) 4-bit | ~19GB | 262K | Mixed-precision MoE (always loaded) |
+| Qwen3-Coder-Next | 6-bit | ~60GB | 170K | Daily driver (coding) |
 | Qwen3-Coder-30B-A3B Instruct | 4-bit | ~16GB | 262K | Compact coding model |
+| Qwen3.5-27B Opus Distilled | qx64-hi | ~19GB | 128K | Reasoning |
+| Qwen3.5-122B-A10B | 4-bit | ~65GB | 128K | Agentic reasoning |
+| Qwen3.5-122B-A10B JANG 2S | [JANG](https://jangq.ai/) 2-bit | ~35GB | 200K | Compact 122B |
+| OmniCoder-9B | 8-bit | ~9.5GB | 262K | Coding agent |
+| Qwen3.5-35B-A3B JANG 4K | [JANG](https://jangq.ai/) 4-bit | ~19GB | 262K | Mixed-precision MoE |
 
 No API key needed. OpenAI API only (no Anthropic API). Claude Code requires OpenAI-compatible provider mode. Features: trie-based prompt caching, Qwen3.5 reasoning parser, speculative decoding support.
+
+These `mlx-openai-server` client configs intentionally list a stable superset of commonly used **compatible** model IDs so the files do not need updating every time the live YAML changes. The actual server may expose only a subset at any given time; check `/v1/models` to see what is currently loaded.
+
+Excluded from this superset:
+- Nemotron family — currently incompatible on `mlx-openai-server`
+- Mistral Small 4 — currently unsupported on `mlx-openai-server`
 
 ### `omlx/` -- Multi-Model Server (SSD Cache)
 
@@ -88,7 +99,7 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 ```bash
 # Switch to mlx-openai-server (multi-model, low overhead)
 pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2
-JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml \
   --no-log-file \
   > /tmp/mlx-openai-server.log 2>&1 &

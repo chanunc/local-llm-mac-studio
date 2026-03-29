@@ -126,6 +126,9 @@ Key decisions:
 
 ## Troubleshooting
 
+Additional client-specific notes:
+- [OpenClaw Known Issues](openclaw-known-issues.md)
+
 ### Can't connect to Mac Studio from Linux
 
 - Verify the server is running: `curl -s http://<MAC_STUDIO_IP>:8000/v1/models -H "Authorization: Bearer <YOUR_API_KEY>"`

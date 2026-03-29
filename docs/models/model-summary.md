@@ -1,12 +1,13 @@
 # Model Summary
 
-Detailed specs, benchmarks, and caveats for each model served by the oMLX server on Mac Studio M3 Ultra (96GB). For the quick-reference table, see [README.md](../../README.md).
+Detailed specs, benchmarks, and caveats for the main model set used across the Mac Studio servers. For the quick-reference table, see [README.md](../../README.md).
 
 *Sources: HuggingFace model cards, dev.to, Medium, Reddit, community benchmarks.*
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
 - [Qwen3-Coder-Next (6-bit)](#qwen3-coder-next-6-bit) — Daily driver (coding)
+- [Qwen3-Coder-30B-A3B Instruct (4-bit)](#qwen3-coder-30b-a3b-instruct-4-bit) — Compact coding model
 - [Qwen3.5-27B Claude Opus Distilled (qx64-hi)](#qwen35-27b-claude-opus-distilled-qx64-hi) — Reasoning / chain-of-thought
 - [Qwen3.5-122B-A10B (4-bit)](#qwen35-122b-a10b-4-bit) — Agentic reasoning
 - [Qwen3.5-122B-A10B JANG 2S](#qwen35-122b-a10b-jang-2s) — Compact 122B · 46% smaller than MLX 4-bit
@@ -119,6 +120,30 @@ The new model ID should appear in the list.
 **Caveats:**
 - Non-thinking mode only (no `<think>` blocks)
 - MLX KV cache issues during conversation branching
+
+---
+
+## Qwen3-Coder-30B-A3B Instruct (4-bit)
+
+Smaller Qwen coder MoE tuned for agentic coding and tool use. This is the compact coding model now paired with `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` on `mlx-openai-server`.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3-Coder-30B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct) |
+| MLX 4-bit | [mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit](https://huggingface.co/mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit) |
+| Vendor | Alibaba Qwen team; MLX by mlx-community |
+| Parameters | 30.5B total, 3.3B active |
+| Density | Sparse MoE |
+| Architecture | `qwen3_moe` |
+| Specialties | Agentic coding, browser use, function calling |
+| Context Size | 262,144 tokens native (256K) |
+| On-disk size | 17.2 GB |
+| Current server use | `mlx-openai-server` compact coding model |
+| Key Notes | Non-thinking mode only; does not emit `<think></think>` blocks |
+
+**Caveats:**
+- Compact coding tradeoff, not a drop-in quality replacement for Qwen3-Coder-Next 80B
+- Long contexts still need memory discipline in practice when paired with another loaded model
 
 ---
 

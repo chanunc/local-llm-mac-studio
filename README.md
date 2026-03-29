@@ -82,6 +82,8 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 
 Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
 
+Current `mlx-openai-server` roster: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` and `mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit`.
+
 ---
 
 ## 🤖 Models
@@ -92,6 +94,7 @@ All models fit in **96GB unified memory**.
 |:--------------------------------------|:------------|----------:|--------:|:---------|
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
+| [Qwen3-Coder-30B-A3B Instruct 4-bit](docs/models/model-summary.md#qwen3-coder-30b-a3b-instruct-4-bit) | MoE 30.5B/3.3B | 17.2 | 262K | Compact coding model |
 | [Qwen3.5-122B-A10B 4-bit](docs/models/model-summary.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65 | 128K | Full-precision alternative |
 | [Qwen3.5-27B Opus Distilled](docs/models/model-summary.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19 | 128K | Reasoning / chain-of-thought |
 | [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5 | 262K | Lightweight coding agent |

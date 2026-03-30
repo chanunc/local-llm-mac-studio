@@ -2,7 +2,7 @@
 
 Tested on **Mac Studio M3 Ultra (96 GB)** — March 25, 2026.
 
-## What is TurboQuant?
+## 🔎 What is TurboQuant?
 
 Google Research's KV cache compression algorithm (ICLR 2026, [arXiv:2504.19874](https://arxiv.org/abs/2504.19874)). Compresses the key-value cache at runtime to reduce memory usage during long-context inference. It is NOT weight quantization -- it compresses the activations stored per token during generation.
 
@@ -12,7 +12,7 @@ Google Research's KV cache compression algorithm (ICLR 2026, [arXiv:2504.19874](
 
 **Key properties:** Data-oblivious (no training), online (quantize as tokens stream in), near-optimal (within 2.7x of information-theoretic bounds).
 
-## Implementation Tested
+## ⚙️ Implementation Tested
 
 **Prince Canuma's mlx-vlm PR [#858](https://github.com/Blaizzy/mlx-vlm/pull/858)** -- extracted as standalone `turboquant.py` (3,077 lines). Self-contained module with 9+ custom Metal GPU kernels. Compresses both keys and values (unlike [ananyasingh7/turboquant-mlx-](https://github.com/ananyasingh7/turboquant-mlx-) which only compresses keys).
 
@@ -29,7 +29,7 @@ We monkey-patched `Qwen3NextAttention.__call__` to route decode steps through `T
 
 ---
 
-## Results: Qwen3.5-122B-A10B-4bit
+## 🤖 Results: Qwen3.5-122B-A10B-4bit
 
 Model: `mlx-community/Qwen3.5-122B-A10B-4bit` (~24 GB weights, 48 layers: 12 full-attention + 36 linear-attention).
 
@@ -50,7 +50,7 @@ TurboQuant only applies to the 12 full-attention layers (the 36 linear-attention
 
 ---
 
-## Results: Qwen3.5-35B-A3B-4bit
+## 🤖 Results: Qwen3.5-35B-A3B-4bit
 
 Model: `mlx-community/Qwen3.5-35B-A3B-4bit` (~18.6 GB weights, 40 layers: 10 full-attention + 30 linear-attention).
 
@@ -69,7 +69,7 @@ Model: `mlx-community/Qwen3.5-35B-A3B-4bit` (~18.6 GB weights, 40 layers: 10 ful
 
 ---
 
-## Results: Qwen3.5-35B-A3B JANG 4K
+## 🤖 Results: Qwen3.5-35B-A3B JANG 4K
 
 Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` (~17.5 GB weights, adaptive mixed-precision).
 
@@ -99,7 +99,7 @@ This benchmark tests whether TurboQuant's KV cache compression stacks with JANG 
 
 ---
 
-## Summary
+## 🔍 Summary
 
 | Model | 32K Gen (baseline) | 32K Gen (turbo) | Penalty | KV Compression |
 |-------|-------------------|----------------|---------|----------------|
@@ -124,7 +124,7 @@ This benchmark tests whether TurboQuant's KV cache compression stacks with JANG 
 
 ---
 
-## PR #858 Status & Community Findings
+## 🧠 PR #858 Status & Community Findings
 
 As of March 27, 2026, [PR #858](https://github.com/Blaizzy/mlx-vlm/pull/858) is still **open** with no new commits since March 25 (the day of our benchmark). Prince Canuma noted in the PR that "this implementation is far from optimal" and he's still working on matching the paper's claimed 8x speedup.
 
@@ -159,7 +159,7 @@ Our benchmarks used Qwen3.5 (hybrid architecture, 25% full-attention layers), wh
 
 ---
 
-## Alternative Implementation: flovflo/turboquant-mlx-qwen35-kv
+## 🧩 Alternative Implementation: flovflo/turboquant-mlx-qwen35-kv
 
 [flovflo/turboquant-mlx-qwen35-kv](https://huggingface.co/flovflo/turboquant-mlx-qwen35-kv) is a standalone TurboQuant-inspired implementation released March 25, 2026. It takes a fundamentally different approach from PR #858.
 
@@ -197,7 +197,7 @@ flovflo is a **lightweight TurboQuant-inspired prototype** useful as a reference
 
 ---
 
-## Files on Mac Studio
+## 📁 Files on Mac Studio
 
 | File | Purpose |
 |------|---------|

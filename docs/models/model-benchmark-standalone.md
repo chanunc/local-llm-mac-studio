@@ -2,7 +2,7 @@
 
 Tested on **Mac Studio M3 Ultra (96 GB)** — March 25, 2026.
 
-## Method
+## 🧪 Method
 
 Direct `mlx_lm.generate.stream_generate()` calls with no server overhead. This represents the theoretical maximum throughput for each model on this hardware. Models loaded via `mlx_lm.load()` (standard MLX) or `jang_tools.load_jang_model()` (JANG format).
 
@@ -10,7 +10,7 @@ Benchmark scripts use `time.perf_counter()` around prefill and per-token generat
 
 ---
 
-## Qwen3.5-122B-A10B-4bit
+## 🤖 Qwen3.5-122B-A10B-4bit
 
 Model: `mlx-community/Qwen3.5-122B-A10B-4bit`
 - 122B total params, ~10B active per token (256 experts, 8 routed + 1 shared)
@@ -27,7 +27,7 @@ Model: `mlx-community/Qwen3.5-122B-A10B-4bit`
 
 ---
 
-## Qwen3.5-35B-A3B-4bit
+## 🤖 Qwen3.5-35B-A3B-4bit
 
 Model: `mlx-community/Qwen3.5-35B-A3B-4bit`
 - 35B total params, ~3B active per token (128 experts, 8 routed + 1 shared)
@@ -44,7 +44,7 @@ Model: `mlx-community/Qwen3.5-35B-A3B-4bit`
 
 ---
 
-## Qwen3.5-35B-A3B JANG 4K
+## 🤖 Qwen3.5-35B-A3B JANG 4K
 
 Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 - Same architecture as 35B-A3B above
@@ -61,7 +61,7 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 
 ---
 
-## Cross-Model Comparison
+## ⚖️ Cross-Model Comparison
 
 ### Generation Speed (tok/s)
 
@@ -90,7 +90,7 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 
 ---
 
-## Files on Mac Studio
+## 📁 Files on Mac Studio
 
 | File | Purpose |
 |------|---------|

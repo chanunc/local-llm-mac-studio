@@ -12,7 +12,7 @@ Step-by-step guide to run JANG-quantized models on [vllm-mlx](https://github.com
 
 ---
 
-## Background
+## 🔎 Background
 
 vllm-mlx uses `mlx_lm.load()` internally (via `vllm_mlx.utils.tokenizer.load_model_with_fallback()`). Like mlx-lm.server, it cannot load JANG models natively because `mlx_lm.load()` fails on JANG's custom weight shapes.
 
@@ -25,7 +25,7 @@ The same monkey-patch approach works: intercept `mlx_lm.load()` before vllm-mlx 
 
 ---
 
-## How It Works
+## 🧠 How It Works
 
 1. A wrapper script imports `mlx_lm` and replaces `mlx_lm.load` with a patched version
 2. The patched function checks if the model path contains a JANG config file
@@ -34,7 +34,7 @@ The same monkey-patch approach works: intercept `mlx_lm.load()` before vllm-mlx 
 
 ---
 
-## The Wrapper Script
+## 🧩 The Wrapper Script
 
 Create `/Users/chanunc/run_vllm_jang.py` on the Mac Studio:
 
@@ -143,7 +143,7 @@ scp run_vllm_jang.py macstudio:~/run_vllm_jang.py
 
 ---
 
-## Running the Server
+## 🚀 Running the Server
 
 ### Foreground (for testing)
 
@@ -187,7 +187,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
 ---
 
-## Verification
+## 🧪 Verification
 
 ### Check model list
 ```bash
@@ -232,7 +232,7 @@ pkill -f run_vllm_jang
 
 ---
 
-## Limitations
+## ⚠️ Limitations
 
 - **Single model only:** `vllm-mlx serve` loads one model at startup.
 - **Separate venv required:** Cannot share the oMLX Homebrew venv (Python 3.11 vs 3.12, different mlx-lm versions).
@@ -243,7 +243,7 @@ pkill -f run_vllm_jang
 
 ---
 
-## Benchmark Results
+## 📊 Benchmark Results
 
 See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) for full comparison. Summary at 32K context:
 

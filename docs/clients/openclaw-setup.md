@@ -1,6 +1,6 @@
 # OpenClaw Setup: Linux Machine → Mac Studio LLM Server
 
-OpenClaw on the Linux machine connects **directly** to the oMLX server's OpenAI-compatible endpoint.
+OpenClaw on the Linux machine connects **directly** to the oMLX server's OpenAI-compatible API endpoint.
 
 ## Index
 - [Architecture](#architecture)
@@ -14,7 +14,7 @@ OpenClaw on the Linux machine connects **directly** to the oMLX server's OpenAI-
   - [Tool calling quality](#tool-calling-quality)
 - [Comparison with Other Setups](#comparison-with-other-setups)
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 Linux (narutaki@<LINUX_CLIENT_IP>)          Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
@@ -25,12 +25,12 @@ Linux (narutaki@<LINUX_CLIENT_IP>)          Mac Studio M3 Ultra (<MAC_STUDIO_IP>
 └─────────────────────────┘              └──────────────────────────────────┘
 ```
 
-## Prerequisites
+## ✅ Prerequisites
 
 - SSH access from MacBook: `ssh narutaki` (config in `~/.ssh/config`)
 - Mac Studio oMLX server running on port 8000
 
-## SSH Config (MacBook)
+## 🔑 SSH Config (MacBook)
 
 Entry in `~/.ssh/config`:
 
@@ -45,7 +45,7 @@ Host narutaki
 
 SSH key was copied with `ssh-copy-id` (or manual `authorized_keys` setup).
 
-## OpenClaw Configuration
+## 🧩 OpenClaw Configuration
 
 Config file: `~/.openclaw/openclaw.json` on the Linux machine.
 
@@ -106,7 +106,7 @@ Key decisions:
 - Model alias: `qwen3-local` (use `/model qwen3-local` in OpenClaw)
 - Added as first fallback in `agents.defaults.model.fallbacks`
 
-## Testing
+## 🧪 Testing
 
 1. **Connectivity from Linux**:
    ```bash
@@ -124,7 +124,7 @@ Key decisions:
 
 3. **Test a simple prompt** to verify end-to-end flow.
 
-## Troubleshooting
+## ⚠️ Troubleshooting
 
 Additional client-specific notes:
 - [OpenClaw Known Issues](openclaw-known-issues.md)
@@ -147,7 +147,7 @@ If `openai-completions` doesn't work, try changing to `openai-responses` in the 
 
 Qwen3-Coder-Next-4bit may not handle OpenClaw's tool format perfectly. This is a known limitation of smaller quantized models.
 
-## Comparison with Other Setups
+## 🔍 Comparison with Other Setups
 
 | | Claude Code (MacBook) | OpenCode (MacBook) | OpenClaw (Linux) |
 |---|---|---|---|

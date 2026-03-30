@@ -1,15 +1,17 @@
-# Mac Studio M3 Ultra — Local LLM Server for Claude Code
+# mlx-lm Server Summary
 
 ## Index
+- [Overview](#overview)
 - [Architecture](#architecture)
-- [What Was Done](#what-was-done)
-  - [Phase 1: SSH Setup](#phase-1-ssh-setup)
-  - [Phase 2: Mac Studio Base Setup](#phase-2-mac-studio-base-setup)
-  - [Phase 3: macOS Performance Tuning](#phase-3-macos-performance-tuning)
-  - [Phase 4: Model Download](#phase-4-model-download)
-  - [Phase 5: Server Setup](#phase-5-server-setup)
-  - [Phase 6: Persistent Services (launchd)](#phase-6-persistent-services-launchd)
-  - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
+- [Installation](#installation)
+  - [Setup Walkthrough](#setup-walkthrough)
+    - [Phase 1: SSH Setup](#phase-1-ssh-setup)
+    - [Phase 2: Mac Studio Base Setup](#phase-2-mac-studio-base-setup)
+    - [Phase 3: macOS Performance Tuning](#phase-3-macos-performance-tuning)
+    - [Phase 4: Model Download](#phase-4-model-download)
+    - [Phase 5: Server Setup](#phase-5-server-setup)
+    - [Phase 6: Persistent Services (launchd)](#phase-6-persistent-services-launchd)
+    - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
 - [Key Discovery: LiteLLM Does NOT Translate](#key-discovery-litellm-does-not-translate)
 - [Files Modified](#files-modified)
 - [Testing](#testing)
@@ -32,21 +34,29 @@
   - [Check logs](#check-logs)
   - [Upgrade all tools](#upgrade-all-tools)
 
-## Architecture
+## Overview
+
+`mlx-lm` is the older two-service stack in this repo: `mlx-lm.server` exposes an OpenAI-compatible API on the Mac Studio M3 Ultra, and `claude-code-router` translates Anthropic-format Claude Code traffic into that backend. It remains useful as a lightweight reference setup and benchmark baseline, but it is no longer the simplest or most ergonomic path compared with `oMLX`, `vllm-mlx`, or `mlx-openai-server`.
+
+## 🏗️ Architecture
 
 ```
 MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
 │ Claude Code         │                   │ mlx-lm server (port 8080)       │
 │   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
-│   ANTHROPIC_BASE_URL│                   │   OpenAI API format             │
+│   ANTHROPIC_BASE_URL│                   │   OpenAI-compatible API         │
 │   = :3456           │                   │                                 │
 │                     │                   │ claude-code-router (port 3456)  │
-│                     │                   │   Anthropic API → OpenAI API    │
+│                     │                   │   Anthropic-format API → OpenAI-compatible API │
 └─────────────────────┘                   └──────────────────────────────────┘
 ```
 
-## What Was Done
+## ⚙️ Installation
+
+This document preserves the original end-to-end setup sequence for the `mlx-lm` + `claude-code-router` stack on the Mac Studio.
+
+### Setup Walkthrough
 
 ### Phase 1: SSH Setup
 
@@ -107,7 +117,7 @@ mlx_lm.manage --scan mlx-community/Qwen3-Coder-Next-4bit
 
 **mlx-lm server (port 8080):**
 - Installed via Homebrew (`brew install mlx-lm`)
-- Serves OpenAI-compatible `/v1/chat/completions` API
+- Serves the OpenAI-compatible `/v1/chat/completions` API
 - Supports native function/tool calling
 - Loads model into Apple Silicon unified memory
 - Tuned for max context: `--prompt-cache-size 2` (2 concurrent KV caches), `--prompt-cache-bytes 17179869184` (16GB cap, ~170K tokens per cache), `--max-tokens 8192`
@@ -255,11 +265,11 @@ Add alias to `~/.zshrc`:
 alias claude-local="claude --settings ~/.claude/macstudio-settings.json"
 ```
 
-## Key Discovery: LiteLLM Does NOT Translate
+## 🔎 Key Discovery: LiteLLM Does NOT Translate
 
 The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This does not work.** LiteLLM's `/v1/messages` endpoint is a **pass-through** — it sends Anthropic-format requests directly to the backend without translation. The initial fix used `claude-code-proxy` (fuergaosi233) with a manual patch. This was later replaced by `claude-code-router` (musistudio), which handles tool_use natively via its `enhancetool` transformer — no patching needed.
 
-## Files Modified
+## 📁 Files Modified
 
 | Machine | File | Purpose |
 |---------|------|---------|
@@ -273,7 +283,7 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 | Mac Studio | `~/Library/LaunchAgents/com.<YOUR_USERNAME>.litellm-proxy.plist` | Router service |
 | Mac Studio | `/etc/sysctl.conf` | GPU memory tuning |
 
-## Testing
+## 🧪 Testing
 
 ### Layer 1: mlx-lm server (OpenAI format, port 8080)
 
@@ -308,7 +318,7 @@ curl http://<MAC_STUDIO_IP>:8080/v1/models
 
 ### Layer 2: claude-code-router (Anthropic format, port 3456)
 
-Test basic message (Anthropic API format):
+Test a basic message against the Anthropic-format API:
 ```bash
 curl http://<MAC_STUDIO_IP>:3456/v1/messages \
   -H "Content-Type: application/json" \
@@ -393,7 +403,7 @@ curl -s http://<MAC_STUDIO_IP>:3456/v1/messages \
 memory_pressure | head -20
 ```
 
-## Usage
+## 🚀 Usage
 
 ```bash
 # Open a new terminal, then:
@@ -403,7 +413,7 @@ claude-local
 claude-local -p "Write a Python function that reverses a string"
 ```
 
-## Changing the LLM Model
+## 🔁 Changing the LLM Model
 
 To swap `Qwen3-Coder-Next-4bit` for a different model (e.g., upgrading to 8-bit or a different model entirely):
 
@@ -463,7 +473,7 @@ Run the Layer 1 and Layer 2 tests above to confirm the new model works.
 Browse MLX-optimized models at: `https://huggingface.co/mlx-community`
 Filter by size to find models that fit your memory budget.
 
-## Maintenance
+## 🛠️ Maintenance
 
 ### Restart services
 ```bash

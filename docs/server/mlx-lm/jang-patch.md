@@ -12,7 +12,7 @@ Step-by-step guide to run JANG-quantized models on Apple's built-in `mlx-lm.serv
 
 ---
 
-## Background
+## 🔎 Background
 
 `mlx-lm.server` uses `mlx_lm.load()` to load models, which only supports standard MLX safetensors. JANG models use a custom weight format (adaptive mixed-precision) that requires `jang_tools.load_jang_model()` to load. However, both loaders return the **identical model class** (`mlx_lm.models.qwen3_5_moe.Model`) -- the difference is only in weight loading.
 
@@ -25,7 +25,7 @@ This means we can monkey-patch `mlx_lm.load()` to detect JANG model paths and de
 
 ---
 
-## How It Works
+## 🧠 How It Works
 
 1. A wrapper script imports `mlx_lm` and replaces `mlx_lm.load` with a patched version
 2. The patched function checks if the model path contains a JANG config file (via `jang_tools.loader.is_jang_model()`)
@@ -35,7 +35,7 @@ This means we can monkey-patch `mlx_lm.load()` to detect JANG model paths and de
 
 ---
 
-## The Wrapper Script
+## 🧩 The Wrapper Script
 
 Create `/Users/chanunc/run_mlx_server_jang.py` on the Mac Studio:
 
@@ -118,7 +118,7 @@ If not installed:
 
 ---
 
-## Running the Server
+## 🚀 Running the Server
 
 ### Foreground (for testing)
 
@@ -159,7 +159,7 @@ INFO:root:Starting httpd at 0.0.0.0 on port 8000...
 
 ---
 
-## Verification
+## 🧪 Verification
 
 ### Check model list
 ```bash
@@ -191,18 +191,18 @@ pkill -f run_mlx_server_jang
 
 ---
 
-## Limitations
+## ⚠️ Limitations
 
 - **Single model only:** mlx-lm.server loads one model at startup. No hot-swapping.
 - **No admin dashboard:** Unlike oMLX, there is no web UI.
 - **Model name is the full path:** The API model ID is the local filesystem path, not a clean HF-style name.
 - **Not production-hardened:** mlx-lm.server warns it "is not recommended for production as it only implements basic security checks."
-- **No Anthropic API format:** Only serves OpenAI `/v1/chat/completions`. Needs a proxy (e.g., claude-code-router) for Claude Code compatibility.
+- **No Anthropic-format API:** Only serves the OpenAI-compatible `/v1/chat/completions` API. Needs a proxy (e.g., `claude-code-router`) for Claude Code compatibility.
 - **Reasoning field quirk:** Qwen3.5 models stream thinking tokens in the `delta.reasoning` field instead of `delta.content`. Some clients may not parse this correctly.
 
 ---
 
-## Benchmark Results
+## 📊 Benchmark Results
 
 See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) for full comparison. Summary at 32K context:
 

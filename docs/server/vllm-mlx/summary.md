@@ -14,7 +14,7 @@
 
 ## Overview
 
-[vllm-mlx](https://github.com/vllm-project/vllm-mlx) is a vLLM port for Apple Silicon, providing GPU-accelerated inference with an OpenAI + Anthropic compatible API. It is the **fastest server tested** for single-request throughput on Mac Studio M3 Ultra, achieving only 3-4% overhead vs raw standalone `mlx_lm.generate()`.
+[vllm-mlx](https://github.com/vllm-project/vllm-mlx) is a vLLM port for Apple Silicon, providing GPU-accelerated inference with native OpenAI-compatible and Anthropic-format APIs. It is the **fastest server tested** for single-request throughput on the Mac Studio M3 Ultra, achieving only 3-4% overhead vs raw standalone `mlx_lm.generate()`.
 
 | Property | Value |
 |----------|-------|
@@ -22,13 +22,13 @@
 | Repository | [waybarrios/vllm-mlx](https://github.com/waybarrios/vllm-mlx) |
 | Python | 3.10+ (requires Homebrew Python 3.12 on Mac Studio) |
 | Framework | MLX + Uvicorn/FastAPI |
-| API formats | OpenAI `/v1/chat/completions`, Anthropic `/v1/messages` (native) |
+| API formats | OpenAI-compatible `/v1/chat/completions`, Anthropic-format `/v1/messages` (native) |
 | Model formats | MLX safetensors, JANG (via monkey-patch) |
 | Install location | `~/vllm-mlx-env/` on Mac Studio |
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 Client (MacBook / Linux / WSL)          Mac Studio M3 Ultra
@@ -36,7 +36,7 @@ Client (MacBook / Linux / WSL)          Mac Studio M3 Ultra
 │ Claude Code          │                │ vllm-mlx (port 8000)        │
 │ OpenCode / Pi        │─── LAN ───────>│   Uvicorn + FastAPI          │
 │                      │                │   mlx_lm model backend       │
-│                      │                │   OpenAI + Anthropic native  │
+│                      │                │   Native OpenAI-compatible + Anthropic-format APIs │
 └──────────────────────┘                └──────────────────────────────┘
 ```
 
@@ -52,7 +52,7 @@ vllm-mlx wraps `mlx_lm` model loading and `stream_generate()` with an async Uvic
 
 ---
 
-## Installation
+## ⚙️ Installation
 
 ### Create dedicated venv
 
@@ -78,7 +78,7 @@ See [jang-patch.md](jang-patch.md) for the full JANG wrapper setup.
 
 ---
 
-## Usage
+## 🚀 Usage
 
 ### Start server (standard MLX model)
 
@@ -129,7 +129,7 @@ pkill -f run_vllm_jang
 
 ---
 
-## Quick Test
+## 💬 Quick Test
 
 ```bash
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
@@ -143,7 +143,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 
 ---
 
-## API Endpoints
+## 🔌 API Endpoints
 
 | Endpoint | Format | Purpose |
 |----------|--------|---------|
@@ -163,13 +163,13 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 
 ---
 
-## JANG Model Support
+## 🧠 JANG Model Support
 
 Not supported natively. Requires a monkey-patch wrapper script. See [jang-patch.md](jang-patch.md) for step-by-step instructions.
 
 ---
 
-## Known Issues
+## ⚠️ Known Issues
 
 1. **v0.2.6 return bug:** `load_model_with_fallback()` missing return statement. Must patch after install.
 2. **Single model per instance:** Only one model loaded at a time. No hot-swapping.
@@ -178,6 +178,6 @@ Not supported natively. Requires a monkey-patch wrapper script. See [jang-patch.
 5. **JANG not native:** Requires monkey-patch wrapper for JANG models.
 6. **Model ID is full path:** When using local model paths, the API model ID is the filesystem path.
 
-## Nemotron Support
+## 🧩 Nemotron Support
 
 vllm-mlx is the **only local server** with full Nemotron support — built-in chat template fallback, `nemotron` tool parser, and `think` reasoning parser. mlx-openai-server and oMLX cannot serve Nemotron models correctly. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.

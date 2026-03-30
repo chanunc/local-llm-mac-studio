@@ -4,7 +4,7 @@ How to convert a HuggingFace model to MLX safetensors format for use with oMLX o
 
 ---
 
-## The Short Answer
+## ✨ The Short Answer
 
 **Don't convert — download instead.** Thousands of models are already converted on HuggingFace. Self-conversion is last resort for models with no pre-built MLX version.
 
@@ -12,7 +12,7 @@ How to convert a HuggingFace model to MLX safetensors format for use with oMLX o
 
 ---
 
-## Conversion Decision Tree
+## 🌳 Conversion Decision Tree
 
 ```
 Need a model in oMLX?
@@ -38,7 +38,7 @@ Need a model in oMLX?
 
 ---
 
-## Finding Pre-Converted Models
+## 🔎 Finding Pre-Converted Models
 
 | Org | Specialty | URL |
 |-----|-----------|-----|
@@ -51,7 +51,7 @@ Need a model in oMLX?
 
 ---
 
-## mlx_lm.convert: Complete Reference
+## 🧩 mlx_lm.convert: Complete Reference
 
 ### Input Formats
 
@@ -141,7 +141,7 @@ Conversion loads the full BF16 source into memory plus the output. Rule: need ~2
 
 ---
 
-## Step-by-Step: Convert from HuggingFace BF16
+## ⚙️ Step-by-Step: Convert from HuggingFace BF16
 
 This example converts `huihui-ai/Qwen3.5-35B-A3B-abliterated` to 4-bit MLX. Adapt the model IDs and paths for other models.
 
@@ -276,7 +276,7 @@ After confirming the model works, update all client configs per the **Editing Wo
 
 ---
 
-## Why GGUF → MLX Direct Fails
+## ⚠️ Why GGUF → MLX Direct Fails
 
 ### mlx_lm.convert doesn't accept GGUF
 
@@ -295,7 +295,7 @@ There is no reliable GGUF → MLX path. The correct approach is always: find the
 
 ---
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 | Issue | Likely cause | Fix |
 |-------|-------------|-----|

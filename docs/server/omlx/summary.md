@@ -1,15 +1,17 @@
-# Mac Studio M3 Ultra — Local LLM Server for Claude Code
+# oMLX Server Summary
 
 ## Index
+- [Overview](#overview)
 - [Architecture](#architecture)
-- [What Was Done](#what-was-done)
-  - [Phase 1: SSH Setup](#phase-1-ssh-setup)
-  - [Phase 2: Mac Studio Base Setup](#phase-2-mac-studio-base-setup)
-  - [Phase 3: macOS Performance Tuning](#phase-3-macos-performance-tuning)
-  - [Phase 4: Model Download](#phase-4-model-download)
-  - [Phase 5: Server Setup](#phase-5-server-setup)
-  - [Phase 6: Persistent Service](#phase-6-persistent-service)
-  - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
+- [Installation](#installation)
+  - [Setup Walkthrough](#setup-walkthrough)
+    - [Phase 1: SSH Setup](#phase-1-ssh-setup)
+    - [Phase 2: Mac Studio Base Setup](#phase-2-mac-studio-base-setup)
+    - [Phase 3: macOS Performance Tuning](#phase-3-macos-performance-tuning)
+    - [Phase 4: Model Download](#phase-4-model-download)
+    - [Phase 5: Server Setup](#phase-5-server-setup)
+    - [Phase 6: Persistent Service](#phase-6-persistent-service)
+    - [Phase 7: Claude Code Configuration](#phase-7-claude-code-configuration)
 - [Key Discovery: LiteLLM Does NOT Translate](#key-discovery-litellm-does-not-translate)
 - [Files Modified](#files-modified)
 - [Quick Test](#quick-test)
@@ -34,21 +36,29 @@
   - [Admin panel](#admin-panel)
   - [Upgrade all tools](#upgrade-all-tools)
 
-## Architecture
+## Overview
+
+`oMLX` is the highest-convenience server in this repository: a single Homebrew-managed service on the Mac Studio M3 Ultra that serves both OpenAI-compatible and Anthropic-format APIs, supports hot-swapping models, and exposes an admin dashboard. It is the main operational runbook for the repo when you want one persistent multi-model service rather than the lower-level `mlx-lm` + router stack.
+
+## 🏗️ Architecture
 
 ```
 MacBook (this machine)                    Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌─────────────────────┐                   ┌──────────────────────────────────┐
 │ Claude Code         │                   │ oMLX server (port 8000)         │
 │   claude-local      │───── LAN ────────>│   Qwen3-Coder-Next-4bit         │
-│   ANTHROPIC_BASE_URL│                   │   OpenAI + Anthropic API native │
+│   ANTHROPIC_BASE_URL│                   │   Native OpenAI-compatible + Anthropic-format APIs │
 │   = :8000           │                   │                                 │
 │ OpenCode, Pi        │───── LAN ────────>│                                 │
 │   (direct to 8000)  │                   │                                 │
 └─────────────────────┘                   └──────────────────────────────────┘
 ```
 
-## What Was Done
+## ⚙️ Installation
+
+This document preserves the original step-by-step setup flow for standing up `oMLX` on the Mac Studio and wiring clients to it.
+
+### Setup Walkthrough
 
 ### Phase 1: SSH Setup
 
@@ -189,11 +199,11 @@ alias claude-local="claude --settings ~/.claude/macstudio-settings.json"
 - `claude_code.context_scaling_enabled`: `true`/`false`
 - `claude_code.target_context_size`: integer (default `170000`)
 
-## Key Discovery: LiteLLM Does NOT Translate
+## 🔎 Key Discovery: LiteLLM Does NOT Translate
 
 The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This does not work.** LiteLLM's `/v1/messages` endpoint is a **pass-through** — it sends Anthropic-format requests directly to the backend without translation. The initial fix used `claude-code-proxy` (fuergaosi233) with a manual patch. This was later replaced by `claude-code-router` (musistudio), which handles tool_use natively via its `enhancetool` transformer — no patching needed. The final migration to oMLX eliminated the need for any proxy entirely, as oMLX natively speaks both API formats.
 
-## Files Modified
+## 📁 Files Modified
 
 | Machine | File | Purpose |
 |---------|------|---------|
@@ -204,7 +214,7 @@ The original plan used LiteLLM proxy for Anthropic→OpenAI translation. **This 
 | Mac Studio | `~/.omlx/` | oMLX config, models, logs, and cache |
 | Mac Studio | `/etc/sysctl.conf` | GPU memory tuning |
 
-## Quick Test
+## 💬 Quick Test
 
 ```bash
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
@@ -219,7 +229,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ### Layer 1: oMLX server — OpenAI format (port 8000)
 
@@ -257,7 +267,7 @@ curl http://<MAC_STUDIO_IP>:8000/v1/models \
 
 ### Layer 2: oMLX server — Anthropic format (port 8000)
 
-Test basic message (Anthropic API format):
+Test a basic message against the Anthropic-format API:
 ```bash
 curl http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
@@ -342,7 +352,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
 memory_pressure | head -20
 ```
 
-## Usage
+## 🚀 Usage
 
 ```bash
 # Open a new terminal, then:
@@ -352,7 +362,7 @@ claude-local
 claude-local -p "Write a Python function that reverses a string"
 ```
 
-## Changing the LLM Model
+## 🔁 Changing the LLM Model
 
 To swap `Qwen3-Coder-Next-4bit` for a different model:
 
@@ -408,7 +418,7 @@ If a download is taking too long or you've accidentally queued too many versions
 Browse MLX-optimized models at: `https://huggingface.co/mlx-community`
 Filter by size to find models that fit your memory budget.
 
-## Maintenance
+## 🛠️ Maintenance
 
 For advanced troubleshooting, discovery fixes, and "hard restart" commands, see: **[maintenance.md](maintenance.md)**
 
@@ -466,6 +476,6 @@ ssh narutaki "openclaw update"
 
 ---
 
-## Known Limitations
+## ⚠️ Known Limitations
 
 - **Nemotron family incompatible**: No chat template fallback or tool/reasoning parsers for Nemotron models. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.

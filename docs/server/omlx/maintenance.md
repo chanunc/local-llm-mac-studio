@@ -14,7 +14,7 @@ This guide covers advanced maintenance tasks and troubleshooting for the oMLX se
 - [6. Starlette Dashboard Fix](#6-starlette-dashboard-fix)
 - [7. Debug Logging](#7-debug-logging)
 
-## 1. Model Discovery Issues
+## 🔎 1. Model Discovery Issues
 
 If you add a new model to `~/.omlx/models/` but it does not appear in the dashboard or API:
 
@@ -38,7 +38,7 @@ If the server is stuck on an old list of models, clear the internal metadata cac
 rm -rf ~/.omlx/cache/* && brew services restart omlx
 ```
 
-## 2. Managing Model Aliases
+## 🧩 2. Managing Model Aliases
 
 To make model IDs look cleaner in your tools (e.g., changing `mlx-community--Qwen3-Coder-Next-6bit` to `mlx-community/Qwen3-Coder-Next-6bit`), edit `~/.omlx/model_settings.json`:
 
@@ -54,7 +54,7 @@ To make model IDs look cleaner in your tools (e.g., changing `mlx-community--Qwe
 ```
 *Note: Always perform a **Hard Restart** (Method B) after editing this file.*
 
-## 3. Monitoring Downloads
+## 📥 3. Monitoring Downloads
 
 Since background downloads via the API can be opaque, use these commands to monitor progress:
 
@@ -71,7 +71,7 @@ tail -n 5 ~/download_8bit.log
 du -sh ~/.cache/huggingface/hub/models--mlx-community--Qwen*
 ```
 
-## 4. Port Conflicts
+## 🔌 4. Port Conflicts
 
 If the server fails to start, check if another process is holding port 8000:
 ```bash
@@ -79,7 +79,7 @@ lsof -i :8000
 ```
 If you see a process, use `kill -9 <PID>` to free the port.
 
-## 5. JANG Fork Overlay Management
+## 🧠 5. JANG Fork Overlay Management
 
 oMLX currently runs with the [AlexTzk/omlx fork](https://github.com/AlexTzk/omlx) (PR #364) pip-installed over the Homebrew v0.2.20 base to add JANG model support.
 
@@ -110,7 +110,7 @@ python3 /tmp/patch_omlx_cache.py
 - Qwen3.5 MoE models work correctly
 - JANG models are detected with `engine: jang` in discovery logs
 
-## 6. Starlette Dashboard Fix
+## 🩹 6. Starlette Dashboard Fix
 
 oMLX v0.2.20 pulls starlette 1.0.0 which breaks the admin dashboard ([#361](https://github.com/jundot/omlx/issues/361)):
 ```
@@ -123,7 +123,7 @@ Fix:
 /opt/homebrew/bin/brew services restart jundot/omlx/omlx
 ```
 
-## 7. Debug Logging
+## 🪵 7. Debug Logging
 
 To trace incoming requests and model responses:
 ```bash

@@ -22,7 +22,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 
 ---
 
-## Adding a Model to oMLX
+## ➕ Adding a Model to oMLX
 
 ### Step 1: Find a model
 
@@ -99,7 +99,7 @@ The new model ID should appear in the list.
 
 ---
 
-## Qwen3-Coder-Next (6-bit)
+## 🤖 Qwen3-Coder-Next (6-bit)
 
 80B sparse MoE with only 3B active params. Optimized for coding agents and IDE integration. Performance comparable to Claude Sonnet 4.0 on SWE tasks. This is the **daily driver** model. The 6-bit quantization provides the best quality/size balance with 128-170K context on 96GB.
 
@@ -123,7 +123,7 @@ The new model ID should appear in the list.
 
 ---
 
-## Qwen3-Coder-30B-A3B Instruct (4-bit)
+## 🤖 Qwen3-Coder-30B-A3B Instruct (4-bit)
 
 Smaller Qwen coder MoE tuned for agentic coding and tool use. This is a compact coding option for local MLX servers when you want something smaller than Qwen3-Coder-Next.
 
@@ -147,7 +147,7 @@ Smaller Qwen coder MoE tuned for agentic coding and tool use. This is a compact 
 
 ---
 
-## Qwen3.5-27B Claude Opus Distilled (qx64-hi)
+## 🤖 Qwen3.5-27B Claude Opus Distilled (qx64-hi)
 
 Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured chain-of-thought reasoning and extended autonomous coding sessions (9+ min uninterrupted).
 
@@ -171,7 +171,7 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 
 ---
 
-## Qwen3.5-122B-A10B (4-bit)
+## 🤖 Qwen3.5-122B-A10B (4-bit)
 
 122B multimodal vision-language MoE with 10B active params. Supports 262K native context (1M+ with YaRN). Strong across reasoning, coding, and vision tasks.
 
@@ -194,7 +194,7 @@ Dense 27B fine-tuned with Claude Opus 4.6 reasoning chains. Excels at structured
 
 ---
 
-## Qwen3.5-122B-A10B JANG 2S
+## 🤖 Qwen3.5-122B-A10B JANG 2S
 
 JANG 2-bit quantization of the 122B MoE model. Uses aggressive mixed-precision: 6-bit for critical parameters, 4-bit for important parameters, 2-bit for 98% of expert MLP layers. **46% smaller** than MLX 4-bit (35 GB vs 65 GB) with only 6% MMLU drop, freeing ~30 GB extra for KV cache and dramatically extending context.
 
@@ -220,7 +220,7 @@ JANG 2-bit quantization of the 122B MoE model. Uses aggressive mixed-precision: 
 
 ---
 
-## OmniCoder-9B (8-bit)
+## 🤖 OmniCoder-9B (8-bit)
 
 9B dense model fine-tuned on 425K+ curated agentic coding trajectories from Claude Opus 4.6, GPT-5.3/5.4, and Gemini 3.1 Pro. Expert at error recovery and targeted edit diffs.
 
@@ -243,7 +243,7 @@ JANG 2-bit quantization of the 122B MoE model. Uses aggressive mixed-precision: 
 
 ---
 
-## Nemotron 3 Nano 30B-A3B (8-bit)
+## 🤖 Nemotron 3 Nano 30B-A3B (8-bit)
 
 NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trained on Nemotron-CC datasets with strong multilingual coverage across 6 languages.
 
@@ -267,7 +267,7 @@ NVIDIA's 32B sparse MoE with only 3B active params, quantized to 8-bit MLX. Trai
 
 ---
 
-## Nemotron 3 Super 120B-A12B (4.5-bit)
+## 🤖 Nemotron 3 Super 120B-A12B (4.5-bit)
 
 NVIDIA's 120B sparse MoE with 12B active params, using a hybrid Mamba-2 SSM + Attention architecture. Only ~55 of 88 layers use KV cache (attention layers); Mamba layers use fixed-size recurrent state, making context very memory-efficient.
 
@@ -297,7 +297,7 @@ NVIDIA's 120B sparse MoE with 12B active params, using a hybrid Mamba-2 SSM + At
 
 ---
 
-## Nemotron Cascade 2 30B-A3B (nvfp4)
+## 🤖 Nemotron Cascade 2 30B-A3B (nvfp4)
 
 NVIDIA's second-generation Cascade model with a triple-hybrid architecture: Mamba-2 SSM + Mixture of Experts + Dense Attention. 30B total parameters with only 3B active per token. The nvfp4 (NVIDIA FP4, group size 16) quantization keeps the model at just 17GB with minimal quality loss.
 
@@ -323,7 +323,7 @@ NVIDIA's second-generation Cascade model with a triple-hybrid architecture: Mamb
 
 ---
 
-## Nemotron Server Compatibility
+## 🔌 Nemotron Server Compatibility
 
 All Nemotron models (Nano, Super, Cascade 2) share the same server compatibility constraints due to NVIDIA's tokenizer implementation.
 
@@ -379,7 +379,7 @@ On mlx-openai-server and oMLX, Nemotron models may work for simple direct chat (
 
 ---
 
-## Mistral Small 4 119B-A6B JANG 2L
+## 🤖 Mistral Small 4 119B-A6B JANG 2L
 
 Mistral's 119B sparse MoE with 6B active params and Pixtral vision encoder. JANG_2L quantization compresses to just 30 GB — 52% smaller than MLX Community 4-bit (63 GB) — while achieving 94% MMLU and **5x faster prefill** (216 vs 43 tok/s). Uses MLA (Multi-Head Latent Attention) and 128 routed MoE experts with top-4 routing.
 
@@ -434,7 +434,7 @@ Chat template is in `tokenizer_config.json` (5,919 chars) with full tool support
 
 ---
 
-## Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)
+## 🤖 Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)
 
 First JANG-format model on the oMLX server. Uses adaptive mixed-precision quantization (JANG_4K profile): attention layers at 8-bit for coherence, MoE expert layers at 4-bit for compression. Same base architecture as the MLX 8-bit variant but **48% smaller** (19GB vs 37GB) with sub-second model loading via zero-copy mmap.
 

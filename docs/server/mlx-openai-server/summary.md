@@ -16,7 +16,7 @@
 
 ## Overview
 
-[mlx-openai-server](https://github.com/cubist38/mlx-openai-server) is a FastAPI/Uvicorn server providing OpenAI-compatible endpoints for MLX models on Apple Silicon. It features trie-based prompt caching, speculative decoding, Qwen3.5 reasoning parser, and process-isolated multi-model deployment.
+[mlx-openai-server](https://github.com/cubist38/mlx-openai-server) is a FastAPI/Uvicorn server providing an OpenAI-compatible API for MLX models on Apple Silicon. It features trie-based prompt caching, speculative decoding, Qwen3.5 reasoning parser, and process-isolated multi-model deployment.
 
 | Property | Value |
 |----------|-------|
@@ -24,14 +24,14 @@
 | Repository | [cubist38/mlx-openai-server](https://github.com/cubist38/mlx-openai-server) |
 | Python | 3.11+ (requires Homebrew Python 3.12 on Mac Studio) |
 | Framework | MLX + mlx-lm 0.31.x + Uvicorn/FastAPI |
-| API formats | OpenAI `/v1/chat/completions`, `/v1/responses` |
+| API formats | OpenAI-compatible `/v1/chat/completions`, `/v1/responses` |
 | Model types | Text (lm), multimodal (vlm), image generation (Flux), embeddings, whisper |
 | Model formats | MLX safetensors, JANG (via monkey-patch) |
 | Install location | `~/mlx-openai-server-env/` on Mac Studio |
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 Client (MacBook / Linux / WSL)          Mac Studio M3 Ultra
@@ -53,7 +53,7 @@ Client (MacBook / Linux / WSL)          Mac Studio M3 Ultra
 
 ---
 
-## Installation
+## ⚙️ Installation
 
 ### Create dedicated venv
 
@@ -73,7 +73,7 @@ The JANG wrapper script (`~/run_mlx_openai_jang.py`) monkey-patches `mlx_lm.util
 
 ---
 
-## Usage
+## 🚀 Usage
 
 ### Start server (standard MLX model)
 
@@ -214,7 +214,7 @@ tail -20 /tmp/mlx-openai-server.log
 
 ---
 
-## Quick Test
+## 💬 Quick Test
 
 ```bash
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
@@ -231,7 +231,7 @@ Current live roster on the Mac Studio:
 
 ---
 
-## API Endpoints
+## 🔌 API Endpoints
 
 | Endpoint | Model Types | Purpose |
 |----------|------------|---------|
@@ -243,20 +243,20 @@ Current live roster on the Mac Studio:
 | `/v1/audio/transcriptions` | whisper | Speech-to-text |
 | `GET /v1/models` | all | List available models |
 
-**No Anthropic API support.** Clients must use OpenAI-compatible mode. Claude Code requires `claude-code-router` for Anthropic-to-OpenAI translation.
+**No Anthropic-format API support.** Clients must use OpenAI-compatible mode. Claude Code requires `claude-code-router` for Anthropic-to-OpenAI translation.
 
 ---
 
-## JANG Model Support
+## 🧠 JANG Model Support
 
 Not supported natively. Requires a `.pth`-based patch in the venv that intercepts `mlx_lm.load()` at Python startup — works in `multiprocessing.spawn` subprocesses and survives pip upgrades. Supports simultaneous JANG + non-JANG multi-model deployment. See [JANG Patch](jang-patch.md) for installation, multi-model config, and details.
 
 ---
 
-## Known Issues
+## ⚠️ Known Issues
 
 1. **64K context performance drop**: 15% overhead vs standalone at 64K context, compared to vllm-mlx's 3%. The overhead likely comes from the inference worker queue and reasoning parser processing.
-2. **No Anthropic API**: Clients expecting Anthropic format (Claude Code) need a translation layer like `claude-code-router`.
+2. **No Anthropic-format API**: Clients expecting Anthropic-format requests (Claude Code) need a translation layer like `claude-code-router`.
 3. **Single-request concurrency**: The InferenceWorker processes one request at a time. Multiple simultaneous clients will queue.
 4. **JANG not native**: Requires `.pth`-based patch in the venv (`jang_patch.pth` + `jang_mlx_patch.py`). Survives pip upgrades but must be reinstalled if the venv is recreated.
 5. **Streaming format**: Uses `reasoning_content` field for think tokens instead of `content`. Benchmark scripts and clients expecting `content` or `reasoning` fields will miss these tokens.
@@ -268,7 +268,7 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 
 ---
 
-## Files on Mac Studio
+## 📁 Files on Mac Studio
 
 | File | Purpose |
 |------|---------|

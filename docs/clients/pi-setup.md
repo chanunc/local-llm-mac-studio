@@ -1,6 +1,6 @@
 # Pi Coding Agent Setup: MacBook → Mac Studio LLM Server
 
-Pi connects **directly** to the oMLX server's OpenAI-compatible endpoint.
+Pi connects **directly** to the oMLX server's OpenAI-compatible API endpoint.
 
 ## Index
 - [Architecture](#architecture)
@@ -16,7 +16,7 @@ Pi connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 - [Changing the Model](#changing-the-model)
 - [Comparison with Other Agent Setups](#comparison-with-other-agent-setups)
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
@@ -27,7 +27,7 @@ MacBook                                   Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 └─────────────────────┘                   └──────────────────────────────────┘
 ```
 
-## Installation
+## ⚙️ Installation
 
 ```bash
 brew install pi-coding-agent
@@ -35,7 +35,7 @@ brew install pi-coding-agent
 
 Verify: `pi --version`
 
-## Configuration
+## 🧩 Configuration
 
 Copy config from this repo, or create manually:
 
@@ -82,7 +82,7 @@ Key settings:
 - Cost is all zeros (local model, no billing)
 - The `models.json` file hot-reloads — no restart needed when editing
 
-## Testing
+## 🧪 Testing
 
 1. **Connectivity check**:
    ```bash
@@ -101,7 +101,7 @@ Key settings:
 
 5. **Tool use test**: Ask Pi to read or create a file to verify tool calling works.
 
-## Troubleshooting
+## ⚠️ Troubleshooting
 
 ### Can't connect to Mac Studio
 
@@ -135,7 +135,7 @@ Pi sends `role: "developer"` (OpenAI's newer role) for system prompts when `mode
 - Check Mac Studio memory pressure: `ssh macstudio "memory_pressure"`
 - Reduce `contextWindow` in models.json if the model runs out of memory
 
-## Changing the Model
+## 🔁 Changing the Model
 
 1. Load the new model on Mac Studio (see `../server/omlx/summary.md` "Changing the LLM Model")
 2. Update `~/.pi/agent/models.json`:
@@ -143,7 +143,7 @@ Pi sends `role: "developer"` (OpenAI's newer role) for system prompts when `mode
    - Update `name`, `contextWindow`, and `maxTokens` as appropriate
 3. Pi hot-reloads `models.json` — no restart needed
 
-## Comparison with Other Agent Setups
+## 🔍 Comparison with Other Agent Setups
 
 | | Claude Code | OpenCode | Pi |
 |---|---|---|---|

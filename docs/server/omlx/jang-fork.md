@@ -14,7 +14,7 @@ How JANG and nvfp4 model support was added to the oMLX server via [AlexTzk/omlx]
 
 ---
 
-## Background
+## 🔎 Background
 
 oMLX v0.2.20 (Homebrew) only loads standard MLX safetensors. To serve JANG-quantized models (adaptive mixed-precision) and nvfp4 models, we pip-install AlexTzk's fork over the Homebrew package. The fork adds a `JANGLoader` engine (+1,130 lines) that handles JANG's custom weight format, and the existing MLX engine handles nvfp4 natively.
 
@@ -27,13 +27,13 @@ oMLX v0.2.20 (Homebrew) only loads standard MLX safetensors. To serve JANG-quant
 └── starlette/       ← Pinned to 0.46.2 (dashboard fix)
 ```
 
-## What the Fork Adds
+## 🧠 What the Fork Adds
 
 - **`omlx/engine/jang.py`** — 675-line `JANGLoader` that reads JANG v2 format (zero-copy mmap, custom Metal kernels)
 - **JANG model discovery** — Models with JANG metadata detected as `engine: jang` in server logs
 - **Standard MLX engine** — Unchanged; continues to serve MLX safetensors including nvfp4 quantizations
 
-## Installation
+## ⚙️ Installation
 
 These steps install the fork into the existing Homebrew oMLX venv. Run from your client machine (MacBook).
 
@@ -91,7 +91,7 @@ curl -s http://localhost:8000/v1/chat/completions \
 
 ---
 
-## Supported Formats
+## 🧩 Supported Formats
 
 After the fork overlay, oMLX serves three model formats:
 
@@ -105,7 +105,7 @@ After the fork overlay, oMLX serves three model formats:
 
 ---
 
-## Current JANG & nvfp4 Models
+## 🤖 Current JANG & nvfp4 Models
 
 | Model | Format | Size | Context | Status |
 |:-------|:-------|:-----|:--------|:-------|
@@ -115,7 +115,7 @@ After the fork overlay, oMLX serves three model formats:
 
 ---
 
-## Known Limitations
+## ⚠️ Known Limitations
 
 - **JANG + Nemotron-H architecture**: JANG-quantized models using the Nemotron-H architecture (Mamba-2 + latent MoE gate) fail with `[matmul] shape mismatch` at the expert router gate. This is a bug in PR #364's weight mapping for latent MoE projections. Affects: `JANGQ-AI/Nemotron-Cascade-2-30B-A3B-JANG_4M`, `JANGQ-AI/Nemotron-3-Super-120B-A12B-JANG_4M`. **Workaround:** Use MLX nvfp4/mxfp4 quantizations instead for Nemotron models.
 - **Non-Nemotron JANG models work fine**: Qwen3.5-35B-A3B, Qwen3.5-122B-A10B, and other non-Nemotron architectures load and run correctly via JANG.
@@ -124,7 +124,7 @@ After the fork overlay, oMLX serves three model formats:
 
 ---
 
-## Maintenance After Upgrades
+## 🛠️ Maintenance After Upgrades
 
 After `brew upgrade omlx`, the fork is overwritten. Re-apply the full stack:
 
@@ -151,7 +151,7 @@ python3 /tmp/patch_omlx_cache.py
 
 ---
 
-## Rollback
+## 🔁 Rollback
 
 To revert to stock Homebrew oMLX (removes JANG support):
 

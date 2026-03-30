@@ -2,7 +2,7 @@
 
 Tested on **Mac Studio M3 Ultra (96 GB)** — March 25-27, 2026.
 
-## Method
+## 🧪 Method
 
 Streaming `/v1/chat/completions` requests via Python `urllib`, parsing SSE `data:` chunks to measure per-token timing. Each test generates 50 tokens at temperature 0.0 across context lengths 512, 8K, 32K, 64K.
 
@@ -16,7 +16,7 @@ JANG model support was added to mlx-lm.server, vllm-mlx, and mlx-openai-server v
 
 ---
 
-## Qwen3.5-35B-A3B-4bit (Standard MLX Quantization)
+## 🤖 Qwen3.5-35B-A3B-4bit (Standard MLX Quantization)
 
 Model: `mlx-community/Qwen3.5-35B-A3B-4bit`
 
@@ -49,7 +49,7 @@ Model: `mlx-community/Qwen3.5-35B-A3B-4bit`
 
 ---
 
-## Qwen3.5-35B-A3B JANG 4K
+## 🤖 Qwen3.5-35B-A3B JANG 4K
 
 Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`
 
@@ -88,7 +88,7 @@ oMLX 16K/128K and 4-bit results from [omlx.ai leaderboard](https://omlx.ai) (Mar
 
 ---
 
-## Server Overhead Comparison
+## ⚖️ Server Overhead Comparison
 
 Percentage slower than raw standalone at each context length:
 
@@ -112,7 +112,7 @@ Note: vllm-mlx and mlx-lm.server show *higher* prefill than standalone at longer
 
 ---
 
-## Key Findings
+## 🔍 Key Findings
 
 ### 1. vllm-mlx is the fastest server
 
@@ -143,13 +143,13 @@ A ~15-line wrapper script intercepts `mlx_lm.load()` / `mlx_lm.utils.load()` and
 
 ---
 
-## vllm-mlx Bug Fix
+## 🩹 vllm-mlx Bug Fix
 
 vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with_fallback()` function is missing `return model, tokenizer` after a successful `mlx_lm.load()` call, causing the function to return `None`. Patched locally by adding the missing return statement.
 
 ---
 
-## Files on Mac Studio
+## 📁 Files on Mac Studio
 
 | File | Purpose |
 |------|---------|

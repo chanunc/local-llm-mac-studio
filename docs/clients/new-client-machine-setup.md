@@ -1,4 +1,4 @@
-# Connect a New Machine to the Mac Studio LLM Server
+# Connect a New Machine to the Mac Studio M3 Ultra LLM Server
 
 This guide sets up Claude Code on a new machine to use the local LLM running on the Mac Studio M3 Ultra at `<MAC_STUDIO_IP>`.
 
@@ -15,19 +15,19 @@ This guide sets up Claude Code on a new machine to use the local LLM running on 
 - [Optional: SSH Access to Mac Studio](#optional-ssh-access-to-mac-studio)
 - [Troubleshooting](#troubleshooting)
 
-## Prerequisites
+## ✅ Prerequisites
 
 - The Mac Studio oMLX server is already running on port 8000
 - The new machine is on the same LAN as the Mac Studio
 - Homebrew installed on the new machine (or Node.js 18+ if not on macOS)
 
-## Step 1: Verify Network Connectivity
+## 🌐 Step 1: Verify Network Connectivity
 
 ```bash
 # Check the Mac Studio is reachable
 ping -c 2 <MAC_STUDIO_IP>
 
-# Check oMLX is responding (Anthropic format)
+# Check oMLX is responding (Anthropic-format API)
 curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: <YOUR_API_KEY>" \
@@ -36,9 +36,9 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   | python3 -m json.tool
 ```
 
-You should see an Anthropic-format JSON response with `"type": "message"`. If not, the Mac Studio oMLX server may need to be started — see `../server/omlx/summary.md`.
+You should see an Anthropic-format JSON response with `"type": "message"`. If not, the Mac Studio M3 Ultra oMLX server may need to be started — see `../server/omlx/summary.md`.
 
-## Step 2: Install Claude Code
+## 📦 Step 2: Install Claude Code
 
 ```bash
 brew install claude-code
@@ -49,7 +49,7 @@ Verify:
 claude --version
 ```
 
-## Step 3: Create Settings File
+## 🧩 Step 3: Create Settings File
 
 Copy the config from this repo:
 
@@ -74,7 +74,7 @@ EOF
 
 **Note:** If the Mac Studio's IP address is different on your network, replace `<MAC_STUDIO_IP>` with the correct IP.
 
-## Step 4: Add Shell Alias
+## 🖥️ Step 4: Add Shell Alias
 
 Add to your shell config (`~/.zshrc` for macOS, `~/.bashrc` for Linux):
 
@@ -85,7 +85,7 @@ echo "alias claude-local='claude --settings ~/.claude/macstudio-settings.json'" 
 source ~/.zshrc
 ```
 
-## Step 5: Test
+## 🧪 Step 5: Test
 
 ### Basic test
 ```bash
@@ -103,7 +103,7 @@ claude-local -p "Read the file /tmp/test-local-llm.txt and tell me what it says"
 claude-local
 ```
 
-## Optional: SSH Access to Mac Studio
+## 🔑 Optional: SSH Access to Mac Studio
 
 If you want to manage the Mac Studio server from this machine:
 
@@ -144,7 +144,7 @@ ssh macstudio-ts true
 
 Use `macstudio` on the local LAN and `macstudio-ts` when you are remote but both machines are connected to Tailscale.
 
-## Troubleshooting
+## ⚠️ Troubleshooting
 
 **"Connection refused" on port 8000:**
 The oMLX server isn't running. SSH into the Mac Studio and start it:

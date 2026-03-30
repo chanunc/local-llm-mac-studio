@@ -1,6 +1,6 @@
 # OpenCode Setup: MacBook / WSL → Mac Studio LLM Server
 
-OpenCode connects **directly** to the oMLX server's OpenAI-compatible endpoint.
+OpenCode connects **directly** to the oMLX server's OpenAI-compatible API endpoint.
 
 ## Index
 - [Architecture](#architecture)
@@ -20,7 +20,7 @@ OpenCode connects **directly** to the oMLX server's OpenAI-compatible endpoint.
 - [Changing the Model](#changing-the-model)
 - [Comparison with Claude Code Setup](#comparison-with-claude-code-setup)
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 MacBook or WSL Linux                      Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
@@ -31,7 +31,7 @@ MacBook or WSL Linux                      Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 └─────────────────────┘                   └──────────────────────────────────┘
 ```
 
-## Installation
+## ⚙️ Installation
 
 **Important**: Use `anomalyco/tap/opencode` (actively maintained).
 
@@ -108,7 +108,7 @@ sudo systemctl enable lan-route-eth2
 sudo systemctl start lan-route-eth2
 ```
 
-## Configuration
+## 🧩 Configuration
 
 Copy config from this repo, or create manually:
 
@@ -154,7 +154,7 @@ Add to `~/.zshrc` or `~/.bashrc`:
 alias oc='opencode'
 ```
 
-## Testing
+## 🧪 Testing
 
 1. **Connectivity check**:
    ```bash
@@ -175,7 +175,7 @@ alias oc='opencode'
 
 4. **Tool use test**: Create a test file, then ask OpenCode to read it.
 
-## Troubleshooting
+## ⚠️ Troubleshooting
 
 ### `Error: agent coder not found`
 
@@ -217,7 +217,7 @@ If not, add the route (see WSL-Specific section above).
 
 ### Server reliability
 
-oMLX is installed via Homebrew on the Mac Studio (`brew install omlx`). It natively serves both OpenAI and Anthropic API formats on a single port.
+oMLX is installed via Homebrew on the Mac Studio M3 Ultra (`brew install omlx`). It natively serves both OpenAI-compatible and Anthropic-format APIs on a single port.
 
 `brew services start omlx` auto-restarts on crash natively. Check status: `ssh macstudio 'brew services info omlx'`.
 
@@ -225,7 +225,7 @@ Logs: `/opt/homebrew/var/log/omlx.log` (service) and `~/.omlx/logs/server.log` (
 
 Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"`
 
-## Changing the Model
+## 🔁 Changing the Model
 
 1. Load the new model on Mac Studio (see `../server/omlx/summary.md` "Changing the LLM Model")
 2. Update `opencode.json`:
@@ -233,7 +233,7 @@ Upgrade with: `ssh macstudio "/opt/homebrew/bin/brew upgrade omlx"`
    - Adjust `context` and `output` limits for the new model
 3. Restart OpenCode
 
-## Comparison with Claude Code Setup
+## 🔍 Comparison with Claude Code Setup
 
 | | Claude Code | OpenCode |
 |---|---|---|

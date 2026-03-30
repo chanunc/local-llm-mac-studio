@@ -4,7 +4,7 @@
 
 Client config files for connecting to the Mac Studio M3 Ultra. Organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
-## Server Roles
+## 🖥️ Server Roles
 
 | Server | Port | Role | Model(s) | API Key |
 |--------|------|------|----------|---------|
@@ -27,7 +27,7 @@ Benchmarked on Qwen3-Coder-Next 6-bit (dense 60GB model):
 
 The speed gap widens significantly at longer contexts -- exactly where coding agents operate.
 
-## Config Files
+## 🧩 Config Files
 
 ### `vllm-mlx/` -- Primary Server (Single Model)
 
@@ -61,7 +61,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | OmniCoder-9B | 8-bit | ~9.5GB | 262K | Coding agent |
 | Qwen3.5-35B-A3B JANG 4K | [JANG](https://jangq.ai/) 4-bit | ~19GB | 262K | Mixed-precision MoE |
 
-No API key needed. OpenAI API only (no Anthropic API). Claude Code requires OpenAI-compatible provider mode. Features: trie-based prompt caching, Qwen3.5 reasoning parser, speculative decoding support.
+No API key needed. OpenAI-compatible API only (no Anthropic-format API). Claude Code requires OpenAI-compatible provider mode. Features: trie-based prompt caching, Qwen3.5 reasoning parser, speculative decoding support.
 
 These `mlx-openai-server` client configs intentionally list a stable superset of commonly used **compatible** model IDs so the files do not need updating every time the live YAML changes. The actual server may expose only a subset at any given time; check `/v1/models` to see what is currently loaded.
 
@@ -94,7 +94,7 @@ Excluded from this superset:
 
 Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports hot-swapping between models via the admin dashboard at `http://<MAC_STUDIO_IP>:8000/admin`.
 
-## Switching Servers
+## 🔀 Switching Servers
 
 ```bash
 # Switch to mlx-openai-server (multi-model, low overhead)

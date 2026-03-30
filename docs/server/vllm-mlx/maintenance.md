@@ -11,7 +11,7 @@
 
 ---
 
-## 1. Upgrading vllm-mlx
+## 🔁 1. Upgrading vllm-mlx
 
 ```bash
 ~/vllm-mlx-env/bin/pip install --upgrade 'git+https://github.com/waybarrios/vllm-mlx.git'
@@ -26,7 +26,7 @@ Check installed version:
 
 ---
 
-## 2. Re-applying Patches After Upgrade
+## 🩹 2. Re-applying Patches After Upgrade
 
 ### Return bug patch (v0.2.6)
 
@@ -62,7 +62,7 @@ The JANG monkey-patch (`~/run_vllm_jang.py`) is external to the package, so it s
 
 ---
 
-## 3. Port Conflicts with oMLX
+## 🔌 3. Port Conflicts with oMLX
 
 vllm-mlx and oMLX both default to port 8000. Only one can run at a time.
 
@@ -84,7 +84,7 @@ lsof -i :8000 | head -5
 
 ---
 
-## 4. Model Loading Failures
+## ⚠️ 4. Model Loading Failures
 
 ### "cannot unpack non-iterable NoneType object"
 
@@ -112,7 +112,7 @@ You're loading a JANG model without the monkey-patch. Use `~/run_vllm_jang.py` i
 
 ---
 
-## 5. Memory Management
+## 🧠 5. Memory Management
 
 vllm-mlx loads the full model into Apple Silicon unified memory. Monitor usage:
 
@@ -128,7 +128,7 @@ memory_pressure | head -5
 
 ---
 
-## 6. KV Cache & Context Configuration
+## 🧩 6. KV Cache & Context Configuration
 
 vllm-mlx manages context length through its KV cache system. By default it auto-detects available RAM and allocates ~20% for cache.
 
@@ -214,7 +214,7 @@ curl -s http://localhost:8000/v1/cache/stats | python3 -m json.tool
 
 ---
 
-## 7. Debug Logging
+## 🪵 7. Debug Logging
 
 ### Server logs
 

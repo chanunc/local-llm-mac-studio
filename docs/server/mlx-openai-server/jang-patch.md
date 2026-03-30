@@ -15,7 +15,7 @@ Step-by-step guide to run JANG-quantized models on [mlx-openai-server](https://g
 
 ---
 
-## Background
+## 🔎 Background
 
 mlx-openai-server uses `mlx_lm.load()` to load models, which only supports standard MLX safetensors and nvfp4. JANG models use a custom weight format (adaptive mixed-precision) that requires `jang_tools.load_jang_model()`. Both loaders return the **identical model class** (`mlx_lm.models.qwen3_5_moe.Model`) — the difference is only in weight loading.
 
@@ -30,7 +30,7 @@ Unlike the other servers, mlx-openai-server's multi-model mode spawns each model
 
 ---
 
-## How It Works
+## 🧠 How It Works
 
 Two files in `~/mlx-openai-server-env/lib/python3.12/site-packages/`:
 
@@ -50,7 +50,7 @@ Both JANG and non-JANG models can run simultaneously in multi-model mode — eac
 
 ---
 
-## Installing the Patch
+## ⚙️ Installing the Patch
 
 ```bash
 SITE=~/mlx-openai-server-env/lib/python3.12/site-packages
@@ -105,7 +105,7 @@ import mlx_lm; print('patch active:', mlx_lm.load.__name__ == '_jang_patched_loa
 
 ---
 
-## Running the Server
+## 🚀 Running the Server
 
 **Important:** Any command that loads a JANG model must be prefixed with `JANG_PATCH_ENABLED=1`. Without it, the `.pth` patch is dormant and JANG models will fail with a shape mismatch error.
 
@@ -137,7 +137,7 @@ pkill -f mlx-openai-server
 
 ---
 
-## Multi-Model Configuration
+## 🧩 Multi-Model Configuration
 
 JANG and non-JANG models can run simultaneously via YAML config. Each model runs in a process-isolated subprocess, and the `.pth` patch activates independently in each.
 
@@ -176,7 +176,7 @@ Key fields from `ModelEntryConfig`:
 
 ---
 
-## Verification
+## 🧪 Verification
 
 ### Check model list
 ```bash
@@ -213,7 +213,7 @@ import mlx_lm; print('patch active:', mlx_lm.load.__name__ == '_jang_patched_loa
 
 ---
 
-## Upgrade Safety
+## 🔁 Upgrade Safety
 
 The `.pth` file and patch module are **not touched by `pip install --upgrade mlx-lm`** or `pip install --upgrade mlx-openai-server`** — pip only overwrites files from its own packages. No re-patching needed after upgrades.
 
@@ -231,10 +231,10 @@ The legacy wrapper script (`~/run_mlx_openai_jang.py`) is still available for si
 
 ---
 
-## Limitations
+## ⚠️ Limitations
 
 - **Not native:** Requires `.pth`-based patch in the venv. Must be reinstalled if the venv is recreated.
-- **No Anthropic API:** Only serves OpenAI `/v1/chat/completions`. Needs a proxy for Claude Code.
+- **No Anthropic-format API:** Only serves the OpenAI-compatible `/v1/chat/completions` API. Needs a proxy for Claude Code.
 - **Single-request concurrency:** The InferenceWorker processes one request at a time. Multiple simultaneous clients will queue.
 - **64K context performance drop:** 15% overhead vs standalone at 64K context, compared to vllm-mlx's 3%.
 - **Streaming format:** Uses `reasoning_content` field for think tokens. Clients expecting `content` or `reasoning` fields will miss these tokens.
@@ -242,7 +242,7 @@ The legacy wrapper script (`~/run_mlx_openai_jang.py`) is still available for si
 
 ---
 
-## Benchmark Results
+## 📊 Benchmark Results
 
 See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) for full comparison. Summary at 32K context (Qwen3.5-35B-A3B JANG 4K):
 
@@ -255,7 +255,7 @@ See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) 
 
 ---
 
-## Files on Mac Studio
+## 📁 Files on Mac Studio
 
 | File | Purpose |
 |------|---------|

@@ -8,9 +8,38 @@ Run large language models locally on a **Mac Studio M3 Ultra (96GB)** and connec
 MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB)
   Claude Code                            vllm-mlx (primary) :8000
   OpenCode                               or oMLX (multi-model) :8000
-  OpenClaw                               OpenAI + Anthropic API
+  OpenClaw                               OpenAI-compatible + Anthropic-format API
   Pi
 ```
+
+## 🗂️ Repository Map
+
+This repository is primarily an **operations notebook + config bundle** for the Mac Studio inference stack, not a single application codebase.
+
+### What lives where
+
+| Path | Purpose | Start Here |
+|:-----|:--------|:-----------|
+| `docs/server/` | Server runbooks, setup, maintenance, and JANG patches | Pick one `summary.md` per server |
+| `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/model-summary.md` |
+| `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | The client you are configuring |
+| `configs/` | Ready-to-copy client config templates grouped by server type | `configs/README.md` |
+| `scripts/` | Small local patch helpers for upstream server packages | Read before re-running after upgrades |
+| `plans/` | Research notes and future work, not the primary source of truth for live setup | Use only for backlog/context |
+
+### Canonical reading order
+
+1. Read this `README.md` for the stack overview and server selection.
+2. Read one server runbook in `docs/server/<server>/summary.md`.
+3. Read `configs/README.md` for the matching client config templates.
+4. Read `docs/models/model-summary.md` when choosing or adding models.
+5. Read the relevant maintenance or patch docs only when upgrading or debugging.
+
+### Summary vs maintenance vs plans
+
+- `summary.md` files are the main operational entry points.
+- `maintenance.md` and `jang-patch.md` files are task-specific follow-ups.
+- `plans/` captures ideas, experiments, and pending investigations; it is not the live runbook layer.
 
 ## ⚡ Quick Start
 
@@ -81,8 +110,6 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 [mlx-lm](docs/server/mlx-lm/jang-patch.md)
 
 Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
-
-Current `mlx-openai-server` roster: `mlx-community/Qwen3.5-27B-4bit`.
 
 ---
 

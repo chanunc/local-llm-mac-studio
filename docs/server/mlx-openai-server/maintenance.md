@@ -1,6 +1,6 @@
 # mlx-openai-server Maintenance
 
-## Upgrading
+## 🔁 Upgrading
 
 ```bash
 ~/mlx-openai-server-env/bin/pip install --upgrade mlx-openai-server
@@ -14,7 +14,7 @@ The `.pth` patch survives upgrades. Only reinstall if the venv itself is deleted
 
 **After upgrading**, also re-apply the tool_call arguments patch (see below).
 
-## Tool Call Arguments Patch
+## 🧩 Tool Call Arguments Patch
 
 The Qwen3.5 chat template expects `tool_call.arguments` as a dict, but OpenAI API clients (OpenClaw, etc.) send it as a JSON string. This causes `"Can only get item pairs from a mapping"` errors.
 
@@ -32,7 +32,7 @@ The patch script is idempotent (detects if already applied). Must be re-applied 
 
 ---
 
-## Mistral Small 4 Status
+## ⚠️ Mistral Small 4 Status
 
 No repo-managed local Mistral Small 4 patch is maintained here anymore.
 
@@ -42,7 +42,7 @@ For Apple Silicon local use, prefer `GGUF` on `llama.cpp` / `LM Studio` / `Ollam
 
 ---
 
-## Files on Mac Studio
+## 📁 Files on Mac Studio
 
 | File | Purpose |
 |------|---------|

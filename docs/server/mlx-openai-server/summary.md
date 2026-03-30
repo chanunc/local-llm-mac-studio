@@ -5,6 +5,7 @@
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Qwen3.5 27B 4-bit](#qwen35-27b-4-bit)
 - [Compact Hermes 4.3 36B](#compact-hermes-43-36b)
 - [Quick Test](#quick-test)
 - [API Endpoints](#api-endpoints)
@@ -133,6 +134,7 @@ Repo-managed reference config for the models currently supportable on this Mac S
 
 Included there:
 - Qwen3.5 JANG 122B / 35B with `qwen3_coder` + `qwen3_5`
+- Qwen3.5 27B 4-bit as a `multimodal` Qwen3.5-VL-style entry with `qwen3_vl`
 - Qwen3-Coder-30B-A3B-Instruct with `qwen3_coder`
 - Hermes 4 70B with `hermes`
 - Hermes 4.3 36B as a Seed-OSS chat-only entry with a custom template
@@ -141,6 +143,20 @@ Included there:
 Excluded there:
 - Nemotron family, which this repo still routes to `vllm-mlx`
 - Mistral Small 4 JANG, which is not currently supportable on this `mlx-openai-server` stack
+
+### Qwen3.5 27B 4-bit
+
+Validated on 2026-03-30:
+- Model: `mlx-community/Qwen3.5-27B-4bit`
+- Launch shape: `model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`
+- Reference file:
+  - [mlx-openai-server-qwen35-27b.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/mlx-openai-server-qwen35-27b.yaml)
+
+Observed behavior on Mac Studio M3 Ultra:
+- The repo name does not include `VL`, but the upstream MLX conversion is a multimodal Qwen3.5 build and must be served as `model_type: multimodal`
+- Loads cleanly on `mlx-openai-server` and answers text-only chat requests
+- `qwen3_vl` parsing separates thinking into `message.reasoning_content` while leaving the final answer in `message.content`
+- Short text probes validated clean startup, `GET /v1/models`, and successful `/v1/chat/completions` responses on port `8000`
 
 ### Compact Hermes 4.3 36B
 
@@ -204,14 +220,14 @@ tail -20 /tmp/mlx-openai-server.log
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK",
-    "messages": [{"role": "user", "content": "Say hello in one sentence"}],
-    "max_tokens": 50
+    "model": "mlx-community/Qwen3.5-27B-4bit",
+    "messages": [{"role": "user", "content": "Reply with exactly: pong"}],
+    "max_tokens": 128
   }' | python3 -m json.tool
 ```
 
 Current live roster on the Mac Studio:
-- `dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK`
+- `mlx-community/Qwen3.5-27B-4bit`
 
 ---
 

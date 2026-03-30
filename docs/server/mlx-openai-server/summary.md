@@ -157,6 +157,19 @@ Observed behavior on Mac Studio M3 Ultra:
 - The current `mlx-openai-server` build does not expose a `seed_oss` tool parser, so treat this model as chat-only on this server
 - Responses can continue past the first useful answer unless clients keep `max_tokens` conservative or trim at the first `<|eot_id|>`
 
+### Qwen3.5-VL CRACK Single-Model YAML
+
+Validated on 2026-03-30:
+- Model: `dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK`
+- Reference file:
+  - [mlx-openai-server-crack-vl.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/mlx-openai-server-crack-vl.yaml)
+
+Observed behavior on Mac Studio M3 Ultra:
+- Loads cleanly as `model_type: multimodal` on `mlx-openai-server`
+- Basic text-only chat responded in roughly 3 seconds during validation
+- The model is currently a better live fit on this stack than compact Hermes 4.3
+- Text-only chat can still surface visible `<think>` output, so clients may need parser handling or response trimming if they expect plain final answers
+
 ### Key CLI flags
 
 | Flag | Purpose |
@@ -191,14 +204,14 @@ tail -20 /tmp/mlx-openai-server.log
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "mlx-community/Qwen3-Coder-Next-6bit",
+    "model": "dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK",
     "messages": [{"role": "user", "content": "Say hello in one sentence"}],
     "max_tokens": 50
   }' | python3 -m json.tool
 ```
 
 Current live roster on the Mac Studio:
-- `mlx-community/Qwen3-Coder-Next-6bit`
+- `dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK`
 
 ---
 

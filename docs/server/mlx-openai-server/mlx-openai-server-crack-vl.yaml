@@ -1,0 +1,12 @@
+server:
+  host: 0.0.0.0
+  port: 8000
+
+models:
+  - model_path: /Users/chanunc/.omlx/models/dealignai--Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK
+    model_type: multimodal
+    served_model_name: dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
+    reasoning_parser: qwen3_vl
+    context_length: 131072

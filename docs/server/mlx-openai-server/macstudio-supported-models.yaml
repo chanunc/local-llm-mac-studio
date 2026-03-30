@@ -10,7 +10,8 @@
 # Included here:
 # - Qwen3.5 JANG models: require qwen3_coder tool parsing + qwen3_5 reasoning parsing
 # - Qwen3-Coder 30B: requires qwen3_coder tool parsing
-# - Hermes 4: requires hermes tool + reasoning parsing
+# - Hermes 4 70B: requires hermes tool + reasoning parsing
+# - Hermes 4.3 36B: Seed-OSS chat-only path with custom template
 #
 # Excluded here on purpose:
 # - Nemotron family: use vllm-mlx instead on this repo
@@ -50,6 +51,17 @@ models:
     enable_auto_tool_choice: true
     tool_call_parser: hermes
     reasoning_parser: hermes
+    context_length: 131072
+
+  # Seed-OSS-based compact Hermes. Works for basic chat on this stack when the
+  # official Seed-OSS chat template is supplied. Tool calling and reasoning
+  # parsing are not validated here because the current server build does not
+  # expose a seed_oss parser.
+  - model_path: /Users/chanunc/.omlx/models/alexcovo--Hermes-4.3-36B-mlx-4Bit
+    model_type: lm
+    served_model_name: alexcovo/Hermes-4.3-36B-mlx-4Bit
+    trust_remote_code: true
+    chat_template_file: /Users/chanunc/seed-oss-36b-chat-template.jinja
     context_length: 131072
 
   # Medium-confidence multimodal entry. Keep only if you intend to serve VLMs

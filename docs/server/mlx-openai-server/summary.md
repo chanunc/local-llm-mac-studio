@@ -5,6 +5,7 @@
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Compact Hermes 4.3 36B](#compact-hermes-43-36b)
 - [Quick Test](#quick-test)
 - [API Endpoints](#api-endpoints)
 - [JANG Model Support](#jang-model-support)
@@ -134,11 +135,27 @@ Included there:
 - Qwen3.5 JANG 122B / 35B with `qwen3_coder` + `qwen3_5`
 - Qwen3-Coder-30B-A3B-Instruct with `qwen3_coder`
 - Hermes 4 70B with `hermes`
+- Hermes 4.3 36B as a Seed-OSS chat-only entry with a custom template
 - Qwen3.5-VL 122B as a medium-confidence multimodal entry
 
 Excluded there:
 - Nemotron family, which this repo still routes to `vllm-mlx`
 - Mistral Small 4 JANG, which is not currently supportable on this `mlx-openai-server` stack
+
+### Compact Hermes 4.3 36B
+
+Validated on 2026-03-30:
+- Model: `alexcovo/Hermes-4.3-36B-mlx-4Bit` (community MLX conversion of `NousResearch/Hermes-4.3-36B`)
+- Launch shape: `--trust-remote-code` plus the official Seed-OSS chat template
+- Reference files:
+  - [mlx-openai-server-hermes43-36b.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/mlx-openai-server-hermes43-36b.yaml)
+  - [seed-oss-36b-chat-template.jinja](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/seed-oss-36b-chat-template.jinja)
+
+Observed behavior on Mac Studio M3 Ultra:
+- Loads and serves short chat completions successfully on `mlx-openai-server`
+- Short prompts responded in roughly 3 to 6 seconds during validation
+- The current `mlx-openai-server` build does not expose a `seed_oss` tool parser, so treat this model as chat-only on this server
+- Responses can continue past the first useful answer unless clients keep `max_tokens` conservative or trim at the first `<|eot_id|>`
 
 ### Key CLI flags
 
@@ -218,6 +235,7 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 7. **Tool call arguments as string**: OpenAI API clients (OpenClaw, etc.) send `tool_call.arguments` as a JSON string, but Qwen3.5's chat template expects a dict — causes `"Can only get item pairs from a mapping"` error. Fixed by `scripts/patch_mlx_openai_tool_args.py` (see [Maintenance](maintenance.md#tool-call-arguments-patch)). Must re-apply after upgrades.
 8. **Nemotron family incompatible**: No chat template fallback, no reasoning/tool parsers for Nemotron. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.
 9. **Mistral Small 4 is not currently supported here**: Upstream `mlx-lm` does not yet ship native `mistral4` support, and this repo no longer carries a local patch path. Use `GGUF` on `llama.cpp` / `LM Studio` / `Ollama`, or `vLLM` for Mistral's official self-deployment path.
+10. **Seed-OSS models need extra wiring**: Compact Hermes 4.3 36B is based on `seed_oss`, not the older Hermes tokenizer family. On this `mlx-openai-server` build it needs an explicit Seed-OSS chat template and currently has no validated tool parser path.
 
 ---
 

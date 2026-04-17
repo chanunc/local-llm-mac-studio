@@ -49,7 +49,7 @@ SSH key was copied with `ssh-copy-id` (or manual `authorized_keys` setup).
 
 Config file: `~/.openclaw/openclaw.json` on the Linux machine.
 
-The Mac Studio provider config is available at `configs/omlx/openclaw-provider.json` in this repo. It was added to the existing `models.providers` section (merged alongside DeepSeek and Kimi providers):
+The Mac Studio provider config is available at `configs/client/omlx/openclaw-provider.json` in this repo. It was added to the existing `models.providers` section (merged alongside DeepSeek and Kimi providers):
 
 ```json
 {

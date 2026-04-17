@@ -2,7 +2,7 @@
 
 **Last updated: 2026-03-29**
 
-Client config files for connecting to the Mac Studio M3 Ultra. Organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
+Client config files for connecting to the Mac Studio M3 Ultra. Templates now live under `configs/client/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
 ## 🖥️ Server Roles
 
@@ -29,7 +29,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 
 ## 🧩 Config Files
 
-### `vllm-mlx/` -- Primary Server (Single Model)
+### `client/vllm-mlx/` -- Primary Server (Single Model)
 
 | File | Copy to | Used by |
 |------|---------|---------|
@@ -40,7 +40,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 
 **Model:** `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` -- [JANG](https://jangq.ai/) 2-bit adaptive mixed-precision, ~35GB, 200K+ context, 122B total / 10B active MoE. Uses `run_vllm_jang.py` wrapper for JANG model loading and `--served-model-name` so clients see the clean HuggingFace-style model ID.
 
-### `mlx-openai-server/` -- Multi-Model Server (Process Isolation)
+### `client/mlx-openai-server/` -- Multi-Model Server (Process Isolation)
 
 | File | Copy to | Used by |
 |------|---------|---------|
@@ -69,7 +69,7 @@ Excluded from this superset:
 - Nemotron family — currently incompatible on `mlx-openai-server`
 - Mistral Small 4 — currently unsupported on `mlx-openai-server`
 
-### `omlx/` -- Multi-Model Server (SSD Cache)
+### `client/omlx/` -- Multi-Model Server (SSD Cache)
 
 | File | Copy to | Used by |
 |------|---------|---------|

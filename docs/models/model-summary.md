@@ -18,6 +18,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Nemotron Server Compatibility](#nemotron-server-compatibility) — vllm-mlx only; mlx-openai-server and oMLX broken
 - [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
+- [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision encoder · 3B active · 262K native (1M YaRN)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -465,3 +466,37 @@ First JANG-format model on the oMLX server. Uses adaptive mixed-precision quanti
 - JANG ecosystem is early stage; no community validation of quality claims
 - Future `brew upgrade omlx` will overwrite the fork — must re-apply after upgrades
 - Detected as VLM model type (`qwen3_5_moe`) in oMLX discovery
+
+---
+
+## Qwen3.6-35B-A3B (6-bit)
+
+New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, but a different architecture: hybrid Gated DeltaNet (linear attention) interleaved with full Gated Attention layers, a built-in vision encoder, and native Multi-Token Prediction for speculative decoding. Thinking mode is the default.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| MLX 6-bit | [mlx-community/Qwen3.6-35B-A3B-6bit](https://huggingface.co/mlx-community/Qwen3.6-35B-A3B-6bit) |
+| Format | MLX safetensors (multimodal / `mlx_vlm` handler) |
+| Vendor | Alibaba Qwen; MLX conversion by mlx-community |
+| Parameters | 35B total, ~3B active (MoE, 256 experts, 8 routed + 1 shared) |
+| Density | Sparse hybrid: 10× [3× (Gated DeltaNet → MoE) + 1× (Gated Attention → MoE)] = 40 layers |
+| Quantization | 6-bit uniform MLX |
+| Specialties | Vision-language (image + video), thinking mode by default, MTP speculative decoding, agentic coding, tool use |
+| On-disk size | ~27 GB |
+| Context Size | 262K native; extensible to ~1M with YaRN |
+| License | Apache-2.0 |
+| Key Features | Hybrid linear + full attention (long-context efficiency), native VL encoder, MTP |
+
+**mlx-openai-server model ID:** `mlx-community/Qwen3.6-35B-A3B-6bit`
+
+**Server config:** `model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072` (conservative; raise toward 262K after stability checks).
+
+**Requirements:**
+- `mlx_lm >= 0.31.1` and `mlx_vlm >= 0.4.1` (confirmed working on Mac Studio pilot)
+- Verified on `mlx-openai-server` v1.7.0 in multi-handler mode alongside `Qwen3-Coder-Next-6bit`
+
+**Caveats:**
+- Default chat template emits `<think>` unconditionally; `chat_template_kwargs.enable_thinking=false` did not suppress it in pilot testing — needs follow-up on parser / template wiring
+- Compatibility on `oMLX` and `vllm-mlx` not yet verified (hybrid Gated DeltaNet is new; upstream support may lag)
+- MTP speculative decoding benefits require server-side support — not yet wired in `mlx-openai-server`

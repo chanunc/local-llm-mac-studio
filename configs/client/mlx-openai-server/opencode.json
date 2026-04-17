@@ -15,6 +15,13 @@
             "output": 8192
           }
         },
+        "mlx-community/Qwen3.6-35B-A3B-6bit": {
+          "name": "Qwen3.6-35B-A3B 6-bit (Hybrid MoE + Vision, Thinking)",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
         "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit": {
           "name": "Qwen3-Coder-30B-A3B Instruct 4-bit",
           "limit": {

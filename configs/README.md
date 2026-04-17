@@ -60,6 +60,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | Qwen3.5-122B-A10B JANG 2S | [JANG](https://jangq.ai/) 2-bit | ~35GB | 200K | Compact 122B |
 | OmniCoder-9B | 8-bit | ~9.5GB | 262K | Coding agent |
 | Qwen3.5-35B-A3B JANG 4K | [JANG](https://jangq.ai/) 4-bit | ~19GB | 262K | Mixed-precision MoE |
+| Qwen3.6-35B-A3B | 6-bit | ~27GB | 262K (1M YaRN) | Hybrid MoE + vision, thinking |
 
 No API key needed. OpenAI-compatible API only (no Anthropic-format API). Claude Code requires OpenAI-compatible provider mode. Features: trie-based prompt caching, Qwen3.5 reasoning parser, speculative decoding support.
 

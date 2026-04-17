@@ -500,3 +500,7 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 - Default chat template emits `<think>` unconditionally; `chat_template_kwargs.enable_thinking=false` did not suppress it in pilot testing — needs follow-up on parser / template wiring
 - Compatibility on `oMLX` and `vllm-mlx` not yet verified (hybrid Gated DeltaNet is new; upstream support may lag)
 - MTP speculative decoding benefits require server-side support — not yet wired in `mlx-openai-server`
+
+### Variant attempted but blocked: `JANGQ-AI/Qwen3.6-35B-A3B-JANGTQ4`
+
+A TurboQuant-weight (`.tq_packed` + `.tq_norms`) quant of the same base model (~20 GB on disk). Loader requires the private `jang_tools.load_jangtq` / `load_jangtq_vlm` modules bundled with `vmlx[jang]==1.3.61`'s fast path. Neither module is in the PyPI `jang==2.3.2` package nor in the public `jjang-ai/jangq` GitHub repo (verified with a fresh clone). vmlx's own dequant-and-requant fallback is commented as producing gibberish on this family, which we reproduced: weights load at correct shapes (~19.5 GB peak), but generation collapses into repeating loops (`"Paris capital Paris capital..."` on a `"The capital of France is"` prompt). Conclusion: not runnable on M3 Ultra with public tooling until upstream publishes the TQ loaders. Parked; model removed from disk.

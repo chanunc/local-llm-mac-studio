@@ -111,7 +111,7 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 
 Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
 
-Current `mlx-openai-server` roster: `mlx-community/Qwen3-Coder-Next-6bit`, `mlx-community/Qwen3.6-35B-A3B-6bit`.
+Current `mlx-openai-server` roster: `mlx-community/gemma-4-26b-a4b-it-4bit` (single-model, Gemma-4-only mode).
 
 
 ---
@@ -122,6 +122,7 @@ All models fit in **96GB unified memory**.
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--------------------------------------|:------------|----------:|--------:|:---------|
+| [Gemma 4 26B-A4B (4-bit)](docs/models/model-summary.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/model-summary.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3-Coder-Next 6-bit](docs/models/model-summary.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
 | [Qwen3-Coder-30B-A3B Instruct 4-bit](docs/models/model-summary.md#qwen3-coder-30b-a3b-instruct-4-bit) | MoE 30.5B/3.3B | 17.2 | 262K | Compact coding model |
@@ -151,6 +152,19 @@ Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 | vllm-mlx | **68.8** 🥇 | **63.8** 🥇 | **56.4** 🥇 | **51.7** 🥇 |
 | mlx-lm | 68.4 🥈 | 62.7 🥈 | 54.0 🥈 | 47.7 🥈 |
 | oMLX | 66.5 | 56.9 | 40.4 | 34.8 |
+
+**Gemma 4 26B-A4B 4-bit** (MoE, multimodal — mlx-openai-server 1.7.1, Apr 2026):
+
+> Tokens include both reasoning (`reasoning_content`) and output (`content`) phases. 512 warm values shown (run 1 cold-start: 59.4 tok/s / 28 tok/s prefill / 18.7s TTFT).
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|:---:|:---:|:---:|
+| 512 | **62.5** | 1,710 | 0.30 |
+| 4K | 54.6 | 3,117 | 1.32 |
+| 8K | **60.6** | **3,154** | 2.60 |
+| 32K | 50.6 | 2,892 | 11.34 |
+| 64K | 42.0 | 2,542 | 25.78 |
+| 128K | 27.1 | 1,995 | 65.70 |
 
 **Qwen3.5-35B-A3B JANG** (MoE, primary architecture):
 

@@ -1,6 +1,6 @@
 # Benchmark: API Server Inference
 
-Tested on **Mac Studio M3 Ultra (96 GB)** — March 25-27, 2026.
+Tested on **Mac Studio M3 Ultra (96 GB)** — March 25-27, 2026 (Qwen3.5 models) · April 17, 2026 (Gemma 4).
 
 ## 🧪 Method
 
@@ -140,6 +140,57 @@ Within 2-5% across all servers and context lengths. JANG's adaptive mixed-precis
 ### 6. JANG monkey-patch works on all servers
 
 A ~15-line wrapper script intercepts `mlx_lm.load()` / `mlx_lm.utils.load()` and delegates JANG paths to `jang_tools.load_jang_model()`. No server code modifications needed. All servers loaded JANG models in <3 seconds via mmap.
+
+---
+
+---
+
+## Gemma 4 26B-A4B-it (4-bit)
+
+Model: `mlx-community/gemma-4-26b-a4b-it-4bit`  
+Tested on **Mac Studio M3 Ultra (96 GB)** — April 17, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens count both `reasoning_content` (thinking) and `content` (answer) phases — Gemma 4 always thinks before answering. 512 warm values shown (run 1 was a cold-start: 59.4 tok/s gen / 28 tok/s prefill / 18.7s TTFT).
+
+**Server:** mlx-openai-server v1.7.1 (mlx-lm 0.31.2, mlx-vlm 0.4.4) — only server tested; vllm-mlx has a known reasoning parser bug ([#38855](https://github.com/vllm-project/vllm/issues/38855)) and oMLX lacks the `gemma4` parser.
+
+### Generation Speed (tok/s)
+
+| Context | mlx-openai-server |
+|:--------|:-----------------:|
+| 512 | **62.5** |
+| 4K | 54.6 |
+| 8K | **60.6** |
+| 32K | 50.6 |
+| 64K | 42.0 |
+| 128K | 27.1 |
+
+### Prefill Speed (tok/s)
+
+| Context | mlx-openai-server |
+|:--------|:-----------------:|
+| 512 | 1,710 |
+| 4K | 3,117 |
+| 8K | **3,154** |
+| 32K | 2,892 |
+| 64K | 2,542 |
+| 128K | 1,995 |
+
+### Time to First Token (seconds)
+
+| Context | mlx-openai-server |
+|:--------|:-----------------:|
+| 512 | 0.30 |
+| 4K | 1.32 |
+| 8K | 2.60 |
+| 32K | 11.34 |
+| 64K | 25.78 |
+| 128K | 65.70 |
+
+**Notes:**
+- Gen speed is stable across runs (±0.1 tok/s at 32K–128K) — minimal variance due to MoE routing determinism at temperature 0.0
+- 8K slightly faster than 4K in generation — likely GPU utilization sweet spot for this sliding-window MoE
+- 128K TTFT (65.7s) is dominated by prefill time; generation itself is 27.1 tok/s once started
 
 ---
 

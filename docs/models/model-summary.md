@@ -6,6 +6,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
+- [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — Vision + reasoning + tool use · 15 GB · 256K
 - [Qwen3-Coder-Next (6-bit)](#qwen3-coder-next-6-bit) — Daily driver (coding)
 - [Qwen3-Coder-30B-A3B Instruct (4-bit)](#qwen3-coder-30b-a3b-instruct-4-bit) — Compact coding model
 - [Qwen3.5-27B Claude Opus Distilled (qx64-hi)](#qwen35-27b-claude-opus-distilled-qx64-hi) — Reasoning / chain-of-thought
@@ -500,6 +501,59 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 - Default chat template emits `<think>` unconditionally; `chat_template_kwargs.enable_thinking=false` did not suppress it in pilot testing — needs follow-up on parser / template wiring
 - Compatibility on `oMLX` and `vllm-mlx` not yet verified (hybrid Gated DeltaNet is new; upstream support may lag)
 - MTP speculative decoding benefits require server-side support — not yet wired in `mlx-openai-server`
+
+---
+
+## Gemma 4 26B-A4B (4-bit)
+
+Google's first mixture-of-experts Gemma. The 26B-A4B activates only ~4B parameters per token (128 experts, top-4 routing) giving MoE-class throughput while supporting 256K context, native vision+video+audio multimodal input, and built-in thinking mode. Verified on Mac Studio M3 Ultra (96 GB) on April 17, 2026.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [google/gemma-4-26b-a4b-it](https://huggingface.co/google/gemma-4-26b-a4b-it) |
+| MLX 4-bit | [mlx-community/gemma-4-26b-a4b-it-4bit](https://huggingface.co/mlx-community/gemma-4-26b-a4b-it-4bit) |
+| Format | MLX safetensors (multimodal / `mlx_vlm` handler) |
+| Vendor | Google DeepMind; MLX conversion by mlx-community |
+| Architecture | `Gemma4ForConditionalGeneration` — MoE text + vision encoder + audio encoder |
+| Parameters | 26B total, ~4B active (128 experts, top-4 routing) |
+| Quantization | 4-bit (group size 64), with 8-bit on MoE gate/up/down projectors of layer 0 |
+| Specialties | Thinking mode (chain-of-thought), image + video + audio input, tool calling, 256K context |
+| On-disk size | ~15 GB |
+| Context Size | 262,144 tokens (256K); sliding window 1024 on intermediate layers |
+| License | Gemma Terms of Use |
+| Requirements | `mlx-openai-server >= 1.7.1`, `mlx-lm >= 0.31.2`, `mlx-vlm >= 0.4.4` |
+
+**mlx-openai-server model ID:** `mlx-community/gemma-4-26b-a4b-it-4bit`
+
+**Server config:** `model_type: multimodal`, `tool_call_parser: gemma4`, `reasoning_parser: gemma4`, `context_length: 262144`
+
+**Reference YAML:** [mlx-openai-server-gemma4.yaml](../server/mlx-openai-server/mlx-openai-server-gemma4.yaml)
+
+### Benchmarks (mlx-openai-server 1.7.1, M3 Ultra 96 GB, Apr 17 2026)
+
+Method: streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens include both `reasoning_content` (thinking) and `content` (answer) phases.
+
+> **512 note:** run 1 was a cold-start (59.4 tok/s gen, 28 tok/s prefill, 18.7s TTFT). Table shows warm values (runs 2–3).
+
+#### Generation Speed (tok/s)
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|------------:|----------------:|---------:|
+| 512 | **62.5** | 1,710 | 0.30 |
+| 4K | 54.6 | 3,117 | 1.32 |
+| 8K | 60.6 | 3,154 | 2.60 |
+| 32K | 50.6 | 2,892 | 11.34 |
+| 64K | 42.0 | 2,542 | 25.78 |
+| 128K | 27.1 | 1,995 | 65.70 |
+
+Prefill peaks at 8K (~3,154 tok/s) — typical for sliding-window models where GPU utilisation is highest in the mid-range. Generation speed drops gradually with context due to sliding window KV growth.
+
+### Caveats
+
+- **Thinking always on (streaming):** Bug [#280](https://github.com/cubist38/mlx-openai-server/issues/280) — reasoning parser not applied mid-stream in 1.7.1. Fixed on `main` but not yet released. Non-streaming requests separate `content` / `reasoning_content` correctly (verified).
+- **`chat_template_kwargs` ignored:** Bug [#279](https://github.com/cubist38/mlx-openai-server/issues/279) — `enable_thinking: false` has no effect in 1.7.1. Fixed on `main`. Thinking cannot currently be suppressed via API.
+- **vllm-mlx:** Not tested. Bug [#38855](https://github.com/vllm-project/vllm/issues/38855) means reasoning parser strips `<|channel>` markers — not recommended until vllm-mlx picks up the vLLM main fix.
+- **oMLX:** Not tested. The 4-bit MLX port includes `chat_template.jinja` so the tokenizer issue seen with 8-bit variants does not apply here; however, Gemma 4 parsers are not registered in oMLX's parser map.
 
 ### Variant attempted but blocked: `JANGQ-AI/Qwen3.6-35B-A3B-JANGTQ4`
 

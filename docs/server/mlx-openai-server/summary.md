@@ -5,6 +5,7 @@
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Gemma 4 26B-A4B (single-model)](#gemma-4-26b-a4b-single-model)
 - [Qwen3.5 27B 4-bit](#qwen35-27b-4-bit)
 - [Compact Hermes 4.3 36B](#compact-hermes-43-36b)
 - [Quick Test](#quick-test)
@@ -20,7 +21,7 @@
 
 | Property | Value |
 |----------|-------|
-| Version | 1.7.0 |
+| Version | 1.7.1 |
 | Repository | [cubist38/mlx-openai-server](https://github.com/cubist38/mlx-openai-server) |
 | Python | 3.11+ (requires Homebrew Python 3.12 on Mac Studio) |
 | Framework | MLX + mlx-lm 0.31.x + Uvicorn/FastAPI |
@@ -49,7 +50,7 @@ Client (MacBook / Linux / WSL)          Mac Studio M3 Ultra
 - **Trie-based prompt cache**: Stores token sequences in a trie for exact matches, shorter prefixes, and longer cached sequences. LRU eviction with optional byte limits. Qwen3.5-specific non-trimmable cache optimization.
 - **Process isolation (multi-model)**: Each model runs in a dedicated subprocess using `multiprocessing.spawn` to prevent Metal/GPU semaphore leaks.
 - **Speculative decoding**: Uses a small draft model to generate candidate tokens verified by the main model.
-- **Reasoning parsers**: Built-in parsers for Qwen3.5, Qwen3, Hermes, Kimi K2, and others. Emits `reasoning_content` in streaming chunks for think tokens.
+- **Reasoning parsers**: Built-in parsers for Qwen3.5, Qwen3, Hermes, Kimi K2, Gemma 4, and others. Emits `reasoning_content` in streaming chunks for think tokens.
 
 ---
 
@@ -144,6 +145,38 @@ Excluded there:
 - Nemotron family, which this repo still routes to `vllm-mlx`
 - Mistral Small 4 JANG, which is not currently supportable on this `mlx-openai-server` stack
 
+### Gemma 4 26B-A4B (single-model)
+
+Validated on 2026-04-17:
+- Model: `mlx-community/gemma-4-26b-a4b-it-4bit`
+- Launch shape: `model_type: multimodal`, `tool_call_parser: gemma4`, `reasoning_parser: gemma4`
+- Reference file: [mlx-openai-server-gemma4.yaml](mlx-openai-server-gemma4.yaml)
+
+```bash
+~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-gemma4.yaml --no-log-file
+```
+
+Observed behavior on Mac Studio M3 Ultra (96 GB):
+- Loads in ~5s via `mlx_vlm` multimodal handler (15 GB on disk, ~16 GB RSS at idle)
+- `/v1/models` returns single entry `mlx-community/gemma-4-26b-a4b-it-4bit`
+- Tool calling verified: `finish_reason: tool_calls`, structured `tool_calls[]` with JSON args
+- Non-streaming: `reasoning_content` (thinking) cleanly separated from `content` (answer)
+- Streaming: reasoning parser partially broken in 1.7.1 ([#280](https://github.com/cubist38/mlx-openai-server/issues/280)) — thinking tokens may appear in `content`; fixed on `main`
+- `enable_thinking: false` has no effect in 1.7.1 ([#279](https://github.com/cubist38/mlx-openai-server/issues/279)) — fixed on `main`
+- 256K context configured; sliding-window architecture keeps prefill fast at mid-range contexts
+
+Generation benchmarks (3 runs, temperature 0.0, 150 max tokens, includes reasoning tokens):
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|------------:|----------------:|---------:|
+| 512 | 62.5 | 1,710 | 0.30 |
+| 4K | 54.6 | 3,117 | 1.32 |
+| 8K | 60.6 | 3,154 | 2.60 |
+| 32K | 50.6 | 2,892 | 11.34 |
+| 64K | 42.0 | 2,542 | 25.78 |
+| 128K | 27.1 | 1,995 | 65.70 |
+
 ### Qwen3.5 27B 4-bit
 
 Validated on 2026-03-30:
@@ -227,7 +260,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 ```
 
 Current live roster on the Mac Studio:
-- `mlx-community/Qwen3.5-27B-4bit`
+- `mlx-community/gemma-4-26b-a4b-it-4bit` (Gemma-4-only mode, Apr 2026)
 
 ---
 
@@ -264,7 +297,9 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 7. **Tool call arguments as string**: OpenAI API clients (OpenClaw, etc.) send `tool_call.arguments` as a JSON string, but Qwen3.5's chat template expects a dict — causes `"Can only get item pairs from a mapping"` error. Fixed by `scripts/patch_mlx_openai_tool_args.py` (see [Maintenance](maintenance.md#tool-call-arguments-patch)). Must re-apply after upgrades.
 8. **Nemotron family incompatible**: No chat template fallback, no reasoning/tool parsers for Nemotron. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.
 9. **Mistral Small 4 is not currently supported here**: Upstream `mlx-lm` does not yet ship native `mistral4` support, and this repo no longer carries a local patch path. Use `GGUF` on `llama.cpp` / `LM Studio` / `Ollama`, or `vLLM` for Mistral's official self-deployment path.
-10. **Seed-OSS models need extra wiring**: Compact Hermes 4.3 36B is based on `seed_oss`, not the older Hermes tokenizer family. On this `mlx-openai-server` build it needs an explicit Seed-OSS chat template and currently has no validated tool parser path.
+10. **Gemma 4 streaming reasoning leak (1.7.1):** Bug [#280](https://github.com/cubist38/mlx-openai-server/issues/280) — reasoning parser not applied in the streaming path; thinking tokens bleed into `content` chunks. Non-streaming is clean. Fix is on `main`; awaiting 1.7.2 release.
+11. **Gemma 4 `enable_thinking` ignored (1.7.1):** Bug [#279](https://github.com/cubist38/mlx-openai-server/issues/279) — `chat_template_kwargs.enable_thinking=false` has no effect. Cannot suppress thinking via API in 1.7.1. Fixed on `main`.
+12. **Seed-OSS models need extra wiring**: Compact Hermes 4.3 36B is based on `seed_oss`, not the older Hermes tokenizer family. On this `mlx-openai-server` build it needs an explicit Seed-OSS chat template and currently has no validated tool parser path.
 
 ---
 
@@ -273,7 +308,8 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 | File | Purpose |
 |------|---------|
 | `~/mlx-openai-server-env/` | Python 3.12 venv |
-| `~/mlx-openai-server-multimodel.yaml` | Multi-model YAML config |
+| `~/mlx-openai-server-gemma4.yaml` | Gemma-4-only single-model config (current live) |
+| `~/mlx-openai-server-multimodel.yaml` | Multi-model config (Qwen3-Coder-Next + Qwen3.6-35B) |
 | `/tmp/mlx-openai-server.log` | Server log (when started with redirect) |
 
 Full file list including JANG patch files: [JANG Patch](jang-patch.md#files-on-mac-studio)

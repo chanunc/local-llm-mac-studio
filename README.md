@@ -111,7 +111,7 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 
 Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
 
-Current `mlx-openai-server` roster: `mlx-community/gemma-4-26b-a4b-it-4bit` (single-model, Gemma-4-only mode).
+Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
 
 ---
@@ -166,6 +166,21 @@ Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 | 64K | 42.0 | 2,542 | 25.78 |
 | 128K | 27.1 | 1,995 | 65.70 |
 
+**Qwen3.6-35B-A3B 6-bit** (Hybrid MoE, multimodal — mlx-openai-server 1.7.1, Apr 2026):
+
+> Tokens include both `reasoning_content` (always-on `<think>`) and `content`. Server-validated; standalone-only Apr 17 numbers in [standalone benchmarks](docs/models/model-benchmark-standalone.md#qwen36-35b-a3b-6-bit-vs-qwen35-35b-a3b-jang-4k) carry a VLM double-prefill artefact and are not directly comparable.
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|:---:|:---:|:---:|
+| 512 | **52.5** | 1,401 | 0.34 |
+| 4K | **53.0** | **2,237** | 1.64 |
+| 8K | 51.3 | 2,197 | 3.32 |
+| 32K | 46.3 | 1,798 | 16.22 |
+| 64K | 40.3 | 1,408 | 41.40 |
+| 128K | 35.6 | 927 | 125.73 |
+
+Hybrid Gated DeltaNet pays off at long context — Qwen3.6's 35.6 tok/s @ 128K is **31% faster than Gemma 4** at the same context, despite Qwen3.6 carrying a vision encoder.
+
 **Qwen3.5-35B-A3B JANG** (MoE, primary architecture):
 
 | Server | 32K | 64K |
@@ -174,6 +189,16 @@ Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 | mlx-openai-server | 81.3 🥈 | 62.8 |
 | mlx-lm | 77.6 | 65.1 🥈 |
 | oMLX | 59.9 | 49.0 |
+
+**128K cross-model** (long-context comparison — all measured through-server, Apr 2026):
+
+| Model | Server | Gen tok/s | Prefill tok/s | TTFT (s) |
+|:-------|:-------|:---:|:---:|:---:|
+| Qwen3-Coder-Next 6-bit (Dense 80B) | vllm-mlx | **44.2** 🥇 | **736** 🥇 | **158** 🥇 |
+| Qwen3.6-35B-A3B 6-bit (Hybrid MoE + VL) | mlx-openai-server | 35.6 🥈 | 927 | 126 🥈 |
+| Qwen3.5-122B JANG 2S | vllm-mlx (JANG) | 34.5 | 405 | 324 |
+| Qwen3.5-35B-A3B JANG 4K | oMLX (Mar leaderboard) | 33.8 | 295 | — |
+| Gemma 4 26B-A4B 4-bit (MoE + VL) | mlx-openai-server | 27.1 | 1,995 | 66 |
 
 Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/model-benchmark-turboquant-jang.md)
 

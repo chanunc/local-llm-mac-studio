@@ -177,6 +177,44 @@ Generation benchmarks (3 runs, temperature 0.0, 150 max tokens, includes reasoni
 | 64K | 42.0 | 2,542 | 25.78 |
 | 128K | 27.1 | 1,995 | 65.70 |
 
+### Qwen3.6-35B-A3B 6-bit
+
+Validated on 2026-04-18:
+- Model: `mlx-community/Qwen3.6-35B-A3B-6bit` (~27 GB on disk at `~/.omlx/models/mlx-community/Qwen3.6-35B-A3B-6bit`)
+- Launch shape: `model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`, `enable_auto_tool_choice: true`
+- Reference file: [mlx-openai-server-qwen36-35b.yaml](mlx-openai-server-qwen36-35b.yaml)
+
+```bash
+ssh macstudio "nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-qwen36-35b.yaml --no-log-file \
+  > /tmp/mlx-openai-server.log 2>&1 &"
+```
+
+Observed behavior on Mac Studio M3 Ultra (96 GB):
+- Loads in ~8s via `mlx_vlm` multimodal handler (~30 GB peak RSS at idle)
+- `/v1/models` returns single entry `mlx-community/Qwen3.6-35B-A3B-6bit`
+- Non-streaming: `reasoning_content` (always-on `<think>`) cleanly separated from `content` (final answer)
+- Streaming: `reasoning_content` and `content` arrive in separate SSE deltas — **the Gemma-4 streaming-leak bug ([#280](https://github.com/cubist38/mlx-openai-server/issues/280)) does not surface with the `qwen3_vl` parser here**
+- Vision through API verified: `image_url` content blocks (data URL with base64 PNG) work end-to-end; a 64×64 solid-red PNG was correctly identified as "Red". `https://`-hosted images are also accepted but currently fetched through the server, so client-reachable URLs are required
+- 131K context configured (conservative; Qwen3.6 native is 262K extensible to ~1M with YaRN). Long-context generation stays usable: 35.6 tok/s at 128K vs 52.5 tok/s at 512
+- Server overhead at 512 ≈ 4% vs standalone (52.5 vs 54.7 tok/s), within the JANG-class band already seen on this server
+- `enable_thinking=false` has no effect (same hookup gap as Gemma 4 [#279](https://github.com/cubist38/mlx-openai-server/issues/279)); thinking cannot currently be suppressed via API
+- MTP/multi-token-prediction speculative decoding is not exposed — `mlx-openai-server` issues [#177](https://github.com/cubist38/mlx-openai-server/issues/177) and [#204](https://github.com/cubist38/mlx-openai-server/issues/204) remain open. Use `waybarrios/vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) if MTP-through-API is required
+- `oMLX` rejected for Qwen3.6 today: open issues [#812](https://github.com/jundot/omlx/issues/812) (tool calling stops), [#819](https://github.com/jundot/omlx/issues/819) (lmstudio 6bit fails to load), [#827](https://github.com/jundot/omlx/issues/827) (DFlash load fail), [#841](https://github.com/jundot/omlx/issues/841) (>127K silent crash)
+
+Through-server benchmarks (3 runs, temperature 0.0, 150 max tokens, includes reasoning tokens):
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|------------:|----------------:|---------:|
+| 512 | 52.5 | 1,401 | 0.34 |
+| 4K | 53.0 | 2,237 | 1.64 |
+| 8K | 51.3 | 2,197 | 3.32 |
+| 32K | 46.3 | 1,798 | 16.22 |
+| 64K | 40.3 | 1,408 | 41.40 |
+| 128K | 35.6 | 927 | 125.73 |
+
+Full results and methodology: [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md). Raw JSON: [qwen36-35b-server-benchmark.json](qwen36-35b-server-benchmark.json).
+
 ### Qwen3.5 27B 4-bit
 
 Validated on 2026-03-30:
@@ -260,7 +298,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 ```
 
 Current live roster on the Mac Studio:
-- `mlx-community/gemma-4-26b-a4b-it-4bit` (Gemma-4-only mode, Apr 2026)
+- `mlx-community/Qwen3.6-35B-A3B-6bit` (Qwen3.6-only mode, switched 2026-04-18)
 
 ---
 
@@ -300,6 +338,8 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 10. **Gemma 4 streaming reasoning leak (1.7.1):** Bug [#280](https://github.com/cubist38/mlx-openai-server/issues/280) — reasoning parser not applied in the streaming path; thinking tokens bleed into `content` chunks. Non-streaming is clean. Fix is on `main`; awaiting 1.7.2 release.
 11. **Gemma 4 `enable_thinking` ignored (1.7.1):** Bug [#279](https://github.com/cubist38/mlx-openai-server/issues/279) — `chat_template_kwargs.enable_thinking=false` has no effect. Cannot suppress thinking via API in 1.7.1. Fixed on `main`.
 12. **Seed-OSS models need extra wiring**: Compact Hermes 4.3 36B is based on `seed_oss`, not the older Hermes tokenizer family. On this `mlx-openai-server` build it needs an explicit Seed-OSS chat template and currently has no validated tool parser path.
+13. **Qwen 3.5/3.6 empty `<think>` cache miss (template bug, applies engine-wide):** Shipped Jinja templates emit `<think>\n\n</think>\n\n` for every prior assistant turn even when `reasoning_content` is empty, drifting the prompt prefix and breaking KV-cache reuse — worst after tool use ([r/LocalLLaMA 1sg076h](https://www.reddit.com/r/LocalLLaMA/comments/1sg076h/)). Patched on Mac Studio 2026-04-19 by adding `and reasoning_content` to the `loop.index0 > ns.last_query_index` guard in 6 model templates. See [maintenance.md#qwen-empty-think-template-patch](maintenance.md#qwen-empty-think-template-patch). **Must be re-applied on any model re-download.**
+14. **`chat_template_kwargs` must be nested, not top-level:** The server only reads `request.chat_template_kwargs.<key>`. Sending `preserve_thinking: true` at the request root is silently dropped (same plumbing class as #11). Clients must send `{"chat_template_kwargs": {"preserve_thinking": true, "enable_thinking": true}}`. Verified at `app/handler/mlx_lm.py:1010-1012` → `app/models/mlx_lm.py:136-142` (main and v1.7.1 identical).
 
 ---
 
@@ -308,7 +348,8 @@ Not supported natively. Requires a `.pth`-based patch in the venv that intercept
 | File | Purpose |
 |------|---------|
 | `~/mlx-openai-server-env/` | Python 3.12 venv |
-| `~/mlx-openai-server-gemma4.yaml` | Gemma-4-only single-model config (current live) |
+| `~/mlx-openai-server-qwen36-35b.yaml` | Qwen3.6-only single-model config (current live) |
+| `~/mlx-openai-server-gemma4.yaml` | Gemma-4-only single-model config |
 | `~/mlx-openai-server-multimodel.yaml` | Multi-model config (Qwen3-Coder-Next + Qwen3.6-35B) |
 | `/tmp/mlx-openai-server.log` | Server log (when started with redirect) |
 

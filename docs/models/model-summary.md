@@ -495,12 +495,15 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 
 **Requirements:**
 - `mlx_lm >= 0.31.1` and `mlx_vlm >= 0.4.1` (confirmed working on Mac Studio pilot)
-- Verified on `mlx-openai-server` v1.7.0 in multi-handler mode alongside `Qwen3-Coder-Next-6bit`
+- Validated through-API on `mlx-openai-server` v1.7.1 single-handler mode on 2026-04-18: text + vision smoke tests pass; full benchmark in [model-benchmark-api-server.md](model-benchmark-api-server.md#qwen36-35b-a3b-6-bit) shows 52.5 tok/s @ 512 → 35.6 tok/s @ 128K
+- Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../server/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml)
 
 **Caveats:**
-- Default chat template emits `<think>` unconditionally; `chat_template_kwargs.enable_thinking=false` did not suppress it in pilot testing — needs follow-up on parser / template wiring
-- Compatibility on `oMLX` and `vllm-mlx` not yet verified (hybrid Gated DeltaNet is new; upstream support may lag)
-- MTP speculative decoding benefits require server-side support — not yet wired in `mlx-openai-server`
+- Default chat template emits `<think>` unconditionally; `chat_template_kwargs.enable_thinking=false` has no effect through `mlx-openai-server` 1.7.1 — same hookup gap as Gemma 4 ([#279](https://github.com/cubist38/mlx-openai-server/issues/279), fixed on `main`, awaiting 1.7.2)
+- `oMLX` is **not recommended** for Qwen3.6 today: open issues [#812](https://github.com/jundot/omlx/issues/812) (tool calling silently stops), [#819](https://github.com/jundot/omlx/issues/819) (lmstudio 6bit fails to load), [#827](https://github.com/jundot/omlx/issues/827) (DFlash load failure), [#841](https://github.com/jundot/omlx/issues/841) (>127K silent crash)
+- `waybarrios/vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only Apple-Silicon server that exposes MTP/speculative decoding through OpenAI API for Qwen3.6 today, but inherits the upstream `mlx-lm` hybrid-attention cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)) — not deployed here yet
+- MTP speculative decoding through `mlx-openai-server` remains unwired ([#177](https://github.com/cubist38/mlx-openai-server/issues/177), [#204](https://github.com/cubist38/mlx-openai-server/issues/204))
+- Streaming `reasoning_content` / `content` split **does work cleanly** with the `qwen3_vl` parser on `mlx-openai-server` 1.7.1 — the Gemma-4-only streaming-leak bug ([#280](https://github.com/cubist38/mlx-openai-server/issues/280)) does not affect Qwen3.6
 
 ---
 

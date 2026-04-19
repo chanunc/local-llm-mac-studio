@@ -1,0 +1,32 @@
+[
+  {
+    "context": 131072,
+    "run": 1,
+    "prompt_tokens": 0,
+    "tokens_generated": 150,
+    "ttft_sec": 324.168,
+    "pp_tps": 404.3,
+    "gen_tps": 34.42,
+    "total_sec": 328.51
+  },
+  {
+    "context": 131072,
+    "run": 2,
+    "prompt_tokens": 0,
+    "tokens_generated": 150,
+    "ttft_sec": 323.849,
+    "pp_tps": 404.7,
+    "gen_tps": 34.6,
+    "total_sec": 328.16
+  },
+  {
+    "context": 131072,
+    "run": 3,
+    "prompt_tokens": 0,
+    "tokens_generated": 150,
+    "ttft_sec": 323.828,
+    "pp_tps": 404.8,
+    "gen_tps": 34.45,
+    "total_sec": 328.16
+  }
+]

@@ -1,0 +1,182 @@
+[
+  {
+    "context": 512,
+    "run": 1,
+    "prompt_tokens": 465,
+    "tokens_generated": 98,
+    "ttft_sec": 0.577,
+    "pp_tps": 806.0,
+    "gen_tps": 52.4,
+    "total_sec": 2.5
+  },
+  {
+    "context": 512,
+    "run": 2,
+    "prompt_tokens": 465,
+    "tokens_generated": 98,
+    "ttft_sec": 0.335,
+    "pp_tps": 1389.5,
+    "gen_tps": 52.49,
+    "total_sec": 2.18
+  },
+  {
+    "context": 512,
+    "run": 3,
+    "prompt_tokens": 465,
+    "tokens_generated": 98,
+    "ttft_sec": 0.332,
+    "pp_tps": 1401.0,
+    "gen_tps": 52.18,
+    "total_sec": 2.19
+  },
+  {
+    "context": 4096,
+    "run": 1,
+    "prompt_tokens": 3651,
+    "tokens_generated": 101,
+    "ttft_sec": 1.632,
+    "pp_tps": 2236.7,
+    "gen_tps": 52.87,
+    "total_sec": 3.6
+  },
+  {
+    "context": 4096,
+    "run": 2,
+    "prompt_tokens": 3651,
+    "tokens_generated": 101,
+    "ttft_sec": 1.638,
+    "pp_tps": 2228.5,
+    "gen_tps": 52.68,
+    "total_sec": 3.54
+  },
+  {
+    "context": 4096,
+    "run": 3,
+    "prompt_tokens": 3651,
+    "tokens_generated": 101,
+    "ttft_sec": 1.632,
+    "pp_tps": 2237.3,
+    "gen_tps": 52.98,
+    "total_sec": 3.59
+  },
+  {
+    "context": 8192,
+    "run": 1,
+    "prompt_tokens": 7293,
+    "tokens_generated": 99,
+    "ttft_sec": 3.321,
+    "pp_tps": 2196.2,
+    "gen_tps": 51.08,
+    "total_sec": 5.31
+  },
+  {
+    "context": 8192,
+    "run": 2,
+    "prompt_tokens": 7293,
+    "tokens_generated": 99,
+    "ttft_sec": 3.319,
+    "pp_tps": 2197.2,
+    "gen_tps": 51.33,
+    "total_sec": 5.3
+  },
+  {
+    "context": 8192,
+    "run": 3,
+    "prompt_tokens": 7293,
+    "tokens_generated": 99,
+    "ttft_sec": 3.321,
+    "pp_tps": 2195.9,
+    "gen_tps": 51.07,
+    "total_sec": 5.31
+  },
+  {
+    "context": 32768,
+    "run": 1,
+    "prompt_tokens": 29137,
+    "tokens_generated": 100,
+    "ttft_sec": 16.208,
+    "pp_tps": 1797.7,
+    "gen_tps": 46.38,
+    "total_sec": 18.42
+  },
+  {
+    "context": 32768,
+    "run": 2,
+    "prompt_tokens": 29137,
+    "tokens_generated": 100,
+    "ttft_sec": 16.221,
+    "pp_tps": 1796.2,
+    "gen_tps": 46.29,
+    "total_sec": 18.43
+  },
+  {
+    "context": 32768,
+    "run": 3,
+    "prompt_tokens": 29137,
+    "tokens_generated": 100,
+    "ttft_sec": 16.206,
+    "pp_tps": 1797.9,
+    "gen_tps": 46.2,
+    "total_sec": 18.42
+  },
+  {
+    "context": 65536,
+    "run": 1,
+    "prompt_tokens": 58264,
+    "tokens_generated": 98,
+    "ttft_sec": 41.393,
+    "pp_tps": 1407.6,
+    "gen_tps": 40.42,
+    "total_sec": 43.87
+  },
+  {
+    "context": 65536,
+    "run": 2,
+    "prompt_tokens": 58264,
+    "tokens_generated": 98,
+    "ttft_sec": 41.377,
+    "pp_tps": 1408.1,
+    "gen_tps": 39.31,
+    "total_sec": 43.92
+  },
+  {
+    "context": 65536,
+    "run": 3,
+    "prompt_tokens": 58264,
+    "tokens_generated": 98,
+    "ttft_sec": 41.395,
+    "pp_tps": 1407.5,
+    "gen_tps": 40.26,
+    "total_sec": 43.88
+  },
+  {
+    "context": 131072,
+    "run": 1,
+    "prompt_tokens": 116518,
+    "tokens_generated": 101,
+    "ttft_sec": 125.586,
+    "pp_tps": 927.8,
+    "gen_tps": 35.81,
+    "total_sec": 128.46
+  },
+  {
+    "context": 131072,
+    "run": 2,
+    "prompt_tokens": 116518,
+    "tokens_generated": 101,
+    "ttft_sec": 125.637,
+    "pp_tps": 927.4,
+    "gen_tps": 34.1,
+    "total_sec": 128.65
+  },
+  {
+    "context": 131072,
+    "run": 3,
+    "prompt_tokens": 116518,
+    "tokens_generated": 101,
+    "ttft_sec": 125.73,
+    "pp_tps": 926.7,
+    "gen_tps": 35.63,
+    "total_sec": 128.61
+  }
+]

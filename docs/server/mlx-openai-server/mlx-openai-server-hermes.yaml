@@ -1,0 +1,12 @@
+server:
+  host: 0.0.0.0
+  port: 8000
+
+models:
+  - model_path: /Users/chanunc/.omlx/models/lmstudio-community--Hermes-4-70B-MLX-6bit
+    model_type: lm
+    served_model_name: lmstudio-community/Hermes-4-70B-MLX-6bit
+    enable_auto_tool_choice: true
+    tool_call_parser: hermes
+    reasoning_parser: hermes
+    context_length: 131072

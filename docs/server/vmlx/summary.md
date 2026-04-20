@@ -1,5 +1,19 @@
 # vmlx Server Summary
 
+## Index
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Starting the server](#starting-the-server)
+- [Tool use and reasoning](#tool-use-and-reasoning)
+- [Verifying the fast path](#verifying-the-fast-path)
+- [Health check](#health-check)
+- [Performance](#performance-mac-studio-m3-ultra-96-gb)
+- [Known limitations](#known-limitations)
+- [See also](#see-also)
+
+---
+
 ## Overview
 
 `vmlx` is the **JANGTQ-only** server in this repo. It exists because TurboQuant-weight (JANGTQ) models need `jang_tools.load_jangtq` + the `turboquant/*kernel*` Metal kernels at load time — and **none of that ships via the public pypi `jang` or `vmlx` wheels** ([`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5)). The loader + kernels are bundled only inside the MLX Studio Electron DMG's relocatable Python (`panel/scripts/bundle-python.sh` per the vmlx 1.3.62 CHANGELOG). `vmlx` runs headlessly out of that bundled Python — no GUI session is needed despite the Electron packaging.
@@ -51,10 +65,36 @@ Expected: `load_jangtq.py`, `load_jangtq_vlm.py`, `turboquant/{tq_kernel,hadamar
 BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
 SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snapshots/033d5537f48f2f836ce3dfbe392304a2b30f8536
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
-  --host 0.0.0.0 --port 8000 > /tmp/vmlx.log 2>&1 &
+  --host 0.0.0.0 --port 8000 \
+  --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  > /tmp/vmlx.log 2>&1 &
 ```
 
 > **Do not** use the shipped `$BP/bin/vmlx` script — its shebang hardcodes the maintainer's build path (`/Users/eric/mlx/vllm-mlx/panel/bundled-python/python/bin/python3`). The `vmlx_engine.cli` module route is the maintainer-documented workaround (CHANGELOG: "Bundled spawn uses `python3 -m vmlx_engine.cli serve` (avoids shebang issues)").
+
+---
+
+## Tool use and reasoning
+
+OpenAI-style tool calling and Qwen3 thinking-token separation both work on vmlx but require **three runtime flags and a one-time source patch** applied to the bundled Python.
+
+**Runtime flags** (already in the Start snippet above):
+
+| Flag | Required for |
+|------|-------------|
+| `--enable-auto-tool-choice` | `tool_choice: auto` semantics + qwen3 tool-call parser wiring |
+| `--tool-call-parser qwen3` | Extracts `<tool_call>…</tool_call>` into structured `tool_calls[]` |
+| `--reasoning-parser qwen3` | Extracts `<think>…</think>` into `reasoning_content` (keeps `content` clean) |
+
+Without `--reasoning-parser qwen3`, the model's entire thinking monologue appears in `content` and clients like OpenCode show it as the visible reply ("thinking nonsense").
+
+**One-time source patch** — vmlx 1.0.3 has three MLLM-path defects the flags alone cannot fix (tools silently dropped before the chat template, template ignores them anyway, multi-turn tool replay crashes the Jinja template). Fix:
+
+```bash
+ssh macstudio "$BP/bin/python3 ~/setup-llm-macstu/scripts/patch_vmlx_jangtq_mllm_tools.py"
+```
+
+Idempotent. **Re-apply after every DMG upgrade.** Full bug-by-bug breakdown: [`maintenance.md` § Tool use and reasoning](maintenance.md#tool-use-and-reasoning-mllm-models).
 
 ## Verifying the fast path
 
@@ -96,6 +136,7 @@ Full deploy + perf report: [`docs/models/uncen-model/minimax-m27-crack-benchmark
 
 ## Known limitations
 
+- **MLLM tool-use bugs (patch required)**: vmlx 1.0.3 drops `tools[]` before the chat template, ignores it in `_apply_chat_template`, and crashes on multi-turn tool replay with "Can only get item pairs from a mapping". All three are fixed by `scripts/patch_vmlx_jangtq_mllm_tools.py`. Must re-apply after every DMG upgrade. See [§ Tool use and reasoning](#tool-use-and-reasoning) and [`maintenance.md`](maintenance.md#tool-use-and-reasoning-mllm-models).
 - **Incompatible flags**: `--smelt` and `--flash-moe` raise `ValueError` on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)). Do not pass either.
 - **JANGTQ-weight models only**: non-JANGTQ models work too, but there is no reason to use vmlx for them — `vllm-mlx` / `mlx-openai-server` / `oMLX` have better operational stories and matching or faster perf.
 - **Single-vendor dependency risk**: the loader + Metal kernels are not in any public package. A new DMG install is the only supported path after reinstall; there is no `pip install` fallback today. Upstream tracking issue: [`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5).
@@ -105,5 +146,7 @@ Full deploy + perf report: [`docs/models/uncen-model/minimax-m27-crack-benchmark
 ## See also
 
 - [`maintenance.md`](maintenance.md) — lifecycle + upgrade recipe
+- [`maintenance.md` § Tool use and reasoning](maintenance.md#tool-use-and-reasoning-mllm-models) — three MLLM-path bugs, patch script, troubleshooting table
+- [`scripts/patch_vmlx_jangtq_mllm_tools.py`](../../../scripts/patch_vmlx_jangtq_mllm_tools.py) — idempotent source patch for all three bugs
 - [`docs/models/model-summary.md` § unblocking path](../../models/model-summary.md#unblocking-path--corrected--deployed-2026-04-20) — why pypi `vmlx` alone doesn't work
 - [`docs/models/uncen-model/minimax-m27-crack-benchmark.md`](../../models/uncen-model/minimax-m27-crack-benchmark.md) — per-context perf + RAM detail

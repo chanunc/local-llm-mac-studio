@@ -11,8 +11,9 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates now liv
 | **vllm-mlx** | 8000 | **Primary** -- fastest inference, single model | Qwen3.5-122B-A10B JANG 2S (~35GB) | Not needed |
 | **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
+| **vmlx** | 8000 | **JANGTQ** -- only route for TurboQuant-weight (JANGTQ) CRACK models; runs out of MLX Studio bundled Python | MiniMax-M2.7-JANGTQ-CRACK (~57GB) | Not needed |
 
-Only one server runs at a time on port 8000. vllm-mlx is the default for daily coding; switch to mlx-openai-server for multi-model with low overhead, or oMLX when you need the full 9-model roster and admin dashboard.
+Only one server runs at a time on port 8000. vllm-mlx is the default for daily coding; switch to mlx-openai-server for multi-model with low overhead, oMLX when you need the full 9-model roster + admin dashboard, or vmlx when you need an uncensored JANGTQ model (the loader + Metal kernels ship only inside the MLX Studio DMG's bundled Python — see [`docs/models/model-summary.md`](../docs/models/model-summary.md#unblocking-path--corrected--deployed-2026-04-20)).
 
 ### Why vllm-mlx is Primary
 
@@ -95,24 +96,46 @@ Excluded from this superset:
 
 Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports hot-swapping between models via the admin dashboard at `http://<MAC_STUDIO_IP>:8000/admin`.
 
+### `client/vmlx/` -- JANGTQ Server (Uncensored CRACK)
+
+| File | Copy to | Used by |
+|------|---------|---------|
+| `claude-code-settings.json` | `~/.claude/settings.json` | Claude Code |
+| `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
+| `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
+| `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
+
+**Model:** `dealignai/MiniMax-M2.7-JANGTQ-CRACK` -- MiniMax-M2.7 MoE (230B total / ~10B active / 256 experts), JANGTQ quant (2-bit TurboQuant codebook + 8-bit attention/embeddings, Hadamard rotation, Metal-fused dequant+matmul), CRACK-abliterated for uncensored use. ~57 GB on disk. Educational / experimental -- see [`docs/models/uncen-model/minimax-m27-crack-benchmark.md`](../docs/models/uncen-model/minimax-m27-crack-benchmark.md) for the deploy + perf report.
+
+Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs out of the MLX Studio DMG's bundled Python (`/Applications/vMLX.app/Contents/Resources/bundled-python/python/`) because the TurboQuant loader (`jang_tools.load_jangtq`) and Metal kernels (`turboquant/{tq_kernel,hadamard_kernel,gather_tq_kernel,fused_gate_up_kernel}`) are not distributed via the public pypi `jang` or `vmlx` wheels ([`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5) tracks this).
+
+**Not compatible with**: `--smelt` or `--flash-moe` flags ([`vmlx#81`](https://github.com/jjang-ai/vmlx/issues/81) -- both raise `ValueError` on `weight_format=mxtq`). Use the bundled `python3 -m vmlx_engine.cli serve` invocation only; the bundled `bin/vmlx` shebang points at the maintainer's build tree.
+
 ## 🔀 Switching Servers
 
 ```bash
 # Switch to mlx-openai-server (multi-model, low overhead)
-pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2
+pkill -f vllm-mlx; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml \
   --no-log-file \
   > /tmp/mlx-openai-server.log 2>&1 &
 
 # Switch to oMLX (multi-model, 9 models)
-pkill -f mlx-openai-server; pkill -f vllm-mlx; sleep 2
+pkill -f mlx-openai-server; pkill -f vllm-mlx; pkill -f vmlx_engine; sleep 2
 /opt/homebrew/bin/brew services start omlx
 
 # Switch to vllm-mlx (primary, fastest)
-pkill -f mlx-openai-server; /opt/homebrew/bin/brew services stop omlx; sleep 2
+pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
 nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
   --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &
+
+# Switch to vmlx (JANGTQ CRACK — bundled-Python headless)
+pkill -f vllm-mlx; pkill -f mlx-openai-server; /opt/homebrew/bin/brew services stop omlx; sleep 2
+BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
+SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snapshots/033d5537f48f2f836ce3dfbe392304a2b30f8536
+nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
+  --host 0.0.0.0 --port 8000 > /tmp/vmlx.log 2>&1 &
 ```

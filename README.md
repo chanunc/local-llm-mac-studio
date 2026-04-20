@@ -7,9 +7,10 @@ Run large language models locally on a **Mac Studio M3 Ultra (96GB)** and connec
 ```
 MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB)
   Claude Code                            vllm-mlx (primary) :8000
-  OpenCode                               or oMLX (multi-model) :8000
-  OpenClaw                               OpenAI-compatible + Anthropic-format API
-  Pi
+  OpenCode                               mlx-openai-server :8000
+  OpenClaw                               oMLX (multi-model) :8000
+  Pi                                     vmlx (JANGTQ) :8000
+                                         OpenAI + Anthropic API (+ Ollama for vmlx)
 ```
 
 ## 🗂️ Repository Map
@@ -62,9 +63,16 @@ JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch 
 # oMLX — 9 models, hot-swap
 /opt/homebrew/bin/brew services start omlx
 
+# vmlx — JANGTQ CRACK (MLX Studio bundled Python, headless)
+BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
+SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snapshots/033d5537f48f2f836ce3dfbe392304a2b30f8536
+nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
+  --host 0.0.0.0 --port 8000 > /tmp/vmlx.log 2>&1 &
+
 pkill -f vllm-mlx                                                                # stop vllm-mlx
 pkill -f mlx-openai-server                                                       # stop mlx-openai-server
 /opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
+pkill -f vmlx_engine                                                             # stop vmlx
 ```
 
 ### 🩺 Health Check
@@ -79,6 +87,7 @@ open http://<MAC_STUDIO_IP>:8000/admin                                          
 tail -f /tmp/vllm-mlx.log                                                       # vllm-mlx logs
 tail -f /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
 tail -f ~/.omlx/logs/server.log                                                 # oMLX logs
+tail -f /tmp/vmlx.log                                                           # vmlx logs
 ```
 
 ### 💬 Quick Test
@@ -102,7 +111,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 | **[mlx-openai-server](docs/server/mlx-openai-server/summary.md)** | 🟢 Fast | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
 | **[mlx-lm](docs/server/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
 | **[oMLX](docs/server/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
-| **vmlx** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — see [model-summary](docs/models/model-summary.md#variant-attempted-but-blocked-jangq-aiqwen36-35b-a3b-jangtq4) |
+| **[vmlx](docs/server/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
 
 All servers support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·
@@ -110,7 +119,7 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 [mlx-openai-server](docs/server/mlx-openai-server/jang-patch.md) ·
 [mlx-lm](docs/server/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md)
+Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md) · [vmlx](docs/server/vmlx/maintenance.md)
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 

@@ -2,6 +2,23 @@
 
 Operational notes for the `vmlx` JANGTQ server on Mac Studio. See [`summary.md`](summary.md) for the architectural overview.
 
+## Index
+- [Lifecycle](#lifecycle)
+  - [Start](#start)
+  - [Stop](#stop)
+  - [Status](#status)
+- [Switching to/from other servers](#switching-tofrom-other-servers)
+- [Upgrading](#upgrading)
+- [Changing the served model](#changing-the-served-model)
+- [Model download cancellation](#model-download-cancellation)
+- [Memory / performance tuning](#memory--performance-tuning)
+- [Tool use and reasoning (MLLM models)](#tool-use-and-reasoning-mllm-models)
+  - [Required server flags](#required-server-flags)
+  - [Required source patch](#required-source-patch-scriptspatch_vmlx_jangtq_mllm_toolspy)
+- [Troubleshooting](#troubleshooting)
+
+---
+
 ## Lifecycle
 
 ### Start

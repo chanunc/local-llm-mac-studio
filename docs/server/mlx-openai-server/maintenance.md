@@ -1,5 +1,14 @@
 # mlx-openai-server Maintenance
 
+## Index
+- [Upgrading](#-upgrading)
+- [Tool Call Arguments Patch](#-tool-call-arguments-patch)
+- [Qwen Empty `<think>` Template Patch](#qwen-empty-think-template-patch)
+- [Mistral Small 4 Status](#️-mistral-small-4-status)
+- [Files on Mac Studio](#-files-on-mac-studio)
+
+---
+
 ## 🔁 Upgrading
 
 ```bash

@@ -10,6 +10,8 @@
       "models": {
         "dealignai/MiniMax-M2.7-JANGTQ-CRACK": {
           "name": "MiniMax-M2.7 JANGTQ-CRACK (230B MoE, Uncensored, TurboQuant)",
+          "tools": true,
+          "reasoning": true,
           "limit": {
             "context": 131072,
             "output": 8192
@@ -17,6 +19,8 @@
         },
         "dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK": {
           "name": "Qwen3.6-35B-A3B JANGTQ4-CRACK (35B MoE + VL, Uncensored, 4-bit TurboQuant — recommended default)",
+          "tools": true,
+          "reasoning": true,
           "limit": {
             "context": 262144,
             "output": 8192
@@ -24,6 +28,7 @@
         },
         "dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK": {
           "name": "Qwen3.6-35B-A3B JANGTQ2-CRACK (35B MoE, Uncensored, 2-bit TurboQuant, needs enable_thinking=false)",
+          "tools": true,
           "limit": {
             "context": 262144,
             "output": 8192

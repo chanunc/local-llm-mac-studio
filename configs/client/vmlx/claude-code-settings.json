@@ -1,0 +1,11 @@
+{
+  "_comment": "vmlx (MLX Studio bundled Python) serving JANGTQ-CRACK model. Speaks OpenAI + Anthropic + Ollama API natively. No API key required.",
+  "env": {
+    "OPENAI_BASE_URL": "http://<MAC_STUDIO_IP>:8000/v1",
+    "OPENAI_API_KEY": "not-needed",
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8000",
+    "ANTHROPIC_API_KEY": "not-needed",
+    "ANTHROPIC_MODEL": "dealignai/MiniMax-M2.7-JANGTQ-CRACK",
+    "ANTHROPIC_SMALL_FAST_MODEL": "dealignai/MiniMax-M2.7-JANGTQ-CRACK"
+  }
+}

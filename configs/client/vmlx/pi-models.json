@@ -1,0 +1,25 @@
+{
+  "providers": {
+    "macstudio": {
+      "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "not-needed",
+      "compat": {
+        "supportsUsageInStreaming": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "dealignai/MiniMax-M2.7-JANGTQ-CRACK",
+          "name": "MiniMax-M2.7 JANGTQ-CRACK (230B MoE, Uncensored, TurboQuant)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    }
+  }
+}

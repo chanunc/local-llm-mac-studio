@@ -102,6 +102,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 | **[mlx-openai-server](docs/server/mlx-openai-server/summary.md)** | 🟢 Fast | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
 | **[mlx-lm](docs/server/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
 | **[oMLX](docs/server/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
+| **vmlx** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — see [model-summary](docs/models/model-summary.md#variant-attempted-but-blocked-jangq-aiqwen36-35b-a3b-jangtq4) |
 
 All servers support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·
@@ -134,6 +135,7 @@ All models fit in **96GB unified memory**.
 | [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
 | [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
+| MiniMax-M2.7 JANGTQ-CRACK | MoE 230B/10B | 57 | 128K | Uncensored, TurboQuant (vmlx only) — see [uncen-model](docs/models/uncen-model/) |
 
 Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 

@@ -145,6 +145,7 @@ All models fit in **96GB unified memory**.
 | [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
 | MiniMax-M2.7 JANGTQ-CRACK | MoE 230B/10B | 57 | 128K | Uncensored, TurboQuant (vmlx only) — see [uncen-model](docs/models/uncen-model/) |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | MoE 35B/3B + VL | 19.7 | 262K | **Uncensored efficiency-frontier winner** — ties MiniMax at 10/10 useful compliance at 1/3 the weights, ~64 tok/s sustained, ~4.66 s avg latency. VLM. Default thinking ON. (vmlx only) |
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Uncensored VLM, 2-bit TurboQuant (vmlx only). Fastest CRACK (~66 tok/s) but **quality-impaired** (4/10 useful compliance). Requires `enable_thinking=false` |
 
 Full specs and per-model details: [Model Summary](docs/models/model-summary.md)

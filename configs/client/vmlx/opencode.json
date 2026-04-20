@@ -15,6 +15,13 @@
             "output": 8192
           }
         },
+        "dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK": {
+          "name": "Qwen3.6-35B-A3B JANGTQ4-CRACK (35B MoE + VL, Uncensored, 4-bit TurboQuant — recommended default)",
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
+        },
         "dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK": {
           "name": "Qwen3.6-35B-A3B JANGTQ2-CRACK (35B MoE, Uncensored, 2-bit TurboQuant, needs enable_thinking=false)",
           "limit": {

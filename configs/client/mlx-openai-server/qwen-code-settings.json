@@ -1,0 +1,49 @@
+{
+  "_comment": "qwen-code settings for mlx-openai-server on Mac Studio. Default model is Qwen3.5-35B-A3B JANG 4K (currently loaded per mlx-openai-server-multimodel.yaml). mlx-openai-server does not require auth, but qwen-code expects an envKey — set MACSTUDIO_API_KEY=not-needed. Install target: ~/.qwen/settings.json.",
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mac Studio, Primary)",
+        "description": "MoE 35B/3B, JANG mixed precision, 262K context — default for mlx-openai-server",
+        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "mlx-community/Qwen3.6-35B-A3B-6bit",
+        "name": "Qwen3.6-35B-A3B 6-bit (Hybrid MoE + Vision, Thinking)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
+        "name": "Qwen3-Coder-30B-A3B Instruct 4-bit",
+        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "mlx-community/Qwen3-Coder-Next-6bit",
+        "name": "Qwen3-Coder-Next 6-bit (Daily Driver)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
+        "name": "Qwen3.5-122B-A10B JANG 2S (Compact 122B)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      }
+    ]
+  },
+  "env": {
+    "MACSTUDIO_API_KEY": "not-needed"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "openai"
+    }
+  },
+  "model": {
+    "name": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
+  }
+}

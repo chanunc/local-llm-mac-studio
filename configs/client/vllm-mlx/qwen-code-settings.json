@@ -1,0 +1,25 @@
+{
+  "_comment": "qwen-code settings for vllm-mlx on Mac Studio. vllm-mlx is single-model — set the baseUrl only when JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K is the loaded model (otherwise update id + model.name to match the live /v1/models). vllm-mlx does not require auth; envKey resolves to not-needed. Install target: ~/.qwen/settings.json.",
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mac Studio, vllm-mlx)",
+        "description": "MoE 35B/3B, JANG mixed precision, 262K context — served via vllm-mlx when loaded as primary",
+        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      }
+    ]
+  },
+  "env": {
+    "MACSTUDIO_API_KEY": "not-needed"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "openai"
+    }
+  },
+  "model": {
+    "name": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
+  }
+}

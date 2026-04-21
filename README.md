@@ -230,6 +230,7 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 | **OpenCode** | Autonomous coding agent | [Guide](docs/clients/opencode-setup.md) |
 | **OpenClaw** | Multi-agent framework | [Guide](docs/clients/openclaw-setup.md) |
 | **Pi** | Coding assistant | [Guide](docs/clients/pi-setup.md) |
+| **Qwen Code** | Qwen-tuned terminal agent (OpenAI-compatible) | [Guide](docs/clients/qwen-code-setup.md) |
 
 ---
 

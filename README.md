@@ -50,10 +50,15 @@ Pick one — all serve on port 8000. Stop others first if switching.
 
 ```bash
 # vllm-mlx — fastest, single model
+# Qwen3.5 needs --tool-call-parser qwen3_coder (NOT qwen — Qwen3.5 emits XML
+# tool calls, not JSON). --reasoning-parser qwen3 extracts <think> blocks.
+# See docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
 nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
   --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
-  --port 8000 --host 0.0.0.0 > /tmp/vllm-mlx.log 2>&1 &
+  --port 8000 --host 0.0.0.0 \
+  --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 \
+  > /tmp/vllm-mlx.log 2>&1 &
 
 # mlx-openai-server — multi-model, low overhead
 JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
@@ -218,7 +223,7 @@ Hybrid Gated DeltaNet pays off at long context — Qwen3.6's 35.6 tok/s @ 128K i
 | Qwen3.5-35B-A3B JANG 4K | oMLX (Mar leaderboard) | 33.8 | 295 | — |
 | Gemma 4 26B-A4B 4-bit (MoE + VL) | mlx-openai-server | 27.1 | 1,995 | 66 |
 
-Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/model-benchmark-turboquant-jang.md)
+Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Server](docs/models/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/model-benchmark-turboquant-jang.md) · [Agent Tool-Call](docs/models/model-benchmark-agent-tool-call.md)
 
 ---
 
@@ -239,7 +244,7 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 **Server constraints:**
 - **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/server/omlx/jang-fork.md)). [Maintenance](docs/server/omlx/maintenance.md)
 - **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
-- **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. [Maintenance](docs/server/vllm-mlx/maintenance.md)
+- **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/server/vllm-mlx/maintenance.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patch_vmlx_jangtq_mllm_tools.py`](scripts/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/server/vmlx/maintenance.md)
 
 **Model compatibility:**

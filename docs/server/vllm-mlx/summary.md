@@ -8,6 +8,7 @@
 - [Quick Test](#quick-test)
 - [API Endpoints](#api-endpoints)
 - [JANG Model Support](#jang-model-support)
+- [Tool Calling & Reasoning (Qwen3.5)](#-tool-calling--reasoning-qwen35)
 - [Known Issues](#known-issues)
 
 ---
@@ -169,6 +170,39 @@ Not supported natively. Requires a monkey-patch wrapper script. See [jang-patch.
 
 ---
 
+## 🔧 Tool Calling & Reasoning (Qwen3.5)
+
+Qwen3.5 models (all sizes) use a **non-standard XML tool-call format** (`<function=name><parameter=key>value</parameter></function>`) instead of JSON. This requires specific parser flags:
+
+```bash
+~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+  ~/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
+  --served-model-name JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K \
+  --port 8000 --host 0.0.0.0 \
+  --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3
+```
+
+| Flag | Required for | What happens without it |
+|------|-------------|------------------------|
+| `--enable-auto-tool-choice` | Any tool use | Server ignores `tools[]` in requests |
+| `--tool-call-parser qwen3_coder` | Qwen3.5 tool calls | Raw `<tool_call>` XML leaks into `content` as plain text |
+| `--reasoning-parser qwen3` | Qwen3 thinking models | `<think>…</think>` dumps into `content` instead of `reasoning` field |
+
+**Parser mapping:** `qwen3_coder` is aliased to the `HermesToolParser` which handles the Nemotron XML format (`<function=name><parameter=key>value</parameter></function>`). Do **not** use `--tool-call-parser qwen` — that parser expects JSON inside `<tool_call>` tags, which Qwen3.5 does not emit.
+
+**Known issue — stale `.pyc` cache:** After patching or upgrading `server.py`, delete compiled bytecode or the old code runs:
+```bash
+find ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/__pycache__/ -name 'server*.pyc' -delete
+```
+
+**Community references:**
+- [HuggingFace Qwen3.5-35B-A3B discussions #4](https://huggingface.co/Qwen/Qwen3.5-35B-A3B/discussions/4) — 21 template bugs documented
+- [vLLM PR #35347](https://github.com/vllm-project/vllm/pull/35347) — dedicated `Qwen35CoderToolParser`
+- [Ollama #14493](https://github.com/ollama/ollama/issues/14493) — Qwen3.5 tool calling "completely non-functional" with wrong parser
+- [mlx-lm #1061](https://github.com/ml-explore/mlx-lm/issues/1061) — MLX quantizations show progressive tool-call degradation
+
+---
+
 ## ⚠️ Known Issues
 
 1. **v0.2.6 return bug:** `load_model_with_fallback()` missing return statement. Must patch after install.
@@ -177,6 +211,7 @@ Not supported natively. Requires a monkey-patch wrapper script. See [jang-patch.
 4. **Separate venv from oMLX:** Cannot share the oMLX Homebrew Python environment (version conflict).
 5. **JANG not native:** Requires monkey-patch wrapper for JANG models.
 6. **Model ID is full path:** When using local model paths, the API model ID is the filesystem path.
+7. **Qwen3.5 tool calls need `qwen3_coder` parser:** See [Tool Calling & Reasoning](#-tool-calling--reasoning-qwen35) above.
 
 ## 🧩 Nemotron Support
 

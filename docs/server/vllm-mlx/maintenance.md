@@ -8,6 +8,7 @@
 - [5. Memory Management](#5-memory-management)
 - [6. KV Cache & Context Configuration](#6-kv-cache--context-configuration)
 - [7. Debug Logging](#7-debug-logging)
+- [8. Qwen3.5 Tool Calling & Reasoning Parsers](#8-qwen35-tool-calling--reasoning-parsers)
 
 ---
 
@@ -276,4 +277,71 @@ lsof -i :8000 -sTCP:LISTEN | head -3
 
 # Memory usage
 memory_pressure | head -5
+```
+
+---
+
+## 🔧 8. Qwen3.5 Tool Calling & Reasoning Parsers
+
+### Problem
+
+All Qwen3.5 models (9B, 27B, 35B-A3B, 122B-A10B, 397B) emit tool calls in a **non-standard XML format**:
+
+```xml
+<tool_call>
+<function=webfetch>
+<parameter=url>
+https://example.com
+</parameter>
+</function>
+</tool_call>
+```
+
+Without the correct parser flags, this XML leaks into the `content` field as plain text. Clients like OpenCode render it as the model "hallucinating" tool names instead of actually calling tools.
+
+### Fix
+
+Add three flags when starting vllm-mlx with any Qwen3.5 model:
+
+```bash
+~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+  ~/.omlx/models/JANGQ-AI--Qwen3.5-35B-A3B-JANG_4K \
+  --served-model-name JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K \
+  --port 8000 --host 0.0.0.0 \
+  --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3
+```
+
+### Parser details
+
+| Flag value | Registered as | Actual parser class | Format handled |
+|-----------|--------------|---------------------|---------------|
+| `qwen3_coder` | `HermesToolParser` | Nemotron XML: `<function=name><parameter=key>value</parameter></function>` | Qwen3.5 tool calls |
+| `qwen` | `QwenToolParser` | JSON inside `<tool_call>` tags | Qwen3 (NOT Qwen3.5) |
+| `qwen3` (reasoning) | `Qwen3ReasoningParser` | `<think>…</think>` extraction | All Qwen3/3.5 thinking models |
+
+**Critical:** `--tool-call-parser qwen` does NOT work for Qwen3.5. The `qwen` parser expects `<tool_call>{"name": "...", "arguments": {...}}</tool_call>` (JSON), but Qwen3.5 emits XML. Use `qwen3_coder`.
+
+### Verification
+
+Non-streaming test (tool calls should appear in `tool_calls` field, not in `content`):
+
+```bash
+curl -s http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+    "messages": [{"role": "user", "content": "Browse example.com"}],
+    "tools": [{"type": "function", "function": {"name": "webfetch", "description": "Fetch a web page", "parameters": {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]}}}],
+    "stream": false
+  }' | python3 -m json.tool
+```
+
+Expected: `"tool_calls": [{"function": {"name": "webfetch", ...}}]` and `"finish_reason": "tool_calls"`.
+
+### Stale `.pyc` cache
+
+After upgrading or patching `server.py`, Python may still run the old compiled bytecode. Always clear after changes:
+
+```bash
+find ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/__pycache__/ -name 'server*.pyc' -delete
 ```

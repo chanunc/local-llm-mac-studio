@@ -14,10 +14,19 @@
             "context": 200000,
             "output": 8192
           }
+        },
+        "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K": {
+          "name": "Qwen3.5-35B-A3B JANG 4K (Fast MoE)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }
   },
-  "model": "macstudio/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
-  "small_model": "macstudio/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S"
+  "model": "macstudio/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
+  "small_model": "macstudio/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
 }

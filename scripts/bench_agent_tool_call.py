@@ -49,6 +49,7 @@ class RunResult:
     scenario: str
     prompt: str
     response_time_s: float
+    llm_time_s: float
     agent_turns: int
     tool_calls: list
     total_input_tokens: int
@@ -361,10 +362,13 @@ def run_scenario(runner, scenario_name, prompt, model, working_dir, warmup, runs
         if session_data:
             session_details = runner.extract_session_details(session_data)
 
+        llm_time_s = round(sum(t.duration_s for t in session_details["per_turn"]), 2)
+
         result = RunResult(
             scenario=scenario_name,
             prompt=prompt,
             response_time_s=round(raw["response_time_s"], 2),
+            llm_time_s=llm_time_s,
             agent_turns=parsed["agent_turns"],
             tool_calls=parsed["tool_calls"],
             total_input_tokens=session_details["total_input"],
@@ -376,7 +380,7 @@ def run_scenario(runner, scenario_name, prompt, model, working_dir, warmup, runs
             events_summary=parsed["events"],
         )
 
-        print(f"{result.response_time_s}s  turns={result.agent_turns}  tools={result.tool_calls}", file=sys.stderr)
+        print(f"{result.response_time_s}s wall (llm {result.llm_time_s}s)  turns={result.agent_turns}  tools={result.tool_calls}", file=sys.stderr)
 
         if verbose:
             print(f"    tokens: in={result.total_input_tokens} out={result.total_output_tokens} reason={result.total_reasoning_tokens}", file=sys.stderr)
@@ -397,6 +401,7 @@ def aggregate_scenario(results):
         "prompt": results[0].prompt,
         "runs": len(results),
         "response_time_s": asdict(aggregate([r.response_time_s for r in results])),
+        "llm_time_s": asdict(aggregate([r.llm_time_s for r in results])),
         "agent_turns": asdict(aggregate([r.agent_turns for r in results])),
         "total_tokens": asdict(aggregate([r.total_input_tokens + r.total_output_tokens for r in results])),
         "input_tokens": asdict(aggregate([r.total_input_tokens for r in results])),
@@ -421,6 +426,7 @@ def print_summary(config, scenario_results):
         if not agg:
             continue
         rt = agg["response_time_s"]
+        llm = agg.get("llm_time_s", {})
         turns = agg["agent_turns"]
         tokens = agg["total_tokens"]
 
@@ -432,7 +438,9 @@ def print_summary(config, scenario_results):
         tools_str = ", ".join(tools_flat) if tools_flat else "(none)"
 
         print(f"--- {SCENARIOS.get(name, name)} ---", file=sys.stderr)
-        print(f"  Response time: {rt['median']}s (median)  [{rt['p5']} - {rt['p95']} p5-p95]", file=sys.stderr)
+        print(f"  Wall time: {rt['median']}s (median)  [{rt['p5']} - {rt['p95']} p5-p95]", file=sys.stderr)
+        if llm.get("median", 0) > 0:
+            print(f"  LLM time:  {llm['median']}s (median, sum of per-turn assistant durations — matches TUI status bar)", file=sys.stderr)
         print(f"  Turns: {turns['median']} (median) | Tools: {tools_str} | Tokens: {int(tokens['median']):,}", file=sys.stderr)
 
         reasoning = agg.get("reasoning_tokens", {})

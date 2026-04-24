@@ -27,11 +27,18 @@ All numbers below are medians; per-model detail sections follow further down.
 
 ### OpenCode end-to-end (`opencode run --format json`, real agent loop)
 
-| Model | Server | Browse github.com (median) | Search 3 latest AI tools (median) | Notes |
-|:------|:-------|:-------------------------:|:--------------------------------:|:------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** | **70.61 s** | 2 / 2 turns; `webfetch`, `task`, `bash`; fastest of the three (sparse 3B-active MoE) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — needs diagnosis. See partial results in [qwen36-35b-a3b-jangtq4-crack-agent-bench.json](qwen36-35b-a3b-jangtq4-crack-agent-bench.json). |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s | 163.59 s | 2 / 3 turns; `webfetch`, `bash`; dense model — slowest; one 250s browse outlier and one 262s search warmup outlier (9-turn bash loop) |
+Two medians reported per scenario:
+
+- **Wall time** — full `opencode run` subprocess elapsed (bootstrap + LLM turns + tool execution + teardown). What a user waits for.
+- **LLM time** — sum of per-turn assistant `time.completed - time.created` from the session export. Matches the duration that opencode's TUI status bar displays (e.g. `▣ Build · ... · 50.8s`). Isolates model-side latency from client-side overhead.
+
+| Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
+|:------|:-------|:-------------------:|:-------------------:|:------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** / 41.45 s | **70.61 s** / 69.43 s | 2 / 2 turns; `webfetch`, `task`, `bash`; fastest of the three (sparse 3B-active MoE) |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ / n/a | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — needs diagnosis. See [qwen36-35b-a3b-jangtq4-crack-agent-bench.json](qwen36-35b-a3b-jangtq4-crack-agent-bench.json). |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s / 113.11 s | 163.59 s / 161.15 s | 2 / 3 turns; `webfetch`, `bash`; dense model — slowest; one 250s browse outlier and one 262s search warmup outlier (9-turn bash loop) |
+
+Wall and LLM time are within 1–3 % of each other for all three models on these scenarios — opencode's own bootstrap/teardown is negligible at this prompt size (10 k-token system prompt + 10 tools). The gap widens only when tool execution itself is slow (network fetches against rate-limited APIs, long bash pipelines).
 
 ### Server / parser flag matrix
 

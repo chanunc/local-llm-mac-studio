@@ -267,7 +267,19 @@
             "other": 0
           }
         }
-      ]
+      ],
+      "llm_time_s": {
+        "median": 113.11,
+        "p5": 88.23,
+        "p95": 249.57,
+        "mean": 150.3,
+        "stddev": 86.86,
+        "values": [
+          249.57,
+          88.23,
+          113.11
+        ]
+      }
     },
     "search": {
       "prompt": "Search 3 latest ai agentic tools on github.com",
@@ -544,7 +556,19 @@
             "other": 0
           }
         }
-      ]
+      ],
+      "llm_time_s": {
+        "median": 161.15,
+        "p5": 0,
+        "p95": 162.41,
+        "mean": 107.85,
+        "stddev": 93.41,
+        "values": [
+          162.41,
+          0,
+          161.15
+        ]
+      }
     }
   }
 }

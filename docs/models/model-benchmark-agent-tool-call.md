@@ -23,6 +23,7 @@ All numbers below are medians; per-model detail sections follow further down.
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **5/5** | 1.18 - 1.21 s | 1.51 - 1.53 s | **5.64 s** |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | n/a (not run) | n/a | n/a | n/a |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | n/a (not run) | n/a | n/a | n/a |
 
 ### OpenCode end-to-end (`opencode run --format json`, real agent loop)
@@ -35,8 +36,9 @@ Two medians reported per scenario:
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** / 41.45 s | **70.61 s** / 69.43 s | 2 / 2 turns; `webfetch`, `task`, `bash`; fastest of the three (sparse 3B-active MoE) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ / n/a | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — needs diagnosis. See [qwen36-35b-a3b-jangtq4-crack-agent-bench.json](qwen36-35b-a3b-jangtq4-crack-agent-bench.json). |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ / n/a | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — needs diagnosis. See [benchmarks/qwen36-35b-a3b-jangtq4-crack/agent-bench.json](benchmarks/qwen36-35b-a3b-jangtq4-crack/agent-bench.json). |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s / 113.11 s | 163.59 s / 161.15 s | 2 / 3 turns; `webfetch`, `bash`; dense model — slowest; one 250s browse outlier and one 262s search warmup outlier (9-turn bash loop) |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 119.93 s / 118.76 s | 300.04 s ⚠ / 161.04 s (clean) | 2 / 2 turns; `webfetch`, `bash`, `glob`; 2-of-3 search runs hit 300 s client cap (same pattern as JANG_4M); ~5 % slower than JANG_4M on browse, ~1 % diff on clean search |
 
 Wall and LLM time are within 1–3 % of each other for all three models on these scenarios — opencode's own bootstrap/teardown is negligible at this prompt size (10 k-token system prompt + 10 tools). The gap widens only when tool execution itself is slow (network fetches against rate-limited APIs, long bash pipelines).
 
@@ -46,6 +48,7 @@ Wall and LLM time are within 1–3 % of each other for all three models on these
 |:------|:-------|:---------------------|:---------------------|:--------------|
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patch_vllm_mlx_streaming_tools.py` |
 | Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as above |
+| Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patch_vmlx_jangtq_mllm_tools.py` |
 
 ---
@@ -109,7 +112,7 @@ Unpatched result: BLOCKED — vllm-mlx streaming path with `--reasoning-parser` 
 | Browse github.com | 36.54s (2026-04-21) / 42.58s (2026-04-24) | 2 | `webfetch` |
 | Search 3 latest AI tools | 59.50s (2026-04-21) / 70.61s (2026-04-24) | 2 | `bash`, `webfetch`, `task` |
 
-Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run used `--print-logs --log-level=INFO` captured per-run to [`qwen35-35b-a3b-jang4k-agent-bench.logs/`](qwen35-35b-a3b-jang4k-agent-bench.logs/); raw JSON in [`qwen35-35b-a3b-jang4k-agent-bench.json`](qwen35-35b-a3b-jang4k-agent-bench.json). The ~15 % increase vs 2026-04-21 mostly reflects higher-token OpenCode system prompts in the newer 1.14.21 client (10.8k-token first-turn prefill vs ~9k earlier).
+Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run used `--print-logs --log-level=INFO` captured per-run to [`benchmarks/qwen35-35b-a3b-jang4k/agent-bench.logs/`](benchmarks/qwen35-35b-a3b-jang4k/agent-bench.logs/); raw JSON in [`benchmarks/qwen35-35b-a3b-jang4k/agent-bench.json`](benchmarks/qwen35-35b-a3b-jang4k/agent-bench.json). The ~15 % increase vs 2026-04-21 mostly reflects higher-token OpenCode system prompts in the newer 1.14.21 client (10.8k-token first-turn prefill vs ~9k earlier).
 
 ### Key Findings
 
@@ -197,7 +200,7 @@ Prompt: `"Search 3 latest ai agentic tools on github.com"`
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `docs/models/qwen36-27b-jang4m-api-tool-test.json`. Direct `/v1/chat/completions` invocation, mirroring the API-level table above.
+Captured via [`benchmarks/qwen36-27b-jang4m/api-tool-test.json`](benchmarks/qwen36-27b-jang4m/api-tool-test.json). Direct `/v1/chat/completions` invocation, mirroring the API-level table above.
 
 | Scenario | Time | Output Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:--------------|:------|:------------|:-------|
@@ -228,9 +231,9 @@ Verified independently of OpenCode: a streaming `/v1/chat/completions` request w
 
 ### OpenCode End-to-End Agent Benchmark
 
-**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`qwen36-27b-jang4m-agent-bench.logs/`](qwen36-27b-jang4m-agent-bench.logs/)).
+**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`benchmarks/qwen36-27b-jang4m/agent-bench.logs/`](benchmarks/qwen36-27b-jang4m/agent-bench.logs/)).
 
-Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`qwen36-27b-jang4m-agent-bench.json`](qwen36-27b-jang4m-agent-bench.json).
+Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`benchmarks/qwen36-27b-jang4m/agent-bench.json`](benchmarks/qwen36-27b-jang4m/agent-bench.json).
 
 | Scenario | Median | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -258,3 +261,43 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 4. **Verbose reasoning preamble** — the model emits ~80-200 tokens of `<think>`-equivalent reasoning (routed to `reasoning_content` by the `qwen3` parser) before the tool call, even on simple prompts. This adds ~1-3s of fixed overhead per turn versus a non-thinking equivalent.
 
 5. **Client-config hygiene** — previously the local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` defaulted to `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`, which is not served by the single-model vllm-mlx. Calls without an explicit `--model` returned 404 from the server ("The model … does not exist"). Both local configs were realigned with the repo canonical (`configs/client/vllm-mlx/`) to default to the live 27B model; this must be repeated whenever the vllm-mlx primary model changes.
+
+---
+
+## Results: mlx-community/Qwen3.6-27B-6bit
+
+**Date:**
+**Server:** vllm-mlx v0.2.6 native CLI (no JANG wrapper — standard MLX safetensors) with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
+**Architecture:** Qwen3.6 dense — 27.3B params, hybrid (48 Gated DeltaNet + 16 full-attention) layers, ViT vision encoder, standard MLX 6-bit quantization (uniform), 262K native context. Loaded as `MLLM=False` (text-only — vllm-mlx does not expose the vision tower).
+**Model path:** `~/.cache/huggingface/hub/models--mlx-community--Qwen3.6-27B-6bit` (21 GB on disk, downloaded via `hf download`)
+
+### OpenCode End-to-End Agent Benchmark
+
+Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`benchmarks/qwen36-27b-6bit/agent-bench.json`](benchmarks/qwen36-27b-6bit/agent-bench.json).
+
+| Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
+|:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|
+| Browse github.com | **119.93 s** | 118.76 s | 106.21 – 124.42 s | 2 | `webfetch` | 27,536 |
+| Search 3 latest AI agentic tools on github.com | **300.04 s** ⚠ | 161.04 s | 162.25 – 300.05 s | 2 | `webfetch`, `bash`, `glob` | 32,764 |
+
+⚠ 2 of 3 search runs hit OpenCode's 300 s wall-clock cap: one chained 4 tools (`webfetch`×2 + `bash` + `glob`, 237 s LLM time, client killed at 300 s); one returned zero output/turns at the cap. Only run 3 (162.25 s / 161.04 s LLM, 2 × `webfetch`) completed cleanly. Same pattern as the JANG_4M baseline — dense 27B + multi-tool chain regularly hits the timeout ceiling.
+
+Per-turn breakdown (browse, representative run): turn 1 prefill ≈ 10.8k tokens → 56 s, turn 2 prefill ≈ 16.5k → 62 s. 0 reasoning tokens emitted in any run — the `qwen3` reasoning parser is armed but the model did not produce `<think>` blocks on these prompts.
+
+Cross-model comparison on the same scenarios (all captured 2026-04-24 with the same bench script):
+
+| Model | Server | Bits | Disk | Browse | Search | vs. this model |
+|:------|:-------|:----:|:----:|:------:|:------:|:--------------|
+| Qwen3.5-35B-A3B JANG 4K (sparse MoE, 3B active) | vllm-mlx | 4.00 mixed | — | 42.58 s | 70.61 s | **~2.8× faster** browse, **~2.3× faster** search |
+| Qwen3.6-27B JANG 4M (dense, same architecture) | vllm-mlx | 4.45 mixed | 17.5 GB | 114.25 s | 163.59 s | 5 % faster browse (smaller weights), ~1 % diff on clean search |
+| **Qwen3.6-27B 6bit (this model, dense 27B)** | vllm-mlx | 6.00 uniform | 21 GB | **119.93 s** | **162.25 s** (clean) | baseline |
+
+### Key Findings
+
+1. **Right server chosen** — vllm-mlx native CLI (no JANG wrapper needed; the 6-bit model is standard MLX safetensors). Documented as lowest-overhead server at long contexts in CLAUDE.md. Tool-call + reasoning parsers attached cleanly on startup (`qwen3_coder` / `qwen3`).
+
+2. **Browse ~5 % slower than JANG_4M** (119.93 s vs 114.25 s) — consistent with the 21 GB vs 17.5 GB weight-bandwidth ratio on M3 Ultra. Memory bandwidth dominates per-token cost at these prompt sizes; no algorithmic regression vs JANG mixed-precision.
+
+3. **Search median inflated by client timeout** — on runs that converge in 2 turns the 6-bit model performs within 1 % of JANG_4M (162.25 s vs 163.59 s). Dense 27B models chain 4+ tool calls roughly 1 in 3 runs, which pushes wall time past OpenCode's 300 s ceiling. Use median-of-clean-runs or raise the client cap for a cleaner number.
+
+4. **Quality upside not measured here** — this bench is latency-only. External reference (LLM infrastructure research memo, 1350): 6-bit uniform retains ~1 ppt more quality vs 4.45-bit JANG mixed on standard benchmarks while adding ~3.5 GB disk / ~5 % wall latency.

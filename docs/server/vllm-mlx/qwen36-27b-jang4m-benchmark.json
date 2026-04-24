@@ -1,0 +1,147 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-04-23T13:59:19.287590+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:8000/v1",
+    "model": "JANGQ-AI/Qwen3.6-27B-JANG_4M",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      4096,
+      8192,
+      32768,
+      65536
+    ]
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 1.724,
+          "total_s": 3.095,
+          "input_tokens": 536,
+          "output_tokens": 50,
+          "gen_tps": 36.46,
+          "prefill_tps": 310.9
+        },
+        {
+          "ttft_s": 1.719,
+          "total_s": 3.09,
+          "input_tokens": 536,
+          "output_tokens": 50,
+          "gen_tps": 36.46,
+          "prefill_tps": 311.8
+        }
+      ],
+      "median_ttft_s": 1.722,
+      "median_gen_tps": 36.46,
+      "median_prefill_tps": 311.4,
+      "input_tokens": 536,
+      "output_tokens": 50
+    },
+    "4096": {
+      "runs": [
+        {
+          "ttft_s": 11.915,
+          "total_s": 13.311,
+          "input_tokens": 4121,
+          "output_tokens": 50,
+          "gen_tps": 35.83,
+          "prefill_tps": 345.9
+        },
+        {
+          "ttft_s": 11.857,
+          "total_s": 13.255,
+          "input_tokens": 4121,
+          "output_tokens": 50,
+          "gen_tps": 35.77,
+          "prefill_tps": 347.6
+        }
+      ],
+      "median_ttft_s": 11.886,
+      "median_gen_tps": 35.8,
+      "median_prefill_tps": 346.8,
+      "input_tokens": 4121,
+      "output_tokens": 50
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 23.802,
+          "total_s": 25.246,
+          "input_tokens": 8216,
+          "output_tokens": 50,
+          "gen_tps": 34.62,
+          "prefill_tps": 345.2
+        },
+        {
+          "ttft_s": 23.837,
+          "total_s": 25.281,
+          "input_tokens": 8216,
+          "output_tokens": 50,
+          "gen_tps": 34.64,
+          "prefill_tps": 344.7
+        }
+      ],
+      "median_ttft_s": 23.819,
+      "median_gen_tps": 34.63,
+      "median_prefill_tps": 344.9,
+      "input_tokens": 8216,
+      "output_tokens": 50
+    },
+    "32768": {
+      "runs": [
+        {
+          "ttft_s": 104.456,
+          "total_s": 106.076,
+          "input_tokens": 32792,
+          "output_tokens": 50,
+          "gen_tps": 30.88,
+          "prefill_tps": 313.9
+        },
+        {
+          "ttft_s": 104.443,
+          "total_s": 106.063,
+          "input_tokens": 32792,
+          "output_tokens": 50,
+          "gen_tps": 30.87,
+          "prefill_tps": 314.0
+        }
+      ],
+      "median_ttft_s": 104.45,
+      "median_gen_tps": 30.875,
+      "median_prefill_tps": 313.9,
+      "input_tokens": 32792,
+      "output_tokens": 50
+    },
+    "65536": {
+      "runs": [
+        {
+          "ttft_s": 239.613,
+          "total_s": 241.462,
+          "input_tokens": 65561,
+          "output_tokens": 50,
+          "gen_tps": 27.04,
+          "prefill_tps": 273.6
+        },
+        {
+          "ttft_s": 239.542,
+          "total_s": 241.39,
+          "input_tokens": 65561,
+          "output_tokens": 50,
+          "gen_tps": 27.06,
+          "prefill_tps": 273.7
+        }
+      ],
+      "median_ttft_s": 239.577,
+      "median_gen_tps": 27.05,
+      "median_prefill_tps": 273.6,
+      "input_tokens": 65561,
+      "output_tokens": 50
+    }
+  },
+  "notes": "input_tokens and prefill_tps computed from real tokenizer counts; vllm-mlx 0.2.6 reports prompt_tokens=0 in usage block for this model (both streaming and non-streaming)."
+}

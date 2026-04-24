@@ -299,6 +299,54 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 ---
 
+## Qwen3.6-27B JANG 4M (Dense + VL)
+
+Model: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense 27.3B, Qwen3.6 hybrid 48 Gated DeltaNet + 16 full-attention, ViT vision encoder, JANG mixed 4/8-bit ≈4.45 bits/param, 17.5 GB on disk)
+Tested on **Mac Studio M3 Ultra (96 GB)** — April 23, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Filler-token padding via `Hello world. ` repetition. Vision tower not exercised (vllm-mlx loads as `MLLM=False`). Raw JSON: [qwen36-27b-jang4m-benchmark.json](../server/vllm-mlx/qwen36-27b-jang4m-benchmark.json). Bench script: [`scripts/bench_api_server.py`](../../scripts/bench_api_server.py).
+
+**Server:** vllm-mlx v0.2.6 via `~/run_vllm_jang.py` wrapper with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`. JANG load: 2.8s mmap (instant). `mlx-lm` 0.31.1, `jang-tools` 2.2.0.
+
+### Generation Speed (tok/s)
+
+| Context | vllm-mlx (JANG wrapper) |
+|:--------|:-----------------------:|
+| 512 | **36.5** |
+| 4K | 35.8 |
+| 8K | 34.6 |
+| 32K | 30.9 |
+| 64K | 27.0 |
+
+### Prefill Speed (tok/s)
+
+| Context | vllm-mlx (JANG wrapper) |
+|:--------|:-----------------------:|
+| 512 | 311 |
+| 4K | **347** |
+| 8K | 345 |
+| 32K | 314 |
+| 64K | 274 |
+
+### Time to First Token (seconds)
+
+| Context | vllm-mlx (JANG wrapper) |
+|:--------|:-----------------------:|
+| 512 | 1.72 |
+| 4K | 11.89 |
+| 8K | 23.82 |
+| 32K | 104.45 |
+| 64K | 239.58 |
+
+**Notes:**
+- vllm-mlx + this model returns `usage.prompt_tokens=0` for both streaming and non-streaming responses; prefill rates above are computed against the actual chat-templated token counts measured locally with the model's own tokenizer (536 / 4,121 / 8,216 / 32,792 / 65,561 tokens for the 5 contexts respectively). The `notes` field in the raw JSON records this.
+- 128K not tested — extrapolating from the 32K → 64K curve (TTFT 2.3× per context doubling), 128K TTFT would land around ~9-10 minutes per request, outside a useful interactive band for a dense 27B
+- Compared to `Qwen3.6-35B-A3B (6-bit)` on `mlx-openai-server` at the same contexts: dense 27B is **~30-40% slower at gen** (27.0 vs 40.3 tok/s @ 64K) and **~5× slower at prefill** (274 vs 1,408 tok/s @ 64K). The MoE 3B-active sibling wins decisively for through-server throughput; the dense 27B's value is on quality (full 27B params per token) and the JANG mixed-precision compression
+- Tool calling and `<think>` reasoning both work via this server config — see [`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m) for API-level + agentic-loop results
+- Vision input is NOT exposed: vllm-mlx loads the model as `MLLM=False` (text-only). For VL inference, deploy on `vmlx` (MLX Studio bundled Python) or `mlx-openai-server` with the `multimodal` handler — neither has been validated for this specific model
+
+---
+
 ## 128K Cross-Model Summary
 
 All models benchmarked at the 128K-context bucket (closest standard size to the 100K-class workload):

@@ -23,10 +23,19 @@
             "context": 262144,
             "output": 8192
           }
+        },
+        "JANGQ-AI/Qwen3.6-27B-JANG_4M": {
+          "name": "Qwen3.6-27B JANG 4M (Dense + VL)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }
   },
-  "model": "macstudio/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
-  "small_model": "macstudio/JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
+  "model": "macstudio/JANGQ-AI/Qwen3.6-27B-JANG_4M",
+  "small_model": "macstudio/JANGQ-AI/Qwen3.6-27B-JANG_4M"
 }

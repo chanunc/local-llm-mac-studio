@@ -5,12 +5,12 @@
     "api": "openai-completions",
     "models": [
       {
-        "id": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
-        "name": "Qwen3.5-122B-A10B JANG 2S (Primary)",
+        "id": "JANGQ-AI/Qwen3.6-27B-JANG_4M",
+        "name": "Qwen3.6-27B JANG 4M (Primary, Dense + VL)",
         "reasoning": true,
         "input": ["text"],
         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-        "contextWindow": 200000,
+        "contextWindow": 262144,
         "maxTokens": 8192
       }
     ]

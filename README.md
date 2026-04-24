@@ -49,13 +49,14 @@ This repository is primarily an **operations notebook + config bundle** for the 
 Pick one — all serve on port 8000. Stop others first if switching.
 
 ```bash
-# vllm-mlx — fastest, single model
-# Qwen3.5 needs --tool-call-parser qwen3_coder (NOT qwen — Qwen3.5 emits XML
+# vllm-mlx — fastest, single model. Current primary: Qwen3.6-27B JANG 4M
+# (dense 27B + ViT, 17.5 GB; switched from Qwen3.5-122B-JANG_2S on 2026-04-23).
+# Qwen3.5/3.6 need --tool-call-parser qwen3_coder (NOT qwen — they emit XML
 # tool calls, not JSON). --reasoning-parser qwen3 extracts <think> blocks.
 # See docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
 nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
-  ~/.omlx/models/JANGQ-AI--Qwen3.5-122B-A10B-JANG_2S \
-  --served-model-name JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S \
+  ~/.omlx/models/JANGQ-AI--Qwen3.6-27B-JANG_4M \
+  --served-model-name JANGQ-AI/Qwen3.6-27B-JANG_4M \
   --port 8000 --host 0.0.0.0 \
   --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 \
   > /tmp/vllm-mlx.log 2>&1 &
@@ -131,6 +132,8 @@ All servers support [JANG](https://jangq.ai/) mixed-precision models via patches
 
 Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md) · [vmlx](docs/server/vmlx/maintenance.md)
 
+Current `vllm-mlx` primary: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense 27B + ViT, 17.5 GB, JANG mixed 4/8-bit — switched 2026-04-23; vllm-mlx loads as text-only `MLLM=False`). See [model-summary.md](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl) and [agent tool-call benchmark](docs/models/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m).
+
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
 
@@ -151,6 +154,7 @@ All models fit in **96GB unified memory**.
 | [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5 | 262K | Lightweight coding agent |
 | [Qwen3.5-35B-A3B JANG 4K](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19 | 262K | Fast small MoE |
 | [Qwen3.6-35B-A3B 6-bit](docs/models/model-summary.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
+| [Qwen3.6-27B JANG 4M](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
 | [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
 | [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |

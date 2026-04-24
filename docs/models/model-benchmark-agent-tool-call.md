@@ -13,6 +13,36 @@ Config switcher: [`scripts/switch_opencode_config.py`](../../scripts/switch_open
 
 ---
 
+## Cross-Model Summary
+
+All numbers below are medians; per-model detail sections follow further down.
+
+### API-level tool calling (direct `/v1/chat/completions`, 5-tool harness)
+
+| Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
+|:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **5/5** | 1.18 - 1.21 s | 1.51 - 1.53 s | **5.64 s** |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | n/a (not run) | n/a | n/a | n/a |
+
+### OpenCode end-to-end (`opencode run --format json`, real agent loop)
+
+| Model | Server | Browse github.com (median) | Search 3 latest AI tools (median) | Notes |
+|:------|:-------|:-------------------------:|:--------------------------------:|:------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **36.54 s** | **59.50 s** | 2 turns / 2-4 turns; `webfetch`, `bash` |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 93.63 s | 91.22 s | 2 turns / 2-3 turns; `webfetch`, `bash` |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 109.14 s | 156.74 s | 2 turns / 2 turns; `webfetch`, `bash`; dense model — ~3× slower than sparse-MoE on same task |
+
+### Server / parser flag matrix
+
+| Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
+|:------|:-------|:---------------------|:---------------------|:--------------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patch_vllm_mlx_streaming_tools.py` |
+| Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as above |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patch_vmlx_jangtq_mllm_tools.py` |
+
+---
+
 ## Results: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
 
 **Date:** 2026-04-21
@@ -146,3 +176,87 @@ Prompt: `"Search 3 latest ai agentic tools on github.com"`
 3. **2.5x slower than JANG 4K on vllm-mlx** — browse 93.63s vs 36.54s, search 91.22s vs 59.50s. The gap is likely a combination of the vmlx MLLM code path overhead and TurboQuant inference vs standard JANG format.
 
 4. **Consistent browse, variable search** — browse stddev 1.86s (tight), search stddev 19.99s (one run took 3 turns / 124.71s instead of the usual 2).
+
+---
+
+## Results: JANGQ-AI/Qwen3.6-27B-JANG_4M
+
+**Date:** 2026-04-23
+**Server:** vllm-mlx v0.2.6 (`run_vllm_jang.py` wrapper) with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
+**Architecture:** Qwen3.6 dense — 27.3B params, hybrid (48 Gated DeltaNet + 16 full-attention) layers, ViT vision encoder, 4.45 bits/param JANG mixed 4/8-bit, 262K native context (1M YaRN). Loaded as `MLLM=False` (text-only — vllm-mlx does not expose the vision tower).
+**Model path:** `~/.omlx/models/JANGQ-AI--Qwen3.6-27B-JANG_4M` (downloaded via `huggingface_hub.snapshot_download`)
+
+### API-Level Tool Calling (non-streaming, 5 tools available)
+
+Captured via `docs/models/qwen36-27b-jang4m-api-tool-test.json`. Direct `/v1/chat/completions` invocation, mirroring the API-level table above.
+
+| Scenario | Time | Output Tokens | Speed | Tools Called | Result |
+|:---------|:-----|:--------------|:------|:------------|:-------|
+| Single tool (file read) | 3.76s | 65 | 17.3 tok/s | `read_file` | PASS |
+| Single tool (command) | 3.44s | 64 | 18.6 tok/s | `run_command` | PASS |
+| Multi-tool (search + read) | 8.13s | 228 | 28.0 tok/s | `search_web`, `read_file` | PASS (parallel) |
+| Multi-tool (list + read + write) | 4.23s | 89 | 21.1 tok/s | `list_directory` | PASS (chose serial — 1 tool/turn) |
+| Agentic reasoning | 13.47s | 421 | 31.3 tok/s | `run_command` | PASS |
+
+**Pass rate: 5/5** — correct tool selection, valid JSON arguments, `finish_reason: tool_calls`. Parallel calling demonstrated in scenario 3.
+
+### Multi-Turn Agentic Loop (simulated tool results)
+
+Task: "Read /tmp/app/config.json, change port to 8080, write back"
+
+| Turn | Action | Time | Output Tokens |
+|:-----|:-------|:-----|:--------------|
+| 1 | `read_file({"path":"/tmp/app/config.json"})` | 4.42s | 97 |
+| 2 | `write_file({...port:8080...})` | 5.89s | 144 |
+| 3 | Natural language summary (stop) | 4.53s | 85 |
+| **Total** | **3 turns, complete task** | **14.84s** | 326 |
+
+For comparison: the same task on `Qwen3.5-35B-A3B JANG 4K` (sparse 3B-active MoE) finished in 5.64s — dense 27B is ~2.6x slower per turn but completes the loop with the same correctness.
+
+### Streaming Tool Calls (direct curl validation)
+
+Verified independently of OpenCode: a streaming `/v1/chat/completions` request with `stream=true` and a `webfetch` tool returns reasoning chunks (sent as `reasoning` + `reasoning_content` deltas) followed by a `tool_calls` delta and `finish_reason: tool_calls`. End-to-end ~5s for the "Browse github.com" prompt with 283 prompt tokens / 83 completion tokens.
+
+### OpenCode End-to-End Agent Benchmark
+
+**Date:** 2026-04-24 (re-run after the 2026-04-23 NordVPN Shield block was cleared by allowlisting `node`/`opencode` binaries — see history note below).
+
+Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`qwen36-27b-jang4m-agent-bench.json`](qwen36-27b-jang4m-agent-bench.json).
+
+| Scenario | Median | p5 – p95 | Turns | Tools used | Tokens (total, median) |
+|:---------|:------:|:--------:|:-----:|:-----------|:----------------------:|
+| Browse github.com | **109.14 s** | 105.97 – 117.95 s | 2 | `webfetch` | 27,515 |
+| Search 3 latest AI agentic tools on github.com | **156.74 s** | 115.74 – 277.66 s | 2 | `bash`, `webfetch` | 27,265 |
+
+Per-turn breakdown (browse, representative run): turn 1 prefill=10,791 tokens → 49.4 s (one `webfetch` tool call); turn 2 prefill=16,478 → 55.3 s (final text, 192 output tokens). Search variance is high because some runs chained multiple `webfetch` calls sequentially (the 277 s outlier made 3 consecutive fetches).
+
+Comparison with the other models on the same two scenarios:
+
+| Model | Browse | Search | vs. this model |
+|:------|:------:|:------:|:--------------|
+| Qwen3.5-35B-A3B JANG 4K (sparse MoE, 3B active) | 36.54 s | 59.50 s | **~3× faster** |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK (vmlx) | 93.63 s | 91.22 s | 15 % faster on browse, 2× faster on search |
+| **Qwen3.6-27B JANG 4M (this model, dense 27B)** | **109.14 s** | **156.74 s** | baseline |
+
+### History: 2026-04-23 NordVPN Shield block (resolved)
+
+The initial 2026-04-23 bench run timed out at 300 s on every invocation with `turns=0, tools=[]` and OpenCode `FailedToOpenSocket errno=0`. Root cause was the macOS **NordVPN Threat Protection Pro** system extension (`com.nordvpn.macos.Shield`) silently dropping outbound LAN traffic from freshly-rebuilt `node`/`bun` binaries at the socket layer (returns `EHOSTUNREACH` from `connect()` before the packet leaves the host). Bisection matrix at the time:
+
+| From the MacBook (192.168.31.181) | Result |
+|----|----|
+| `curl` / `python3 urllib` / Docker container → vllm-mlx | ✅ <1 s |
+| `node` / `bun` / `pi` / `opencode` → vllm-mlx | ⛔ EHOSTUNREACH / FailedToOpenSocket |
+
+**Fix applied** (one-time, on the client MacBook): in NordVPN → Threat Protection → App Exceptions, allow `/opt/homebrew/Cellar/node/…/bin/node` and `/opt/homebrew/Cellar/opencode/…/bin/opencode`. Re-add after every `brew upgrade` of these tools — the binary signature changes.
+
+### Key Findings
+
+1. **API-level tool calling works perfectly** — 5/5 single-call pass + 3-turn loop completes correctly. Streaming `tool_calls` delta is emitted (verified via curl). Same `qwen3_coder` tool parser + `qwen3` reasoning parser as the Qwen3.5 setup.
+
+2. **Dense 27B latency is ~2.6× sparse 3B-active MoE on the inner loop, ~3× on end-to-end OpenCode** — the internal 3-turn agentic loop measured 14.84 s (vs 5.64 s for Qwen3.5-35B-A3B JANG 4K); OpenCode end-to-end browse was 109 s vs 36.5 s. Per-turn time is dominated by full-attention prefill of growing context (turns 1-2 prefill 10-17k tokens × 16 full-attention layers).
+
+3. **High search-scenario variance (116 – 278 s)** — caused by non-deterministic branching in the agent loop. When the model chooses to chain multiple `webfetch` calls (3 fetches observed in the 278 s run vs 1 fetch in the 116 s run), each added fetch adds ~60-80 s of round-trip latency. Median is a more robust metric than mean for this model.
+
+4. **Verbose reasoning preamble** — the model emits ~80-200 tokens of `<think>`-equivalent reasoning (routed to `reasoning_content` by the `qwen3` parser) before the tool call, even on simple prompts. This adds ~1-3s of fixed overhead per turn versus a non-thinking equivalent.
+
+5. **Client-config hygiene** — previously the local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` defaulted to `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`, which is not served by the single-model vllm-mlx. Calls without an explicit `--model` returned 404 from the server ("The model … does not exist"). Both local configs were realigned with the repo canonical (`configs/client/vllm-mlx/`) to default to the live 27B model; this must be repeated whenever the vllm-mlx primary model changes.

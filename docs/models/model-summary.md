@@ -20,6 +20,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision encoder · 3B active · 262K native (1M YaRN)
+- [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27B Qwen3.6 hybrid · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -504,6 +505,48 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 - `waybarrios/vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only Apple-Silicon server that exposes MTP/speculative decoding through OpenAI API for Qwen3.6 today, but inherits the upstream `mlx-lm` hybrid-attention cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)) — not deployed here yet
 - MTP speculative decoding through `mlx-openai-server` remains unwired ([#177](https://github.com/cubist38/mlx-openai-server/issues/177), [#204](https://github.com/cubist38/mlx-openai-server/issues/204))
 - Streaming `reasoning_content` / `content` split **does work cleanly** with the `qwen3_vl` parser on `mlx-openai-server` 1.7.1 — the Gemma-4-only streaming-leak bug ([#280](https://github.com/cubist38/mlx-openai-server/issues/280)) does not affect Qwen3.6
+
+---
+
+## Qwen3.6-27B JANG 4M (Dense + VL)
+
+Dense 27.3B-parameter sibling of `Qwen3.6-35B-A3B`. Same Qwen3.6 hybrid attention stack — 48 Gated DeltaNet (linear-attention) layers + 16 full-attention layers — and the same 27-layer ViT vision tower, but no MoE: every parameter is active per token. Quantised with JANG mixed 4-bit/8-bit affine (4-bit FFN + linear-attention + ViT, 8-bit full-attention + embedding + lm_head, 4.45 bits/param average) for 17.5 GB on disk. Deployed on this Mac Studio on 2026-04-23.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-27B](https://huggingface.co/Qwen/Qwen3.6-27B) |
+| Quant | [JANGQ-AI/Qwen3.6-27B-JANG_4M](https://huggingface.co/JANGQ-AI/Qwen3.6-27B-JANG_4M) |
+| Format | JANG v2 mmap safetensors (11 shards) — loads in 2.8 s |
+| Vendor | Alibaba Qwen base; JANGQ-AI mixed-precision quant |
+| Parameters | 27.3 B (dense) |
+| Density | Dense — no MoE; every param active per token |
+| Quantization | JANG_4M: 4-bit FFN/linear-attn/ViT + 8-bit full-attn/embed/lm_head; ~4.45 bits/param avg |
+| Specialties | Vision-language (image + video via ViT), thinking mode optional, hybrid Gated DeltaNet long-context, `qwen3_5` arch |
+| On-disk size | ~17.5 GB |
+| Context Size | 262K native; ~1M with YaRN |
+| License | Apache-2.0 (base) |
+| Key Features | Highest dense quality in the 27 GB class with VL + hybrid linear attention |
+
+**vllm-mlx model ID:** `JANGQ-AI/Qwen3.6-27B-JANG_4M` (served from `~/.omlx/models/JANGQ-AI--Qwen3.6-27B-JANG_4M`)
+
+**Server config (vllm-mlx):** `~/run_vllm_jang.py serve <path> --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` — same flags as the Qwen3.5-35B-A3B-JANG_4K setup. Loaded as `MLLM=False` (text-only — vllm-mlx does not expose the vision tower for this model).
+
+**Performance** (vllm-mlx, [`model-benchmark-api-server.md`](model-benchmark-api-server.md#qwen36-27b-jang-4m-dense--vl)):
+- Gen: 36.5 tok/s @ 512 → 34.6 @ 8K → 27.0 @ 64K
+- Prefill: ~310-345 tok/s across 512-32K, falling to 274 @ 64K
+- TTFT: 1.7 s @ 512, 23.8 s @ 8K, 240 s @ 64K
+- ~30-40 % slower gen and ~5× slower prefill than `Qwen3.6-35B-A3B-6bit` on `mlx-openai-server` (the MoE 3B-active sibling) — the dense-vs-MoE tradeoff is exactly as expected at full context
+
+**Tool calling** ([`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)):
+- API-level: 5/5 single-call pass, 3-turn agentic loop completes in 14.84 s (read → write → summary)
+- Streaming `tool_calls` deltas verified via direct curl
+- OpenCode end-to-end (2026-04-24): browse 109.14 s median, search 156.74 s median, 2 turns each. ~3× slower than Qwen3.5-35B-A3B JANG 4K on the same scenarios — the expected dense-vs-sparse gap at OpenCode's ~10k-token system prompt
+
+**Caveats:**
+- **Vision input is not exposed via vllm-mlx** (`MLLM=False` at load). To exercise the ViT, deploy on `vmlx` (MLX Studio bundled Python — HF card recommendation) or `mlx-openai-server` with the `multimodal` handler. Neither has been validated for this specific model yet.
+- **`usage.prompt_tokens=0`** for both streaming and non-streaming responses on vllm-mlx 0.2.6 — the JANG-loaded `qwen3_5` model does not propagate prompt-token count into the OpenAI usage block. Bench output computes prefill via the model's own tokenizer instead. Same shape as the Qwen3.5-122B JANG 2S note in `model-benchmark-api-server.md`.
+- **Verbose reasoning preamble** — even on simple prompts the model emits ~80-200 tokens of `<think>`-equivalent reasoning into `reasoning_content` before the tool call. Consider `enable_thinking=false` via `chat_template_kwargs` if you need the lowest possible per-turn latency (not validated through vllm-mlx).
+- **Client-config sync** — because vllm-mlx is single-model, local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` must default to whichever model is live on port 8000. Pointing at `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` while the server serves 27B returns HTTP 404 from the chat-completion endpoint. Keep those local configs aligned with `configs/client/vllm-mlx/`.
 
 ---
 

@@ -151,12 +151,14 @@ class OpenCodeRunner(AgentRunner):
             "config_path": str(config_path),
         }
 
-    def run_prompt(self, prompt, model=None, working_dir=None, skip_permissions=False, verbose=False):
+    def run_prompt(self, prompt, model=None, working_dir=None, skip_permissions=False, verbose=False, log_path=None):
         cmd = ["opencode", "run", "--format", "json"]
         if model:
             cmd += ["--model", model]
         if skip_permissions:
             cmd += ["--dangerously-skip-permissions"]
+        if verbose:
+            cmd += ["--print-logs", "--log-level", "INFO"]
         cmd.append(prompt)
 
         env = os.environ.copy()
@@ -167,6 +169,7 @@ class OpenCodeRunner(AgentRunner):
             print(f"  CWD: {cwd}", file=sys.stderr)
 
         t_start = time.perf_counter()
+        timed_out = False
         try:
             proc = subprocess.run(
                 cmd,
@@ -176,21 +179,33 @@ class OpenCodeRunner(AgentRunner):
                 env=env,
                 timeout=300,
             )
-        except subprocess.TimeoutExpired:
-            t_end = time.perf_counter()
-            return {
-                "response_time_s": t_end - t_start,
-                "stdout": "",
-                "stderr": "TIMEOUT after 300s",
-                "exit_code": -1,
-            }
+            stdout = proc.stdout
+            stderr = proc.stderr
+            exit_code = proc.returncode
+        except subprocess.TimeoutExpired as e:
+            timed_out = True
+            stdout = e.stdout.decode("utf-8", "replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
+            stderr = e.stderr.decode("utf-8", "replace") if isinstance(e.stderr, bytes) else (e.stderr or "")
+            stderr = (stderr or "") + "\n[bench] TIMEOUT after 300s"
+            exit_code = -1
         t_end = time.perf_counter()
+
+        if log_path:
+            try:
+                with open(log_path, "w") as f:
+                    f.write(f"# bench stderr capture: {' '.join(cmd)}\n")
+                    f.write(f"# cwd: {cwd}\n")
+                    f.write(f"# exit_code: {exit_code}  elapsed_s: {t_end - t_start:.2f}  timed_out: {timed_out}\n\n")
+                    f.write(stderr or "")
+            except OSError as err:
+                print(f"  [warn] could not write log {log_path}: {err}", file=sys.stderr)
 
         return {
             "response_time_s": t_end - t_start,
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
-            "exit_code": proc.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": exit_code,
+            "log_path": log_path,
         }
 
     def parse_output(self, stdout, stderr):
@@ -322,17 +337,23 @@ class OpenCodeRunner(AgentRunner):
 # --- Benchmark Engine ---
 
 
-def run_scenario(runner, scenario_name, prompt, model, working_dir, warmup, runs, skip_permissions, verbose):
+def run_scenario(runner, scenario_name, prompt, model, working_dir, warmup, runs, skip_permissions, verbose, log_dir=None):
     all_results = []
     total_iterations = warmup + runs
 
     for i in range(total_iterations):
         is_warmup = i < warmup
         label = f"warmup {i + 1}/{warmup}" if is_warmup else f"run {i - warmup + 1}/{runs}"
+        slug = f"warmup-{i + 1}" if is_warmup else f"run-{i - warmup + 1}"
         print(f"  [{scenario_name}] {label}...", file=sys.stderr, end=" ", flush=True)
 
+        log_path = None
+        if verbose and log_dir:
+            log_path = os.path.join(log_dir, f"{scenario_name}-{slug}.log")
+
         raw = runner.run_prompt(prompt, model=model, working_dir=working_dir,
-                                skip_permissions=skip_permissions, verbose=verbose)
+                                skip_permissions=skip_permissions, verbose=verbose,
+                                log_path=log_path)
         parsed = runner.parse_output(raw["stdout"], raw["stderr"])
 
         session_details = {"per_turn": [], "total_input": 0, "total_output": 0, "total_reasoning": 0}
@@ -485,6 +506,17 @@ def main():
     working_dir = args.working_dir or "/tmp/agent-bench"
     os.makedirs(working_dir, exist_ok=True)
 
+    # Prepare per-run log directory when verbose — placed next to --output JSON
+    log_dir = None
+    if args.verbose:
+        if args.output:
+            base = Path(args.output)
+            log_dir = str(base.with_suffix("")) + ".logs"
+        else:
+            log_dir = os.path.join(working_dir, "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        print(f"  Logs:   {log_dir}", file=sys.stderr)
+
     # Run scenarios
     scenarios_to_run = list(SCENARIOS.keys()) if args.scenario == "both" else [args.scenario]
     scenario_results = {}
@@ -500,6 +532,7 @@ def main():
             runs=args.runs,
             skip_permissions=args.skip_permissions,
             verbose=args.verbose,
+            log_dir=log_dir,
         )
         scenario_results[scenario_name] = aggregate_scenario(results)
 
@@ -515,6 +548,7 @@ def main():
             "discovered_from": config_info.get("config_path", ""),
             "warmup_runs": args.warmup,
             "measured_runs": args.runs,
+            "log_dir": log_dir,
         },
         "scenarios": scenario_results,
     }

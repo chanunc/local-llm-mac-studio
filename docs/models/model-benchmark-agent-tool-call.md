@@ -29,9 +29,9 @@ All numbers below are medians; per-model detail sections follow further down.
 
 | Model | Server | Browse github.com (median) | Search 3 latest AI tools (median) | Notes |
 |:------|:-------|:-------------------------:|:--------------------------------:|:------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **36.54 s** | **59.50 s** | 2 turns / 2-4 turns; `webfetch`, `bash` |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 93.63 s | 91.22 s | 2 turns / 2-3 turns; `webfetch`, `bash` |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 109.14 s | 156.74 s | 2 turns / 2 turns; `webfetch`, `bash`; dense model — ~3× slower than sparse-MoE on same task |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** | **70.61 s** | 2 / 2 turns; `webfetch`, `task`, `bash`; fastest of the three (sparse 3B-active MoE) |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — needs diagnosis. See partial results in [qwen36-35b-a3b-jangtq4-crack-agent-bench.json](qwen36-35b-a3b-jangtq4-crack-agent-bench.json). |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s | 163.59 s | 2 / 3 turns; `webfetch`, `bash`; dense model — slowest; one 250s browse outlier and one 262s search warmup outlier (9-turn bash loop) |
 
 ### Server / parser flag matrix
 
@@ -99,10 +99,10 @@ Unpatched result: BLOCKED — vllm-mlx streaming path with `--reasoning-parser` 
 
 | Scenario | Response Time (median) | Turns | Tools Called |
 |:---------|:----------------------|:------|:------------|
-| Browse github.com | 36.54s | 2 | `webfetch` |
-| Search 3 latest AI tools | 59.50s | 2-4 | `bash`, `webfetch` |
+| Browse github.com | 36.54s (2026-04-21) / 42.58s (2026-04-24) | 2 | `webfetch` |
+| Search 3 latest AI tools | 59.50s (2026-04-21) / 70.61s (2026-04-24) | 2 | `bash`, `webfetch`, `task` |
 
-Full agentic tool use works end-to-end through OpenCode.
+Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run used `--print-logs --log-level=INFO` captured per-run to [`qwen35-35b-a3b-jang4k-agent-bench.logs/`](qwen35-35b-a3b-jang4k-agent-bench.logs/); raw JSON in [`qwen35-35b-a3b-jang4k-agent-bench.json`](qwen35-35b-a3b-jang4k-agent-bench.json). The ~15 % increase vs 2026-04-21 mostly reflects higher-token OpenCode system prompts in the newer 1.14.21 client (10.8k-token first-turn prefill vs ~9k earlier).
 
 ### Key Findings
 
@@ -120,10 +120,11 @@ Full agentic tool use works end-to-end through OpenCode.
 
 Prompt: `"Browse github.com"`
 
-| Model | Server | Response Time | Turns | Tools | Tokens |
-|:------|:-------|:-------------|:------|:------|:-------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 36.54s (median) | 2 | `webfetch` | 26,669 |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 93.63s (median) | 2 | `webfetch` | 26,750 |
+| Model | Server | Response Time (2026-04-24 median) | Turns | Tools | Tokens |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** | 2 | `webfetch` | 27,528 |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s (2 good runs + 1 timeout) | 2-3 | `webfetch`, `bash` | 27,650 |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s | 2 | `webfetch` | 27,503 |
 
 ---
 
@@ -131,10 +132,11 @@ Prompt: `"Browse github.com"`
 
 Prompt: `"Search 3 latest ai agentic tools on github.com"`
 
-| Model | Server | Response Time | Turns | Tools | Tokens | Context Growth |
-|:------|:-------|:-------------|:------|:------|:-------|:---------------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 59.50s (median) | 2-4 | `bash`, `webfetch` | 32,032 | ~10K/turn |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 91.22s (median) | 2-3 | `bash`, `webfetch` | 26,411 | ~10K/turn |
+| Model | Server | Response Time (2026-04-24 median) | Turns | Tools | Tokens | Context Growth |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **70.61 s** | 2 | `task`, `bash` | 22,743 | ~10K/turn |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ⛔ hung (0 tool calls on all attempts) | — | — | — | — |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 163.59 s | 3 | `bash`, `webfetch` | 35,063 | ~10K/turn |
 
 ---
 
@@ -219,43 +221,43 @@ Verified independently of OpenCode: a streaming `/v1/chat/completions` request w
 
 ### OpenCode End-to-End Agent Benchmark
 
-**Date:** 2026-04-24 (re-run after the 2026-04-23 NordVPN Shield block was cleared by allowlisting `node`/`opencode` binaries — see history note below).
+**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`qwen36-27b-jang4m-agent-bench.logs/`](qwen36-27b-jang4m-agent-bench.logs/), after the NordVPN Shield block was cleared by uninstalling the app + rebooting the client MacBook — see history note below).
 
-Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`qwen36-27b-jang4m-agent-bench.json`](qwen36-27b-jang4m-agent-bench.json).
+Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`qwen36-27b-jang4m-agent-bench.json`](qwen36-27b-jang4m-agent-bench.json).
 
 | Scenario | Median | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:--------:|:-----:|:-----------|:----------------------:|
-| Browse github.com | **109.14 s** | 105.97 – 117.95 s | 2 | `webfetch` | 27,515 |
-| Search 3 latest AI agentic tools on github.com | **156.74 s** | 115.74 – 277.66 s | 2 | `bash`, `webfetch` | 27,265 |
+| Browse github.com | **114.25 s** | 89.4 – 250.7 s | 2 | `webfetch` | 27,503 |
+| Search 3 latest AI agentic tools on github.com | **163.59 s** | 162.31 – 265.76 s | 3 | `bash`, `webfetch` | 35,063 |
 
-Per-turn breakdown (browse, representative run): turn 1 prefill=10,791 tokens → 49.4 s (one `webfetch` tool call); turn 2 prefill=16,478 → 55.3 s (final text, 192 output tokens). Search variance is high because some runs chained multiple `webfetch` calls sequentially (the 277 s outlier made 3 consecutive fetches).
+Per-turn breakdown (browse, representative run): turn 1 prefill=10,791 tokens → 193.1 s (one `webfetch` tool call, routed through the dense 27B with ~80-200 token `<think>` preamble); turn 2 prefill=16,478 → 56.4 s (final text, 233 output tokens). Search variance is high because some runs chose `bash` shell pipelines (gh-style search via curl/grep) and some chose a single `webfetch` — on runs that chain 4+ web fetches or shell steps, wall time pushes toward the 300 s timeout ceiling.
 
-Comparison with the other models on the same two scenarios:
+Cross-model comparison on the same scenarios (all captured 2026-04-24 with the same bench script):
 
-| Model | Browse | Search | vs. this model |
-|:------|:------:|:------:|:--------------|
-| Qwen3.5-35B-A3B JANG 4K (sparse MoE, 3B active) | 36.54 s | 59.50 s | **~3× faster** |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK (vmlx) | 93.63 s | 91.22 s | 15 % faster on browse, 2× faster on search |
-| **Qwen3.6-27B JANG 4M (this model, dense 27B)** | **109.14 s** | **156.74 s** | baseline |
+| Model | Server | Browse | Search | vs. this model |
+|:------|:-------|:------:|:------:|:--------------|
+| Qwen3.5-35B-A3B JANG 4K (sparse MoE, 3B active) | vllm-mlx | 42.58 s | 70.61 s | **~2.7× faster** browse, **~2.3× faster** search |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK (sparse MoE, 3B active, TurboQuant 4-bit) | vmlx | 88.94 s ⚠ (2 good + 1 timeout) | ⛔ hung (0 tool calls) | search scenario failed on vmlx — separate issue, not a model-quality signal |
+| **Qwen3.6-27B JANG 4M (this model, dense 27B)** | vllm-mlx | **114.25 s** | **163.59 s** | baseline |
 
-### History: 2026-04-23 NordVPN Shield block (resolved)
+### History: NordVPN Shield block (resolved 2026-04-24)
 
-The initial 2026-04-23 bench run timed out at 300 s on every invocation with `turns=0, tools=[]` and OpenCode `FailedToOpenSocket errno=0`. Root cause was the macOS **NordVPN Threat Protection Pro** system extension (`com.nordvpn.macos.Shield`) silently dropping outbound LAN traffic from freshly-rebuilt `node`/`bun` binaries at the socket layer (returns `EHOSTUNREACH` from `connect()` before the packet leaves the host). Bisection matrix at the time:
+The 2026-04-23 bench run timed out at 300 s on every invocation with `turns=0, tools=[]` and OpenCode `FailedToOpenSocket errno=0`. The block recurred on 2026-04-24 after NordVPN auto-upgraded from v9.15.0 → v10.0.4 (the v10 client no longer ships the "App Exceptions" UI). Root cause was the macOS **NordVPN Threat Protection Pro** system extension (`com.nordvpn.macos.Shield`) silently dropping outbound LAN traffic from `node`/`bun` binaries at the socket layer (returns `EHOSTUNREACH` from `connect()` before the packet leaves the host). Bisection matrix:
 
 | From the MacBook (192.168.31.181) | Result |
 |----|----|
 | `curl` / `python3 urllib` / Docker container → vllm-mlx | ✅ <1 s |
 | `node` / `bun` / `pi` / `opencode` → vllm-mlx | ⛔ EHOSTUNREACH / FailedToOpenSocket |
 
-**Fix applied** (one-time, on the client MacBook): in NordVPN → Threat Protection → App Exceptions, allow `/opt/homebrew/Cellar/node/…/bin/node` and `/opt/homebrew/Cellar/opencode/…/bin/opencode`. Re-add after every `brew upgrade` of these tools — the binary signature changes.
+**Fix applied 2026-04-24:** uninstalled the NordVPN app and rebooted the MacBook (macOS does not unload system extensions on app uninstall alone; reboot purges any entry already marked `terminated waiting to uninstall on reboot`). Post-reboot `systemextensionsctl list | grep Shield` shows the v10.0.4 entry as `[activated disabled]` and `node` LAN `connect()` succeeds in ~7 ms. A prior attempt to allowlist binaries in v9.15.0's "App Exceptions" UI worked per-binary-signature but broke on every `brew upgrade` of node/opencode; the v10 client removed the feature so allowlisting is no longer an option. See `project_opencode_vllm_socket_regression.md` memory for the full triage chain.
 
 ### Key Findings
 
 1. **API-level tool calling works perfectly** — 5/5 single-call pass + 3-turn loop completes correctly. Streaming `tool_calls` delta is emitted (verified via curl). Same `qwen3_coder` tool parser + `qwen3` reasoning parser as the Qwen3.5 setup.
 
-2. **Dense 27B latency is ~2.6× sparse 3B-active MoE on the inner loop, ~3× on end-to-end OpenCode** — the internal 3-turn agentic loop measured 14.84 s (vs 5.64 s for Qwen3.5-35B-A3B JANG 4K); OpenCode end-to-end browse was 109 s vs 36.5 s. Per-turn time is dominated by full-attention prefill of growing context (turns 1-2 prefill 10-17k tokens × 16 full-attention layers).
+2. **Dense 27B latency is ~2.7× sparse 3B-active MoE on end-to-end OpenCode** — browse 114.25 s vs 42.58 s for Qwen3.5-35B-A3B JANG 4K; search 163.59 s vs 70.61 s. The inner 3-turn agentic loop (no OpenCode harness) measured 14.84 s vs 5.64 s. Per-turn time is dominated by full-attention prefill of growing context (turns 1-2 prefill 10-17k tokens × 16 full-attention layers).
 
-3. **High search-scenario variance (116 – 278 s)** — caused by non-deterministic branching in the agent loop. When the model chooses to chain multiple `webfetch` calls (3 fetches observed in the 278 s run vs 1 fetch in the 116 s run), each added fetch adds ~60-80 s of round-trip latency. Median is a more robust metric than mean for this model.
+3. **High single-run variance (89 – 265 s browse, 162 – 266 s search)** — caused by non-deterministic branching in the agent loop. When the model chooses a single `webfetch` the run finishes in ~90 s; when it chooses a `bash` loop of 5-9 shell calls (observed once in browse warmup and one measured run), wall time pushes toward the 300 s timeout. Median is a more robust metric than mean for this model.
 
 4. **Verbose reasoning preamble** — the model emits ~80-200 tokens of `<think>`-equivalent reasoning (routed to `reasoning_content` by the `qwen3` parser) before the tool call, even on simple prompts. This adds ~1-3s of fixed overhead per turn versus a non-thinking equivalent.
 

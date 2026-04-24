@@ -1,0 +1,65 @@
+{
+  "benchmark": "agent-tool-call",
+  "version": "1.0",
+  "timestamp": "2026-04-24T12:00:00+00:00",
+  "config": {
+    "agent": "opencode",
+    "model": "macstudio/dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK",
+    "server_url": "http://192.168.31.4:8000/v1",
+    "discovered_from": "/Users/chanunc/.config/opencode/opencode.json",
+    "warmup_runs": 1,
+    "measured_runs": 3,
+    "log_dir": "docs/models/qwen36-35b-a3b-jangtq4-crack-agent-bench.logs",
+    "notes": "Bench was stopped after search warmup + search run 1/3 both hit the 300s OpenCode timeout with turns=0 tools=[] (model emitted no tool call at all). Browse scenario captured 2 clean runs + 1 timeout from a 9-turn bash loop. Values below reflect the good runs only; search is marked as failed."
+  },
+  "scenarios": {
+    "browse": {
+      "prompt": "Browse github.com",
+      "runs": 3,
+      "partial": true,
+      "note": "Two clean runs (87.55s, 90.33s) plus one 300.03s timeout in which the model entered a 9-turn loop calling bash 8 times instead of webfetch. Warmup (120.27s, 3 turns, bash) also chose bash over webfetch. Median below is over the 2 clean runs only.",
+      "response_time_s": {
+        "median": 88.94,
+        "p5": 87.55,
+        "p95": 90.33,
+        "mean": 88.94,
+        "stddev": 1.97,
+        "values": [
+          87.55,
+          90.33,
+          300.03
+        ]
+      },
+      "agent_turns": {
+        "median": 2,
+        "values": [2, 2, 9]
+      },
+      "total_tokens": {
+        "median": 27654,
+        "values": [27650, 27673, 89994]
+      },
+      "tool_calls_per_run": [
+        ["webfetch"],
+        ["webfetch"],
+        ["bash", "bash", "bash", "bash", "bash", "bash", "bash", "bash"]
+      ],
+      "timeouts": 1
+    },
+    "search": {
+      "prompt": "Search 3 latest ai agentic tools on github.com",
+      "runs": 0,
+      "partial": true,
+      "note": "All attempts hit the 300s OpenCode timeout with turns=0, tools=[], tokens=0 — opencode returned no events whatsoever. Reproduced across warmup + run 1/3; bench was stopped after run 1/3 to save wall-clock time. Not a NordVPN-style socket failure (browse succeeded on the same server minutes earlier); appears to be a model/server interaction failure specific to this prompt on vmlx JANGTQ4-CRACK. Needs standalone diagnosis.",
+      "response_time_s": {
+        "median": null,
+        "values": []
+      },
+      "agent_turns": {
+        "median": 0,
+        "values": [0, 0]
+      },
+      "timeouts": 2,
+      "timeout_values_s": [300.04, 300.01]
+    }
+  }
+}

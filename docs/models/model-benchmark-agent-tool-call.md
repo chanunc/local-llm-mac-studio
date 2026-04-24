@@ -266,7 +266,7 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 ## Results: mlx-community/Qwen3.6-27B-6bit
 
-**Date:**
+**Date:** 2026-04-24
 **Server:** vllm-mlx v0.2.6 native CLI (no JANG wrapper — standard MLX safetensors) with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
 **Architecture:** Qwen3.6 dense — 27.3B params, hybrid (48 Gated DeltaNet + 16 full-attention) layers, ViT vision encoder, standard MLX 6-bit quantization (uniform), 262K native context. Loaded as `MLLM=False` (text-only — vllm-mlx does not expose the vision tower).
 **Model path:** `~/.cache/huggingface/hub/models--mlx-community--Qwen3.6-27B-6bit` (21 GB on disk, downloaded via `hf download`)

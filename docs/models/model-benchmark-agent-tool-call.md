@@ -221,7 +221,7 @@ Verified independently of OpenCode: a streaming `/v1/chat/completions` request w
 
 ### OpenCode End-to-End Agent Benchmark
 
-**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`qwen36-27b-jang4m-agent-bench.logs/`](qwen36-27b-jang4m-agent-bench.logs/), after the NordVPN Shield block was cleared by uninstalling the app + rebooting the client MacBook — see history note below).
+**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`qwen36-27b-jang4m-agent-bench.logs/`](qwen36-27b-jang4m-agent-bench.logs/)).
 
 Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`qwen36-27b-jang4m-agent-bench.json`](qwen36-27b-jang4m-agent-bench.json).
 
@@ -239,17 +239,6 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 | Qwen3.5-35B-A3B JANG 4K (sparse MoE, 3B active) | vllm-mlx | 42.58 s | 70.61 s | **~2.7× faster** browse, **~2.3× faster** search |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK (sparse MoE, 3B active, TurboQuant 4-bit) | vmlx | 88.94 s ⚠ (2 good + 1 timeout) | ⛔ hung (0 tool calls) | search scenario failed on vmlx — separate issue, not a model-quality signal |
 | **Qwen3.6-27B JANG 4M (this model, dense 27B)** | vllm-mlx | **114.25 s** | **163.59 s** | baseline |
-
-### History: NordVPN Shield block (resolved 2026-04-24)
-
-The 2026-04-23 bench run timed out at 300 s on every invocation with `turns=0, tools=[]` and OpenCode `FailedToOpenSocket errno=0`. The block recurred on 2026-04-24 after NordVPN auto-upgraded from v9.15.0 → v10.0.4 (the v10 client no longer ships the "App Exceptions" UI). Root cause was the macOS **NordVPN Threat Protection Pro** system extension (`com.nordvpn.macos.Shield`) silently dropping outbound LAN traffic from `node`/`bun` binaries at the socket layer (returns `EHOSTUNREACH` from `connect()` before the packet leaves the host). Bisection matrix:
-
-| From the MacBook (192.168.31.181) | Result |
-|----|----|
-| `curl` / `python3 urllib` / Docker container → vllm-mlx | ✅ <1 s |
-| `node` / `bun` / `pi` / `opencode` → vllm-mlx | ⛔ EHOSTUNREACH / FailedToOpenSocket |
-
-**Fix applied 2026-04-24:** uninstalled the NordVPN app and rebooted the MacBook (macOS does not unload system extensions on app uninstall alone; reboot purges any entry already marked `terminated waiting to uninstall on reboot`). Post-reboot `systemextensionsctl list | grep Shield` shows the v10.0.4 entry as `[activated disabled]` and `node` LAN `connect()` succeeds in ~7 ms. A prior attempt to allowlist binaries in v9.15.0's "App Exceptions" UI worked per-binary-signature but broke on every `brew upgrade` of node/opencode; the v10 client removed the feature so allowlisting is no longer an option. See `project_opencode_vllm_socket_regression.md` memory for the full triage chain.
 
 ### Key Findings
 

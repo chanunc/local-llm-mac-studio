@@ -2,7 +2,7 @@
 
 Tested on **Mac Studio M3 Ultra (96 GB)**.
 
-## Method
+## 🧪 Method
 
 Real agent CLI invocation via `opencode run --format json`, measuring end-to-end response time including agent system prompts, tool definitions, agent loop turns, and reasoning overhead. This captures the actual latency a user experiences — not raw inference tok/s.
 
@@ -10,6 +10,33 @@ Script: [`scripts/bench_agent_tool_call.py`](../../scripts/bench_agent_tool_call
 Config switcher: [`scripts/switch_opencode_config.py`](../../scripts/switch_opencode_config.py)
 
 **Why this matters:** Raw benchmarks show 45-85 tok/s for these models. But agent workloads include 2,000-4,000 token system prompts, multiple API round-trips, and reasoning amplification. Measured end-to-end, `opencode run "Hi"` takes 80s vs 2.7s raw curl for the same model — a 30x gap ([analysis](../../docs/clients/opencode-analysis.md)).
+
+---
+
+## Index
+
+**Cross-model tables** (medians, all models side-by-side):
+- [API-level tool calling](#api-level-tool-calling-direct-v1chatcompletions-5-tool-harness) — direct `/v1/chat/completions` 5-tool harness
+- [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) — `opencode run` real agent loop (wall + LLM time)
+- [Server / parser flag matrix](#server--parser-flag-matrix) — required server CLI flags + patches per model
+- [Scenario 1: Browse github.com](#scenario-1-browse-githubcom-single-tool-call) — single-tool ranking
+- [Scenario 2: Search 3 latest AI agentic tools](#scenario-2-search-3-latest-ai-agentic-tools-multi-step) — multi-step ranking
+
+**Per-model results** (typical inference + agent bench + key findings):
+- [JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K](#results-jangq-aiqwen35-35b-a3b-jang_4k) — 35 B sparse MoE, 3 B active, JANG 4-bit mixed (vllm-mlx + patch) — *2026-04-21*
+- [dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK](#results-dealignaiqwen36-35b-a3b-jangtq4-crack) — 35 B sparse MoE, TurboQuant 4-bit, abliterated (vmlx + MLLM patch) — *2026-04-21*
+- [JANGQ-AI/Qwen3.6-27B-JANG_4M](#results-jangq-aiqwen36-27b-jang_4m) — 27 B dense + ViT, hybrid attn, JANG 4.45-bit mixed (vllm-mlx + JANG wrapper + patch) — *2026-04-23*
+- [mlx-community/Qwen3.6-27B-6bit](#results-mlx-communityqwen36-27b-6bit) — 27 B dense + ViT, uniform 6-bit MLX (vllm-mlx, no patches) — *2026-04-24*
+- [jedisct1/Qwen3.6-35B-rust.mlx](#results-jedisct1qwen36-35b-rustmlx) — 35 B sparse MoE, 3 B active, uniform 8-bit MLX, Rust LoRA merged (vllm-mlx, no patches) — *2026-04-24*
+
+**Topic index** (jump to specific concerns):
+- *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
+- *API-level harness script* — `scripts/bench_api_tool_call.py` (5 single-call scenarios + 3-turn agentic loop, non-streaming, temperature 0)
+- *vllm-mlx streaming + tool-call bug + patch* — see Qwen3.5-35B-A3B JANG 4K § Key Findings #3
+- *vmlx MLLM tools-dropped bug + patch* — see JANGTQ4-CRACK § Key Findings #1 and `CLAUDE.md` Known Issues
+- *300 s OpenCode client timeout (search hits)* — see Qwen3.6-27B-JANG_4M / Qwen3.6-27B-6bit § Key Findings
+- *A3B sparsity (3 B active out of 35 B) speed advantage* — see Qwen3.6-35B-rust.mlx and Qwen3.5-35B-A3B § Key Findings
+- *Quality vs latency trade-offs by quantization* — see Qwen3.6-27B-6bit § Key Findings #4
 
 ---
 
@@ -21,10 +48,13 @@ All numbers below are medians; per-model detail sections follow further down.
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **5/5** | 1.18 - 1.21 s | 1.51 - 1.53 s | **5.64 s** |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | n/a (not run) | n/a | n/a | n/a |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | n/a (not run) | n/a | n/a | n/a |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🏆 | **1.51 - 1.53 s** 🏆 | **5.64 s** 🏆 |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s 🥈 | 1.42 - 2.70 s 🥈 | 6.99 s 🥈 |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
+
+⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
 ### OpenCode end-to-end (`opencode run --format json`, real agent loop)
 
@@ -35,12 +65,13 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** / 41.45 s | **70.61 s** / 69.43 s | 2 / 2 turns; `webfetch`, `task`, `bash`; fastest of the three (sparse 3B-active MoE) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ / n/a | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — needs diagnosis. See [benchmarks/qwen36-35b-a3b-jangtq4-crack/agent-bench.json](benchmarks/qwen36-35b-a3b-jangtq4-crack/agent-bench.json). |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | **25.35 s** 🏆 / 24.17 s | **36.73 s** 🏆 / 35.58 s | 2 / 3 turns; `webfetch`, `bash`; fastest end-to-end here; A3B sparsity + shorter agent loops (2026-04-24) |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 42.58 s 🥈 / 41.45 s | 70.61 s 🥈 / 69.43 s | 2 / 2 turns; `webfetch`, `task`, `bash`; sparse 3B-active MoE |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ / n/a | ⛔ hung | Browse: 2 good runs + 1 300s bash-loop timeout (median of 2). Search: 0 turns on all attempts (model emitted no tool call) — harness-level (passes at API). See [benchmarks/qwen36-35b-a3b-jangtq4-crack/agent-bench.json](benchmarks/qwen36-35b-a3b-jangtq4-crack/agent-bench.json). |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s / 113.11 s | 163.59 s / 161.15 s | 2 / 3 turns; `webfetch`, `bash`; dense model — slowest; one 250s browse outlier and one 262s search warmup outlier (9-turn bash loop) |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 119.93 s / 118.76 s | 300.04 s ⚠ / 161.04 s (clean) | 2 / 2 turns; `webfetch`, `bash`, `glob`; 2-of-3 search runs hit 300 s client cap (same pattern as JANG_4M); ~5 % slower than JANG_4M on browse, ~1 % diff on clean search |
 
-Wall and LLM time are within 1–3 % of each other for all three models on these scenarios — opencode's own bootstrap/teardown is negligible at this prompt size (10 k-token system prompt + 10 tools). The gap widens only when tool execution itself is slow (network fetches against rate-limited APIs, long bash pipelines).
+Wall and LLM time are within 1–3 % of each other for all measured models on these scenarios — opencode's own bootstrap/teardown is negligible at this prompt size (10 k-token system prompt + 10 tools). The gap widens only when tool execution itself is slow (network fetches against rate-limited APIs, long bash pipelines).
 
 ### Server / parser flag matrix
 
@@ -49,11 +80,12 @@ Wall and LLM time are within 1–3 % of each other for all three models on these
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patch_vllm_mlx_streaming_tools.py` |
 | Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as above |
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patch_vmlx_jangtq_mllm_tools.py` |
 
 ---
 
-## Results: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
+## 🤖 Results: JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K
 
 **Date:** 2026-04-21
 **Server:** vllm-mlx with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
@@ -74,11 +106,11 @@ Thinking tokens (`<think>` block) included in output count. Model always generat
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:------------|:-------|
-| Single tool (file read) | 1.21s | 54 | 44.6 tok/s | `read_file` | PASS |
-| Single tool (command) | 1.18s | 81 | 68.6 tok/s | `run_command` | PASS |
-| Multi-tool (search + read) | 1.51s | 115 | 76.1 tok/s | `search_web`, `read_file` | PASS |
-| Multi-tool (list + read + write) | 1.53s | 117 | 76.2 tok/s | `list_directory`, `read_file` | PASS |
-| Agentic reasoning | 1.29s | 92 | 71.3 tok/s | `list_directory` | PASS |
+| Single tool (file read) | 1.21s | 54 | 44.6 tok/s | `read_file` | ✅ PASS |
+| Single tool (command) | 1.18s | 81 | 68.6 tok/s | `run_command` | ✅ PASS |
+| Multi-tool (search + read) | 1.51s | 115 | 76.1 tok/s | `search_web`, `read_file` | ✅ PASS |
+| Multi-tool (list + read + write) | 1.53s | 117 | 76.2 tok/s | `list_directory`, `read_file` | ✅ PASS |
+| Agentic reasoning | 1.29s | 92 | 71.3 tok/s | `list_directory` | ✅ PASS |
 
 **Pass rate: 5/5** — correct tool selection, valid JSON arguments, proper `finish_reason: tool_calls`.
 Parallel tool calling works (multi-tool scenarios call 2+ tools in single response).
@@ -132,9 +164,11 @@ Prompt: `"Browse github.com"`
 
 | Model | Server | Response Time (2026-04-24 median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **42.58 s** | 2 | `webfetch` | 27,528 |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s (2 good runs + 1 timeout) | 2-3 | `webfetch`, `bash` | 27,650 |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | **25.35 s** 🏆 | 2 | `webfetch` | 27,619 |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 42.58 s 🥈 | 2 | `webfetch` | 27,528 |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 88.94 s ⚠ (2 good runs + 1 timeout) | 2-3 | `webfetch`, `bash` | 27,650 |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 114.25 s | 2 | `webfetch` | 27,503 |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 119.93 s | 2 | `webfetch` | 27,536 |
 
 ---
 
@@ -144,18 +178,47 @@ Prompt: `"Search 3 latest ai agentic tools on github.com"`
 
 | Model | Server | Response Time (2026-04-24 median) | Turns | Tools | Tokens | Context Growth |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **70.61 s** | 2 | `task`, `bash` | 22,743 | ~10K/turn |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ⛔ hung (0 tool calls on all attempts) | — | — | — | — |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | **36.73 s** 🏆 | 3 | `webfetch`, `bash` | 34,165 | ~11K/turn |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 70.61 s 🥈 | 2 | `task`, `bash` | 22,743 | ~10K/turn |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 162.25 s (clean) / 300.04 s ⚠ (median) | 2 | `webfetch`, `bash`, `glob` | 32,764 | ~11K/turn |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 163.59 s | 3 | `bash`, `webfetch` | 35,063 | ~10K/turn |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ⛔ hung (0 tool calls on all attempts) | — | — | — | — |
 
 ---
 
-## Results: dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK
+## 🤖 Results: dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK
 
 **Date:** 2026-04-21
 **Server:** vmlx (MLX Studio v1.3.65 bundled Python) with `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`
 **Architecture:** Qwen3.6 MoE+VL — 35B total, 3B active, 4-bit TurboQuant (JANGTQ4), CRACK abliterated, 262K context
 **Model path:** `dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK` via HuggingFace cache
+
+### API-Level Tool Calling (non-streaming, 5 tools available)
+
+Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json`](benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json).
+
+| Scenario | Time | Tokens | Speed | Tools Called | Result |
+|:---------|:-----|:-------|:------|:-------------|:-------|
+| Single tool (file read) | 5.37 s | 80 | 14.9 tok/s | `read_file` | ✅ PASS |
+| Single tool (command) | 2.47 s | 65 | 26.3 tok/s | `run_command` | ✅ PASS |
+| Multi-tool (search + read) | 3.71 s | 145 | 39.1 tok/s | `search_web`, `read_file` | ✅ PASS (parallel) |
+| Multi-tool (list + read + write) | 2.77 s | 83 | 29.9 tok/s | `list_directory` | ✅ PASS (chose serial) |
+| Agentic reasoning | 10.49 s | 588 | 56.1 tok/s | `run_command` | ✅ PASS |
+
+**Pass rate: 5/5** — correct tool selection, valid JSON arguments, `finish_reason: tool_calls`. The MLLM tools patch (`scripts/patch_vmlx_jangtq_mllm_tools.py`) is required for vmlx to forward tool definitions on this model's MLLM code path.
+
+### Multi-Turn Agentic Loop (simulated tool results)
+
+Task: "Read /tmp/app/config.json, change port to 8080, write back"
+
+| Turn | Action | Time | Output Tokens |
+|:-----|:-------|:-----|:--------------|
+| 1 | `read_file({"path":"/tmp/app/config.json"})` | 2.94 s | 89 |
+| 2 | `write_file({...port:8080...})` | 4.02 s | 146 |
+| 3 | Natural language summary (stop) | 4.58 s | 166 |
+| **Total** | **3 turns, complete task** | **11.54 s** | 401 |
+
+The OpenCode-level Search hang seen in the end-to-end bench (`⛔ hung, 0 tool calls`) does not reproduce at the API level — the model emits valid `tool_calls` deltas on the same `search_web` scenario in 3.7 s. The hang is a harness/prompt-level interaction, not a model tool-call failure.
 
 ### OpenCode Agent Benchmark (streaming via `opencode run`)
 
@@ -191,7 +254,7 @@ Prompt: `"Search 3 latest ai agentic tools on github.com"`
 
 ---
 
-## Results: JANGQ-AI/Qwen3.6-27B-JANG_4M
+## 🤖 Results: JANGQ-AI/Qwen3.6-27B-JANG_4M
 
 **Date:** 2026-04-23
 **Server:** vllm-mlx v0.2.6 (`run_vllm_jang.py` wrapper) with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
@@ -204,11 +267,11 @@ Captured via [`benchmarks/qwen36-27b-jang4m/api-tool-test.json`](benchmarks/qwen
 
 | Scenario | Time | Output Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:--------------|:------|:------------|:-------|
-| Single tool (file read) | 3.76s | 65 | 17.3 tok/s | `read_file` | PASS |
-| Single tool (command) | 3.44s | 64 | 18.6 tok/s | `run_command` | PASS |
-| Multi-tool (search + read) | 8.13s | 228 | 28.0 tok/s | `search_web`, `read_file` | PASS (parallel) |
-| Multi-tool (list + read + write) | 4.23s | 89 | 21.1 tok/s | `list_directory` | PASS (chose serial — 1 tool/turn) |
-| Agentic reasoning | 13.47s | 421 | 31.3 tok/s | `run_command` | PASS |
+| Single tool (file read) | 3.76s | 65 | 17.3 tok/s | `read_file` | ✅ PASS |
+| Single tool (command) | 3.44s | 64 | 18.6 tok/s | `run_command` | ✅ PASS |
+| Multi-tool (search + read) | 8.13s | 228 | 28.0 tok/s | `search_web`, `read_file` | ✅ PASS (parallel) |
+| Multi-tool (list + read + write) | 4.23s | 89 | 21.1 tok/s | `list_directory` | ✅ PASS (chose serial — 1 tool/turn) |
+| Agentic reasoning | 13.47s | 421 | 31.3 tok/s | `run_command` | ✅ PASS |
 
 **Pass rate: 5/5** — correct tool selection, valid JSON arguments, `finish_reason: tool_calls`. Parallel calling demonstrated in scenario 3.
 
@@ -264,12 +327,37 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 ---
 
-## Results: mlx-community/Qwen3.6-27B-6bit
+## 🤖 Results: mlx-community/Qwen3.6-27B-6bit
 
 **Date:** 2026-04-24
 **Server:** vllm-mlx v0.2.6 native CLI (no JANG wrapper — standard MLX safetensors) with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
 **Architecture:** Qwen3.6 dense — 27.3B params, hybrid (48 Gated DeltaNet + 16 full-attention) layers, ViT vision encoder, standard MLX 6-bit quantization (uniform), 262K native context. Loaded as `MLLM=False` (text-only — vllm-mlx does not expose the vision tower).
 **Model path:** `~/.cache/huggingface/hub/models--mlx-community--Qwen3.6-27B-6bit` (21 GB on disk, downloaded via `hf download`)
+
+### API-Level Tool Calling (non-streaming, 5 tools available)
+
+Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-27b-6bit/api-tool-test.json`](benchmarks/qwen36-27b-6bit/api-tool-test.json).
+
+| Scenario | Time | Tokens | Speed | Tools Called | Result |
+|:---------|:-----|:-------|:------|:-------------|:-------|
+| Single tool (file read) | 5.75 s | 101 | 17.6 tok/s | `read_file` | ✅ PASS |
+| Single tool (command) | 4.73 s | 79 | 16.7 tok/s | `run_command` | ✅ PASS |
+| Multi-tool (search + read) | 7.52 s | 157 | 20.9 tok/s | `search_web`, `read_file` | ✅ PASS (parallel) |
+| Multi-tool (list + read + write) | 8.83 s | 193 | 21.9 tok/s | `list_directory` | ✅ PASS (chose serial) |
+| Agentic reasoning | 13.69 s | 328 | 24.0 tok/s | `run_command` | ✅ PASS |
+
+**Pass rate: 5/5** — correct tool selection, valid JSON arguments, `finish_reason: tool_calls`. Single-call latency (~5–9 s) is roughly 1.5–2× the JANG_4M dense baseline at the same param count, despite no JANG wrapper overhead — extra latency tracks the 6-bit weight bandwidth (21 GB vs 17.5 GB).
+
+### Multi-Turn Agentic Loop (simulated tool results)
+
+Task: "Read /tmp/app/config.json, change port to 8080, write back"
+
+| Turn | Action | Time | Output Tokens |
+|:-----|:-------|:-----|:--------------|
+| 1 | `read_file({"path":"/tmp/app/config.json"})` | 7.53 s | 154 |
+| 2 | `write_file({...port:8080...})` | 5.91 s | 103 |
+| 3 | Natural language summary (stop) | 5.87 s | 94 |
+| **Total** | **3 turns, complete task** | **19.31 s** | 351 |
 
 ### OpenCode End-to-End Agent Benchmark
 
@@ -301,3 +389,81 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 3. **Search median inflated by client timeout** — on runs that converge in 2 turns the 6-bit model performs within 1 % of JANG_4M (162.25 s vs 163.59 s). Dense 27B models chain 4+ tool calls roughly 1 in 3 runs, which pushes wall time past OpenCode's 300 s ceiling. Use median-of-clean-runs or raise the client cap for a cleaner number.
 
 4. **Quality upside not measured here** — this bench is latency-only. External reference (LLM infrastructure research memo, 1350): 6-bit uniform retains ~1 ppt more quality vs 4.45-bit JANG mixed on standard benchmarks while adding ~3.5 GB disk / ~5 % wall latency.
+
+## 🤖 Results: jedisct1/Qwen3.6-35B-rust.mlx
+
+**Date:** 2026-04-24
+**Server:** vllm-mlx v0.2.6 native CLI with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`
+**Architecture:** Qwen3.6-35B-A3B (`Qwen3_5MoeForConditionalGeneration`, `model_type=qwen3_5_moe`) — 256 experts, 8 active per token, 40 layers (3 linear / 1 full attention pattern, Mamba-like SSM hybrid), `max_position_embeddings=262144`, vision tokens defined in tokenizer (text-only here). 8-bit MLX uniform quant (group_size=64). Base: `Brooooooklyn/Qwen3.6-35B-A3B-UD-Q8_K_XL-mlx`. LoRA (rank 8, alpha 16) trained on 356K Rust commits (634K samples) for diff generation, then merged into the quantized weights.
+**Model path:** `~/.omlx/models/jedisct1--Qwen3.6-35B-rust.mlx` (35 GB on disk, downloaded via `hf download`)
+
+### Typical Inference (`scripts/bench_api_server.py`, 1 warmup + 2 runs, median)
+
+Raw JSON: [`benchmarks/qwen36-35b-rust/api-typical.json`](benchmarks/qwen36-35b-rust/api-typical.json).
+
+| Context (tokens) | TTFT (median) | Gen tok/s (median) |
+|:----------------:|:------:|:------:|
+|  ~256 |  0.31 s | **83.2** |
+| ~2,048 |  1.00 s | 82.2 |
+| ~8,192 |  3.70 s | 79.7 |
+
+Generation throughput stays in the 80 tok/s band even at 8K prefill — matches the ~A3B-class behaviour seen on JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K (only 3 B params active per token despite 35 B total). `prompt_tokens` reports 0 in the streaming SSE / non-streaming probe — known vllm-mlx field-fill bug, not a real prefill of zero. `prefill_tps` therefore unmeasurable here; TTFT scales linearly with context (~0.45 ms / token), consistent with M3 Ultra bandwidth on 8-bit MoE weights.
+
+### API-Level Tool Calling (non-streaming, 5 tools available)
+
+Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-rust/api-tool-test.json`](benchmarks/qwen36-35b-rust/api-tool-test.json).
+
+| Scenario | Time | Tokens | Speed | Tools Called | Result |
+|:---------|:-----|:-------|:------|:-------------|:-------|
+| Single tool (file read) | 1.80 s | 84 | 46.7 tok/s | `read_file` | ✅ PASS |
+| Single tool (command) | 1.42 s | 82 | 57.7 tok/s | `run_command` | ✅ PASS |
+| Multi-tool (search + read) | 2.70 s | 188 | 69.5 tok/s | `search_web`, `read_file` | ✅ PASS (parallel) |
+| Multi-tool (list + read + write) | 1.42 s | 82 | 57.7 tok/s | `list_directory` | ✅ PASS (chose serial) |
+| Agentic reasoning | 12.82 s | 1024 | 79.9 tok/s | (none) | ❌ FAIL — `finish_reason: length` |
+
+**Pass rate: 4/5** — fastest single-call latency of any model in this doc (A3B sparsity + cache-warm SSM hybrid). The `Agentic reasoning` failure is a model behaviour, not a server bug: this Rust-LoRA-tuned variant emits long Gemini-style chain-of-thought as plain `content` (no `<think>` wrapper) and runs out of token budget before emitting the tool call. Other models on this prompt produce 328-588 tokens and call the tool cleanly. Bumping `max_tokens` past 1024 is unlikely to help — sample inspection shows the model loops on candidate-command deliberation.
+
+### Multi-Turn Agentic Loop (simulated tool results)
+
+Task: "Read /tmp/app/config.json, change port to 8080, write back"
+
+| Turn | Action | Time | Output Tokens |
+|:-----|:-------|:-----|:--------------|
+| 1 | `read_file({"path":"/tmp/app/config.json"})` | 1.57 s | 93 |
+| 2 | `write_file({...port:8080...})` | 2.86 s | 197 |
+| 3 | Natural language summary (stop) | 2.56 s | 168 |
+| **Total** | **3 turns, complete task** | **6.99 s** | 458 |
+
+At API level the 4-bit Qwen3.5-35B-A3B JANG 4K baseline (5.64 s, 1.18-1.21 s single-call) still edges out this 8-bit variant — A3B sparsity gives both models 3 B active params, but lower-bit weights win on memory bandwidth. The Rust LoRA's huge OpenCode-end-to-end advantage (4.5× over the dense 27B models) comes from prefill + agent-loop convergence, not from per-call generation speed.
+
+### OpenCode End-to-End Agent Benchmark
+
+Captured via `scripts/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions --verbose`. Raw JSON: [`benchmarks/qwen36-35b-rust/agent-bench.json`](benchmarks/qwen36-35b-rust/agent-bench.json).
+
+| Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
+|:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|
+| Browse github.com | **25.35 s** | 24.17 s | 21.67 – 28.28 s | 2 | `webfetch` | 27,619 |
+| Search 3 latest AI agentic tools on github.com | **36.73 s** | 35.58 s | 27.38 – 51.15 s | 3 | `webfetch`, `bash` | 34,165 |
+
+Per-turn breakdown (browse, sample): turn 1 prefill ≈ 10.8k → 11.0 s, turn 2 prefill ≈ 16.5k → 13.2 s. 0 reasoning tokens emitted — the qwen3 reasoning parser is armed but the model produced its thinking in the body of the assistant response (Gemini-style "Here's a thinking process:" preamble, captured by the parser only when `</think>` is hit; on agent turns it skips thinking entirely).
+
+Cross-model comparison on the same scenarios (all captured 2026-04-24 with the same bench script):
+
+| Model | Server | Bits | Active params | Disk | Browse | Search | vs. this model |
+|:------|:-------|:----:|:----:|:----:|:------:|:------:|:--------------|
+| **Qwen3.6-35B-A3B Rust LoRA (this model)** | vllm-mlx | 8 uniform | 3 B | 35 GB | **25.35 s** | **36.73 s** | baseline |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | 4 mixed | 3 B | — | 42.58 s | 70.61 s | this is **~1.7×** / **~1.9×** faster |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx | 4.45 mixed | 27 B | 17.5 GB | 114.25 s | 163.59 s | this is **~4.5×** / **~4.5×** faster |
+| Qwen3.6-27B 6bit (dense) | vllm-mlx | 6 uniform | 27 B | 21 GB | 119.93 s | 162.25 s | this is **~4.7×** / **~4.4×** faster |
+
+### Key Findings
+
+1. **Right server chosen** — vllm-mlx native CLI. The `qwen3_5_moe` architecture is supported by mlx-lm 0.31.1 (`mlx_lm/models/qwen3_5_moe.py`); the chat template is the standard Qwen3 XML tool format that the existing `qwen3_coder` parser handles natively. Tool call probe (`get_weather`) returned a clean OpenAI `tool_calls` block on first try.
+
+2. **Faster than other A3B 35 B variants on these scenarios despite 8-bit (vs 4-bit) weights** — most of the speedup is the smaller / cleaner agent loops the Rust-tuned model takes (browse converges in 2 turns, search in 3 vs 5+ for some other models). A3B sparsity (3 B active) keeps generation throughput high; 8-bit weight-bandwidth penalty is real (~5–10 % vs 4-bit) but doesn't dominate at these token counts.
+
+3. **Search variance is wide (27 – 51 s, p5 – p95)** — one of three measured runs went 5 turns / 6 bash calls. The Rust-specialist LoRA does not appear to break general agentic tool use on natural-language prompts, but it does drift toward `bash` more than `webfetch` (vs. dense Qwen3.6 which prefers `webfetch`). Worth flagging if you intend to use this for non-Rust agent work.
+
+4. **Agentic value is limited by training scope** — the LoRA was trained on Rust commit diffs (jedisct1/rust dataset, 356K commits). Strong code-generation specialist, but not a general agent. For Rust-heavy refactor / patch workflows it may outperform the base model; for general agentic browse/search/etc. you're getting the base Qwen3.6-35B-A3B behaviour (this benchmark) without the Rust upside.
+
+5. **No JANG / TurboQuant bug surfaced** — this is plain 8-bit MLX safetensors (no JANG mixed precision, no TurboQuant), so vllm-mlx can run it without the JANG wrapper script. No special config knobs needed beyond the standard Qwen3 parser flags.

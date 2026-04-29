@@ -1,7 +1,7 @@
 {
   "benchmark": "agent-tool-call",
   "version": "1.0",
-  "timestamp": "2026-04-24T13:29:11.776802+00:00",
+  "timestamp": "2026-04-27T13:12:25.008822+00:00",
   "config": {
     "agent": "opencode",
     "model": "macstudio/mlx-community/Qwen3.6-27B-6bit",
@@ -16,347 +16,75 @@
       "prompt": "Browse github.com",
       "runs": 3,
       "response_time_s": {
-        "median": 119.93,
-        "p5": 106.21,
-        "p95": 124.42,
-        "mean": 116.85,
-        "stddev": 9.49,
+        "median": 124.3,
+        "p5": 118.74,
+        "p95": 300.03,
+        "mean": 181.02,
+        "stddev": 103.1,
         "values": [
-          124.42,
-          119.93,
-          106.21
+          124.3,
+          118.74,
+          300.03
         ]
       },
       "llm_time_s": {
-        "median": 118.76,
-        "p5": 105.03,
-        "p95": 123.26,
-        "mean": 115.68,
-        "stddev": 9.5,
-        "values": [
-          123.26,
-          118.76,
-          105.03
-        ]
-      },
-      "agent_turns": {
-        "median": 2,
-        "p5": 2,
-        "p95": 2,
-        "mean": 2,
-        "stddev": 0.0,
-        "values": [
-          2,
-          2,
-          2
-        ]
-      },
-      "total_tokens": {
-        "median": 27536,
-        "p5": 24259,
-        "p95": 27574,
-        "mean": 26456.33,
-        "stddev": 1903.04,
-        "values": [
-          27574,
-          27536,
-          24259
-        ]
-      },
-      "input_tokens": {
-        "median": 27251,
-        "p5": 23958,
-        "p95": 27251,
-        "mean": 26153.33,
-        "stddev": 1901.21,
-        "values": [
-          27251,
-          27251,
-          23958
-        ]
-      },
-      "output_tokens": {
-        "median": 301,
-        "p5": 285,
-        "p95": 323,
-        "mean": 303,
-        "stddev": 19.08,
-        "values": [
-          323,
-          285,
-          301
-        ]
-      },
-      "reasoning_tokens": {
-        "median": 0,
+        "median": 117.53,
         "p5": 0,
-        "p95": 0,
-        "mean": 0,
-        "stddev": 0.0,
+        "p95": 123.09,
+        "mean": 80.21,
+        "stddev": 69.52,
         "values": [
-          0,
-          0,
+          123.09,
+          117.53,
           0
-        ]
-      },
-      "tool_calls_per_run": [
-        [
-          "webfetch"
-        ],
-        [
-          "webfetch"
-        ],
-        [
-          "webfetch"
-        ]
-      ],
-      "per_turn_samples": [
-        [
-          {
-            "turn": 1,
-            "duration_s": 59.36,
-            "input_tokens": 10782,
-            "output_tokens": 66,
-            "reasoning_tokens": 0
-          },
-          {
-            "turn": 2,
-            "duration_s": 63.9,
-            "input_tokens": 16469,
-            "output_tokens": 257,
-            "reasoning_tokens": 0
-          }
-        ],
-        [
-          {
-            "turn": 1,
-            "duration_s": 56.34,
-            "input_tokens": 10782,
-            "output_tokens": 66,
-            "reasoning_tokens": 0
-          },
-          {
-            "turn": 2,
-            "duration_s": 62.42,
-            "input_tokens": 16469,
-            "output_tokens": 219,
-            "reasoning_tokens": 0
-          }
-        ],
-        [
-          {
-            "turn": 1,
-            "duration_s": 53.33,
-            "input_tokens": 10782,
-            "output_tokens": 66,
-            "reasoning_tokens": 0
-          },
-          {
-            "turn": 2,
-            "duration_s": 51.7,
-            "input_tokens": 13176,
-            "output_tokens": 235,
-            "reasoning_tokens": 0
-          }
-        ]
-      ],
-      "error_count": 0,
-      "raw_runs": [
-        {
-          "scenario": "browse",
-          "prompt": "Browse github.com",
-          "response_time_s": 124.42,
-          "llm_time_s": 123.26,
-          "agent_turns": 2,
-          "tool_calls": [
-            "webfetch"
-          ],
-          "total_input_tokens": 27251,
-          "total_output_tokens": 323,
-          "total_reasoning_tokens": 0,
-          "per_turn": [
-            {
-              "turn": 1,
-              "duration_s": 59.36,
-              "input_tokens": 10782,
-              "output_tokens": 66,
-              "reasoning_tokens": 0
-            },
-            {
-              "turn": 2,
-              "duration_s": 63.9,
-              "input_tokens": 16469,
-              "output_tokens": 257,
-              "reasoning_tokens": 0
-            }
-          ],
-          "errors": [],
-          "exit_code": 0,
-          "events_summary": {
-            "step_start": 2,
-            "step_finish": 2,
-            "text": 2,
-            "tool_use": 1,
-            "reasoning": 0,
-            "error": 0,
-            "other": 0
-          }
-        },
-        {
-          "scenario": "browse",
-          "prompt": "Browse github.com",
-          "response_time_s": 119.93,
-          "llm_time_s": 118.76,
-          "agent_turns": 2,
-          "tool_calls": [
-            "webfetch"
-          ],
-          "total_input_tokens": 27251,
-          "total_output_tokens": 285,
-          "total_reasoning_tokens": 0,
-          "per_turn": [
-            {
-              "turn": 1,
-              "duration_s": 56.34,
-              "input_tokens": 10782,
-              "output_tokens": 66,
-              "reasoning_tokens": 0
-            },
-            {
-              "turn": 2,
-              "duration_s": 62.42,
-              "input_tokens": 16469,
-              "output_tokens": 219,
-              "reasoning_tokens": 0
-            }
-          ],
-          "errors": [],
-          "exit_code": 0,
-          "events_summary": {
-            "step_start": 2,
-            "step_finish": 2,
-            "text": 2,
-            "tool_use": 1,
-            "reasoning": 0,
-            "error": 0,
-            "other": 0
-          }
-        },
-        {
-          "scenario": "browse",
-          "prompt": "Browse github.com",
-          "response_time_s": 106.21,
-          "llm_time_s": 105.03,
-          "agent_turns": 2,
-          "tool_calls": [
-            "webfetch"
-          ],
-          "total_input_tokens": 23958,
-          "total_output_tokens": 301,
-          "total_reasoning_tokens": 0,
-          "per_turn": [
-            {
-              "turn": 1,
-              "duration_s": 53.33,
-              "input_tokens": 10782,
-              "output_tokens": 66,
-              "reasoning_tokens": 0
-            },
-            {
-              "turn": 2,
-              "duration_s": 51.7,
-              "input_tokens": 13176,
-              "output_tokens": 235,
-              "reasoning_tokens": 0
-            }
-          ],
-          "errors": [],
-          "exit_code": 0,
-          "events_summary": {
-            "step_start": 2,
-            "step_finish": 2,
-            "text": 2,
-            "tool_use": 1,
-            "reasoning": 0,
-            "error": 0,
-            "other": 0
-          }
-        }
-      ]
-    },
-    "search": {
-      "prompt": "Search 3 latest ai agentic tools on github.com",
-      "runs": 3,
-      "response_time_s": {
-        "median": 300.04,
-        "p5": 162.25,
-        "p95": 300.05,
-        "mean": 254.11,
-        "stddev": 79.56,
-        "values": [
-          300.05,
-          300.04,
-          162.25
-        ]
-      },
-      "llm_time_s": {
-        "median": 161.04,
-        "p5": 0,
-        "p95": 237.05,
-        "mean": 132.7,
-        "stddev": 121.04,
-        "values": [
-          237.05,
-          0,
-          161.04
         ]
       },
       "agent_turns": {
         "median": 2,
         "p5": 1,
-        "p95": 4,
-        "mean": 2.33,
-        "stddev": 1.53,
+        "p95": 2,
+        "mean": 1.67,
+        "stddev": 0.58,
         "values": [
-          4,
-          1,
-          2
+          2,
+          2,
+          1
         ]
       },
       "total_tokens": {
-        "median": 32764,
+        "median": 27451,
         "p5": 0,
-        "p95": 54296,
-        "mean": 29020,
-        "stddev": 27340.94,
+        "p95": 27477,
+        "mean": 18309.33,
+        "stddev": 15856.35,
         "values": [
-          54296,
-          0,
-          32764
+          27451,
+          27477,
+          0
         ]
       },
       "input_tokens": {
-        "median": 32191,
+        "median": 27169,
         "p5": 0,
-        "p95": 53923,
-        "mean": 28704.67,
-        "stddev": 27130.03,
+        "p95": 27169,
+        "mean": 18112.67,
+        "stddev": 15686.03,
         "values": [
-          53923,
-          0,
-          32191
+          27169,
+          27169,
+          0
         ]
       },
       "output_tokens": {
-        "median": 373,
+        "median": 282,
         "p5": 0,
-        "p95": 573,
-        "mean": 315.33,
-        "stddev": 290.82,
+        "p95": 308,
+        "mean": 196.67,
+        "stddev": 170.81,
         "values": [
-          373,
-          0,
-          573
+          282,
+          308,
+          0
         ]
       },
       "reasoning_tokens": {
@@ -373,45 +101,43 @@
       },
       "tool_calls_per_run": [
         [
-          "webfetch",
-          "webfetch",
-          "bash",
-          "glob"
-        ],
-        [],
-        [
-          "webfetch",
           "webfetch"
-        ]
+        ],
+        [
+          "webfetch"
+        ],
+        []
       ],
       "per_turn_samples": [
         [
           {
             "turn": 1,
-            "duration_s": 84.16,
-            "input_tokens": 10790,
-            "output_tokens": 143,
+            "duration_s": 60.85,
+            "input_tokens": 10741,
+            "output_tokens": 67,
             "reasoning_tokens": 0
           },
           {
             "turn": 2,
-            "duration_s": 76.09,
-            "input_tokens": 21494,
-            "output_tokens": 111,
+            "duration_s": 62.24,
+            "input_tokens": 16428,
+            "output_tokens": 215,
+            "reasoning_tokens": 0
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 54.22,
+            "input_tokens": 10741,
+            "output_tokens": 66,
             "reasoning_tokens": 0
           },
           {
-            "turn": 3,
-            "duration_s": 76.8,
-            "input_tokens": 21639,
-            "output_tokens": 119,
-            "reasoning_tokens": 0
-          },
-          {
-            "turn": 4,
-            "duration_s": 0,
-            "input_tokens": 0,
-            "output_tokens": 0,
+            "turn": 2,
+            "duration_s": 63.31,
+            "input_tokens": 16428,
+            "output_tokens": 242,
             "reasoning_tokens": 0
           }
         ],
@@ -421,22 +147,6 @@
             "duration_s": 0,
             "input_tokens": 0,
             "output_tokens": 0,
-            "reasoning_tokens": 0
-          }
-        ],
-        [
-          {
-            "turn": 1,
-            "duration_s": 72.63,
-            "input_tokens": 10790,
-            "output_tokens": 141,
-            "reasoning_tokens": 0
-          },
-          {
-            "turn": 2,
-            "duration_s": 88.41,
-            "input_tokens": 21401,
-            "output_tokens": 432,
             "reasoning_tokens": 0
           }
         ]
@@ -444,66 +154,89 @@
       "error_count": 0,
       "raw_runs": [
         {
-          "scenario": "search",
-          "prompt": "Search 3 latest ai agentic tools on github.com",
-          "response_time_s": 300.05,
-          "llm_time_s": 237.05,
-          "agent_turns": 4,
+          "scenario": "browse",
+          "prompt": "Browse github.com",
+          "response_time_s": 124.3,
+          "llm_time_s": 123.09,
+          "agent_turns": 2,
           "tool_calls": [
-            "webfetch",
-            "webfetch",
-            "bash",
-            "glob"
+            "webfetch"
           ],
-          "total_input_tokens": 53923,
-          "total_output_tokens": 373,
+          "total_input_tokens": 27169,
+          "total_output_tokens": 282,
           "total_reasoning_tokens": 0,
           "per_turn": [
             {
               "turn": 1,
-              "duration_s": 84.16,
-              "input_tokens": 10790,
-              "output_tokens": 143,
+              "duration_s": 60.85,
+              "input_tokens": 10741,
+              "output_tokens": 67,
               "reasoning_tokens": 0
             },
             {
               "turn": 2,
-              "duration_s": 76.09,
-              "input_tokens": 21494,
-              "output_tokens": 111,
-              "reasoning_tokens": 0
-            },
-            {
-              "turn": 3,
-              "duration_s": 76.8,
-              "input_tokens": 21639,
-              "output_tokens": 119,
-              "reasoning_tokens": 0
-            },
-            {
-              "turn": 4,
-              "duration_s": 0,
-              "input_tokens": 0,
-              "output_tokens": 0,
+              "duration_s": 62.24,
+              "input_tokens": 16428,
+              "output_tokens": 215,
               "reasoning_tokens": 0
             }
           ],
           "errors": [],
-          "exit_code": -1,
+          "exit_code": 0,
           "events_summary": {
-            "step_start": 4,
-            "step_finish": 3,
-            "text": 3,
-            "tool_use": 4,
+            "step_start": 2,
+            "step_finish": 2,
+            "text": 2,
+            "tool_use": 1,
             "reasoning": 0,
             "error": 0,
             "other": 0
           }
         },
         {
-          "scenario": "search",
-          "prompt": "Search 3 latest ai agentic tools on github.com",
-          "response_time_s": 300.04,
+          "scenario": "browse",
+          "prompt": "Browse github.com",
+          "response_time_s": 118.74,
+          "llm_time_s": 117.53,
+          "agent_turns": 2,
+          "tool_calls": [
+            "webfetch"
+          ],
+          "total_input_tokens": 27169,
+          "total_output_tokens": 308,
+          "total_reasoning_tokens": 0,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 54.22,
+              "input_tokens": 10741,
+              "output_tokens": 66,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 2,
+              "duration_s": 63.31,
+              "input_tokens": 16428,
+              "output_tokens": 242,
+              "reasoning_tokens": 0
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 2,
+            "step_finish": 2,
+            "text": 2,
+            "tool_use": 1,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "browse",
+          "prompt": "Browse github.com",
+          "response_time_s": 300.03,
           "llm_time_s": 0,
           "agent_turns": 1,
           "tool_calls": [],
@@ -530,43 +263,346 @@
             "error": 0,
             "other": 0
           }
-        },
+        }
+      ]
+    },
+    "search": {
+      "prompt": "Search 3 latest ai agentic tools on github.com",
+      "runs": 3,
+      "response_time_s": {
+        "median": 283.37,
+        "p5": 209.59,
+        "p95": 300.01,
+        "mean": 264.32,
+        "stddev": 48.13,
+        "values": [
+          209.59,
+          300.01,
+          283.37
+        ]
+      },
+      "llm_time_s": {
+        "median": 234.44,
+        "p5": 208.34,
+        "p95": 282.08,
+        "mean": 241.62,
+        "stddev": 37.39,
+        "values": [
+          208.34,
+          234.44,
+          282.08
+        ]
+      },
+      "agent_turns": {
+        "median": 3,
+        "p5": 3,
+        "p95": 4,
+        "mean": 3.33,
+        "stddev": 0.58,
+        "values": [
+          3,
+          4,
+          3
+        ]
+      },
+      "total_tokens": {
+        "median": 49208,
+        "p5": 49199,
+        "p95": 55014,
+        "mean": 51140.33,
+        "stddev": 3354.7,
+        "values": [
+          49199,
+          49208,
+          55014
+        ]
+      },
+      "input_tokens": {
+        "median": 48560,
+        "p5": 48507,
+        "p95": 53931,
+        "mean": 50332.67,
+        "stddev": 3116.36,
+        "values": [
+          48507,
+          48560,
+          53931
+        ]
+      },
+      "output_tokens": {
+        "median": 692,
+        "p5": 648,
+        "p95": 1083,
+        "mean": 807.67,
+        "stddev": 239.46,
+        "values": [
+          692,
+          648,
+          1083
+        ]
+      },
+      "reasoning_tokens": {
+        "median": 0,
+        "p5": 0,
+        "p95": 0,
+        "mean": 0,
+        "stddev": 0.0,
+        "values": [
+          0,
+          0,
+          0
+        ]
+      },
+      "tool_calls_per_run": [
+        [
+          "webfetch",
+          "webfetch",
+          "webfetch"
+        ],
+        [
+          "bash",
+          "webfetch",
+          "webfetch",
+          "webfetch",
+          "bash"
+        ],
+        [
+          "webfetch",
+          "webfetch",
+          "bash"
+        ]
+      ],
+      "per_turn_samples": [
+        [
+          {
+            "turn": 1,
+            "duration_s": 59.59,
+            "input_tokens": 10749,
+            "output_tokens": 91,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 2,
+            "duration_s": 59.14,
+            "input_tokens": 16070,
+            "output_tokens": 165,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 3,
+            "duration_s": 89.61,
+            "input_tokens": 21688,
+            "output_tokens": 436,
+            "reasoning_tokens": 0
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 90.19,
+            "input_tokens": 10749,
+            "output_tokens": 190,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 2,
+            "duration_s": 60.53,
+            "input_tokens": 16095,
+            "output_tokens": 178,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 3,
+            "duration_s": 83.72,
+            "input_tokens": 21716,
+            "output_tokens": 280,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 4,
+            "duration_s": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "reasoning_tokens": 0
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 100.72,
+            "input_tokens": 10749,
+            "output_tokens": 139,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 2,
+            "duration_s": 76.13,
+            "input_tokens": 21517,
+            "output_tokens": 108,
+            "reasoning_tokens": 0
+          },
+          {
+            "turn": 3,
+            "duration_s": 105.23,
+            "input_tokens": 21665,
+            "output_tokens": 836,
+            "reasoning_tokens": 0
+          }
+        ]
+      ],
+      "error_count": 0,
+      "raw_runs": [
         {
           "scenario": "search",
           "prompt": "Search 3 latest ai agentic tools on github.com",
-          "response_time_s": 162.25,
-          "llm_time_s": 161.04,
-          "agent_turns": 2,
+          "response_time_s": 209.59,
+          "llm_time_s": 208.34,
+          "agent_turns": 3,
           "tool_calls": [
+            "webfetch",
             "webfetch",
             "webfetch"
           ],
-          "total_input_tokens": 32191,
-          "total_output_tokens": 573,
+          "total_input_tokens": 48507,
+          "total_output_tokens": 692,
           "total_reasoning_tokens": 0,
           "per_turn": [
             {
               "turn": 1,
-              "duration_s": 72.63,
-              "input_tokens": 10790,
-              "output_tokens": 141,
+              "duration_s": 59.59,
+              "input_tokens": 10749,
+              "output_tokens": 91,
               "reasoning_tokens": 0
             },
             {
               "turn": 2,
-              "duration_s": 88.41,
-              "input_tokens": 21401,
-              "output_tokens": 432,
+              "duration_s": 59.14,
+              "input_tokens": 16070,
+              "output_tokens": 165,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 3,
+              "duration_s": 89.61,
+              "input_tokens": 21688,
+              "output_tokens": 436,
               "reasoning_tokens": 0
             }
           ],
           "errors": [],
           "exit_code": 0,
           "events_summary": {
-            "step_start": 2,
-            "step_finish": 2,
-            "text": 2,
-            "tool_use": 2,
+            "step_start": 3,
+            "step_finish": 3,
+            "text": 3,
+            "tool_use": 3,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "search",
+          "prompt": "Search 3 latest ai agentic tools on github.com",
+          "response_time_s": 300.01,
+          "llm_time_s": 234.44,
+          "agent_turns": 4,
+          "tool_calls": [
+            "bash",
+            "webfetch",
+            "webfetch",
+            "webfetch",
+            "bash"
+          ],
+          "total_input_tokens": 48560,
+          "total_output_tokens": 648,
+          "total_reasoning_tokens": 0,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 90.19,
+              "input_tokens": 10749,
+              "output_tokens": 190,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 2,
+              "duration_s": 60.53,
+              "input_tokens": 16095,
+              "output_tokens": 178,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 3,
+              "duration_s": 83.72,
+              "input_tokens": 21716,
+              "output_tokens": 280,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 4,
+              "duration_s": 0,
+              "input_tokens": 0,
+              "output_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          ],
+          "errors": [],
+          "exit_code": -1,
+          "events_summary": {
+            "step_start": 4,
+            "step_finish": 3,
+            "text": 3,
+            "tool_use": 5,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "search",
+          "prompt": "Search 3 latest ai agentic tools on github.com",
+          "response_time_s": 283.37,
+          "llm_time_s": 282.08,
+          "agent_turns": 3,
+          "tool_calls": [
+            "webfetch",
+            "webfetch",
+            "bash"
+          ],
+          "total_input_tokens": 53931,
+          "total_output_tokens": 1083,
+          "total_reasoning_tokens": 0,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 100.72,
+              "input_tokens": 10749,
+              "output_tokens": 139,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 2,
+              "duration_s": 76.13,
+              "input_tokens": 21517,
+              "output_tokens": 108,
+              "reasoning_tokens": 0
+            },
+            {
+              "turn": 3,
+              "duration_s": 105.23,
+              "input_tokens": 21665,
+              "output_tokens": 836,
+              "reasoning_tokens": 0
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 3,
+            "step_finish": 3,
+            "text": 3,
+            "tool_use": 3,
             "reasoning": 0,
             "error": 0,
             "other": 0

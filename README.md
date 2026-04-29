@@ -136,10 +136,11 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 
 # End-to-end agent + tool-call test via OpenCode (requires the model to be
 # present in ~/.config/opencode/opencode.json under the `macstudio` provider).
-# "Browse github.com" exercises the webfetch tool — confirms the server's
-# tool-call parser flag (qwen3_coder / hermes / qwen3 depending on model)
-# is wired correctly end-to-end.
-opencode run --model "macstudio/<MODEL_NAME>" "Browse github.com"
+# "Browse www.example.com" reliably triggers webfetch (a concrete URL avoids
+# the model asking the user to clarify which page to fetch); confirms the
+# server's tool-call parser flag (qwen3_coder / hermes / qwen3 depending on
+# model) is wired correctly end-to-end.
+opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 ```
 
 ---

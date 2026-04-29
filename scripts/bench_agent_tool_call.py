@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SCENARIOS = {
-    "browse": "Browse github.com",
+    "browse": "Browse www.example.com",
     "search": "Search 3 latest ai agentic tools on github.com",
 }
 

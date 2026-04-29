@@ -2,6 +2,6 @@
   "env": {
     "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8000",
     "ANTHROPIC_AUTH_TOKEN": "not-needed",
-    "ANTHROPIC_MODEL": "JANGQ-AI/Qwen3.6-27B-JANG_4M"
+    "ANTHROPIC_MODEL": "mlx-community/Ling-2.6-flash-mlx-6bit"
   }
 }

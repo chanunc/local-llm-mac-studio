@@ -1,11 +1,11 @@
 {
-  "_comment": "qwen-code settings for vllm-mlx on Mac Studio. vllm-mlx is single-model — set the baseUrl only when JANGQ-AI/Qwen3.6-27B-JANG_4M is the loaded model (otherwise update id + model.name to match the live /v1/models). vllm-mlx does not require auth; envKey resolves to not-needed. Install target: ~/.qwen/settings.json.",
+  "_comment": "qwen-code settings for vllm-mlx on Mac Studio. vllm-mlx is single-model — set the baseUrl only when mlx-community/Ling-2.6-flash-mlx-6bit is the loaded model (otherwise update id + model.name to match the live /v1/models). Ling needs PR #1227 vendor + 2 patches; see docs/models/model-summary-ling.md. vllm-mlx does not require auth; envKey resolves to not-needed. Install target: ~/.qwen/settings.json.",
   "modelProviders": {
     "openai": [
       {
-        "id": "JANGQ-AI/Qwen3.6-27B-JANG_4M",
-        "name": "Qwen3.6-27B JANG 4M (Mac Studio, vllm-mlx)",
-        "description": "Dense 27B Qwen3.6 hybrid (Gated DeltaNet + full-attn) + ViT, JANG mixed 4/8-bit, 262K context — served via vllm-mlx as primary",
+        "id": "mlx-community/Ling-2.6-flash-mlx-6bit",
+        "name": "Ling-2.6-flash 6bit (Mac Studio, vllm-mlx)",
+        "description": "InclusionAI bailing_hybrid 104B/7.4B-active sparse MoE (4 MLA + 28 linear-attn layers, 256 experts), 6-bit MLX uniform quant — served via vllm-mlx as primary. Hermes tool format, no thinking.",
         "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
         "envKey": "MACSTUDIO_API_KEY"
       }
@@ -20,6 +20,6 @@
     }
   },
   "model": {
-    "name": "JANGQ-AI/Qwen3.6-27B-JANG_4M"
+    "name": "mlx-community/Ling-2.6-flash-mlx-6bit"
   }
 }

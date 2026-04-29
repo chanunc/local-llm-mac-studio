@@ -8,34 +8,18 @@
         "apiKey": "not-needed"
       },
       "models": {
-        "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S": {
-          "name": "Qwen3.5-122B-A10B JANG 2S (Primary)",
-          "limit": {
-            "context": 200000,
-            "output": 8192
-          }
-        },
-        "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K": {
-          "name": "Qwen3.5-35B-A3B JANG 4K (Fast MoE)",
+        "mlx-community/Ling-2.6-flash-mlx-6bit": {
+          "name": "Ling-2.6-flash 6bit (Primary, bailing_hybrid 104B/7.4B-active)",
           "tools": true,
-          "reasoning": true,
+          "reasoning": false,
           "limit": {
-            "context": 262144,
-            "output": 8192
-          }
-        },
-        "JANGQ-AI/Qwen3.6-27B-JANG_4M": {
-          "name": "Qwen3.6-27B JANG 4M (Dense + VL)",
-          "tools": true,
-          "reasoning": true,
-          "limit": {
-            "context": 262144,
+            "context": 65536,
             "output": 8192
           }
         }
       }
     }
   },
-  "model": "macstudio/JANGQ-AI/Qwen3.6-27B-JANG_4M",
-  "small_model": "macstudio/JANGQ-AI/Qwen3.6-27B-JANG_4M"
+  "model": "macstudio/mlx-community/Ling-2.6-flash-mlx-6bit",
+  "small_model": "macstudio/mlx-community/Ling-2.6-flash-mlx-6bit"
 }

@@ -14,6 +14,8 @@ Streaming `/v1/chat/completions` requests via Python `urllib`, parsing SSE `data
 
 JANG model support was added to mlx-lm.server, vllm-mlx, and mlx-openai-server via a ~15-line monkey-patch that intercepts `mlx_lm.load()` / `mlx_lm.utils.load()`, detects JANG model paths (via `jang_tools.loader.is_jang_model()`), and delegates to `jang_tools.load_jang_model()`. All loaders return the identical `mlx_lm.models.qwen3_5_moe.Model` class, so no further changes are needed.
 
+**Unsupported architectures (deployed via patches):** `mlx-community/Ling-2.6-flash-mlx-6bit` uses `bailing_hybrid`, not yet in mlx-lm 0.31.3. Deployed by side-loading `mlx_lm/models/bailing_hybrid.py` from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227) plus two server-side workarounds for thread-bound Metal-kernel state — see [Ling-2.6-flash](#ling-26-flash-mlx-6bit-104b7b-active-bailing_hybrid) section below.
+
 ---
 
 ## 🤖 Qwen3.5-35B-A3B-4bit (Standard MLX Quantization)
@@ -344,6 +346,63 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 23, 2026.
 - Compared to `Qwen3.6-35B-A3B (6-bit)` on `mlx-openai-server` at the same contexts: dense 27B is **~30-40% slower at gen** (27.0 vs 40.3 tok/s @ 64K) and **~5× slower at prefill** (274 vs 1,408 tok/s @ 64K). The MoE 3B-active sibling wins decisively for through-server throughput; the dense 27B's value is on quality (full 27B params per token) and the JANG mixed-precision compression
 - Tool calling and `<think>` reasoning both work via this server config — see [`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m) for API-level + agentic-loop results
 - Vision input is NOT exposed: vllm-mlx loads the model as `MLLM=False` (text-only). For VL inference, deploy on `vmlx` (MLX Studio bundled Python) or `mlx-openai-server` with the `multimodal` handler — neither has been validated for this specific model
+
+---
+
+## Ling-2.6-flash mlx-6bit (104B/7B-active, bailing_hybrid)
+
+Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.
+Tested on **Mac Studio M3 Ultra (96 GB)** — April 29, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Filler-token padding via `Hello world. ` repetition. Raw JSON: [ling-2.6-flash-6bit-benchmark.json](../server/vllm-mlx/ling-2.6-flash-6bit-benchmark.json). Bench script: [`scripts/bench_api_server.py`](../../scripts/bench_api_server.py).
+
+**Server:** vllm-mlx v0.2.6 native CLI (no JANG wrapper) with `--enable-auto-tool-choice --tool-call-parser hermes` (Ling emits `<tool_call>{json}</tool_call>` Hermes-format calls — vllm-mlx has no `qwen3` tool-call parser; `qwen3_coder` expects XML body, not JSON). mlx-lm 0.31.3 with three local patches needed to get this model running:
+
+1. **`mlx_lm/models/bailing_hybrid.py`** — vendored from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227) (ivanfioravanti). Without it: `ValueError: Model type bailing_hybrid not supported`.
+2. **[`scripts/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patch_mlx_lm_threadlocal_stream.py)** — converts `mlx_lm.generate.generation_stream` from a module-level thread-local stream into a per-thread lazy accessor. Stock mlx-lm creates the stream at import time on the main thread; vllm-mlx (and mlx-openai-server) run inference in worker threads where that stream object is unreachable.
+3. **[`scripts/patch_vllm_mlx_inline_gen.py`](../../scripts/patch_vllm_mlx_inline_gen.py)** — replaces every `await asyncio.to_thread(...)` in `vllm_mlx/engine/simple.py` with a direct synchronous call. Fundamental MLX limitation: custom `mx.fast.metal_kernel` objects (used by `bailing_hybrid` for the linear-attention recurrence and the GLA SSM kernel) are bound to the thread that built them. Trying to invoke them from a different thread raises `RuntimeError: There is no Stream(gpu, 0) in current thread` even after patch #2. Running generation inline on the asyncio event loop avoids the cross-thread invocation entirely. Generation now blocks the loop, which is fine for single-stream inference servers.
+
+mlx-openai-server tripped the same threading bug (`There is no Stream(gpu, 1) in current thread` at `mx.eval([c.state for c in model_cache])` in its prompt-cache prefill); patch #2 alone is not enough there because the mlx-openai-server inference-worker design is more deeply thread-coupled than vllm-mlx and patch #3 doesn't apply directly. vllm-mlx is the only viable host for this model today.
+
+### Generation Speed (tok/s)
+
+| Context | vllm-mlx |
+|:--------|:--------:|
+| 512 | **64.5** |
+| 4K | 64.5 |
+| 8K | 64.4 |
+| 32K | 61.5 |
+| 64K | 57.3 |
+| 128K | ⛔ OOM |
+
+### Prefill Speed (tok/s)
+
+| Context | vllm-mlx (against actual chat-templated tokens) |
+|:--------|:-----------------------------------------------:|
+| 512 | ~750 |
+| 4K | ~1,090 |
+| 8K | ~1,120 |
+| 32K | ~1,060 |
+| 64K | ~890 |
+
+Prompt-token counts reported by the server are 0 (vllm-mlx field-fill bug, same as JANG_4M); rates above use locally-tokenised prompt sizes (~535 / 4,100 / 8,200 / 32,800 / 65,500 tokens for the five contexts).
+
+### Time to First Token (seconds)
+
+| Context | vllm-mlx |
+|:--------|:--------:|
+| 512 | 0.70 |
+| 4K | 3.77 |
+| 8K | 7.34 |
+| 32K | 30.92 |
+| 64K | 73.53 |
+| 128K | ⛔ OOM mid-prefill |
+
+**Notes:**
+- **128K OOMs** — the `bailing_hybrid` cache layout (KVCache for the 4 MLA layers + ArraysCache(size=1) for the 28 linear-attention layers) plus 80 GB of weights lands above the 96 GB unified-memory ceiling on M3 Ultra at 128K. Server crashes with `[METAL] Command buffer execution failed: Insufficient Memory`. Useful interactive ceiling on this hardware sits around 64K
+- Generation throughput stays **flat (~64 tok/s)** from 512 → 8K and only slips to 57 tok/s at 64K — much less context-sensitivity than the dense 27B models. The recurrent linear-attention path doesn't grow KV state with context (single-step recurrence) so memory bandwidth pressure scales mainly with the 4 MLA layers
+- Compared to `Qwen3.6-35B-A3B (6-bit)` on `mlx-openai-server` at 64K: Ling is **~42% faster** in generation (57.3 vs 40.3 tok/s) but slower in prefill at the same context, because the MLA absorbed-form is more compute-heavy per token than Qwen3.6's sliding-window MoE at this hardware. The architectural win shows at long context — Ling holds 64 tok/s gen at 32K where Qwen3.6 has dropped to 46.3
+- Vision is N/A — `bailing_hybrid` is text-only
 
 ---
 

@@ -1,3 +1,14 @@
 CLAUDE.md
 AGENTS.md
 .claude/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Benchmark scratch backups (re-bench script keeps a sidecar of the
+# previous run; git history is the source of truth instead)
+*.prev.json

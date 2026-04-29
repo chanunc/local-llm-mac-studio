@@ -31,7 +31,7 @@ from pathlib import Path
 
 SCENARIOS = {
     "browse": "Browse www.example.com",
-    "search": "Search 3 latest ai agentic tools on github.com",
+    "search": "Browse Hackernews, get the only one latest topic",
 }
 
 

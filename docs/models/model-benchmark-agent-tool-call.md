@@ -19,8 +19,8 @@ Config switcher: [`scripts/switch_opencode_config.py`](../../scripts/switch_open
 - [API-level tool calling](#api-level-tool-calling-direct-v1chatcompletions-5-tool-harness) — direct `/v1/chat/completions` 5-tool harness
 - [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) — `opencode run` real agent loop (wall + LLM time)
 - [Server / parser flag matrix](#server--parser-flag-matrix) — required server CLI flags + patches per model
-- [Scenario 1: Browse github.com](#scenario-1-browse-githubcom-single-tool-call) — single-tool ranking
-- [Scenario 2: Search 3 latest AI agentic tools](#scenario-2-search-3-latest-ai-agentic-tools-multi-step) — multi-step ranking
+- [Scenario 1: Browse www.example.com](#scenario-1-browse-wwwexamplecom-single-tool-call) — single-tool ranking
+- [Scenario 2: Browse Hackernews latest topic](#scenario-2-browse-hackernews-latest-topic-multi-step) — multi-step ranking
 
 **Per-model results** (typical inference + agent bench + key findings):
 - [JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K](#results-jangq-aiqwen35-35b-a3b-jang_4k) — 35 B sparse MoE, 3 B active, JANG 4-bit mixed (vllm-mlx + patch) — *2026-04-21, re-bench 2026-04-27*
@@ -67,16 +67,16 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **16.74 s** 🏆 / 15.52 s | 81.92 s / 80.71 s | 2 / 2 turns; `webfetch`, `task`, `bash`; sparse 3B-active MoE; one search outlier (`task`-tool launch) (2026-04-27) |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 20.77 s 🥈 / 19.58 s | **23.29 s** 🏆 / 22.11 s | 2 / 2 turns; `webfetch`, `bash`; fastest combined (search winner); A3B sparsity + shorter agent loops (2026-04-27) |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 89.81 s / 88.59 s | 117.73 s / 95.53 s | 2 / 2 turns; `bash`, `webfetch`; dense model; one 5-turn bash search outlier (2026-04-27) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 97.21 s / 96.01 s | 91.45 s / 90.22 s | 2 / 2 turns; `webfetch`, `bash`; **search hang fixed** by opencode 1.14.28 — was ⛔ hung in 2026-04-24 run on opencode 1.14.22 (2026-04-27) |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 124.30 s / 117.53 s | 283.37 s ⚠ / 234.44 s | 2 / 3 turns; `webfetch`, `bash`; one search run hit 300 s client cap (same pattern as JANG_4M dense); slowest of the five (2026-04-27) |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 36.61 s / 35.41 s | 76.98 s 🥈 / 75.68 s | 2 / 4 turns; `webfetch`, `bash`; competitive on browse but search runs spawn 3-4 webfetch chains (more iterative than the Qwen models which converge in 2 turns) (2026-04-29) |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **12.86 s** 🏆 / 11.47 s | **16.28 s** 🏆 / 14.98 s | 2 / 2 turns; `webfetch`; sparse 3B-active MoE — sweeps both scenarios on the new prompt set |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`; A3B sparsity; close behind JANG_4K on browse, search splits into top-stories + top-item fetches |
+| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search run took the `skill` route); 7.4B active dominated by per-token MLA cost — slower than the Qwen 35B-A3Bs but no thinking overhead |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`; dense 27 B + thinking-on adds 30+ s/turn |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`; A3B but TurboQuant kernels stay slow under deep thinking; one 297 s search outlier |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`; standard 6-bit MLX has no JANG mixed-precision speedup; thinking-on dense path is the slowest browse |
 
 Wall and LLM time are within 1–3 % of each other for all measured models on these scenarios — opencode's own bootstrap/teardown is negligible at this prompt size (10 k-token system prompt + 10 tools). The gap widens only when tool execution itself is slow (network fetches against rate-limited APIs, long bash pipelines).
 
-**2026-04-27 re-run note:** all five models re-benchmarked after upgrading opencode 1.14.22 → 1.14.28 (resolved a client-side hang where `opencode run` would hold ESTABLISHED TCP sessions to vllm-mlx indefinitely after stream completion). All 40 measured runs (5 models × 2 scenarios × (1 warmup + 3 runs)) exited cleanly. Previous numbers preserved in `agent-bench.prev.json` per model directory.
+**2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
 
 ### Server / parser flag matrix
 
@@ -164,33 +164,37 @@ Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run u
 
 ---
 
-## Scenario 1: Browse github.com (Single Tool Call)
+## Scenario 1: Browse www.example.com (Single Tool Call)
 
-Prompt: `"Browse github.com"`
+Prompt: `"Browse www.example.com"`
 
-| Model | Server | Response Time (2026-04-27 median, Ling 2026-04-29) | Turns | Tools | Tokens |
-|:------|:-------|:--------------------------------------------------:|:------|:------|:-------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **16.74 s** 🏆 | 2 | `webfetch` | ~10.7K in / ~165 out |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 20.77 s 🥈 | 2 | `webfetch` | ~10.7K in / ~91 out |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 36.61 s | 2 | `webfetch` | ~10.8K in / ~201 out |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 89.81 s | 2 | `webfetch` | ~10.7K in / ~91 out |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 97.21 s | 2 | `webfetch` | ~10.8K in / ~165 out |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 124.30 s | 2 | `webfetch` | ~10.7K in / ~91 out |
+| Model | Server | Response Time (2026-04-30 median) | Turns | Tools | Tokens |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **12.86 s** 🏆 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 25.75 s | 2 | `webfetch` | ~10.8K in / ~135 out |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s | 2 | `webfetch` | ~10.7K in / ~137 out |
+
+The new prompt removes the clarification round the old `Browse github.com` triggered on every model — every model now fires `webfetch https://www.example.com` on turn 1 and emits the page summary on turn 2. Wall-time spread reflects pure inference latency (sparsity + thinking-on density), not model decision-making.
 
 ---
 
-## Scenario 2: Search 3 Latest AI Agentic Tools (Multi-Step)
+## Scenario 2: Browse Hackernews Latest Topic (Multi-Step)
 
-Prompt: `"Search 3 latest ai agentic tools on github.com"`
+Prompt: `"Browse Hackernews, get the only one latest topic"`
 
-| Model | Server | Response Time (2026-04-27 median, Ling 2026-04-29) | Turns | Tools | Tokens | Context Growth |
-|:------|:-------|:--------------------------------------------------:|:------|:------|:-------|:---------------|
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | **23.29 s** 🏆 | 2 | `webfetch`, `bash` | ~22K | ~10K/turn |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 76.98 s 🥈 | 4 | `webfetch` | ~63K | ~15K/turn |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 81.92 s | 2 | `task`, `bash` | ~22K | ~10K/turn |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 91.45 s | 2 | `bash`, `webfetch` | ~23K | ~10K/turn |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 117.73 s | 2 | `bash`, `webfetch` | ~22K | ~10K/turn |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 283.37 s ⚠ | 3 | `webfetch`, `bash` | ~32K | ~11K/turn |
+| Model | Server | Response Time (2026-04-30 median) | Turns | Tools | Tokens | Context Growth |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **16.28 s** 🏆 | 2 | `webfetch` | ~26K | ~13K/turn |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥈 | 3 | `webfetch` | ~43K | ~13K/turn |
+| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 127.28 s | 2 | `webfetch` | ~23K | ~12K/turn |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
+
+The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3 webfetch turns for every model — JANG_4K's 2-turn convergence (it inlines top-id-fetch + top-item-fetch into a single reasoned call) is what gives it the win over Rust LoRA's 3-turn approach. JANGTQ4-CRACK's outlier search wall (one run hit 297 s) is the abliterated TurboQuant kernels stalling under deep thinking, not a tool-loop problem.
 
 ---
 

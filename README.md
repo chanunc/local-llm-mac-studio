@@ -61,6 +61,28 @@ nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 \
   > /tmp/vllm-mlx.log 2>&1 &
 
+# vllm-mlx — Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit MoE 35B/3B active, 35 GB).
+# Standard MLX safetensors — no patches needed. Same parser flags as the JANG line
+# (qwen3_coder + qwen3); the wrapper handles non-JANG paths fine. Best wall-time
+# for browse/search agent loops (memory #1467, bench 2026-04-27).
+nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
+  ~/.omlx/models/jedisct1--Qwen3.6-35B-rust.mlx \
+  --served-model-name jedisct1/Qwen3.6-35B-rust.mlx \
+  --port 8000 --host 0.0.0.0 \
+  --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 \
+  > /tmp/vllm-mlx.log 2>&1 &
+
+# vllm-mlx — Ling-2.6-flash mlx-6bit (bailing_hybrid MoE 104B/7.4B active, ~80 GB).
+# No JANG wrapper (plain MLX safetensors). --tool-call-parser hermes — Ling emits
+# <tool_call>{json}</tool_call>, not the qwen3_coder XML body. No --reasoning-parser
+# (model never emits <think>). Requires three patches first (vendored bailing_hybrid
+# + thread-local stream + inline-gen) — see docs/models/model-summary-ling.md.
+nohup ~/vllm-mlx-env/bin/vllm-mlx serve mlx-community/Ling-2.6-flash-mlx-6bit \
+  --served-model-name mlx-community/Ling-2.6-flash-mlx-6bit \
+  --port 8000 --host 0.0.0.0 \
+  --enable-auto-tool-choice --tool-call-parser hermes \
+  > /tmp/vllm-mlx.log 2>&1 &
+
 # mlx-openai-server — multi-model, low overhead
 JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
@@ -106,10 +128,18 @@ tail -f /tmp/vmlx.log                                                           
 Works on all servers — swap `<MODEL_NAME>` from `/v1/models`. Add auth header for oMLX.
 
 ```bash
+# Plain chat round-trip
 curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"<MODEL_NAME>","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
   | python3 -m json.tool
+
+# End-to-end agent + tool-call test via OpenCode (requires the model to be
+# present in ~/.config/opencode/opencode.json under the `macstudio` provider).
+# "Browse github.com" exercises the webfetch tool — confirms the server's
+# tool-call parser flag (qwen3_coder / hermes / qwen3 depending on model)
+# is wired correctly end-to-end.
+opencode run --model "macstudio/<MODEL_NAME>" "Browse github.com"
 ```
 
 ---
@@ -159,8 +189,8 @@ All models fit in **96GB unified memory**.
 | [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/model-summary.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
 | MiniMax-M2.7 JANGTQ-CRACK | MoE 230B/10B | 57 | 128K | Uncensored, TurboQuant (vmlx only) — see [uncen-model](docs/models/uncen-model/) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | MoE 35B/3B + VL | 19.7 | 262K | **Uncensored efficiency-frontier winner** — ties MiniMax at 10/10 useful compliance at 1/3 the weights, ~64 tok/s sustained, ~4.66 s avg latency. VLM. Default thinking ON. (vmlx only) |
-| Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Uncensored VLM, 2-bit TurboQuant (vmlx only). Fastest CRACK (~66 tok/s) but **quality-impaired** (4/10 useful compliance). Requires `enable_thinking=false` |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | MoE 35B/3B + VL | 19.7 | 262K | Uncensored efficiency winner (vmlx only) |
+| Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
 
 Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 

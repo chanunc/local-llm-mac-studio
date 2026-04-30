@@ -54,6 +54,7 @@ All numbers below are medians; per-model detail sections follow further down.
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s 🥈 | **4.74 s** 🏆 |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
@@ -73,6 +74,7 @@ Two medians reported per scenario:
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`; dense 27 B + thinking-on adds 30+ s/turn |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`; A3B but TurboQuant kernels stay slow under deep thinking; one 297 s search outlier |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`; standard 6-bit MLX has no JANG mixed-precision speedup; thinking-on dense path is the slowest browse |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`; **3.1× faster browse, 4.9× faster search than vllm-mlx on the identical model file**. llmster's MLX runtime exposes `<think>` content as `reasoning_content` (~70-79 reasoning tokens captured), and its prefill kernel is dramatically faster (47K tok/s @ 32K vs vllm-mlx's ~310 tok/s on the JANG variant). Direct prompt benchmark in [`model-benchmark-api-server.md`](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx) |
 | MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s / 54.29 s ⚠ | ⛔ **fail** | Browse: 1/3 runs emit invalid tool call, 2/3 hit 8K-token cap before any tool; Search: 0/3 runs ever call a tool — model reasons forever and exhausts max_tokens. Raw `/v1/chat/completions` with a single `webfetch` tool *does* emit valid tool calls, so the issue is OpenCode's 10-tool catalog + thinking-on in this pruned variant, not the server config |
 
 **2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
@@ -84,6 +86,7 @@ Two medians reported per scenario:
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patch_vllm_mlx_streaming_tools.py` |
 | Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as above |
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
+| Qwen3.6-27B 6bit (mlx-community) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patch_vmlx_jangtq_mllm_tools.py` |
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patch_mlx_lm_threadlocal_stream.py` + `scripts/patch_vllm_mlx_inline_gen.py` |
@@ -400,6 +403,51 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 3. **Search median inflated by client timeout** — on runs that converge in 2 turns the 6-bit model performs within 1 % of JANG_4M (162.25 s vs 163.59 s). Dense 27B models chain 4+ tool calls roughly 1 in 3 runs, which pushes wall time past OpenCode's 300 s ceiling. Use median-of-clean-runs or raise the client cap for a cleaner number.
 
 4. **Quality upside not measured here** — this bench is latency-only. External reference (LLM infrastructure research memo, 1350): 6-bit uniform retains ~1 ppt more quality vs 4.45-bit JANG mixed on standard benchmarks while adding ~3.5 GB disk / ~5 % wall latency.
+
+### Server comparison: llmster vs vllm-mlx (same model file, 2026-04-30)
+
+Same model, same hardware, same OpenCode bench harness. The only variable is the server.
+
+**Setup for llmster:** LM Studio installed via `brew install --cask lm-studio` (v0.4.12). MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`. Bootstrapped `~/.lmstudio/bin/lms`, ran `lms get https://huggingface.co/mlx-community/Qwen3.6-27B-6bit`, loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`, served via `lms server start --bind 0.0.0.0`. Served identifier: `qwen3.6-27b` (lowercase, org prefix stripped — used as-is in the bench `--model` arg). Raw JSON: [`benchmarks/qwen36-27b-6bit/api-server-llmster.json`](benchmarks/qwen36-27b-6bit/api-server-llmster.json), [`api-tool-test-llmster.json`](benchmarks/qwen36-27b-6bit/api-tool-test-llmster.json), [`agent-bench-llmster.json`](benchmarks/qwen36-27b-6bit/agent-bench-llmster.json).
+
+**API-level tool calling (5-tool harness, 2026-04-30 prompts):**
+
+| Scenario | vllm-mlx | llmster | Δ |
+|:---------|:--------:|:-------:|:---:|
+| Single tool (file read) | 5.75 s | 6.58 s | +14 % |
+| Single tool (command) | 4.73 s | 4.22 s | −11 % |
+| Multi-tool (search + read) | 7.52 s | 8.86 s | +18 % |
+| Multi-tool (list + read + write) | 8.83 s | 5.28 s | **−40 %** |
+| Agentic reasoning | 13.69 s | 18.07 s | +32 % |
+| **3-turn agentic loop total** | **19.31 s** | **20.28 s** | +5 % |
+
+API-level latency is roughly a wash (within ±20 % per scenario, +5 % on the 3-turn loop). Both servers pass 5/5; the underlying decode rate is set by the same MLX kernels and the same 6-bit weight bandwidth.
+
+**OpenCode end-to-end (`opencode run`, browse + search, 1 warmup + 3 measured):**
+
+| Scenario | vllm-mlx wall / llm | llmster wall / llm | llmster speedup |
+|:---------|:-------------------:|:------------------:|:----------------:|
+| Browse www.example.com | 97.93 s / 96.75 s | **31.96 s / 30.74 s** | **3.1× faster** |
+| Browse Hackernews latest topic | 127.28 s / 126.05 s | **25.71 s / 24.51 s** | **4.9× faster** |
+
+This is the headline finding. Same MLX file, same hardware, same client harness, same prompts. **llmster is 3–5× faster end-to-end on the OpenCode agent loop**.
+
+**Why llmster wins on agent workloads:**
+
+1. **Prefill kernel is dramatically faster.** llmster's `mlx-llm` runtime sustains 47K tok/s prefill at 32K context (TTFT 0.70 s). The closest comparison from vllm-mlx + this model family is the JANG_4M variant at ~314 tok/s prefill (TTFT 104 s @ 32K). The 10-K-token OpenCode system prompt and tool catalog is mostly prefill cost — every turn shaves tens of seconds.
+2. **Reasoning content is exposed correctly.** llmster captured 70–79 reasoning tokens per scenario (visible in agent-bench JSON `reasoning_tokens`). vllm-mlx with this exact model + `--reasoning-parser qwen3` reported 0 reasoning tokens — the parser detected no `<think>` blocks. Either llmster's chat-template handling preserves Qwen3.6 thinking output where vllm-mlx swallows it, or the LM Studio MLX runtime emits thinking content even when the chat template suppresses it. Net effect: llmster is letting the model think briefly (~75 tok), reach the tool call faster, and the user sees a concise final answer.
+3. **OpenCode-side overhead is identical.** LLM time tracks wall time within ~1.2 s on both servers — the gap is purely model-side, not client/streaming overhead.
+
+**Decode (gen tok/s) is slightly slower on llmster** (29.9 vs vllm-mlx + JANG_4M at 36.5 @ 512). The 5-tool API harness shows this trade — single-call latency is similar, agentic reasoning (which decodes more tokens) is +32 %. But for agent loops where prefill dominates, the prefill win compensates ~10× over.
+
+**Caveats:**
+- Comparison is against vllm-mlx + JANG 4M for prefill numbers (the standard 6-bit model on vllm-mlx never had an api-server benchmark run). For agent-bench, the comparison is direct (same model file).
+- llmster ships closed-source MLX runtime — exact prefill kernel implementation isn't auditable. If LM Studio rewrites the runtime in a future update, results may shift.
+- llmster's `lms get` doesn't reuse the HF cache — re-downloaded the same 22 GB into `~/.lmstudio/models/`. Disk-cost duplication for any HF-cached model.
+
+**Recommendation:** For standard MLX models that don't need JANG/JANGTQ patches, **llmster is the better server for agent workloads** on this hardware. The vllm-mlx stack remains the right choice for JANG-quantized weights, custom parsers (`hermes` for Ling, `nemotron`), and the patches required for `bailing_hybrid` / Mistral Small 4. For Qwen3.6-27B-6bit specifically, this changes the production calculus — if quality at the 6-bit weight class is acceptable, llmster makes this a viable agent default at ~30 s end-to-end browse latency.
+
+---
 
 ## 🤖 Results: jedisct1/Qwen3.6-35B-rust.mlx
 

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:1234/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "qwen3.6-27b": {
+          "name": "Qwen3.6-27B 6bit (llmster, standard MLX)",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio/qwen3.6-27b",
+  "small_model": "macstudio/qwen3.6-27b"
+}

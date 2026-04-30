@@ -349,6 +349,53 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 23, 2026.
 
 ---
 
+## Qwen3.6-27B 6-bit (Standard MLX, on llmster vs vllm-mlx)
+
+Model: `mlx-community/Qwen3.6-27B-6bit` (same dense 27.3B Qwen3.6 hybrid + ViT base as JANG 4M, but uniform 6-bit MLX quantization at 22 GB on disk — no JANG mixed-precision)
+Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
+
+**Why this matters:** This is the only model in the repo that runs on both vllm-mlx and llmster (LM Studio headless `lms server`) without architecture patches — standard MLX safetensors. It's the cleanest server-overhead comparison available.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench_api_server.py`](../../scripts/bench_api_server.py). Raw JSON: [api-server-llmster.json](benchmarks/qwen36-27b-6bit/api-server-llmster.json).
+
+**Server:** llmster v0.4.12 (Homebrew cask `lm-studio`), MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`, `lms server start --bind 0.0.0.0`. Model loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`. Served identifier: `qwen3.6-27b` (LM Studio strips the org prefix and lowercases it).
+
+### Generation Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **29.9** |
+| 4K | 29.3 |
+| 8K | 28.8 |
+| 32K | 26.3 |
+
+### Prefill Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 1,086 |
+| 4K | 8,031 |
+| 8K | 15,321 |
+| 32K | **47,143** |
+
+### Time to First Token (seconds)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **0.49** |
+| 4K | 0.51 |
+| 8K | 0.54 |
+| 32K | 0.70 |
+
+**Notes:**
+- **Headline finding: TTFT is essentially flat from 512 → 32K (0.49 → 0.70 s)**. llmster's MLX runtime appears to use a much more aggressive prefill kernel than vllm-mlx — prefill speed scales linearly into the tens-of-thousands of tok/s range (47K tok/s at 32K context). Compare to `Qwen3.6-27B JANG 4M` on vllm-mlx where 32K TTFT is **104.45 s** at 314 tok/s prefill.
+- **Generation speed is ~10–20 % slower than vllm-mlx + JANG 4M** at equal contexts (e.g. 512: 29.9 vs 36.5 tok/s; 32K: 26.3 vs 30.9 tok/s). Expected: 6-bit uniform > 4.45-bit mixed on memory bandwidth. The big win is prefill, not decode.
+- 64K not tested on llmster — context-length limit was set to 65,536 at load time but the bench's 64K filler probe pushed past the model's hard ceiling (resolved: ran 4 contexts instead of 5).
+- vllm-mlx baseline for this exact model file (`mlx-community/Qwen3.6-27B-6bit`) was never run for the api-server benchmark — only agent-bench. Direct vs JANG-variant comparison is the closest available.
+- Tool calling works out of the box on llmster's MLX runtime — see [`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-mlx-communityqwen36-27b-6bit-on-llmster) for the agent-loop comparison (llmster is **3–5× faster than vllm-mlx end-to-end** on the same model file).
+
+---
+
 ## Ling-2.6-flash mlx-6bit (104B/7B-active, bailing_hybrid)
 
 Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.

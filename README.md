@@ -50,8 +50,9 @@ This repository is primarily an **operations notebook + config bundle** for the 
 Pick one — all serve on port 8000. Stop others first if switching.
 
 ```bash
-# vllm-mlx — fastest, single model. Current primary: Qwen3.6-27B JANG 4M
-# (dense 27B + ViT, 17.5 GB; switched from Qwen3.5-122B-JANG_2S on 2026-04-23).
+# vllm-mlx — fastest, single model. Current production primary:
+# Ling-2.6-flash mlx-6bit (see Ling block below). Qwen3.6-27B JANG 4M is the
+# go-to dense+VL fallback (17.5 GB, switched from Qwen3.5-122B-JANG_2S on 2026-04-23).
 # Qwen3.5/3.6 need --tool-call-parser qwen3_coder (NOT qwen — they emit XML
 # tool calls, not JSON). --reasoning-parser qwen3 extracts <think> blocks.
 # See docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
@@ -169,7 +170,7 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-lm](docs/server/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
 | **[oMLX](docs/server/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/server/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
-| **llmster** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
+| **[llmster](docs/server/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
 
 All servers except llmster support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·
@@ -177,9 +178,9 @@ All servers except llmster support [JANG](https://jangq.ai/) mixed-precision mod
 [mlx-openai-server](docs/server/mlx-openai-server/jang-patch.md) ·
 [mlx-lm](docs/server/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md) · [vmlx](docs/server/vmlx/maintenance.md)
+Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md) · [vmlx](docs/server/vmlx/maintenance.md) · [llmster](docs/server/llmster/summary.md) (no separate maintenance doc — single `summary.md` covers install, runtime recovery, and limitations)
 
-Current `vllm-mlx` primary: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense 27B + ViT, 17.5 GB, JANG mixed 4/8-bit — switched 2026-04-23; vllm-mlx loads as text-only `MLLM=False`). See [model-summary.md](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl) and [agent tool-call benchmark](docs/models/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m).
+Current `vllm-mlx` production primary: `mlx-community/Ling-2.6-flash-mlx-6bit` (sparse 104B / 7.4B-active `bailing_hybrid`, 6-bit MLX, ~80 GB on disk; deployed 2026-04-29 via three local patches — see [model-summary-ling.md](docs/models/model-summary-ling.md)). The Qwen3.6-27B JANG 4M dense+VL variant remains a documented fallback for VL workloads ([model-summary.md](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl), [bench](docs/models/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)).
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 

@@ -22,6 +22,9 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision encoder · 3B active · 262K native (1M YaRN)
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27B Qwen3.6 hybrid · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27B Qwen3.6 + ViT · 22 GB · uniform 6-bit · llmster recommended (3-5× faster agent loop than vllm-mlx)
+- [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35B/3B MoE · uniform 8-bit MLX · LoRA merged on 356K Rust commits · best wall-time on agent loops
+- [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
+- [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -613,6 +616,107 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
 **See also:** [`docs/server/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/model-benchmark-agent-tool-call.md` § Server comparison](model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+
+---
+
+## Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)
+
+Qwen3.6-35B-A3B base with a rank-8 LoRA (alpha 16) trained on **356 K Rust commits / 634 K samples** for diff generation, then merged into uniform 8-bit MLX weights. `Qwen3_5MoeForConditionalGeneration` arch — 256 experts, 8 active per token, 40 layers (3 linear / 1 full attention pattern, Mamba-like SSM hybrid). Vision tokens defined in tokenizer but text-only here. Standard MLX safetensors — **no JANG wrapper, no patches** required. Currently the **best wall-time on agent browse** in this stack (close behind Qwen3.5-35B-A3B JANG 4K).
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Brooooooklyn/Qwen3.6-35B-A3B-UD-Q8_K_XL-mlx](https://huggingface.co/Brooooooklyn/Qwen3.6-35B-A3B-UD-Q8_K_XL-mlx) |
+| Quant | [jedisct1/Qwen3.6-35B-rust.mlx](https://huggingface.co/jedisct1/Qwen3.6-35B-rust.mlx) |
+| Format | MLX safetensors (uniform 8-bit, group_size=64) |
+| Architecture | `Qwen3_5MoeForConditionalGeneration` (`qwen3_5_moe`) — 40 layers, hybrid (3 linear + 1 full attn) |
+| Parameters | 35 B total, 3 B active per token (256 experts, 8 routed) |
+| Specialties | Agentic coding (Rust-tuned diffs), tool calling, fast browse/search loops |
+| Tokens/sec | ~83 tok/s gen @ 256 ctx, ~80 tok/s @ 8K (bench: [`benchmarks/qwen36-35b-rust/api-typical.json`](benchmarks/qwen36-35b-rust/api-typical.json)) |
+| TTFT | 0.31 s @ 256, 1.00 s @ 2K, 3.70 s @ 8K |
+| On-disk size | ~35 GB |
+| Context Size | 262,144 native (262K) |
+| License | Apache-2.0 (base) |
+
+**vllm-mlx model ID:** `jedisct1/Qwen3.6-35B-rust.mlx` (served from `~/.omlx/models/jedisct1--Qwen3.6-35B-rust.mlx`)
+
+**Server config (vllm-mlx):** standard CLI with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` (same parser flags as the non-LoRA Qwen3.6 variants — the LoRA-merged weights still emit the Qwen3-coder XML tool-call format).
+
+**Tool calling** ([`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jedisct1qwen36-35b-rustmlx)):
+- API-level: 4/5 single-call pass · single-tool 1.42-1.80 s 🥈 · 3-turn agentic loop 6.99 s
+- OpenCode end-to-end (2026-04-30): browse 13.94 s 🥈 · search 26.31 s 🥈 — second-fastest in the stack on both scenarios
+- ⚠ One agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). Other scenarios pass cleanly.
+
+**Caveats:**
+- Reasoning emitted as `content` (not `<think>`) — not extracted by `--reasoning-parser qwen3`. If you need a clean reasoning/content split, prefer Qwen3.5-35B-A3B JANG 4K which uses proper `<think>` tags.
+- Rust-domain LoRA: not measured to degrade general performance, but explicitly tuned for code-diff workloads.
+- Vision encoder defined in tokenizer but vllm-mlx loads as text-only (`MLLM=False`).
+
+---
+
+## Ling-2.6-flash mlx-6bit (`bailing_hybrid`)
+
+InclusionAI's `bailing_hybrid` MoE — **104 B total / 7.4 B active** — sparse-expert hybrid mixing 4 MLA layers (absorbed-form Multi-head Latent Attention) with 28 Lightning-style linear-attention recurrence layers. 256 routed experts (8/tok, group-limited top-8) + 1 shared, sigmoid `noaux_tc` routing. 6-bit MLX uniform quant, ~80 GB on disk. Text-only, no `<think>` reasoning emitted. Currently **production primary on this Mac Studio**.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [inclusionAI/Ling-2.6-flash](https://huggingface.co/inclusionAI/Ling-2.6-flash) |
+| Quant | [mlx-community/Ling-2.6-flash-mlx-6bit](https://huggingface.co/mlx-community/Ling-2.6-flash-mlx-6bit) |
+| Format | MLX safetensors (uniform 6-bit, group_size=64) |
+| Architecture | `BailingMoeV2_5ForCausalLM` (`bailing_hybrid`) — 32 layers (4 MLA + 28 linear-attn) |
+| Parameters | 104 B total, 7.4 B active per token (256 routed + 1 shared) |
+| Tokens/sec | 64.5 @ 512 → 64.4 @ 8K → 57.3 @ 64K (vllm-mlx, [bench](model-benchmark-api-server.md#ling-26-flash-mlx-6bit-104b7b-active-bailing_hybrid)) |
+| On-disk size | ~80 GB |
+| Context Size | 131,072 native; **64K practical ceiling on M3 Ultra** — 128K OOMs |
+| Reasoning | None — does not emit `<think>` blocks |
+| Vision | No — text-only |
+| License | MIT (base) |
+
+**vllm-mlx model ID:** `mlx-community/Ling-2.6-flash-mlx-6bit`
+
+**Server config (vllm-mlx):** `--enable-auto-tool-choice --tool-call-parser hermes` (Ling emits Hermes-format `<tool_call>{json}</tool_call>` blocks — `qwen3_coder` won't parse these). No `--reasoning-parser`.
+
+**Requires three local patches** before the model will load:
+1. Vendor `mlx_lm/models/bailing_hybrid.py` from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227)
+2. [`scripts/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patch_mlx_lm_threadlocal_stream.py) — per-thread lazy `generation_stream` accessor
+3. [`scripts/patch_vllm_mlx_inline_gen.py`](../../scripts/patch_vllm_mlx_inline_gen.py) — replace `await asyncio.to_thread(...)` with inline sync calls in `vllm_mlx/engine/simple.py`
+
+mlx-openai-server is **incompatible** — its inference-worker thread design is more deeply thread-coupled than vllm-mlx and patch #3 doesn't apply directly.
+
+**Tool calling** ([`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)):
+- API-level: 5/5 single-call pass · 3-turn agentic loop **4.74 s** 🏆 (fastest in this stack)
+- OpenCode end-to-end (2026-04-30): browse 25.75 s · search 29.64 s — third-fastest, behind only the two A3B-sparse Qwen3.6 variants
+
+**See also:** [`docs/models/model-summary-ling.md`](model-summary-ling.md) for the full deployment guide (vendoring PR #1227, patch scripts, sampling config, RAM/VRAM profile).
+
+---
+
+## MiMo V2.5 4-bit, 130-expert pruned (jedisct1)
+
+Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`), pruned by `jedisct1` to keep only the first 130 experts per layer plus a quantized output head. ~80 GB on disk, 4-bit MLX uniform quant. Multimodal chat template (text + vision + audio pads) but text-only output via vllm-mlx. Default thinking ON. Deployed and benchmarked 2026-04-30 — **not viable as an agent backbone** (failure investigation documented separately).
+
+| Spec | Value |
+|:-----|:------|
+| HuggingFace | [jedisct1/MiMo-V2.5-MLX-4bit-first130experts-qhead](https://huggingface.co/jedisct1/MiMo-V2.5-MLX-4bit-first130experts-qhead) |
+| Base | [XiaomiMiMo/MiMo-V2.5](https://huggingface.co/XiaomiMiMo/MiMo-V2.5) |
+| Architecture | `MiMoV2ForCausalLM` (`mimo_v2`) |
+| Quant | 4-bit uniform MLX (`group_size=64`) |
+| Pruning | First 130 experts kept per layer (config `expert_keep_indices`) |
+| On-disk size | ~80 GB |
+| Tool-call format | Hermes-style `<tool_call><function=name><parameter=k>v</parameter></function></tool_call>` |
+| Reasoning | `<think>…</think>` blocks |
+| Multimodality | Vision + audio + video pads in chat template; vllm-mlx loads text-only |
+
+**Status: NOT in production.** Three configurations tested (baseline thinking-on, Fix #1 thinking-off, Fix #2 + Hermes parser) — all produce **near-zero pass rates (0-1 of 3 runs per scenario)** on OpenCode end-to-end. Failure signature: `output_tokens=8192` with no tool call emitted. Single-tool API harness *does* pass cleanly, so the issue is OpenCode's 10-tool catalog + system prompt overwhelming this pruned variant.
+
+**Root cause:** Heavy expert pruning to 130/layer degrades simultaneous instruction-following and structured output under long system prompts. Architectural — not a parser or prompt issue. Production reverted to Ling-2.6-flash.
+
+**Requires PR [ml-explore/mlx-lm#1219](https://github.com/ml-explore/mlx-lm/pull/1219) vendored** (`mimo_v2.py`, 556 lines) — `mimo_v2` arch is not in mlx-lm 0.31.3.
+
+**Caveats:**
+- **Not viable as an agent backbone** in this stack — disabling thinking and switching to Hermes parser do not reliably fix tool-calling. Pass rates remain near 0/3 with non-deterministic recovery.
+- **Retry only with a less-aggressive pruning variant** (e.g. `first200experts`) when one becomes available.
+
+**See also:** [`docs/models/model-summary-mimo-v2.5.md`](model-summary-mimo-v2.5.md) for the TL;DR (Findings / Limitations / Blocker), full three-config benchmark comparison, and deployment instructions.
 
 ---
 

@@ -36,7 +36,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/messages \
   | python3 -m json.tool
 ```
 
-You should see an Anthropic-format JSON response with `"type": "message"`. If not, the Mac Studio M3 Ultra oMLX server may need to be started — see `../server/omlx/summary.md`.
+You should see an Anthropic-format JSON response with `"type": "message"`. If not, the Mac Studio M3 Ultra oMLX server may need to be started — see `../servers/omlx/summary.md`.
 
 ## 📦 Step 2: Install Claude Code
 

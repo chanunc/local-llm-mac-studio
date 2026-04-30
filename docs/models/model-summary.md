@@ -501,7 +501,7 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 **Requirements:**
 - `mlx_lm >= 0.31.1` and `mlx_vlm >= 0.4.1` (confirmed working on Mac Studio pilot)
 - Validated through-API on `mlx-openai-server` v1.7.1 single-handler mode on 2026-04-18: text + vision smoke tests pass; full benchmark in [model-benchmark-api-server.md](benchmarks/model-benchmark-api-server.md#qwen36-35b-a3b-6-bit) shows 52.5 tok/s @ 512 → 35.6 tok/s @ 128K
-- Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../server/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml)
+- Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../servers/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml)
 
 **Caveats:**
 - Default chat template emits `<think>` unconditionally; `chat_template_kwargs.enable_thinking=false` has no effect through `mlx-openai-server` 1.7.1 — same hookup gap as Gemma 4 ([#279](https://github.com/cubist38/mlx-openai-server/issues/279), fixed on `main`, awaiting 1.7.2)
@@ -615,7 +615,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **First-time install needs one GUI launch** to bootstrap `~/.lmstudio/bin/lms` after the cask install. Headless-only macOS hosts need a screen-share session for that single step.
 - **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
-**See also:** [`docs/servers/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+**See also:** [`docs/servers/llmster/summary.md`](../servers/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
 
 ---
 
@@ -743,7 +743,7 @@ Google's first mixture-of-experts Gemma. The 26B-A4B activates only ~4B paramete
 
 **Server config:** `model_type: multimodal`, `tool_call_parser: gemma4`, `reasoning_parser: gemma4`, `context_length: 262144`
 
-**Reference YAML:** [mlx-openai-server-gemma4.yaml](../server/mlx-openai-server/mlx-openai-server-gemma4.yaml)
+**Reference YAML:** [mlx-openai-server-gemma4.yaml](../servers/mlx-openai-server/mlx-openai-server-gemma4.yaml)
 
 ### Benchmarks (mlx-openai-server 1.7.1, M3 Ultra 96 GB, Apr 17 2026)
 

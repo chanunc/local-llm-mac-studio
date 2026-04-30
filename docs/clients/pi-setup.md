@@ -137,7 +137,7 @@ Pi sends `role: "developer"` (OpenAI's newer role) for system prompts when `mode
 
 ## 🔁 Changing the Model
 
-1. Load the new model on Mac Studio (see `../server/omlx/summary.md` "Changing the LLM Model")
+1. Load the new model on Mac Studio (see `../servers/omlx/summary.md` "Changing the LLM Model")
 2. Update `~/.pi/agent/models.json`:
    - Change `id` to the new model identifier
    - Update `name`, `contextWindow`, and `maxTokens` as appropriate

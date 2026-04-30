@@ -53,9 +53,9 @@ Three configs were tested to investigate Fix #1 (disable thinking) and Fix #2 (H
 
 | Config | Files |
 |:-------|:------|
-| Baseline: thinking ON, `qwen3_coder` parser | [`agent-bench.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench.json) |
-| Fix1: thinking OFF, `qwen3_coder` parser | [`agent-bench-thinking-off.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench-thinking-off.json) |
-| Fix1+2: thinking OFF, Hermes parser | [`agent-bench-thinking-off-hermes.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench-thinking-off-hermes.json) |
+| Baseline: thinking ON, `qwen3_coder` parser | [`agent-bench.json`](../benchmarks/mimo-v2.5-4bit-130experts/agent-bench.json) |
+| Fix1: thinking OFF, `qwen3_coder` parser | [`agent-bench-thinking-off.json`](../benchmarks/mimo-v2.5-4bit-130experts/agent-bench-thinking-off.json) |
+| Fix1+2: thinking OFF, Hermes parser | [`agent-bench-thinking-off-hermes.json`](../benchmarks/mimo-v2.5-4bit-130experts/agent-bench-thinking-off-hermes.json) |
 
 ### OpenCode end-to-end — tool call success rate
 

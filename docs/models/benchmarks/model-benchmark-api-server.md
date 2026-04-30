@@ -203,7 +203,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens count both `reasoning_content` (thinking) and `content` (answer) phases — Qwen3.6 always thinks before answering. Warm values shown (run 1 to run 3 differ only in TTFT for ctx=512: 0.58s cold vs 0.34s warm; gen tok/s identical to ±0.3 across all runs).
 
-**Server:** mlx-openai-server v1.7.1 (`model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`). Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../server/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml). Raw JSON: [api-server-mlx-openai-server.json](qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json).
+**Server:** mlx-openai-server v1.7.1 (`model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`). Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../servers/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml). Raw JSON: [api-server-mlx-openai-server.json](qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json).
 
 > Why mlx-openai-server only: `oMLX` has multiple open Qwen3.6 issues ([#812](https://github.com/jundot/omlx/issues/812), [#819](https://github.com/jundot/omlx/issues/819), [#827](https://github.com/jundot/omlx/issues/827), [#841](https://github.com/jundot/omlx/issues/841)); `vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only alternative that exposes MTP through API but inherits the upstream `mlx-lm` hybrid-cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)). Not run here.
 

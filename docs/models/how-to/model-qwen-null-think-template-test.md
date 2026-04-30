@@ -13,7 +13,7 @@ Confirms that the Bug #1 chat-template patch (applied 2026-04-19) eliminates emp
 | `nightmedia--Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-qx64-hi-mlx` | `chat_template.jinja` | Qwen 3.5 guard |
 | `mlx-community/Qwen3.6-35B-A3B-6bit` | `chat_template.jinja` | Qwen 3.6 guard (preserves `preserve_thinking` semantics) |
 
-Backups saved as `.bak.<timestamp>` siblings. Re-apply instructions: [maintenance.md#qwen-empty-think-template-patch](../../server/mlx-openai-server/maintenance.md#qwen-empty-think-template-patch).
+Backups saved as `.bak.<timestamp>` siblings. Re-apply instructions: [maintenance.md#qwen-empty-think-template-patch](../../servers/mlx-openai-server/maintenance.md#qwen-empty-think-template-patch).
 
 ## Automated template validation (offline)
 

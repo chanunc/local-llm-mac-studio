@@ -156,8 +156,8 @@ Researched Reddit (r/LocalLLaMA), GitHub (MiniMax-AI/MiniMax-M2, sst/opencode, v
 
 ## See Also
 
-- [`docs/servers/vmlx/summary.md`](../server/vmlx/summary.md) — vmlx server overview and perf numbers
-- [`docs/servers/vmlx/maintenance.md`](../server/vmlx/maintenance.md) — start/stop/switch commands
+- [`docs/servers/vmlx/summary.md`](../servers/vmlx/summary.md) — vmlx server overview and perf numbers
+- [`docs/servers/vmlx/maintenance.md`](../servers/vmlx/maintenance.md) — start/stop/switch commands
 - [`docs/clients/opencode-setup.md`](opencode-setup.md) — OpenCode installation and configuration
 - [sst/opencode#3555](https://github.com/sst/opencode/issues/3555) — OpenCode `<think>` handling in OpenAI-compat mode
 - [MiniMax-AI/MiniMax-M2#77](https://github.com/MiniMax-AI/MiniMax-M2/issues/77) — 29-case agent benchmark showing 325× regression on trivial prompts

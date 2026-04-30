@@ -244,7 +244,7 @@ The legacy wrapper script (`~/run_mlx_openai_jang.py`) is still available for si
 
 ## 📊 Benchmark Results
 
-See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) for full comparison. Summary at 32K context (Qwen3.5-35B-A3B JANG 4K):
+See [model-benchmark-api-server.md](../../models/benchmarks/model-benchmark-api-server.md) for full comparison. Summary at 32K context (Qwen3.5-35B-A3B JANG 4K):
 
 | Server | Gen t/s | vs oMLX |
 |--------|---------|---------|

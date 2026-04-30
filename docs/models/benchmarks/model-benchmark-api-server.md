@@ -203,7 +203,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens count both `reasoning_content` (thinking) and `content` (answer) phases — Qwen3.6 always thinks before answering. Warm values shown (run 1 to run 3 differ only in TTFT for ctx=512: 0.58s cold vs 0.34s warm; gen tok/s identical to ±0.3 across all runs).
 
-**Server:** mlx-openai-server v1.7.1 (`model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`). Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../server/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml). Raw JSON: [qwen36-35b-server-benchmark.json](../../server/mlx-openai-server/qwen36-35b-server-benchmark.json).
+**Server:** mlx-openai-server v1.7.1 (`model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`). Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../server/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml). Raw JSON: [api-server-mlx-openai-server.json](qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json).
 
 > Why mlx-openai-server only: `oMLX` has multiple open Qwen3.6 issues ([#812](https://github.com/jundot/omlx/issues/812), [#819](https://github.com/jundot/omlx/issues/819), [#827](https://github.com/jundot/omlx/issues/827), [#841](https://github.com/jundot/omlx/issues/841)); `vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only alternative that exposes MTP through API but inherits the upstream `mlx-lm` hybrid-cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)). Not run here.
 
@@ -257,7 +257,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs at ctx=131,072. Same filler-text generator as the Qwen3.6 / Gemma 4 rows above.
 
-**Server:** vllm-mlx v0.2.6 launched via `~/run_vllm_jang.py serve` wrapper (the JANG monkey-patch path). Single-model. Reference: `CLAUDE.md` "Common Commands" section. Raw JSON: [qwen35-122b-jang2s-128k-benchmark.json](../../server/vllm-mlx/qwen35-122b-jang2s-128k-benchmark.json).
+**Server:** vllm-mlx v0.2.6 launched via `~/run_vllm_jang.py serve` wrapper (the JANG monkey-patch path). Single-model. Reference: `CLAUDE.md` "Common Commands" section. Raw JSON: [api-server-vllm-mlx-128k.json](qwen35-122b-jang2s/api-server-vllm-mlx-128k.json).
 
 | Run | TTFT (s) | Prefill (tok/s) | Gen (tok/s) | Tokens generated |
 |----:|---------:|----------------:|------------:|-----------------:|
@@ -282,7 +282,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 **Method:** Same streaming SSE methodology as above. 3 runs at ctx=131,072, max_tokens=150, temperature 0.0.
 
-**Server:** vllm-mlx v0.2.6 launched directly via `~/vllm-mlx-env/bin/vllm-mlx serve` (no JANG wrapper). Single-model. Mode: `Simple (maximum throughput)`. Raw JSON: [qwen3-coder-next-6bit-128k-benchmark.json](../../server/vllm-mlx/qwen3-coder-next-6bit-128k-benchmark.json).
+**Server:** vllm-mlx v0.2.6 launched directly via `~/vllm-mlx-env/bin/vllm-mlx serve` (no JANG wrapper). Single-model. Mode: `Simple (maximum throughput)`. Raw JSON: [api-server-vllm-mlx-128k.json](qwen3-coder-next-6bit/api-server-vllm-mlx-128k.json).
 
 | Run | TTFT (s) | Prefill (tok/s) | Gen (tok/s) | prompt_tokens | gen tokens |
 |----:|---------:|----------------:|------------:|--------------:|-----------:|
@@ -306,7 +306,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 Model: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense 27.3B, Qwen3.6 hybrid 48 Gated DeltaNet + 16 full-attention, ViT vision encoder, JANG mixed 4/8-bit ≈4.45 bits/param, 17.5 GB on disk)
 Tested on **Mac Studio M3 Ultra (96 GB)** — April 23, 2026.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Filler-token padding via `Hello world. ` repetition. Vision tower not exercised (vllm-mlx loads as `MLLM=False`). Raw JSON: [qwen36-27b-jang4m-benchmark.json](../../server/vllm-mlx/qwen36-27b-jang4m-benchmark.json). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Filler-token padding via `Hello world. ` repetition. Vision tower not exercised (vllm-mlx loads as `MLLM=False`). Raw JSON: [api-server-vllm-mlx.json](qwen36-27b-jang4m/api-server-vllm-mlx.json). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py).
 
 **Server:** vllm-mlx v0.2.6 via `~/run_vllm_jang.py` wrapper with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`. JANG load: 2.8s mmap (instant). `mlx-lm` 0.31.1, `jang-tools` 2.2.0.
 
@@ -401,7 +401,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.
 Tested on **Mac Studio M3 Ultra (96 GB)** — April 29, 2026.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Filler-token padding via `Hello world. ` repetition. Raw JSON: [ling-2.6-flash-6bit-benchmark.json](../../server/vllm-mlx/ling-2.6-flash-6bit-benchmark.json). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Filler-token padding via `Hello world. ` repetition. Raw JSON: [api-server-vllm-mlx.json](ling-2.6-flash-6bit/api-server-vllm-mlx.json). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py).
 
 **Server:** vllm-mlx v0.2.6 native CLI (no JANG wrapper) with `--enable-auto-tool-choice --tool-call-parser hermes` (Ling emits `<tool_call>{json}</tool_call>` Hermes-format calls — vllm-mlx has no `qwen3` tool-call parser; `qwen3_coder` expects XML body, not JSON). mlx-lm 0.31.3 with three local patches needed to get this model running:
 

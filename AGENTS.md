@@ -144,7 +144,7 @@ If the model needs patches/wrappers (JANG, JANGTQ, `bailing_hybrid`, `mimo_v2`, 
 
 When you run `bench_api_server.py`, `bench_api_tool_call.py`, or `bench_agent_tool_call.py`:
 - Save raw JSON output to `docs/models/benchmarks/<model-slug>/<benchmark-type>.json` (or `<benchmark-type>-<server>.json` for cross-server comparisons — see the `agent-bench-llmster.json` precedent)
-- Update `docs/models/model-benchmark-<type>.md` — add the row to the cross-model summary table, add a per-model results section if one doesn't exist, link the raw JSON
+- Update `docs/models/benchmarks/model-benchmark-<type>.md` — add the row to the cross-model summary table, add a per-model results section if one doesn't exist, link the raw JSON
 - If the benchmark establishes a new fastest/slowest extreme, update the README Benchmarks section's headline tables
 - If the benchmark reveals a production-impacting finding (faster server, broken model), update `model-summary.md` caveats and the relevant `model-summary-*.md` detail file
 

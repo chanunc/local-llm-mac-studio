@@ -213,7 +213,7 @@ Through-server benchmarks (3 runs, temperature 0.0, 150 max tokens, includes rea
 | 64K | 40.3 | 1,408 | 41.40 |
 | 128K | 35.6 | 927 | 125.73 |
 
-Full results and methodology: [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md). Raw JSON: [qwen36-35b-server-benchmark.json](qwen36-35b-server-benchmark.json).
+Full results and methodology: [model-benchmark-api-server.md](../../models/benchmarks/model-benchmark-api-server.md). Raw JSON: [api-server-mlx-openai-server.json](../../models/benchmarks/qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json).
 
 ### Qwen3.5 27B 4-bit
 

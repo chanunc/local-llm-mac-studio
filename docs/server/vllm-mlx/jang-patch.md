@@ -245,7 +245,7 @@ pkill -f run_vllm_jang
 
 ## 📊 Benchmark Results
 
-See [model-benchmark-api-server.md](../../models/model-benchmark-api-server.md) for full comparison. Summary at 32K context:
+See [model-benchmark-api-server.md](../../models/benchmarks/model-benchmark-api-server.md) for full comparison. Summary at 32K context:
 
 | Server | Gen t/s | vs oMLX |
 |--------|---------|---------|

@@ -126,6 +126,7 @@ pkill -f vmlx_engine                                                            
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool            # vllm-mlx / mlx-openai-server
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
+curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # llmster (port 1234)
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
 
@@ -133,6 +134,8 @@ tail -f /tmp/vllm-mlx.log                                                       
 tail -f /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
 tail -f ~/.omlx/logs/server.log                                                 # oMLX logs
 tail -f /tmp/vmlx.log                                                           # vmlx logs
+~/.lmstudio/bin/lms log stream                                                  # llmster live request/response stream
+tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # llmster daily log file
 ```
 
 ### 💬 Quick Test

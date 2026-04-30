@@ -109,18 +109,37 @@ This repo is the operations notebook for a live Mac Studio LLM stack. Every mode
 
 **Hard rule:** When you take an action that changes live state, the same change must land in every doc that asserts the prior state. Use the per-event checklists below. Do not skip "minor" docs — drift compounds across sessions.
 
+#### Canonical layers and where they live
+
+The repo has three navigation layers. Every change to live state must keep all three in sync.
+
+1. **Live-state pointer** — [`docs/current.md`](docs/current.md). One concise table for production server/model, sidecar, and fallbacks. Read it first; update it whenever production state changes.
+2. **Sub-root README.md indexes** — every top-level content folder has a `README.md` acting as its canonical index. When you add, remove, rename, or move a file inside one of these folders, update its README in the same commit:
+
+   | Folder | README | Indexes |
+   |:--|:--|:--|
+   | `docs/servers/` | [`docs/servers/README.md`](docs/servers/README.md) | Server runbooks + maintenance docs |
+   | `docs/models/` | [`docs/models/README.md`](docs/models/README.md) | Catalog, `per-model/`, `benchmarks/`, `how-to/` |
+   | `docs/clients/` | [`docs/clients/README.md`](docs/clients/README.md) | Client setup docs ↔ template mapping |
+   | `configs/` | [`configs/README.md`](configs/README.md) | Server Roles table + Switching Servers |
+   | `configs/clients/` | [`configs/clients/README.md`](configs/clients/README.md) | Per-server template layout |
+   | `scripts/` | [`scripts/README.md`](scripts/README.md) | `bench/`, `patches/`, `switch_opencode_config.py` |
+   | `plans/` | [`plans/README.md`](plans/README.md) | `active/`, `done/`, `archive/` indexes |
+
+3. **Top-level docs** — `README.md`, `CLAUDE.md`, `AGENTS.md`. CLAUDE.md and AGENTS.md must stay content-identical except for the agent-name header (lines 1–3).
+
 #### Event 1: Deploying a new server type (e.g. llmster, future Ollama)
 
 If you stand up a new server type on the Mac Studio, all of these must be updated in the same PR/commit:
-- `README.md` — data flow diagram, Quick Start launch + stop snippets, Health Check (curl + log tail), Servers table row (with link to `docs/servers/<name>/summary.md`), maintenance line, Known Limitations entry
+- `README.md` — data flow diagram, Quick Start launch + stop snippets, Health Check (curl + log tail), Servers table row (with link to `docs/servers/<name>/summary.md`), maintenance line, Known Limitations entry, "What lives where" table only if a new top-level folder is introduced
 - `docs/current.md` — add the new server if it is live, sidecar, or a documented fallback
-- `CLAUDE.md` **and `AGENTS.md`** (kept in sync, content identical except for the agent-name header) — overview paragraph, Architecture bullet, data flow diagram, Common Commands launch + stop, Editing Workflow scope note
+- `CLAUDE.md` **and `AGENTS.md`** — overview paragraph, Architecture bullet, data flow diagram, Common Commands launch + stop, Editing Workflow scope note. Mirror edits between the two files.
 - `configs/README.md` — bump `Last updated` date, Server Roles table row, new `clients/<name>/` config-files section, Switching Servers command block
 - `configs/clients/<name>/opencode.json` — at minimum (other client configs are deferred until the server graduates to permanent status)
-- `configs/clients/README.md` — add the new server row to the Layout table
+- `configs/clients/README.md` — add the new server row to the Layout table; note any deferred templates
 - `scripts/switch_opencode_config.py` — append `"<name>"` to the hardcoded `SERVERS` list
 - `docs/servers/<name>/summary.md` — full runbook matching the structure of `docs/servers/vmlx/summary.md` (Overview, Architecture, Installation, Starting the server, Tool use and reasoning, Health check, Performance, Known limitations, See also)
-- `docs/servers/README.md` — add the new server row to the runbook index
+- `docs/servers/README.md` — add the new server row to the runbook index, and to Maintenance And Patches if maintenance/patch docs exist
 
 If the new server does not support JANG/JANGTQ/`bailing_hybrid`, **also** update the "All servers support JANG…" line in `README.md` (currently reads "All servers except llmster support JANG…").
 
@@ -128,10 +147,12 @@ If the new server does not support JANG/JANGTQ/`bailing_hybrid`, **also** update
 
 When the live process on the Mac Studio changes (e.g. `pkill vllm-mlx; ... vllm-mlx serve <new-model>`), update:
 - `README.md` — "Current `vllm-mlx` production primary" line under the Servers table, Quick Start launch-snippet comment, any inline references in Models table footnotes
-- `docs/current.md` — production server/model/client-template row and fallback notes
+- `docs/current.md` — Production table row (server / model / launch shape / runbook link) and Fallbacks table if the previous primary becomes a fallback
 - `CLAUDE.md` **and `AGENTS.md`** — overview paragraph (`Project` section), Architecture bullet ("Primary server" or equivalent), Common Commands example invocation
-- `configs/README.md` — Server Roles table model column, the relevant `client/<server>/` section's Model description, the Switching Servers command block
+- `configs/README.md` — Server Roles table model column, the relevant `clients/<server>/` section's Model description, the Switching Servers command block
 - `configs/clients/<server>/opencode.json` — `model` and `small_model` fields, plus the `models` map entry; do the equivalent in `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` if the server has them
+- `docs/servers/<server>/summary.md` — Production model section if one exists; otherwise leave it
+- `docs/models/model-summary.md` — flip "current production" / "previous production" markers if any model rows carry them
 
 After the switch, **capture the exact running command** (`ps -axo command= | grep ...`) and save it before the next stop — this is what restores production accurately.
 
@@ -139,9 +160,11 @@ After the switch, **capture the exact running command** (`ps -axo command= | gre
 
 When a new model file lands in `~/.cache/huggingface/`, `~/.omlx/models/`, or `~/.lmstudio/models/` and you serve it:
 - `docs/models/model-summary.md` — add an Index entry **and** a per-model section with the standard spec table (Base Model, Quant, Format, Vendor, Parameters, Density, Quantization, Specialties, Tokens/sec, On-disk size, Context Size, License, Key Features), server config, performance numbers if benchmarked, caveats. Place the entry near siblings (Qwen3.6 family together, etc.)
+- `docs/models/per-model/model-summary-<slug>.md` — only if the model needs more than ~150 lines of detail (deployment recipe, patch list, failure analysis). The catalog entry should then be a stub linking here.
+- `docs/models/README.md` — add a row to the Per-model deep dives table if you created a `per-model/` file
 - `README.md` Models table — one row with size, context, "Best For" cell, and a link to the new model-summary.md anchor
 - The relevant `configs/clients/<server>/*.json` files — add the new model to the `models` map (oMLX requires updating all 4 client config files; vllm-mlx is single-model so only update if it becomes the primary)
-- If the model has a dedicated detail file (`model-summary-ling.md`, `model-summary-mimo-v2.5.md`), the model-summary.md entry should be a stub linking to it rather than duplicating content
+- If the model becomes production primary or sidecar, also follow Event 2 — at minimum `docs/current.md` and the launch-shape comment in `README.md`
 
 If the model needs patches/wrappers (JANG, JANGTQ, `bailing_hybrid`, `mimo_v2`, etc.), document those in the same commit under `docs/servers/<server>/jang-patch.md` or in the model's own summary file.
 
@@ -149,11 +172,30 @@ If the model needs patches/wrappers (JANG, JANGTQ, `bailing_hybrid`, `mimo_v2`, 
 
 When you run `scripts/bench/bench_api_server.py`, `scripts/bench/bench_api_tool_call.py`, or `scripts/bench/bench_agent_tool_call.py`:
 - Save raw JSON output to `docs/models/benchmarks/<model-slug>/<benchmark-type>.json` (or `<benchmark-type>-<server>.json` for cross-server comparisons — see the `agent-bench-llmster.json` precedent)
-- Update `docs/models/benchmarks/model-benchmark-<type>.md` — add the row to the cross-model summary table, add a per-model results section if one doesn't exist, link the raw JSON
+- Update the matching `docs/models/benchmarks/model-benchmark-<type>.md` — add the row to the cross-model summary table, add a per-model results section if one doesn't exist, link the raw JSON
+- If you introduce a new benchmark *type* (rare), add a row in `docs/models/README.md`'s Benchmarks table
 - If the benchmark establishes a new fastest/slowest extreme, update the README Benchmarks section's headline tables
-- If the benchmark reveals a production-impacting finding (faster server, broken model), update `model-summary.md` caveats and the relevant `model-summary-*.md` detail file
+- If the benchmark reveals a production-impacting finding (faster server, broken model), update `docs/models/model-summary.md` caveats, the relevant `docs/models/per-model/model-summary-<slug>.md` detail file, and `docs/current.md` if it drives a production switch (then continue with Event 2)
 
 Do not commit bench JSONs that contain secrets or PII (these scripts don't generate any today, but verify before committing).
+
+#### Event 5: Adding, renaming, or removing a script
+
+When you change anything under `scripts/`:
+- Add new files into the matching subdir — `scripts/bench/` for benchmark drivers, `scripts/patches/` for monkey-patches against installed server packages. Top-level `scripts/` is reserved for client-side helpers like `switch_opencode_config.py`.
+- `scripts/README.md` — update the Benchmarks, Patches, or Client Config table to add/rename/remove the script
+- If the script is a patch, link it from the relevant `docs/servers/<server>/maintenance.md` or `jang-patch.md` so the runbook explains when to re-run it
+- If the script is a benchmark driver, update Event 4's listed names and add an entry in `docs/models/README.md`'s Benchmarks table when a new type is introduced
+- If you rename or move a script, grep for stale references: `grep -rn "scripts/<old-name>" --include="*.md" --include="*.json" --include="*.py"`
+
+#### Event 6: Adding, completing, or abandoning a plan
+
+Plans are non-canonical research docs. They live under `plans/active/` (planned or in progress), `plans/done/` (implemented and kept for context), or `plans/archive/` (superseded or abandoned).
+
+- New plan: create at `plans/active/plan-<slug>.md` with the status block (`Status: active`, `Created: YYYY-MM-DD`, `Canonical: no`); add a row to `plans/README.md`'s Active index
+- Completing a plan: `git mv plans/active/<file> plans/done/<file>`, move the row in `plans/README.md` from Active to Done, and link the implementation (commits, code locations) at the top of the plan body
+- Abandoning a plan: `git mv plans/active/<file> plans/archive/<file>`, move the row in `plans/README.md` from Active to Archive, and add a one-line "Archived because…" note at the top of the plan body
+- Plans never claim live state on their own — operational truth must land in `docs/current.md`, `docs/servers/`, or the catalogs. A plan saying "production primary is X" does not make it so; the production switch follows Event 2.
 
 ### Pre-commit drift check
 

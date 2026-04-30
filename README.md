@@ -22,25 +22,28 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 | Path | Purpose | Start Here |
 |:-----|:--------|:-----------|
-| `docs/server/` | Server runbooks, setup, maintenance, and JANG patches | Pick one `summary.md` per server |
-| `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/model-summary.md` |
-| `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | The client you are configuring |
+| `docs/current.md` | Current live server/model/client state | Read before changing production |
+| `docs/server/` | Server runbooks, setup, maintenance, and JANG patches | `docs/server/README.md` |
+| `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/README.md` |
+| `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | `docs/clients/README.md` |
 | `configs/` | Ready-to-copy client config templates grouped by server type | `configs/README.md` |
-| `scripts/` | Small local patch helpers for upstream server packages | Read before re-running after upgrades |
-| `plans/` | Research notes and future work, not the primary source of truth for live setup | Use only for backlog/context |
+| `scripts/` | Small local patch helpers and benchmark tools | `scripts/README.md` |
+| `plans/` | Research notes and future work, not live runbooks | `plans/README.md` |
 
 ### Canonical reading order
 
-1. Read this `README.md` for the stack overview and server selection.
-2. Read one server runbook in `docs/server/<server>/summary.md`.
-3. Read `configs/README.md` for the matching client config templates.
-4. Read `docs/models/model-summary.md` when choosing or adding models.
-5. Read the relevant maintenance or patch docs only when upgrading or debugging.
+1. Read this `README.md` for the stack overview.
+2. Read `docs/current.md` for the current live production and sidecar state.
+3. Read one server runbook from `docs/server/README.md`.
+4. Read `configs/README.md` for the matching client config templates.
+5. Read `docs/models/README.md` when choosing, adding, or benchmarking models.
+6. Read the relevant maintenance or patch docs only when upgrading or debugging.
 
 ### Summary vs maintenance vs plans
 
 - `summary.md` files are the main operational entry points.
 - `maintenance.md` and `jang-patch.md` files are task-specific follow-ups.
+- `docs/current.md` is the concise live-state pointer.
 - `plans/` captures ideas, experiments, and pending investigations; it is not the live runbook layer.
 
 ## ⚡ Quick Start
@@ -50,9 +53,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 Pick one — all serve on port 8000. Stop others first if switching.
 
 ```bash
-# vllm-mlx — fastest, single model. Current production primary:
-# Ling-2.6-flash mlx-6bit (see Ling block below). Qwen3.6-27B JANG 4M is the
-# go-to dense+VL fallback (17.5 GB, switched from Qwen3.5-122B-JANG_2S on 2026-04-23).
+# vllm-mlx — Qwen3.6-27B JANG 4M fallback (dense+VL, 17.5 GB).
 # Qwen3.5/3.6 need --tool-call-parser qwen3_coder (NOT qwen — they emit XML
 # tool calls, not JSON). --reasoning-parser qwen3 extracts <think> blocks.
 # See docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
@@ -74,7 +75,8 @@ nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 \
   > /tmp/vllm-mlx.log 2>&1 &
 
-# vllm-mlx — Ling-2.6-flash mlx-6bit (bailing_hybrid MoE 104B/7.4B active, ~80 GB).
+# vllm-mlx — current production primary: Ling-2.6-flash mlx-6bit
+# (bailing_hybrid MoE 104B/7.4B active, ~80 GB).
 # No JANG wrapper (plain MLX safetensors). --tool-call-parser hermes — Ling emits
 # <tool_call>{json}</tool_call>, not the qwen3_coder XML body. No --reasoning-parser
 # (model never emits <think>). Requires three patches first (vendored bailing_hybrid

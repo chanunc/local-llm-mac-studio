@@ -416,7 +416,7 @@ Abort or pause the effort if any of these hold:
 
 If implementation proceeds, the expected deliverables should be:
 
-1. `plans/plan-rotorquant-apple-silicon-implementation.md`
+1. `plans/active/plan-rotorquant-apple-silicon-implementation.md`
 2. prototype patch set or fork for `mlx-lm`
 3. optional `mlx-openai-server` integration patch
 4. optional `vllm-mlx` integration patch

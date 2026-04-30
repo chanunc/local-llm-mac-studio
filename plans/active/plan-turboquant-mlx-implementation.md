@@ -153,7 +153,7 @@ A complete, well-structured MLX-native implementation. This eliminates the need 
 ## Implementation Plan
 
 ### Phase 0: Save Plan & Clone Existing Repo
-1. Save this plan as `plans/plan-turboquant-mlx-implementation.md` (this file)
+1. Save this plan as `plans/active/plan-turboquant-mlx-implementation.md` (this file)
 2. Clone `ananyasingh7/turboquant-mlx-` to Mac Studio
 3. Install in dev mode: `pip install -e ".[dev]"` in the oMLX venv
 
@@ -301,7 +301,7 @@ Updated plan document (this file) with all results and conclusions.
 
 | File | Purpose |
 |------|---------|
-| `plans/plan-turboquant-mlx-implementation.md` | This plan document |
+| `plans/active/plan-turboquant-mlx-implementation.md` | This plan document |
 | **From ananyasingh7/turboquant-mlx- (cloned to ~/turboquant-mlx on macstudio):** | |
 | `src/turboquant/turbo.py` | Core TurboQuant quantize/dequantize/score |
 | `src/turboquant/cache.py` | Drop-in TurboCache, QJLCache, PolarKVCache |

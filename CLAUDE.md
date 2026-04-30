@@ -26,8 +26,9 @@ SSH aliases: `macstudio` (Mac Studio over LAN), `macstudio-ts` (Mac Studio over 
 - **Multi-model server:** oMLX installed via Homebrew on Mac Studio, with AlexTzk fork overlay for JANG support (PR #364). Config lives in `~/.omlx/` on the Mac Studio (not in this repo). Models are MLX safetensors or JANG mixed-precision format stored in `~/.omlx/models/`.
 - **JANGTQ server:** vmlx via the MLX Studio DMG (v1.3.65+) bundled Python at `/Applications/vMLX.app/Contents/Resources/bundled-python/python/`. Only route today for TurboQuant-weight models (`*JANGTQ*` / `*JANGTQ-CRACK*`) because the public `jang-tools` pypi package lacks `load_jangtq` + the `turboquant/*kernel*` Metal kernels ([jjang-ai/jangq#5](https://github.com/jjang-ai/jangq/issues/5)). Runs headlessly — no GUI session needed despite Electron packaging. Invoke as `python3 -m vmlx_engine.cli serve …` (the bundled `bin/vmlx` shebang points at the maintainer's build tree; the CLI module works fine). OpenAI + Anthropic + Ollama API compatible. Incompatible flags: `--smelt` and `--flash-moe` raise on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)).
 - **Client configs** (`configs/client/`): Organized by server type — `configs/client/vllm-mlx/` for primary server, `configs/client/mlx-openai-server/` for feature-rich multi-model, `configs/client/omlx/` for full multi-model roster, `configs/client/vmlx/` for JANGTQ CRACK models, `configs/client/llmster/` for LM Studio headless on port 1234 (added 2026-04-30, currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status). IPs and API keys are stored as placeholders (`<MAC_STUDIO_IP>`, `<YOUR_API_KEY>`) — never commit real values.
-- **Scripts** (`scripts/`): `patch_omlx_cache.py` runs on the Mac Studio to monkey-patch oMLX internals. Must be re-run after every `brew upgrade omlx`.
-- **Plans** (`plans/`): Design documents for non-trivial changes before implementation.
+- **Current state** (`docs/current.md`): Concise live-state pointer for production, sidecar, and fallback server/model choices. Update it whenever production state changes.
+- **Scripts** (`scripts/`): Patch helpers, benchmark tools, and client-config utilities. See `scripts/README.md` before re-running patches after upgrades.
+- **Plans** (`plans/`): Design documents for non-trivial changes before implementation. Plans are non-canonical; active plans live in `plans/active/`.
 
 ## Common Commands
 
@@ -44,20 +45,17 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool
 
-# Start vllm-mlx (primary server — JANG model needs wrapper)
-# --enable-auto-tool-choice + --tool-call-parser qwen3_coder are required for Qwen3.5/3.6 tool use.
-#   The model emits XML tool calls (<function=name><parameter=key>value</parameter></function>),
-#   not JSON. The qwen3_coder parser (aliased to HermesToolParser) handles this format.
-#   Using --tool-call-parser qwen will NOT work (it expects JSON inside <tool_call> tags).
-# --reasoning-parser qwen3 extracts <think>…</think> into the reasoning field.
-ssh macstudio "nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
-  ~/.omlx/models/JANGQ-AI--Qwen3.6-27B-JANG_4M \
-  --served-model-name JANGQ-AI/Qwen3.6-27B-JANG_4M \
+# Start vllm-mlx (current production primary: Ling-2.6-flash)
+# Ling is plain MLX safetensors, not JANG, so use vllm-mlx directly.
+# --tool-call-parser hermes is required because Ling emits <tool_call>{json}</tool_call>.
+ssh macstudio "nohup ~/vllm-mlx-env/bin/vllm-mlx serve mlx-community/Ling-2.6-flash-mlx-6bit \
+  --served-model-name mlx-community/Ling-2.6-flash-mlx-6bit \
   --port 8000 --host 0.0.0.0 \
-  --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 \
+  --enable-auto-tool-choice --tool-call-parser hermes \
   > /tmp/vllm-mlx.log 2>&1 &"
 
-# To start the previous primary (Qwen3.5-122B-A10B-JANG_2S), swap both `~/.omlx/models/...` and `--served-model-name` to `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S`. Same parser flags.
+# Qwen3.6-27B JANG 4M remains the dense+VL fallback. Use run_vllm_jang.py with
+# --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3.
 
 # Switch to mlx-openai-server (multi-model, low overhead)
 ssh macstudio "pkill -f vllm-mlx; /opt/homebrew/bin/brew services stop omlx; sleep 2; \
@@ -112,6 +110,7 @@ This repo is the operations notebook for a live Mac Studio LLM stack. Every mode
 
 If you stand up a new server type on the Mac Studio, all of these must be updated in the same PR/commit:
 - `README.md` — data flow diagram, Quick Start launch + stop snippets, Health Check (curl + log tail), Servers table row (with link to `docs/server/<name>/summary.md`), maintenance line, Known Limitations entry
+- `docs/current.md` — add the new server if it is live, sidecar, or a documented fallback
 - `CLAUDE.md` **and `AGENTS.md`** (kept in sync, content identical except for the agent-name header) — overview paragraph, Architecture bullet, data flow diagram, Common Commands launch + stop, Editing Workflow scope note
 - `configs/README.md` — bump `Last updated` date, Server Roles table row, new `client/<name>/` config-files section, Switching Servers command block
 - `configs/client/<name>/opencode.json` — at minimum (other client configs are deferred until the server graduates to permanent status)
@@ -124,6 +123,7 @@ If the new server does not support JANG/JANGTQ/`bailing_hybrid`, **also** update
 
 When the live process on the Mac Studio changes (e.g. `pkill vllm-mlx; ... vllm-mlx serve <new-model>`), update:
 - `README.md` — "Current `vllm-mlx` production primary" line under the Servers table, Quick Start launch-snippet comment, any inline references in Models table footnotes
+- `docs/current.md` — production server/model/client-template row and fallback notes
 - `CLAUDE.md` — overview paragraph (`Project` section), Architecture bullet ("Primary server" or equivalent), Common Commands example invocation
 - `configs/README.md` — Server Roles table model column, the relevant `client/<server>/` section's Model description, the Switching Servers command block
 - `configs/client/<server>/opencode.json` — `model` and `small_model` fields, plus the `models` map entry; do the equivalent in `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` if the server has them
@@ -154,7 +154,7 @@ Do not commit bench JSONs that contain secrets or PII (these scripts don't gener
 
 Before committing any change to live state, grep for stale references across the four primary docs:
 ```bash
-grep -n "<old-model-name>\|<old-primary>" README.md CLAUDE.md configs/README.md docs/models/model-summary.md
+grep -n "<old-model-name>\|<old-primary>" README.md AGENTS.md CLAUDE.md configs/README.md docs/current.md docs/models/model-summary.md
 ```
 Catch drift while the context is fresh, not three sessions later.
 

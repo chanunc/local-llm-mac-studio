@@ -2,7 +2,9 @@
 
 **Last updated: 2026-04-30**
 
-Client config files for connecting to the Mac Studio M3 Ultra. Templates now live under `configs/client/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
+Client config files for connecting to the Mac Studio M3 Ultra. Templates live under `configs/client/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
+
+For the current production server/model and provisional sidecar state, read [`docs/current.md`](../docs/current.md) first.
 
 ## 🖥️ Server Roles
 

@@ -10,6 +10,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
   OpenCode                               mlx-openai-server :8000
   OpenClaw                               oMLX (multi-model) :8000
   Pi                                     vmlx (JANGTQ) :8000
+                                         llmster (LM Studio) :1234
                                          OpenAI + Anthropic API (+ Ollama for vmlx)
 ```
 
@@ -102,10 +103,21 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
   > /tmp/vmlx.log 2>&1 &
 
+# llmster — LM Studio headless on port 1234 (NOT 8000). Standard MLX safetensors
+# only; no JANG/JANGTQ/bailing_hybrid support. Tool-call + reasoning parsing
+# built into the MLX runtime — no parser flags needed. First-time setup:
+#   brew install --cask lm-studio
+#   open -a 'LM Studio' && sleep 8 && osascript -e 'quit app "LM Studio"'   # bootstraps ~/.lmstudio/bin/lms
+#   ~/.lmstudio/bin/lms get https://huggingface.co/<org>/<repo> -y          # downloads to ~/.lmstudio/models/
+# Launch sequence (per model):
+~/.lmstudio/bin/lms load qwen3.6-27b --gpu max --context-length 65536 -y
+~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors                          # default port 1234
+
 pkill -f vllm-mlx                                                                # stop vllm-mlx
 pkill -f mlx-openai-server                                                       # stop mlx-openai-server
 /opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
 pkill -f vmlx_engine                                                             # stop vmlx
+~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop llmster
 ```
 
 ### 🩺 Health Check
@@ -154,8 +166,9 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-lm](docs/server/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
 | **[oMLX](docs/server/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/server/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
+| **llmster** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
 
-All servers support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except llmster support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/server/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/server/mlx-openai-server/jang-patch.md) ·
@@ -281,6 +294,7 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 - **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/server/vllm-mlx/maintenance.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patch_vmlx_jangtq_mllm_tools.py`](scripts/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/server/vmlx/maintenance.md)
+- **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup). Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`). Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/model-summary.md#nemotron-server-compatibility)

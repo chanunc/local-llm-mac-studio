@@ -25,7 +25,7 @@ SSH aliases: `macstudio` (Mac Studio over LAN), `macstudio-ts` (Mac Studio over 
 - **Feature-rich alternative:** mlx-openai-server pip-installed in `~/mlx-openai-server-env/` on Mac Studio. Trie-based prompt caching, speculative decoding, Qwen3.5 reasoning parser, multi-model YAML config with process isolation. 4-15% overhead (worse than vllm-mlx at long contexts). OpenAI API only. JANG support via `.pth` patch (`jang_patch.pth` + `jang_mlx_patch.py` in venv site-packages), activated by `JANG_PATCH_ENABLED=1` env var. Survives pip upgrades. Current roster in `~/mlx-openai-server-multimodel.yaml`: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` + `mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit`.
 - **Multi-model server:** oMLX installed via Homebrew on Mac Studio, with AlexTzk fork overlay for JANG support (PR #364). Config lives in `~/.omlx/` on the Mac Studio (not in this repo). Models are MLX safetensors or JANG mixed-precision format stored in `~/.omlx/models/`.
 - **JANGTQ server:** vmlx via the MLX Studio DMG (v1.3.65+) bundled Python at `/Applications/vMLX.app/Contents/Resources/bundled-python/python/`. Only route today for TurboQuant-weight models (`*JANGTQ*` / `*JANGTQ-CRACK*`) because the public `jang-tools` pypi package lacks `load_jangtq` + the `turboquant/*kernel*` Metal kernels ([jjang-ai/jangq#5](https://github.com/jjang-ai/jangq/issues/5)). Runs headlessly — no GUI session needed despite Electron packaging. Invoke as `python3 -m vmlx_engine.cli serve …` (the bundled `bin/vmlx` shebang points at the maintainer's build tree; the CLI module works fine). OpenAI + Anthropic + Ollama API compatible. Incompatible flags: `--smelt` and `--flash-moe` raise on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)).
-- **Client configs** (`configs/client/`): Organized by server type — `configs/client/vllm-mlx/` for primary server, `configs/client/mlx-openai-server/` for feature-rich multi-model, `configs/client/omlx/` for full multi-model roster, `configs/client/vmlx/` for JANGTQ CRACK models, `configs/client/llmster/` for LM Studio headless on port 1234 (added 2026-04-30, currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status). IPs and API keys are stored as placeholders (`<MAC_STUDIO_IP>`, `<YOUR_API_KEY>`) — never commit real values.
+- **Client configs** (`configs/clients/`): Organized by server type — `configs/clients/vllm-mlx/` for primary server, `configs/clients/mlx-openai-server/` for feature-rich multi-model, `configs/clients/omlx/` for full multi-model roster, `configs/clients/vmlx/` for JANGTQ CRACK models, `configs/clients/llmster/` for LM Studio headless on port 1234 (added 2026-04-30, currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status). IPs and API keys are stored as placeholders (`<MAC_STUDIO_IP>`, `<YOUR_API_KEY>`) — never commit real values.
 - **Scripts** (`scripts/`): `patch_omlx_cache.py` runs on the Mac Studio to monkey-patch oMLX internals. Must be re-run after every `brew upgrade omlx`.
 - **Plans** (`plans/`): Design documents for non-trivial changes before implementation.
 
@@ -111,12 +111,12 @@ This repo is the operations notebook for a live Mac Studio LLM stack. Every mode
 #### Event 1: Deploying a new server type (e.g. llmster, future Ollama)
 
 If you stand up a new server type on the Mac Studio, all of these must be updated in the same PR/commit:
-- `README.md` — data flow diagram, Quick Start launch + stop snippets, Health Check (curl + log tail), Servers table row (with link to `docs/server/<name>/summary.md`), maintenance line, Known Limitations entry
+- `README.md` — data flow diagram, Quick Start launch + stop snippets, Health Check (curl + log tail), Servers table row (with link to `docs/servers/<name>/summary.md`), maintenance line, Known Limitations entry
 - `CLAUDE.md` **and `AGENTS.md`** (kept in sync, content identical except for the agent-name header) — overview paragraph, Architecture bullet, data flow diagram, Common Commands launch + stop, Editing Workflow scope note
 - `configs/README.md` — bump `Last updated` date, Server Roles table row, new `client/<name>/` config-files section, Switching Servers command block
-- `configs/client/<name>/opencode.json` — at minimum (other client configs are deferred until the server graduates to permanent status)
+- `configs/clients/<name>/opencode.json` — at minimum (other client configs are deferred until the server graduates to permanent status)
 - `scripts/switch_opencode_config.py` — append `"<name>"` to the hardcoded `SERVERS` list
-- `docs/server/<name>/summary.md` — full runbook matching the structure of `docs/server/vmlx/summary.md` (Overview, Architecture, Installation, Starting the server, Tool use and reasoning, Health check, Performance, Known limitations, See also)
+- `docs/servers/<name>/summary.md` — full runbook matching the structure of `docs/servers/vmlx/summary.md` (Overview, Architecture, Installation, Starting the server, Tool use and reasoning, Health check, Performance, Known limitations, See also)
 
 If the new server does not support JANG/JANGTQ/`bailing_hybrid`, **also** update the "All servers support JANG…" line in `README.md` (currently reads "All servers except llmster support JANG…").
 
@@ -126,7 +126,7 @@ When the live process on the Mac Studio changes (e.g. `pkill vllm-mlx; ... vllm-
 - `README.md` — "Current `vllm-mlx` production primary" line under the Servers table, Quick Start launch-snippet comment, any inline references in Models table footnotes
 - `CLAUDE.md` — overview paragraph (`Project` section), Architecture bullet ("Primary server" or equivalent), Common Commands example invocation
 - `configs/README.md` — Server Roles table model column, the relevant `client/<server>/` section's Model description, the Switching Servers command block
-- `configs/client/<server>/opencode.json` — `model` and `small_model` fields, plus the `models` map entry; do the equivalent in `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` if the server has them
+- `configs/clients/<server>/opencode.json` — `model` and `small_model` fields, plus the `models` map entry; do the equivalent in `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` if the server has them
 
 After the switch, **capture the exact running command** (`ps -axo command= | grep ...`) and save it before the next stop — this is what restores production accurately.
 
@@ -135,10 +135,10 @@ After the switch, **capture the exact running command** (`ps -axo command= | gre
 When a new model file lands in `~/.cache/huggingface/`, `~/.omlx/models/`, or `~/.lmstudio/models/` and you serve it:
 - `docs/models/model-summary.md` — add an Index entry **and** a per-model section with the standard spec table (Base Model, Quant, Format, Vendor, Parameters, Density, Quantization, Specialties, Tokens/sec, On-disk size, Context Size, License, Key Features), server config, performance numbers if benchmarked, caveats. Place the entry near siblings (Qwen3.6 family together, etc.)
 - `README.md` Models table — one row with size, context, "Best For" cell, and a link to the new model-summary.md anchor
-- The relevant `configs/client/<server>/*.json` files — add the new model to the `models` map (oMLX requires updating all 4 client config files; vllm-mlx is single-model so only update if it becomes the primary)
+- The relevant `configs/clients/<server>/*.json` files — add the new model to the `models` map (oMLX requires updating all 4 client config files; vllm-mlx is single-model so only update if it becomes the primary)
 - If the model has a dedicated detail file (`model-summary-ling.md`, `model-summary-mimo-v2.5.md`), the model-summary.md entry should be a stub linking to it rather than duplicating content
 
-If the model needs patches/wrappers (JANG, JANGTQ, `bailing_hybrid`, `mimo_v2`, etc.), document those in the same commit under `docs/server/<server>/jang-patch.md` or in the model's own summary file.
+If the model needs patches/wrappers (JANG, JANGTQ, `bailing_hybrid`, `mimo_v2`, etc.), document those in the same commit under `docs/servers/<server>/jang-patch.md` or in the model's own summary file.
 
 #### Event 4: Running a new benchmark
 
@@ -160,23 +160,23 @@ Catch drift while the context is fresh, not three sessions later.
 
 ### Server-specific config rules
 
-**oMLX models** (`configs/client/omlx/`) — when adding or removing, keep all of these in sync:
-- `configs/client/omlx/opencode.json`
-- `configs/client/omlx/pi-models.json`
-- `configs/client/omlx/openclaw-provider.json`
-- `configs/client/omlx/qwen-code-settings.json`
+**oMLX models** (`configs/clients/omlx/`) — when adding or removing, keep all of these in sync:
+- `configs/clients/omlx/opencode.json`
+- `configs/clients/omlx/pi-models.json`
+- `configs/clients/omlx/openclaw-provider.json`
+- `configs/clients/omlx/qwen-code-settings.json`
 - `README.md` — Models & Benchmarks table
 - `docs/models/model-summary.md` — per-model specs
 
-`configs/client/omlx/claude-code-settings.json` only references one default model — update only if the default changes.
+`configs/clients/omlx/claude-code-settings.json` only references one default model — update only if the default changes.
 
-**mlx-openai-server configs** (`configs/client/mlx-openai-server/`) intentionally expose a stable superset of commonly used **compatible** model IDs. They do not have to mirror the exact live YAML on the Mac Studio; check `/v1/models` for the current live roster. Update them only when the compatible superset changes.
+**mlx-openai-server configs** (`configs/clients/mlx-openai-server/`) intentionally expose a stable superset of commonly used **compatible** model IDs. They do not have to mirror the exact live YAML on the Mac Studio; check `/v1/models` for the current live roster. Update them only when the compatible superset changes.
 
-**vllm-mlx configs** (`configs/client/vllm-mlx/`) serve a single model and only need updating if the primary model changes (see Event 2 above).
+**vllm-mlx configs** (`configs/clients/vllm-mlx/`) serve a single model and only need updating if the primary model changes (see Event 2 above).
 
-**vmlx configs** (`configs/client/vmlx/`) target the JANGTQ CRACK model served out of the MLX Studio bundled Python. Update the model ID across all four files + the `README.md` Models table when the served JANGTQ model changes.
+**vmlx configs** (`configs/clients/vmlx/`) target the JANGTQ CRACK model served out of the MLX Studio bundled Python. Update the model ID across all four files + the `README.md` Models table when the served JANGTQ model changes.
 
-**llmster configs** (`configs/client/llmster/`) currently ship `opencode.json` only. If llmster graduates from provisional to permanent server status (sustained production use), backfill `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` to match the other servers.
+**llmster configs** (`configs/clients/llmster/`) currently ship `opencode.json` only. If llmster graduates from provisional to permanent server status (sustained production use), backfill `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` to match the other servers.
 
 **Model settings on Mac Studio** (`~/.omlx/model_settings.json`) are edited directly via SSH, then oMLX is restarted to apply. Changes there are separate from the client configs in this repo.
 

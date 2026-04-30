@@ -41,7 +41,7 @@ Copy config from this repo, or create manually:
 
 ```bash
 mkdir -p ~/.pi/agent
-cp configs/client/omlx/pi-models.json ~/.pi/agent/models.json
+cp configs/clients/omlx/pi-models.json ~/.pi/agent/models.json
 ```
 
 Custom model config at `~/.pi/agent/models.json`:

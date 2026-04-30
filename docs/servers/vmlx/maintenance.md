@@ -99,7 +99,7 @@ Bundled-Python `vmlx serve` takes a single model directory as its positional arg
 
 2. Find the snapshot path it prints (`…/snapshots/<hash>/`).
 3. Restart the server with the new `SNAP=` value in the Start recipe.
-4. Update the model ID across all four `configs/client/vmlx/*.json` files and the `README.md` Models & Benchmarks row so clients see the new ID.
+4. Update the model ID across all four `configs/clients/vmlx/*.json` files and the `README.md` Models & Benchmarks row so clients see the new ID.
 
 ## Model download cancellation
 
@@ -171,7 +171,7 @@ Upstream fix belongs at [`jjang-ai/vmlx`](https://github.com/jjang-ai/vmlx) (not
 | `exec: /Users/eric/mlx/...: no such file` | You ran `$BP/bin/vmlx` directly; the shebang is broken | Use `$BP/bin/python3 -m vmlx_engine.cli serve …` |
 | `OSError: port already in use` | Another server still holds `:8000` | Run the pre-start cleanup block above |
 | Empty response / hang on first request | First-request JIT compilation of Metal kernels | Wait ~30 s on the first generation; subsequent requests are fast |
-| OpenCode shows the model's `<think>` block as the visible reply ("thinking nonsense") | `--reasoning-parser qwen3` missing OR the OpenCode model entry lacks `"reasoning": true` | Add the flag (see Start recipe) and `"reasoning": true` in `configs/client/vmlx/opencode.json` |
+| OpenCode shows the model's `<think>` block as the visible reply ("thinking nonsense") | `--reasoning-parser qwen3` missing OR the OpenCode model entry lacks `"reasoning": true` | Add the flag (see Start recipe) and `"reasoning": true` in `configs/clients/vmlx/opencode.json` |
 | Model emits `curl` / `fetch` as prose instead of calling a tool, with `prompt_tokens` ~24 | MLLM path dropped the `tools[]` array before the chat template (bugs 1 + 2 above) | Run `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` on Mac Studio and restart vmlx |
 | Log warns `Failed to apply chat template: Can only get item pairs from a mapping, using last user message` after the first tool call | MLLM path never parses stringified `tool_calls[].function.arguments` (bug 3 above) | Same — the patch script fixes all three bugs together |
 

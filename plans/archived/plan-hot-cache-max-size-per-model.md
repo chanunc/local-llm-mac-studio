@@ -43,5 +43,5 @@ After running the `scripts/patches/patch_omlx_cache.py` script on the Mac Studio
 1. Create `scripts/patches/patch_omlx_cache.py` locally in this repository (Completed).
 2. Run the script on Mac Studio: `python3 scripts/patches/patch_omlx_cache.py`.
 3. Restart oMLX: `brew services restart omlx`.
-4. Add instructions to `docs/server/omlx/maintenance.md` on how to run this script after a `brew upgrade omlx`.
+4. Add instructions to `docs/servers/omlx/maintenance.md` on how to run this script after a `brew upgrade omlx`.
 5. Present changes for user review.

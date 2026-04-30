@@ -151,6 +151,6 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 
 - [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § llmster vs vllm-mlx](../../models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) — full agent-bench comparison with raw numbers
 - [`docs/models/benchmarks/model-benchmark-api-server.md` § Qwen3.6-27B 6-bit on llmster](../../models/benchmarks/model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx) — direct prompt benchmark detail
-- [`configs/client/llmster/opencode.json`](../../../configs/client/llmster/opencode.json) — OpenCode client template (substitutes `<MAC_STUDIO_IP>` via `scripts/switch_opencode_config.py`)
+- [`configs/clients/llmster/opencode.json`](../../../configs/clients/llmster/opencode.json) — OpenCode client template (substitutes `<MAC_STUDIO_IP>` via `scripts/switch_opencode_config.py`)
 - [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py) — handles `--server llmster` to swap OpenCode between vllm-mlx (port 8000) and llmster (port 1234)
 - [LM Studio docs — headless `llmster`](https://lmstudio.ai/docs-md/developer/core/headless_llmster) — upstream reference (Linux/systemd-focused; macOS path documented here is the right one for this stack)

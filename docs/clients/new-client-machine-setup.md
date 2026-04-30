@@ -55,7 +55,7 @@ Copy the config from this repo:
 
 ```bash
 mkdir -p ~/.claude
-cp configs/client/omlx/claude-code-settings.json ~/.claude/macstudio-settings.json
+cp configs/clients/omlx/claude-code-settings.json ~/.claude/macstudio-settings.json
 ```
 
 Or create it manually:

@@ -131,7 +131,7 @@ models:
 ```
 
 Repo-managed reference config for the models currently supportable on this Mac Studio:
-- [macstudio-supported-models.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/macstudio-supported-models.yaml)
+- [macstudio-supported-models.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/servers/mlx-openai-server/macstudio-supported-models.yaml)
 
 Included there:
 - Qwen3.5 JANG 122B / 35B with `qwen3_coder` + `qwen3_5`
@@ -221,7 +221,7 @@ Validated on 2026-03-30:
 - Model: `mlx-community/Qwen3.5-27B-4bit`
 - Launch shape: `model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`
 - Reference file:
-  - [mlx-openai-server-qwen35-27b.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/mlx-openai-server-qwen35-27b.yaml)
+  - [mlx-openai-server-qwen35-27b.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/servers/mlx-openai-server/mlx-openai-server-qwen35-27b.yaml)
 
 Observed behavior on Mac Studio M3 Ultra:
 - The repo name does not include `VL`, but the upstream MLX conversion is a multimodal Qwen3.5 build and must be served as `model_type: multimodal`
@@ -235,8 +235,8 @@ Validated on 2026-03-30:
 - Model: `alexcovo/Hermes-4.3-36B-mlx-4Bit` (community MLX conversion of `NousResearch/Hermes-4.3-36B`)
 - Launch shape: `--trust-remote-code` plus the official Seed-OSS chat template
 - Reference files:
-  - [mlx-openai-server-hermes43-36b.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/mlx-openai-server-hermes43-36b.yaml)
-  - [seed-oss-36b-chat-template.jinja](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/seed-oss-36b-chat-template.jinja)
+  - [mlx-openai-server-hermes43-36b.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/servers/mlx-openai-server/mlx-openai-server-hermes43-36b.yaml)
+  - [seed-oss-36b-chat-template.jinja](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/servers/mlx-openai-server/seed-oss-36b-chat-template.jinja)
 
 Observed behavior on Mac Studio M3 Ultra:
 - Loads and serves short chat completions successfully on `mlx-openai-server`
@@ -249,7 +249,7 @@ Observed behavior on Mac Studio M3 Ultra:
 Validated on 2026-03-30:
 - Model: `dealignai/Qwen3.5-VL-122B-A10B-4bit-MLX-CRACK`
 - Reference file:
-  - [mlx-openai-server-crack-vl.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/server/mlx-openai-server/mlx-openai-server-crack-vl.yaml)
+  - [mlx-openai-server-crack-vl.yaml](/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/servers/mlx-openai-server/mlx-openai-server-crack-vl.yaml)
 
 Observed behavior on Mac Studio M3 Ultra:
 - Loads cleanly as `model_type: multimodal` on `mlx-openai-server`

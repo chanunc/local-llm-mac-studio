@@ -550,7 +550,7 @@ Dense 27.3B-parameter sibling of `Qwen3.6-35B-A3B`. Same Qwen3.6 hybrid attentio
 - **Vision input is not exposed via vllm-mlx** (`MLLM=False` at load). To exercise the ViT, deploy on `vmlx` (MLX Studio bundled Python — HF card recommendation) or `mlx-openai-server` with the `multimodal` handler. Neither has been validated for this specific model yet.
 - **`usage.prompt_tokens=0`** for both streaming and non-streaming responses on vllm-mlx 0.2.6 — the JANG-loaded `qwen3_5` model does not propagate prompt-token count into the OpenAI usage block. Bench output computes prefill via the model's own tokenizer instead. Same shape as the Qwen3.5-122B JANG 2S note in `benchmarks/model-benchmark-api-server.md`.
 - **Verbose reasoning preamble** — even on simple prompts the model emits ~80-200 tokens of `<think>`-equivalent reasoning into `reasoning_content` before the tool call. Consider `enable_thinking=false` via `chat_template_kwargs` if you need the lowest possible per-turn latency (not validated through vllm-mlx).
-- **Client-config sync** — because vllm-mlx is single-model, local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` must default to whichever model is live on port 8000. Pointing at `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` while the server serves 27B returns HTTP 404 from the chat-completion endpoint. Keep those local configs aligned with `configs/client/vllm-mlx/`.
+- **Client-config sync** — because vllm-mlx is single-model, local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` must default to whichever model is live on port 8000. Pointing at `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` while the server serves 27B returns HTTP 404 from the chat-completion endpoint. Keep those local configs aligned with `configs/clients/vllm-mlx/`.
 
 ---
 
@@ -615,7 +615,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **First-time install needs one GUI launch** to bootstrap `~/.lmstudio/bin/lms` after the cask install. Headless-only macOS hosts need a screen-share session for that single step.
 - **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
-**See also:** [`docs/server/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+**See also:** [`docs/servers/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
 
 ---
 

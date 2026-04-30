@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Switch OpenCode client config between server backends.
 
-Reads template configs from this repo's configs/client/<server>/opencode.json,
+Reads template configs from this repo's configs/clients/<server>/opencode.json,
 resolves placeholders with real values from the live config, and writes to
 ~/.config/opencode/opencode.json.
 
@@ -21,7 +21,7 @@ from pathlib import Path
 
 LIVE_CONFIG = Path.home() / ".config" / "opencode" / "opencode.json"
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CONFIGS_DIR = REPO_ROOT / "configs" / "client"
+CONFIGS_DIR = REPO_ROOT / "configs" / "clients"
 SERVERS = ["vllm-mlx", "omlx", "mlx-openai-server", "vmlx", "llmster"]
 
 

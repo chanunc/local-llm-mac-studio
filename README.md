@@ -22,7 +22,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 | Path | Purpose | Start Here |
 |:-----|:--------|:-----------|
-| `docs/server/` | Server runbooks, setup, maintenance, and JANG patches | Pick one `summary.md` per server |
+| `docs/servers/` | Server runbooks, setup, maintenance, and JANG patches | Pick one `summary.md` per server |
 | `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/model-summary.md` |
 | `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | The client you are configuring |
 | `configs/` | Ready-to-copy client config templates grouped by server type | `configs/README.md` |
@@ -32,7 +32,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 ### Canonical reading order
 
 1. Read this `README.md` for the stack overview and server selection.
-2. Read one server runbook in `docs/server/<server>/summary.md`.
+2. Read one server runbook in `docs/servers/<server>/summary.md`.
 3. Read `configs/README.md` for the matching client config templates.
 4. Read `docs/models/model-summary.md` when choosing or adding models.
 5. Read the relevant maintenance or patch docs only when upgrading or debugging.
@@ -55,7 +55,7 @@ Pick one — all serve on port 8000. Stop others first if switching.
 # go-to dense+VL fallback (17.5 GB, switched from Qwen3.5-122B-JANG_2S on 2026-04-23).
 # Qwen3.5/3.6 need --tool-call-parser qwen3_coder (NOT qwen — they emit XML
 # tool calls, not JSON). --reasoning-parser qwen3 extracts <think> blocks.
-# See docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
+# See docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
 nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
   ~/.omlx/models/JANGQ-AI--Qwen3.6-27B-JANG_4M \
   --served-model-name JANGQ-AI/Qwen3.6-27B-JANG_4M \
@@ -96,7 +96,7 @@ JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch 
 # vmlx — JANGTQ CRACK (MLX Studio bundled Python, headless)
 # Tool use + Qwen3 thinking require all three parser flags AND a one-time
 # source patch (scripts/patches/patch_vmlx_jangtq_mllm_tools.py). See
-# docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models.
+# docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models.
 BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
 SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snapshots/033d5537f48f2f836ce3dfbe392304a2b30f8536
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
@@ -165,20 +165,20 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 
 | Server | Speed | Models | API | Best For |
 |:-------|:-----:|:------:|:----|:---------|
-| **[vllm-mlx](docs/server/vllm-mlx/summary.md)** | ⚡ Fastest | Single | OpenAI + Anthropic | Daily use — lowest overhead on Apple Silicon |
-| **[mlx-openai-server](docs/server/mlx-openai-server/summary.md)** | 🟢 Fast | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
-| **[mlx-lm](docs/server/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
-| **[oMLX](docs/server/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
-| **[vmlx](docs/server/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
-| **[llmster](docs/server/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
+| **[vllm-mlx](docs/servers/vllm-mlx/summary.md)** | ⚡ Fastest | Single | OpenAI + Anthropic | Daily use — lowest overhead on Apple Silicon |
+| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** | 🟢 Fast | Multi (YAML) | OpenAI | Prompt caching, speculative decoding |
+| **[mlx-lm](docs/servers/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
+| **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
+| **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
+| **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
 
 All servers except llmster support [JANG](https://jangq.ai/) mixed-precision models via patches:
-[vllm-mlx](docs/server/vllm-mlx/jang-patch.md) ·
-[oMLX](docs/server/omlx/jang-fork.md) ·
-[mlx-openai-server](docs/server/mlx-openai-server/jang-patch.md) ·
-[mlx-lm](docs/server/mlx-lm/jang-patch.md)
+[vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
+[oMLX](docs/servers/omlx/jang-fork.md) ·
+[mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
+[mlx-lm](docs/servers/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/server/vllm-mlx/maintenance.md) · [oMLX](docs/server/omlx/maintenance.md) · [mlx-openai-server](docs/server/mlx-openai-server/maintenance.md) · [vmlx](docs/server/vmlx/maintenance.md) · [llmster](docs/server/llmster/summary.md) (no separate maintenance doc — single `summary.md` covers install, runtime recovery, and limitations)
+Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) (no separate maintenance doc — single `summary.md` covers install, runtime recovery, and limitations)
 
 Current `vllm-mlx` production primary: `mlx-community/Ling-2.6-flash-mlx-6bit` (sparse 104B / 7.4B-active `bailing_hybrid`, 6-bit MLX, ~80 GB on disk; deployed 2026-04-29 via three local patches — see [model-summary-ling.md](docs/models/per-model/model-summary-ling.md)). The Qwen3.6-27B JANG 4M dense+VL variant remains a documented fallback for VL workloads ([model-summary.md](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl), [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)).
 
@@ -294,10 +294,10 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 ## ⚠️ Known Limitations
 
 **Server constraints:**
-- **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/server/omlx/jang-fork.md)). [Maintenance](docs/server/omlx/maintenance.md)
-- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patches/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
-- **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/server/vllm-mlx/maintenance.md)
-- **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/server/vmlx/maintenance.md)
+- **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/servers/omlx/jang-fork.md)). [Maintenance](docs/servers/omlx/maintenance.md)
+- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patches/patch_mlx_openai_tool_args.py)). [Maintenance](docs/servers/mlx-openai-server/maintenance.md)
+- **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/servers/vllm-mlx/maintenance.md)
+- **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/servers/vmlx/maintenance.md)
 - **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup). Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`). Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**
@@ -306,6 +306,6 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 - **Qwen3.5-122B + OpenClaw** — HTTP 500 with large system prompts ([#42](https://github.com/jundot/omlx/issues/42))
 
 **Maintenance:**
-- **JANG fork overlay** — `brew upgrade omlx` overwrites the fork; re-apply after every upgrade. [Guide](docs/server/omlx/jang-fork.md)
-- **Hot cache patch** — `scripts/patches/patch_omlx_cache.py` must re-run after every `brew upgrade omlx`. [Guide](docs/server/omlx/maintenance.md)
+- **JANG fork overlay** — `brew upgrade omlx` overwrites the fork; re-apply after every upgrade. [Guide](docs/servers/omlx/jang-fork.md)
+- **Hot cache patch** — `scripts/patches/patch_omlx_cache.py` must re-run after every `brew upgrade omlx`. [Guide](docs/servers/omlx/maintenance.md)
 - **SSH timeouts** — Fix: `sudo pmset -a sleep 0 disksleep 0 displaysleep 10` on Mac Studio

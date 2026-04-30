@@ -8,9 +8,9 @@
 Reduce "where does this go?" ambiguity as the repo grows past five servers and a dozen model benchmarks. The current top-level layout (set when the repo was three servers + one model) has accumulated four kinds of latent friction:
 
 1. `docs/models/` is flat — 9 files mix a catalog, per-model deep-dives, benchmark write-ups, and how-tos.
-2. Benchmark JSONs live in two homes (`docs/models/benchmarks/<model>/*.json` **and** `docs/server/<server>/*-benchmark.json`).
+2. Benchmark JSONs live in two homes (`docs/models/benchmarks/<model>/*.json` **and** `docs/servers/<server>/*-benchmark.json`).
 3. `plans/` mixes active, completed, and stale plans with no lifecycle marker.
-4. Plural/singular inconsistency: `docs/server/` and `configs/client/` are singular outliers; everything else is plural.
+4. Plural/singular inconsistency: `docs/servers/` and `configs/clients/` are singular outliers; everything else is plural.
 
 Plus two minor items: `scripts/` is a 10-file bag of patches + benches + tools, and `patches/mlx_lm/` is empty.
 
@@ -27,7 +27,7 @@ Create:
 - `scripts/bench/` — `bench_*.py` (3 files)
 - `scripts/` root — `switch_opencode_config.py` (and future tools)
 
-Sweep references in: `README.md`, `CLAUDE.md`, `AGENTS.md`, `plans/*.md`, `docs/server/**/*.md`, `docs/models/**/*.md`, and self-references inside the scripts.
+Sweep references in: `README.md`, `CLAUDE.md`, `AGENTS.md`, `plans/*.md`, `docs/servers/**/*.md`, `docs/models/**/*.md`, and self-references inside the scripts.
 
 ### 3. Reorganize `docs/models/` by content type
 
@@ -43,15 +43,15 @@ Sweep all relative-path references inside moved files (depth changes by 1) and a
 
 ### 4. Consolidate benchmark JSON locations
 
-Move loose JSONs from `docs/server/<server>/` into `docs/models/benchmarks/<model>/`, following the existing naming convention (`api-server-<server>.json`, `api-server-<server>-128k.json`):
+Move loose JSONs from `docs/servers/<server>/` into `docs/models/benchmarks/<model>/`, following the existing naming convention (`api-server-<server>.json`, `api-server-<server>-128k.json`):
 
 | From | To |
 |:---|:---|
-| `docs/server/vllm-mlx/ling-2.6-flash-6bit-benchmark.json` | `docs/models/benchmarks/ling-2.6-flash-6bit/api-server-vllm-mlx.json` |
-| `docs/server/vllm-mlx/qwen36-27b-jang4m-benchmark.json` | `docs/models/benchmarks/qwen36-27b-jang4m/api-server-vllm-mlx.json` |
-| `docs/server/vllm-mlx/qwen3-coder-next-6bit-128k-benchmark.json` | `docs/models/benchmarks/qwen3-coder-next-6bit/api-server-vllm-mlx-128k.json` (new dir) |
-| `docs/server/vllm-mlx/qwen35-122b-jang2s-128k-benchmark.json` | `docs/models/benchmarks/qwen35-122b-jang2s/api-server-vllm-mlx-128k.json` (new dir) |
-| `docs/server/mlx-openai-server/qwen36-35b-server-benchmark.json` | `docs/models/benchmarks/qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json` (new dir) |
+| `docs/servers/vllm-mlx/ling-2.6-flash-6bit-benchmark.json` | `docs/models/benchmarks/ling-2.6-flash-6bit/api-server-vllm-mlx.json` |
+| `docs/servers/vllm-mlx/qwen36-27b-jang4m-benchmark.json` | `docs/models/benchmarks/qwen36-27b-jang4m/api-server-vllm-mlx.json` |
+| `docs/servers/vllm-mlx/qwen3-coder-next-6bit-128k-benchmark.json` | `docs/models/benchmarks/qwen3-coder-next-6bit/api-server-vllm-mlx-128k.json` (new dir) |
+| `docs/servers/vllm-mlx/qwen35-122b-jang2s-128k-benchmark.json` | `docs/models/benchmarks/qwen35-122b-jang2s/api-server-vllm-mlx-128k.json` (new dir) |
+| `docs/servers/mlx-openai-server/qwen36-35b-server-benchmark.json` | `docs/models/benchmarks/qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json` (new dir) |
 
 Sweep `docs/models/benchmarks/model-benchmark-api-server.md` (after #3, this file lives in `benchmarks/`) and any other references.
 
@@ -59,7 +59,7 @@ Sweep `docs/models/benchmarks/model-benchmark-api-server.md` (after #3, this fil
 
 Archive plans that are clearly completed (deployed code visible in repo or referenced as "in production" elsewhere):
 
-- `plan-mac-studio-lmstudio-ollama-benchmark.md` — llmster shipped 2026-04-30 (`docs/server/llmster/summary.md`, `configs/client/llmster/`, multiple commits).
+- `plan-mac-studio-lmstudio-ollama-benchmark.md` — llmster shipped 2026-04-30 (`docs/servers/llmster/summary.md`, `configs/clients/llmster/`, multiple commits).
 - `plan-hot-cache-max-size-per-model.md` — `scripts/patches/patch_omlx_cache.py` (post #2) is in production, marked "Completed" inside the plan itself.
 
 Leave the rest at `plans/` root (status uncertain, treat as active/backlog until the user confirms).
@@ -67,8 +67,8 @@ Leave the rest at `plans/` root (status uncertain, treat as active/backlog until
 ### 6. Plural/singular consistency
 
 Rename:
-- `docs/server/` → `docs/servers/`
-- `configs/client/` → `configs/clients/`
+- `docs/servers/` → `docs/servers/`
+- `configs/clients/` → `configs/clients/`
 
 Sweep:
 - `README.md`, `CLAUDE.md`, `AGENTS.md`, `configs/README.md`

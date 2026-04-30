@@ -2,7 +2,7 @@
 
 **Last updated: 2026-04-30**
 
-Client config files for connecting to the Mac Studio M3 Ultra. Templates now live under `configs/client/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
+Client config files for connecting to the Mac Studio M3 Ultra. Templates now live under `configs/clients/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
 ## 🖥️ Server Roles
 
@@ -120,7 +120,7 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 
 **Model:** `qwen3.6-27b` (LM Studio mangles `mlx-community/Qwen3.6-27B-6bit` → lowercases + strips org prefix at load time — verify with `/v1/models`). Standard MLX 6-bit safetensors, ~22 GB on disk under `~/.lmstudio/models/`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
 
-Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/server/llmster/summary.md`](../docs/server/llmster/summary.md).
+Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
 
 ## 🔀 Switching Servers
 

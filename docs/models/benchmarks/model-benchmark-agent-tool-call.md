@@ -337,7 +337,7 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 4. **Verbose reasoning preamble** — the model emits ~80-200 tokens of `<think>`-equivalent reasoning (routed to `reasoning_content` by the `qwen3` parser) before the tool call, even on simple prompts. This adds ~1-3s of fixed overhead per turn versus a non-thinking equivalent.
 
-5. **Client-config hygiene** — previously the local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` defaulted to `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`, which is not served by the single-model vllm-mlx. Calls without an explicit `--model` returned 404 from the server ("The model … does not exist"). Both local configs were realigned with the repo canonical (`configs/client/vllm-mlx/`) to default to the live 27B model; this must be repeated whenever the vllm-mlx primary model changes.
+5. **Client-config hygiene** — previously the local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` defaulted to `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K`, which is not served by the single-model vllm-mlx. Calls without an explicit `--model` returned 404 from the server ("The model … does not exist"). Both local configs were realigned with the repo canonical (`configs/clients/vllm-mlx/`) to default to the live 27B model; this must be repeated whenever the vllm-mlx primary model changes.
 
 ---
 

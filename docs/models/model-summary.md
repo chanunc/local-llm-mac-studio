@@ -21,6 +21,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision encoder · 3B active · 262K native (1M YaRN)
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27B Qwen3.6 hybrid · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
+- [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27B Qwen3.6 + ViT · 22 GB · uniform 6-bit · llmster recommended (3-5× faster agent loop than vllm-mlx)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -547,6 +548,71 @@ Dense 27.3B-parameter sibling of `Qwen3.6-35B-A3B`. Same Qwen3.6 hybrid attentio
 - **`usage.prompt_tokens=0`** for both streaming and non-streaming responses on vllm-mlx 0.2.6 — the JANG-loaded `qwen3_5` model does not propagate prompt-token count into the OpenAI usage block. Bench output computes prefill via the model's own tokenizer instead. Same shape as the Qwen3.5-122B JANG 2S note in `model-benchmark-api-server.md`.
 - **Verbose reasoning preamble** — even on simple prompts the model emits ~80-200 tokens of `<think>`-equivalent reasoning into `reasoning_content` before the tool call. Consider `enable_thinking=false` via `chat_template_kwargs` if you need the lowest possible per-turn latency (not validated through vllm-mlx).
 - **Client-config sync** — because vllm-mlx is single-model, local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` must default to whichever model is live on port 8000. Pointing at `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` while the server serves 27B returns HTTP 404 from the chat-completion endpoint. Keep those local configs aligned with `configs/client/vllm-mlx/`.
+
+---
+
+## Qwen3.6-27B (6-bit Standard MLX)
+
+Same dense 27.3B-parameter Qwen3.6 base as the JANG 4M variant — 48 Gated DeltaNet (linear-attention) layers + 16 full-attention layers + 27-layer ViT vision tower — but **uniform 6-bit MLX quantization** (22 GB on disk, no JANG mixed-precision). Standard `mlx-community/*` safetensors that loads on every server in this stack without architecture patches. Benchmarked head-to-head against vllm-mlx + JANG 4M on 2026-04-30 to compare server overhead.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-27B](https://huggingface.co/Qwen/Qwen3.6-27B) |
+| Quant | [mlx-community/Qwen3.6-27B-6bit](https://huggingface.co/mlx-community/Qwen3.6-27B-6bit) |
+| Format | MLX safetensors (5 shards, ~22 GB) — standard `qwen3_5` arch |
+| Vendor | Alibaba Qwen base; mlx-community uniform 6-bit conversion |
+| Parameters | 27.3 B (dense) |
+| Density | Dense — every param active per token |
+| Quantization | Uniform 6-bit MLX (group size 64) |
+| Specialties | Vision-language (image + video via ViT), thinking mode optional, hybrid Gated DeltaNet long-context |
+| On-disk size | ~22 GB |
+| Context Size | 262K native; ~1M with YaRN |
+| License | Apache-2.0 (base) |
+| Key Features | Drop-in MLX safetensors — no JANG fork or wrapper required |
+
+**Recommended server: llmster (LM Studio headless).** Tool calling and reasoning parsing are built into LM Studio's MLX runtime — no parser flags needed. Matches the JANG 4M variant's tool-call correctness (5/5 API-level pass) and is **3-5× faster end-to-end on the OpenCode agent loop**:
+
+| Metric | vllm-mlx (this model, no JANG) | llmster (this model) | Δ |
+|:-------|:------------------------------:|:--------------------:|:----:|
+| OpenCode browse (wall) | 97.93 s | **31.96 s** | **3.1× faster** |
+| OpenCode search (wall) | 127.28 s | **25.71 s** | **4.9× faster** |
+| TTFT @ 32K | ~104 s (vllm-mlx + JANG 4M ref) | **0.70 s** | ~150× faster prefill |
+| Prefill @ 32K | ~314 tok/s (JANG 4M ref) | **47,143 tok/s** | ~150× faster |
+| Gen @ 512 | 36.5 tok/s (JANG 4M ref) | 29.9 tok/s | -18 % |
+| 5-tool API harness pass rate | 5/5 | 5/5 | tied |
+
+llmster's MLX runtime ships an aggressive prefill kernel that flattens TTFT across context lengths (0.49 s @ 512 → 0.70 s @ 32K). For agent workloads where the 10K-token system prompt + tool catalog is mostly prefill cost, this win compensates ~10× over the slightly slower decode path.
+
+**llmster model ID:** `qwen3.6-27b` (LM Studio strips the org prefix and lowercases at load — verify with `/v1/models`)
+
+**llmster setup:**
+```bash
+ssh macstudio "/opt/homebrew/bin/brew install --cask lm-studio"            # one-time install
+ssh macstudio "open -a 'LM Studio' && sleep 8 && osascript -e 'quit app \"LM Studio\"'"  # bootstrap lms CLI
+ssh macstudio "~/.lmstudio/bin/lms get https://huggingface.co/mlx-community/Qwen3.6-27B-6bit -y"
+ssh macstudio "~/.lmstudio/bin/lms load qwen3.6-27b --gpu max --context-length 65536 -y"
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # port 1234, NOT 8000
+```
+
+**vllm-mlx server config** (also works, no patches needed): `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` — same flags as the JANG 4M variant, but launched via the standard `~/vllm-mlx-env/bin/vllm-mlx serve` (no `run_vllm_jang.py` wrapper required for the 6-bit standard MLX file).
+
+**Performance** (llmster, [`model-benchmark-api-server.md`](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx)):
+- Gen: 29.9 tok/s @ 512 → 28.8 @ 8K → 26.3 @ 32K
+- Prefill: 1,086 tok/s @ 512 → 8,031 @ 4K → 15,321 @ 8K → **47,143 @ 32K**
+- TTFT: 0.49 s @ 512, 0.51 s @ 4K, 0.54 s @ 8K, 0.70 s @ 32K — effectively flat
+- Model load: ~5 s (warm), ~16 s (cold first launch after `lms get`)
+
+**Quality vs JANG 4M:** External reference (LLM infrastructure research memo): 6-bit uniform retains ~1 ppt more quality than 4.45-bit JANG mixed on standard benchmarks while adding ~3.5 GB disk and ~10-20 % decode latency. Pick this variant when (a) running on llmster for the prefill win, or (b) avoiding the JANG fork overlay maintenance burden on vllm-mlx.
+
+**Caveats:**
+- **Vision input not exposed via vllm-mlx** (`MLLM=False` at load) — same constraint as the JANG 4M sibling. llmster also serves text-only by default; vision via this model has not been validated through `mlx-vlm` here yet.
+- **llmster duplicates HF cache** — `lms get` re-downloads the 22 GB into `~/.lmstudio/models/mlx-community/Qwen3.6-27B-6bit/` even when present in `~/.cache/huggingface/hub/`. Plan ~22 GB extra disk.
+- **Default `lms` context is 4096** — agent prompts (10K+ system prompt) need `--context-length 65536` (or larger) at `lms load` time. Memory is allocated up-front.
+- **Default bind is 127.0.0.1** — `lms server start` won't accept LAN connections without `--bind 0.0.0.0`.
+- **First-time install needs one GUI launch** to bootstrap `~/.lmstudio/bin/lms` after the cask install. Headless-only macOS hosts need a screen-share session for that single step.
+- **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
+
+**See also:** [`docs/server/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/model-benchmark-agent-tool-call.md` § Server comparison](model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
 
 ---
 

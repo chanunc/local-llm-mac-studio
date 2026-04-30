@@ -40,7 +40,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Model:** `mlx-community/Ling-2.6-flash-mlx-6bit` -- [bailing_hybrid](../docs/models/model-summary-ling.md) MoE, 6-bit MLX uniform, ~80GB on disk, 64K practical context (128K OOMs), 104B total / 7.4B active. Launched via standard `~/vllm-mlx-env/bin/vllm-mlx serve` (no JANG wrapper) with `--enable-auto-tool-choice --tool-call-parser hermes`. Requires three local patches (PR #1227 vendor + threadlocal-stream + inline-gen) — see [`model-summary-ling.md`](../docs/models/model-summary-ling.md) for the full deploy recipe. Older primaries: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense+VL fallback, 17.5GB) and `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` (122B/10B MoE, 35GB) — both still available via `run_vllm_jang.py` wrapper.
+**Model:** `mlx-community/Ling-2.6-flash-mlx-6bit` -- [bailing_hybrid](../docs/models/per-model/model-summary-ling.md) MoE, 6-bit MLX uniform, ~80GB on disk, 64K practical context (128K OOMs), 104B total / 7.4B active. Launched via standard `~/vllm-mlx-env/bin/vllm-mlx serve` (no JANG wrapper) with `--enable-auto-tool-choice --tool-call-parser hermes`. Requires three local patches (PR #1227 vendor + threadlocal-stream + inline-gen) — see [`model-summary-ling.md`](../docs/models/per-model/model-summary-ling.md) for the full deploy recipe. Older primaries: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense+VL fallback, 17.5GB) and `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` (122B/10B MoE, 35GB) — both still available via `run_vllm_jang.py` wrapper.
 
 ### `client/mlx-openai-server/` -- Multi-Model Server (Process Isolation)
 

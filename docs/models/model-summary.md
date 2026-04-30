@@ -500,7 +500,7 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 
 **Requirements:**
 - `mlx_lm >= 0.31.1` and `mlx_vlm >= 0.4.1` (confirmed working on Mac Studio pilot)
-- Validated through-API on `mlx-openai-server` v1.7.1 single-handler mode on 2026-04-18: text + vision smoke tests pass; full benchmark in [model-benchmark-api-server.md](model-benchmark-api-server.md#qwen36-35b-a3b-6-bit) shows 52.5 tok/s @ 512 → 35.6 tok/s @ 128K
+- Validated through-API on `mlx-openai-server` v1.7.1 single-handler mode on 2026-04-18: text + vision smoke tests pass; full benchmark in [model-benchmark-api-server.md](benchmarks/model-benchmark-api-server.md#qwen36-35b-a3b-6-bit) shows 52.5 tok/s @ 512 → 35.6 tok/s @ 128K
 - Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../server/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml)
 
 **Caveats:**
@@ -535,20 +535,20 @@ Dense 27.3B-parameter sibling of `Qwen3.6-35B-A3B`. Same Qwen3.6 hybrid attentio
 
 **Server config (vllm-mlx):** `~/run_vllm_jang.py serve <path> --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` — same flags as the Qwen3.5-35B-A3B-JANG_4K setup. Loaded as `MLLM=False` (text-only — vllm-mlx does not expose the vision tower for this model).
 
-**Performance** (vllm-mlx, [`model-benchmark-api-server.md`](model-benchmark-api-server.md#qwen36-27b-jang-4m-dense--vl)):
+**Performance** (vllm-mlx, [`benchmarks/model-benchmark-api-server.md`](benchmarks/model-benchmark-api-server.md#qwen36-27b-jang-4m-dense--vl)):
 - Gen: 36.5 tok/s @ 512 → 34.6 @ 8K → 27.0 @ 64K
 - Prefill: ~310-345 tok/s across 512-32K, falling to 274 @ 64K
 - TTFT: 1.7 s @ 512, 23.8 s @ 8K, 240 s @ 64K
 - ~30-40 % slower gen and ~5× slower prefill than `Qwen3.6-35B-A3B-6bit` on `mlx-openai-server` (the MoE 3B-active sibling) — the dense-vs-MoE tradeoff is exactly as expected at full context
 
-**Tool calling** ([`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)):
+**Tool calling** ([`benchmarks/model-benchmark-agent-tool-call.md`](benchmarks/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)):
 - API-level: 5/5 single-call pass, 3-turn agentic loop completes in 14.84 s (read → write → summary)
 - Streaming `tool_calls` deltas verified via direct curl
 - OpenCode end-to-end (2026-04-24): browse 114.25 s median, search 163.59 s median (medians across 3 measured runs each; p5-p95 89-251 s browse, 162-266 s search). ~2.7× slower than Qwen3.5-35B-A3B JANG 4K on the same scenarios — the expected dense-vs-sparse gap at OpenCode's ~10k-token system prompt
 
 **Caveats:**
 - **Vision input is not exposed via vllm-mlx** (`MLLM=False` at load). To exercise the ViT, deploy on `vmlx` (MLX Studio bundled Python — HF card recommendation) or `mlx-openai-server` with the `multimodal` handler. Neither has been validated for this specific model yet.
-- **`usage.prompt_tokens=0`** for both streaming and non-streaming responses on vllm-mlx 0.2.6 — the JANG-loaded `qwen3_5` model does not propagate prompt-token count into the OpenAI usage block. Bench output computes prefill via the model's own tokenizer instead. Same shape as the Qwen3.5-122B JANG 2S note in `model-benchmark-api-server.md`.
+- **`usage.prompt_tokens=0`** for both streaming and non-streaming responses on vllm-mlx 0.2.6 — the JANG-loaded `qwen3_5` model does not propagate prompt-token count into the OpenAI usage block. Bench output computes prefill via the model's own tokenizer instead. Same shape as the Qwen3.5-122B JANG 2S note in `benchmarks/model-benchmark-api-server.md`.
 - **Verbose reasoning preamble** — even on simple prompts the model emits ~80-200 tokens of `<think>`-equivalent reasoning into `reasoning_content` before the tool call. Consider `enable_thinking=false` via `chat_template_kwargs` if you need the lowest possible per-turn latency (not validated through vllm-mlx).
 - **Client-config sync** — because vllm-mlx is single-model, local `~/.config/opencode/opencode.json` and `~/.pi/agent/models.json` must default to whichever model is live on port 8000. Pointing at `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` while the server serves 27B returns HTTP 404 from the chat-completion endpoint. Keep those local configs aligned with `configs/client/vllm-mlx/`.
 
@@ -599,7 +599,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 
 **vllm-mlx server config** (also works, no patches needed): `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` — same flags as the JANG 4M variant, but launched via the standard `~/vllm-mlx-env/bin/vllm-mlx serve` (no `run_vllm_jang.py` wrapper required for the 6-bit standard MLX file).
 
-**Performance** (llmster, [`model-benchmark-api-server.md`](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx)):
+**Performance** (llmster, [`benchmarks/model-benchmark-api-server.md`](benchmarks/model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx)):
 - Gen: 29.9 tok/s @ 512 → 28.8 @ 8K → 26.3 @ 32K
 - Prefill: 1,086 tok/s @ 512 → 8,031 @ 4K → 15,321 @ 8K → **47,143 @ 32K**
 - TTFT: 0.49 s @ 512, 0.51 s @ 4K, 0.54 s @ 8K, 0.70 s @ 32K — effectively flat
@@ -615,7 +615,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **First-time install needs one GUI launch** to bootstrap `~/.lmstudio/bin/lms` after the cask install. Headless-only macOS hosts need a screen-share session for that single step.
 - **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
-**See also:** [`docs/server/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/model-benchmark-agent-tool-call.md` § Server comparison](model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+**See also:** [`docs/server/llmster/summary.md`](../server/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
 
 ---
 
@@ -641,7 +641,7 @@ Qwen3.6-35B-A3B base with a rank-8 LoRA (alpha 16) trained on **356 K Rust commi
 
 **Server config (vllm-mlx):** standard CLI with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` (same parser flags as the non-LoRA Qwen3.6 variants — the LoRA-merged weights still emit the Qwen3-coder XML tool-call format).
 
-**Tool calling** ([`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jedisct1qwen36-35b-rustmlx)):
+**Tool calling** ([`benchmarks/model-benchmark-agent-tool-call.md`](benchmarks/model-benchmark-agent-tool-call.md#results-jedisct1qwen36-35b-rustmlx)):
 - API-level: 4/5 single-call pass · single-tool 1.42-1.80 s 🥈 · 3-turn agentic loop 6.99 s
 - OpenCode end-to-end (2026-04-30): browse 13.94 s 🥈 · search 26.31 s 🥈 — second-fastest in the stack on both scenarios
 - ⚠ One agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). Other scenarios pass cleanly.
@@ -664,7 +664,7 @@ InclusionAI's `bailing_hybrid` MoE — **104 B total / 7.4 B active** — sparse
 | Format | MLX safetensors (uniform 6-bit, group_size=64) |
 | Architecture | `BailingMoeV2_5ForCausalLM` (`bailing_hybrid`) — 32 layers (4 MLA + 28 linear-attn) |
 | Parameters | 104 B total, 7.4 B active per token (256 routed + 1 shared) |
-| Tokens/sec | 64.5 @ 512 → 64.4 @ 8K → 57.3 @ 64K (vllm-mlx, [bench](model-benchmark-api-server.md#ling-26-flash-mlx-6bit-104b7b-active-bailing_hybrid)) |
+| Tokens/sec | 64.5 @ 512 → 64.4 @ 8K → 57.3 @ 64K (vllm-mlx, [bench](benchmarks/model-benchmark-api-server.md#ling-26-flash-mlx-6bit-104b7b-active-bailing_hybrid)) |
 | On-disk size | ~80 GB |
 | Context Size | 131,072 native; **64K practical ceiling on M3 Ultra** — 128K OOMs |
 | Reasoning | None — does not emit `<think>` blocks |
@@ -682,11 +682,11 @@ InclusionAI's `bailing_hybrid` MoE — **104 B total / 7.4 B active** — sparse
 
 mlx-openai-server is **incompatible** — its inference-worker thread design is more deeply thread-coupled than vllm-mlx and patch #3 doesn't apply directly.
 
-**Tool calling** ([`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)):
+**Tool calling** ([`benchmarks/model-benchmark-agent-tool-call.md`](benchmarks/model-benchmark-agent-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)):
 - API-level: 5/5 single-call pass · 3-turn agentic loop **4.74 s** 🏆 (fastest in this stack)
 - OpenCode end-to-end (2026-04-30): browse 25.75 s · search 29.64 s — third-fastest, behind only the two A3B-sparse Qwen3.6 variants
 
-**See also:** [`docs/models/model-summary-ling.md`](model-summary-ling.md) for the full deployment guide (vendoring PR #1227, patch scripts, sampling config, RAM/VRAM profile).
+**See also:** [`docs/models/per-model/model-summary-ling.md`](per-model/model-summary-ling.md) for the full deployment guide (vendoring PR #1227, patch scripts, sampling config, RAM/VRAM profile).
 
 ---
 
@@ -716,7 +716,7 @@ Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`), pruned by `jedisct1` to keep only the 
 - **Not viable as an agent backbone** in this stack — disabling thinking and switching to Hermes parser do not reliably fix tool-calling. Pass rates remain near 0/3 with non-deterministic recovery.
 - **Retry only with a less-aggressive pruning variant** (e.g. `first200experts`) when one becomes available.
 
-**See also:** [`docs/models/model-summary-mimo-v2.5.md`](model-summary-mimo-v2.5.md) for the TL;DR (Findings / Limitations / Blocker), full three-config benchmark comparison, and deployment instructions.
+**See also:** [`docs/models/per-model/model-summary-mimo-v2.5.md`](per-model/model-summary-mimo-v2.5.md) for the TL;DR (Findings / Limitations / Blocker), full three-config benchmark comparison, and deployment instructions.
 
 ---
 

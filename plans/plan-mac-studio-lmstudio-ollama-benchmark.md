@@ -121,7 +121,7 @@ For Mistral Small 4, also run a second pass at the model's preferred settings:
 ### vllm-mlx
 
 - baseline for best current MLX server performance in this repo
-- use the existing wrapper and benchmark method from `docs/models/model-benchmark-api-server.md`
+- use the existing wrapper and benchmark method from `docs/models/benchmarks/model-benchmark-api-server.md`
 
 ### mlx-openai-server
 
@@ -164,7 +164,7 @@ Important:
 
 For OpenAI-compatible endpoints:
 
-- reuse the existing SSE benchmark approach from `docs/models/model-benchmark-api-server.md`
+- reuse the existing SSE benchmark approach from `docs/models/benchmarks/model-benchmark-api-server.md`
 - parse streamed chunks to measure TTFT and per-token timing
 - store raw JSON per run
 

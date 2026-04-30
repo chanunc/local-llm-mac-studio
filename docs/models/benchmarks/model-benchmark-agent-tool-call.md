@@ -6,10 +6,10 @@ Tested on **Mac Studio M3 Ultra (96 GB)**.
 
 Real agent CLI invocation via `opencode run --format json`, measuring end-to-end response time including agent system prompts, tool definitions, agent loop turns, and reasoning overhead. This captures the actual latency a user experiences — not raw inference tok/s.
 
-Script: [`scripts/bench/bench_agent_tool_call.py`](../../scripts/bench/bench_agent_tool_call.py)
-Config switcher: [`scripts/switch_opencode_config.py`](../../scripts/switch_opencode_config.py)
+Script: [`scripts/bench/bench_agent_tool_call.py`](../../../scripts/bench/bench_agent_tool_call.py)
+Config switcher: [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py)
 
-**Why this matters:** Raw benchmarks show 45-85 tok/s for these models. But agent workloads include 2,000-4,000 token system prompts, multiple API round-trips, and reasoning amplification. Measured end-to-end, `opencode run "Hi"` takes 80s vs 2.7s raw curl for the same model — a 30x gap ([analysis](../../docs/clients/opencode-analysis.md)).
+**Why this matters:** Raw benchmarks show 45-85 tok/s for these models. But agent workloads include 2,000-4,000 token system prompts, multiple API round-trips, and reasoning amplification. Measured end-to-end, `opencode run "Hi"` takes 80s vs 2.7s raw curl for the same model — a 30x gap ([analysis](../../../docs/clients/opencode-analysis.md)).
 
 ---
 
@@ -152,7 +152,7 @@ Unpatched result: BLOCKED — vllm-mlx streaming path with `--reasoning-parser` 
 | Browse github.com | 36.54s (2026-04-21) / 42.58s (2026-04-24) | 2 | `webfetch` |
 | Search 3 latest AI tools | 59.50s (2026-04-21) / 70.61s (2026-04-24) | 2 | `bash`, `webfetch`, `task` |
 
-Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run used `--print-logs --log-level=INFO` captured per-run to [`benchmarks/qwen35-35b-a3b-jang4k/agent-bench.logs/`](benchmarks/qwen35-35b-a3b-jang4k/agent-bench.logs/); raw JSON in [`benchmarks/qwen35-35b-a3b-jang4k/agent-bench.json`](benchmarks/qwen35-35b-a3b-jang4k/agent-bench.json). The ~15 % increase vs 2026-04-21 mostly reflects higher-token OpenCode system prompts in the newer 1.14.21 client (10.8k-token first-turn prefill vs ~9k earlier).
+Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run used `--print-logs --log-level=INFO` captured per-run to [`qwen35-35b-a3b-jang4k/agent-bench.logs/`](qwen35-35b-a3b-jang4k/agent-bench.logs/); raw JSON in [`qwen35-35b-a3b-jang4k/agent-bench.json`](qwen35-35b-a3b-jang4k/agent-bench.json). The ~15 % increase vs 2026-04-21 mostly reflects higher-token OpenCode system prompts in the newer 1.14.21 client (10.8k-token first-turn prefill vs ~9k earlier).
 
 ### Key Findings
 
@@ -209,7 +209,7 @@ The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json`](benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`qwen36-35b-a3b-jangtq4-crack/api-tool-test.json`](qwen36-35b-a3b-jangtq4-crack/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -277,7 +277,7 @@ The OpenCode-level Search hang seen in the end-to-end bench (`⛔ hung, 0 tool c
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via [`benchmarks/qwen36-27b-jang4m/api-tool-test.json`](benchmarks/qwen36-27b-jang4m/api-tool-test.json). Direct `/v1/chat/completions` invocation, mirroring the API-level table above.
+Captured via [`qwen36-27b-jang4m/api-tool-test.json`](qwen36-27b-jang4m/api-tool-test.json). Direct `/v1/chat/completions` invocation, mirroring the API-level table above.
 
 | Scenario | Time | Output Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:--------------|:------|:------------|:-------|
@@ -308,9 +308,9 @@ Verified independently of OpenCode: a streaming `/v1/chat/completions` request w
 
 ### OpenCode End-to-End Agent Benchmark
 
-**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`benchmarks/qwen36-27b-jang4m/agent-bench.logs/`](benchmarks/qwen36-27b-jang4m/agent-bench.logs/)).
+**Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`qwen36-27b-jang4m/agent-bench.logs/`](qwen36-27b-jang4m/agent-bench.logs/)).
 
-Captured via `scripts/bench/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`benchmarks/qwen36-27b-jang4m/agent-bench.json`](benchmarks/qwen36-27b-jang4m/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`qwen36-27b-jang4m/agent-bench.json`](qwen36-27b-jang4m/agent-bench.json).
 
 | Scenario | Median | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -350,7 +350,7 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-27b-6bit/api-tool-test.json`](benchmarks/qwen36-27b-6bit/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`qwen36-27b-6bit/api-tool-test.json`](qwen36-27b-6bit/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -375,7 +375,7 @@ Task: "Read /tmp/app/config.json, change port to 8080, write back"
 
 ### OpenCode End-to-End Agent Benchmark
 
-Captured via `scripts/bench/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`benchmarks/qwen36-27b-6bit/agent-bench.json`](benchmarks/qwen36-27b-6bit/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`qwen36-27b-6bit/agent-bench.json`](qwen36-27b-6bit/agent-bench.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -408,7 +408,7 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 Same model, same hardware, same OpenCode bench harness. The only variable is the server.
 
-**Setup for llmster:** LM Studio installed via `brew install --cask lm-studio` (v0.4.12). MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`. Bootstrapped `~/.lmstudio/bin/lms`, ran `lms get https://huggingface.co/mlx-community/Qwen3.6-27B-6bit`, loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`, served via `lms server start --bind 0.0.0.0`. Served identifier: `qwen3.6-27b` (lowercase, org prefix stripped — used as-is in the bench `--model` arg). Raw JSON: [`benchmarks/qwen36-27b-6bit/api-server-llmster.json`](benchmarks/qwen36-27b-6bit/api-server-llmster.json), [`api-tool-test-llmster.json`](benchmarks/qwen36-27b-6bit/api-tool-test-llmster.json), [`agent-bench-llmster.json`](benchmarks/qwen36-27b-6bit/agent-bench-llmster.json).
+**Setup for llmster:** LM Studio installed via `brew install --cask lm-studio` (v0.4.12). MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`. Bootstrapped `~/.lmstudio/bin/lms`, ran `lms get https://huggingface.co/mlx-community/Qwen3.6-27B-6bit`, loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`, served via `lms server start --bind 0.0.0.0`. Served identifier: `qwen3.6-27b` (lowercase, org prefix stripped — used as-is in the bench `--model` arg). Raw JSON: [`qwen36-27b-6bit/api-server-llmster.json`](qwen36-27b-6bit/api-server-llmster.json), [`api-tool-test-llmster.json`](qwen36-27b-6bit/api-tool-test-llmster.json), [`agent-bench-llmster.json`](qwen36-27b-6bit/agent-bench-llmster.json).
 
 **API-level tool calling (5-tool harness, 2026-04-30 prompts):**
 
@@ -458,7 +458,7 @@ This is the headline finding. Same MLX file, same hardware, same client harness,
 
 ### Typical Inference (`scripts/bench/bench_api_server.py`, 1 warmup + 2 runs, median)
 
-Raw JSON: [`benchmarks/qwen36-35b-rust/api-typical.json`](benchmarks/qwen36-35b-rust/api-typical.json).
+Raw JSON: [`qwen36-35b-rust/api-typical.json`](qwen36-35b-rust/api-typical.json).
 
 | Context (tokens) | TTFT (median) | Gen tok/s (median) |
 |:----------------:|:------:|:------:|
@@ -470,7 +470,7 @@ Generation throughput stays in the 80 tok/s band even at 8K prefill — matches 
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-rust/api-tool-test.json`](benchmarks/qwen36-35b-rust/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`qwen36-35b-rust/api-tool-test.json`](qwen36-35b-rust/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -497,7 +497,7 @@ At API level the 4-bit Qwen3.5-35B-A3B JANG 4K baseline (5.64 s, 1.18-1.21 s sin
 
 ### OpenCode End-to-End Agent Benchmark
 
-Captured via `scripts/bench/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions --verbose`. Raw JSON: [`benchmarks/qwen36-35b-rust/agent-bench.json`](benchmarks/qwen36-35b-rust/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions --verbose`. Raw JSON: [`qwen36-35b-rust/agent-bench.json`](qwen36-35b-rust/agent-bench.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -537,12 +537,12 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 **Model path:** `mlx-community/Ling-2.6-flash-mlx-6bit` (HF cache)
 **Deployment patches (all required, all idempotent):**
 1. Vendored `mlx_lm/models/bailing_hybrid.py` from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227) into `~/vllm-mlx-env/lib/python3.12/site-packages/mlx_lm/models/`
-2. [`scripts/patches/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patches/patch_mlx_lm_threadlocal_stream.py) — converts module-level thread-local `generation_stream` into a per-thread lazy accessor
-3. [`scripts/patches/patch_vllm_mlx_inline_gen.py`](../../scripts/patches/patch_vllm_mlx_inline_gen.py) — replaces `await asyncio.to_thread(...)` with direct synchronous calls so MLX kernels stay on the asyncio loop thread (required for thread-bound `mx.fast.metal_kernel` objects used by the linear-attention recurrence and GLA SSM kernel)
+2. [`scripts/patches/patch_mlx_lm_threadlocal_stream.py`](../../../scripts/patches/patch_mlx_lm_threadlocal_stream.py) — converts module-level thread-local `generation_stream` into a per-thread lazy accessor
+3. [`scripts/patches/patch_vllm_mlx_inline_gen.py`](../../../scripts/patches/patch_vllm_mlx_inline_gen.py) — replaces `await asyncio.to_thread(...)` with direct synchronous calls so MLX kernels stay on the asyncio loop thread (required for thread-bound `mx.fast.metal_kernel` objects used by the linear-attention recurrence and GLA SSM kernel)
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-29). Raw JSON: [`benchmarks/ling-2.6-flash-6bit/api-tool-test.json`](benchmarks/ling-2.6-flash-6bit/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-29). Raw JSON: [`ling-2.6-flash-6bit/api-tool-test.json`](ling-2.6-flash-6bit/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -569,7 +569,7 @@ Fastest completion of the 3-turn config-fix loop in this doc — beats the prior
 
 ### OpenCode End-to-End Agent Benchmark
 
-Captured via `scripts/bench/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions`. Raw JSON: [`benchmarks/ling-2.6-flash-6bit/agent-bench.json`](benchmarks/ling-2.6-flash-6bit/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions`. Raw JSON: [`ling-2.6-flash-6bit/agent-bench.json`](ling-2.6-flash-6bit/agent-bench.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|

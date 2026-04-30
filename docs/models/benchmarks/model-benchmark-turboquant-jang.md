@@ -80,7 +80,7 @@ Model: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` (~17.5 GB weights, adaptive mixed-prec
 **Key properties:**
 - **Instant mmap load** -- memory-mapped weight files load in <1 second (vs 5-15s for standard MLX safetensors)
 - **Same inference path** -- once loaded via `jang_tools.load_jang_model()`, the model runs through standard `mlx_lm` generation with no runtime overhead
-- **Requires integration** -- oMLX needs the [AlexTzk fork overlay](../server/omlx/jang-fork.md) (PR #364); mlx-lm and vllm-mlx use a [monkey-patch wrapper](../server/vllm-mlx/jang-patch.md)
+- **Requires integration** -- oMLX needs the [AlexTzk fork overlay](../../server/omlx/jang-fork.md) (PR #364); mlx-lm and vllm-mlx use a [monkey-patch wrapper](../../server/vllm-mlx/jang-patch.md)
 
 This benchmark tests whether TurboQuant's KV cache compression stacks with JANG weight quantization.
 

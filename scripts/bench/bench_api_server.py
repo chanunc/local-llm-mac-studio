@@ -2,7 +2,7 @@
 """Benchmark a chat-completions server via streaming SSE.
 
 Measures TTFT, prefill tok/s, and gen tok/s at multiple context lengths.
-Matches the methodology used in docs/models/model-benchmark-api-server.md
+Matches the methodology used in docs/models/benchmarks/model-benchmark-api-server.md
 (streaming /v1/chat/completions, 50 generated tokens, temperature 0.0,
 1 cold + warm runs per context, median reported).
 """

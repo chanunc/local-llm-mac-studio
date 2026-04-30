@@ -2,6 +2,14 @@
 
 Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`) — a sparse MoE pruned from the full MiMo-V2.5 checkpoint by `jedisct1` to keep only the first 130 experts per layer plus a quantized head. ~80 GB on disk, 4-bit MLX uniform quant, multimodal input support in the chat template (text + vision + audio pads) but text-only output via vllm-mlx. Default thinking ON (`<think>`). Deployed 2026-04-30.
 
+## TL;DR
+
+**Findings:** Passes raw API single-tool calls cleanly. Fails agent workloads — with a 10-tool catalog the model outputs 8K tokens of prose instead of calling a tool. Three parser/thinking configs tested; all produce near-zero pass rates (0–1 out of 3 runs per scenario). Results are non-deterministic: a run that works once fails on the next iteration.
+
+**Limitations:** Expert pruning to 130/layer degrades simultaneous instruction-following and structured output under long system prompts. Thinking mode (+8K context pressure) was the initial hypothesis; disabling it didn't fix browse and broke search. Hermes parser was the secondary hypothesis; switching to it didn't fix search and only marginally improved browse.
+
+**Blocker:** No known fix — the failure is architectural (pruning calibration loss), not a parser or prompt issue. Reverted to Ling-2.6-flash as production. Retry only if a less-aggressive pruning variant (e.g. `first200experts`) becomes available.
+
 | Spec | Value |
 |:-----|:------|
 | HuggingFace | [jedisct1/MiMo-V2.5-MLX-4bit-first130experts-qhead](https://huggingface.co/jedisct1/MiMo-V2.5-MLX-4bit-first130experts-qhead) |
@@ -41,14 +49,23 @@ The Ling thread-local-stream + inline-gen patches (`scripts/patch_mlx_lm_threadl
 
 ## Benchmarks (2026-04-30)
 
-Full results: [`benchmarks/mimo-v2.5-4bit-130experts/agent-bench.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench.json).
+Three configs were tested to investigate Fix #1 (disable thinking) and Fix #2 (Hermes parser):
 
-### OpenCode end-to-end (`opencode run --format json`)
+| Config | Files |
+|:-------|:------|
+| Baseline: thinking ON, `qwen3_coder` parser | [`agent-bench.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench.json) |
+| Fix1: thinking OFF, `qwen3_coder` parser | [`agent-bench-thinking-off.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench-thinking-off.json) |
+| Fix1+2: thinking OFF, Hermes parser | [`agent-bench-thinking-off-hermes.json`](benchmarks/mimo-v2.5-4bit-130experts/agent-bench-thinking-off-hermes.json) |
 
-| Scenario | Wall median | Outcome | Pass rate |
-|:---------|:------------|:--------|:---------:|
-| Browse www.example.com | 55.51 s ⚠ | 1/3 runs emit invalid tool call, 2/3 hit 8K-token cap before tool | 0/3 |
-| Browse Hackernews latest topic | 222.64 s ⛔ | 0/3 runs ever call a tool — model reasons until max_tokens | 0/3 |
+### OpenCode end-to-end — tool call success rate
+
+| Config | Browse (3 runs) | Search (3 runs) |
+|:-------|:----------------|:----------------|
+| Baseline (thinking ON) | 0/3 valid — 1 invalid call, 2 hit 8K cap | 0/3 — all hit 8K cap |
+| Fix1 (thinking OFF) | 0/3 — all hit 8K cap | 2/3 — 5 webfetch calls, 1 run hit cap |
+| Fix1+2 (OFF + Hermes) | 1/3 — 1 webfetch, 2 hit 8K cap | 0/3 — all hit 8K cap |
+
+Failure signature is identical in all cases: `input_tokens=0, output_tokens=8192` — the model generates a full 8K-token response (prose or repetition) without emitting a tool call. No parser combination fully resolves this. Successes appear random across runs with the same config.
 
 ### Raw API (`/v1/chat/completions` with single tool)
 
@@ -58,11 +75,11 @@ Full results: [`benchmarks/mimo-v2.5-4bit-130experts/agent-bench.json`](benchmar
                 "function":{"name":"webfetch","arguments":"{\"url\": \"www.example.com\"}"}}]}
 ```
 
-A single-tool prompt produces a clean tool call (45 completion tokens, finish_reason=`tool_calls`). The breakdown is between API-level and OpenCode's 10-tool agent path, not at the server config layer.
+A single-tool prompt produces a clean tool call (45 completion tokens, finish_reason=`tool_calls`). The breakdown is at the OpenCode layer — the 10-tool catalog + system prompt overwhelms this pruned variant.
 
 ## Caveats
 
-- **Not viable as an agent backbone in this stack today.** OpenCode + thinking-on + 10-tool catalog is too much for this pruned variant — model spends all 8192 output tokens reasoning instead of emitting a tool call. JANG_4K (also 35B-A3B sparse) handles the same load in 12-16 s.
+- **Not viable as an agent backbone in this stack.** Disabling thinking (Fix #1) and switching to the Hermes parser (Fix #2) do not fix the tool-calling failure reliably — pass rates remain near 0/3 per scenario per run. The model alternates between "hit 8K cap" and occasional valid calls unpredictably. JANG_4K (also 35B-A3B sparse) handles the same load in 12-16 s with consistent tool calling.
 - **Heavy expert pruning likely cause.** The base MiMo-V2.5 ships with hundreds of experts; the `first130experts-qhead` cut keeps only the first 130 plus a quantized output head. Experts pruned this aggressively from a fresh base often lose calibration on long-form reasoning + structured output simultaneously.
 - **Multimodal inputs unused.** Chat template includes vision/audio/video tokens but vllm-mlx loads as text-only. If multimodal is needed, mlx-vlm with the unpruned base is the path forward.
 - **No comparison vs unpruned base.** The full `XiaomiMiMo/MiMo-V2.5-Pro` is multi-host distributed (per the PR description's `mlx.launch jaccl` example), so it doesn't fit the Mac Studio 96 GB single-host constraint. The 130-expert variant is the only single-host MiMo V2.5 path; if it doesn't work for tool-heavy agents, retry with a less aggressive pruning (e.g. `first200experts`) when one becomes available.

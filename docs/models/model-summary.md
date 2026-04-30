@@ -20,6 +20,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision encoder · 3B active · 262K native (1M YaRN)
+- [Qwen3.6-35B-A3B (4-bit)](#qwen36-35b-a3b-4-bit) — Same hybrid arch · 4-bit MLX (~22 GB) · dflash-mlx target paired with `z-lab/Qwen3.6-35B-A3B-DFlash` drafter
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27B Qwen3.6 hybrid · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27B Qwen3.6 + ViT · 22 GB · uniform 6-bit · llmster recommended (3-5× faster agent loop than vllm-mlx)
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35B/3B MoE · uniform 8-bit MLX · LoRA merged on 356K Rust commits · best wall-time on agent loops
@@ -509,6 +510,58 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 - `waybarrios/vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only Apple-Silicon server that exposes MTP/speculative decoding through OpenAI API for Qwen3.6 today, but inherits the upstream `mlx-lm` hybrid-attention cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)) — not deployed here yet
 - MTP speculative decoding through `mlx-openai-server` remains unwired ([#177](https://github.com/cubist38/mlx-openai-server/issues/177), [#204](https://github.com/cubist38/mlx-openai-server/issues/204))
 - Streaming `reasoning_content` / `content` split **does work cleanly** with the `qwen3_vl` parser on `mlx-openai-server` 1.7.1 — the Gemma-4-only streaming-leak bug ([#280](https://github.com/cubist38/mlx-openai-server/issues/280)) does not affect Qwen3.6
+
+---
+
+## Qwen3.6-35B-A3B (4-bit)
+
+Same hybrid Gated DeltaNet + MoE architecture as the 6-bit variant above, quantized to 4-bit MLX (~22 GB on disk). Used as the **target model for the `dflash-mlx` speculative-decoding sidecar** paired with `z-lab/Qwen3.6-35B-A3B-DFlash` (0.5B BF16 drafter, ~1 GB). Not currently routed through any other server in this stack.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| MLX 4-bit | [mlx-community/Qwen3.6-35B-A3B-4bit](https://huggingface.co/mlx-community/Qwen3.6-35B-A3B-4bit) |
+| DFlash drafter | [z-lab/Qwen3.6-35B-A3B-DFlash](https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash) (0.5B BF16) |
+| Format | MLX safetensors (multimodal `Qwen3_5MoeForConditionalGeneration` wrapper, weights nested under `language_model.*`) |
+| Vendor | Alibaba Qwen; MLX conversion by mlx-community; drafter by z-lab |
+| Parameters | 35B total, ~3B active (MoE, 256 experts, 8 routed + 1 shared); drafter adds 0.5B |
+| Density | Sparse hybrid (same as 6-bit variant): 48 Gated DeltaNet + 16 Gated Attention layers |
+| Quantization | 4-bit affine MLX, group_size=64, with selective 8-bit on `mlp.gate` / `shared_expert_gate` |
+| Specialties | Speculative-decoding target on `dflash-mlx`; vision-language; thinking by default |
+| On-disk size | ~22 GB target + ~1 GB drafter (vs ~27 GB at 6-bit) |
+| Context Size | 262K native (matches 6-bit variant); benchmarked here at 32K |
+| License | Apache-2.0 (target); MIT (drafter) |
+| Key Features | DFlash drafter accepts ~87 % of drafted tokens on this target → sustained 74-89 tok/s decode through `dflash-serve` |
+
+**dflash-mlx server config:**
+
+```bash
+~/dflash-mlx-env/bin/dflash-serve \
+  --host 0.0.0.0 --port 8098 \
+  --model mlx-community/Qwen3.6-35B-A3B-4bit \
+  --draft-model z-lab/Qwen3.6-35B-A3B-DFlash \
+  --temp 0.0 --max-tokens 512
+```
+
+`--draft-model` is required — the built-in `DRAFT_REGISTRY` only auto-resolves Qwen3.5 family pairs.
+
+**Performance** (Mac Studio M3 Ultra, dflash-mlx 0.1.4.1 + post-patch mlx-lm 0.31.3, `temperature=0.0`, `block_tokens=16`):
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|------------:|----------------:|---------:|
+| 512  | **89.5** | 1,366 | 0.39 |
+| 4K   | 88.4 | **1,812** | 2.27 |
+| 8K   | 87.0 | 1,524 | 5.40 |
+| 32K  | 74.1 | 837 | 39.2 |
+
+Tool-call latency: 5/5 single-call scenarios, 1.68-6.08 s. Multi-turn 3-turn loop: 5.9 s total. Agent-bench browse: 27.59 s wall median (13% faster than llmster on the smaller dense Qwen3.6-27B-6bit). Agent-bench search: 54.78 s wall median (2.1× slower — 3-turn loop with growing context favors prefill, where llmster's closed runtime wins).
+
+Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](benchmarks/qwen36-35b-a3b-4bit/).
+
+**Caveats:**
+- Requires three local patches against upstream packages — see [`docs/servers/dflash-mlx/summary.md`](../servers/dflash-mlx/summary.md#installation).
+- PyPI 0.1.0 has no tool-calling — install dflash-mlx from `git+https://github.com/bstnxbt/dflash-mlx.git` (which currently resolves to 0.1.4.1).
+- Decode-bound win only; prefill-bound long-context multi-turn workloads lose to llmster.
 
 ---
 

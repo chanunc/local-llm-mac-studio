@@ -250,6 +250,96 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 ---
 
+## Qwen3.6-35B-A3B (4-bit) on dflash-mlx
+
+Model: `mlx-community/Qwen3.6-35B-A3B-4bit` paired with `z-lab/Qwen3.6-35B-A3B-DFlash` drafter (DFlash speculative decoding via block-diffusion).
+Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs each. Note the lower max_tokens cap vs the 6-bit row above (50 vs 150) — these are decode-throughput numbers; for full benchmark detail see [agent-bench-dflash-mlx.json](qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json).
+
+**Server:** dflash-mlx 0.1.4.1 (`pip install 'git+https://github.com/bstnxbt/dflash-mlx.git'` + 3 local patches — see [`docs/servers/dflash-mlx/summary.md`](../../servers/dflash-mlx/summary.md)). Wraps `mlx_lm.server`. `--draft-model` required for Qwen3.6 (built-in `DRAFT_REGISTRY` only auto-resolves Qwen3.5 family). Raw JSON: [api-server-dflash-mlx.json](qwen36-35b-a3b-4bit/api-server-dflash-mlx.json).
+
+### Generation Speed (tok/s)
+
+| Context | dflash-mlx | mlx-openai-server (6-bit) |
+|:--------|:----------:|:--------------------------:|
+| 512 | **89.5** | 52.5 |
+| 4K | 88.4 | 53.0 |
+| 8K | 87.0 | 51.3 |
+| 32K | 74.1 | 46.3 |
+
+### Prefill Speed (tok/s)
+
+| Context | dflash-mlx | mlx-openai-server (6-bit) |
+|:--------|:----------:|:--------------------------:|
+| 512 | 1,366 | 1,401 |
+| 4K | **1,812** | 2,237 |
+| 8K | 1,524 | 2,197 |
+| 32K | 837 | 1,798 |
+
+### Time to First Token (seconds)
+
+| Context | dflash-mlx | mlx-openai-server (6-bit) |
+|:--------|:----------:|:--------------------------:|
+| 512 | 0.39 | 0.34 |
+| 4K | 2.27 | 1.64 |
+| 8K | 5.40 | 3.32 |
+| 32K | 39.2 | 16.22 |
+
+**Notes:**
+- DFlash drafter accepts ~87% of drafted tokens on Qwen3.6-35B-A3B → effective decode is **1.7× faster** than the 6-bit autoregressive baseline at 512 ctx and **1.6× faster** at 32K. The win is decode-bound; prefill is comparable or slower (4-bit gets a small kernel benefit at 4K but the 32K prefill is 2.1× slower than 6-bit on mlx-openai-server, likely due to draft-model prefill overlap).
+- TTFT scales worse with context than mlx-openai-server because dflash-mlx pays both target-prefill and draft-prefill costs. At 32K the TTFT is 2.4× higher.
+- Bench script: [`bench_api_server.py`](../../../scripts/bench/bench_api_server.py) — note: requires the `delta.reasoning` recognition fix landed 2026-04-30 (mlx-lm naming differs from `delta.reasoning_content` used by other servers).
+- Streaming reasoning leaves through `delta.reasoning` (not `reasoning_content`) — informational; `bench_api_server.py` already handles both.
+
+---
+
+## Qwen3.5-4B + DFlash drafter — bstnxbt vs Aryagm (cross-fork comparison, 2026-04-30)
+
+Same target (`Qwen/Qwen3.5-4B`) and drafter (`z-lab/Qwen3.5-4B-DFlash`) on both DFlash-MLX forks, benched against `bench_api_server.py` (50 max tokens, temperature 0.0, 1 warmup + 2 measured per context). Production (Ling on `vllm-mlx :8000`) was left running throughout — the 4B target+drafter occupies <10 GB unified memory.
+
+**Aryagm fork** (`https://github.com/Aryagm/dflash-mlx`) — `dflash-mlx-openai-server`, custom HTTPServer, `tools[]` silently dropped (verified — `prompt_tokens=24` regardless of catalog). Adapter system limited to `qwen3` and `qwen3_5` model_types; **rejects `qwen3_5_moe`** (Qwen3.6-35B-A3B-4bit fails with `NotImplementedError: Unsupported MLX DFlash target model_type='qwen3_5_moe'`). Default verify mode `stream`, no `--temp` / `--top-p`. Raw JSON: [`api-server-aryagm.json`](qwen35-4b-dflash/api-server-aryagm.json).
+
+**bstnxbt fork** (`https://github.com/bstnxbt/dflash-mlx`) 0.1.4.1 — `dflash-serve`, wraps `mlx_lm.server`. Full `tools[]` / `temp` / `top_p` / sampling controls. Requires three local patches against upstream packages (see [`docs/servers/dflash-mlx/summary.md`](../../servers/dflash-mlx/summary.md)). Raw JSON: [`api-server-bstnxbt.json`](qwen35-4b-dflash/api-server-bstnxbt.json).
+
+### Generation Speed (tok/s)
+
+| Context | Aryagm | bstnxbt | bstnxbt advantage |
+|:--------|:------:|:-------:|:------:|
+| 512 | 34.7 | **67.0** | **1.93×** |
+| 4K | 36.1 | **66.4** | **1.84×** |
+| 8K | 24.3 | **65.5** | **2.69×** |
+| 32K | 10.8 | **59.0** | **5.5×** |
+
+### Prefill Speed (tok/s)
+
+| Context | Aryagm | bstnxbt |
+|:--------|:------:|:-------:|
+| 512 | **1,553** | 1,277 |
+| 4K | **1,740** | 1,664 |
+| 8K | **1,631** | 1,462 |
+| 32K | **1,154** | 790 |
+
+### Time to First Token (seconds)
+
+| Context | Aryagm | bstnxbt |
+|:--------|:------:|:-------:|
+| 512 | **0.35** | 0.42 |
+| 4K | **2.37** | 2.48 |
+| 8K | **5.04** | 5.62 |
+| 32K | **28.4** | 41.5 |
+
+**Findings:**
+- **bstnxbt sustains 1.8-5.5× faster decode** at every context length on the same target+drafter pair. Most dramatic at 32K (5.5×) where the drafter's speculative budget compounds.
+- **Aryagm has slightly faster prefill** (1,154 vs 790 tok/s @ 32K) and faster TTFT (28.4 vs 41.5 s @ 32K). Trade-off: Aryagm hits first token sooner but generates much slower thereafter.
+- The two CLIs expose different speculation knobs (Aryagm's `--max-speculative-tokens` / `--verify-mode` vs bstnxbt's `--block-tokens`). Defaults were used in both runs — the gap may narrow with tuning, but the Aryagm decode-rate fall-off across context is the dominant signal.
+- **Tool-calling capability splits decisively:** Aryagm 0.1.x drops `tools[]` entirely; bstnxbt 0.1.4.1 with `mlx_lm.server` wrap exposes full OpenAI tool surface. For agent workloads only bstnxbt is currently viable.
+- **Model-type coverage:** Aryagm only supports `qwen3` and `qwen3_5` adapters → rejects `qwen3_5_moe` (Qwen3.6-35B-A3B-4bit). bstnxbt accepts any model `mlx_lm.utils.load` can load.
+
+For the **production-relevant Qwen3.6-35B-A3B-4bit + DFlash** pair, only bstnxbt has been benched — see [Qwen3.6-35B-A3B (4-bit) on dflash-mlx](#qwen36-35b-a3b-4-bit-on-dflash-mlx) above.
+
+---
+
 ## Qwen3.5-122B-A10B JANG 2S @ 128K
 
 Model: `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` (122B MoE, ~10B active, JANG 2S ≈2.1-bit average)  

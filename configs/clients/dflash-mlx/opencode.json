@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-dflash": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:8098/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "mlx-community/Qwen3.6-35B-A3B-4bit": {
+          "name": "Qwen3.6-35B-A3B 4-bit + DFlash drafter (provisional)",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-dflash/mlx-community/Qwen3.6-35B-A3B-4bit",
+  "small_model": "macstudio-dflash/mlx-community/Qwen3.6-35B-A3B-4bit"
+}

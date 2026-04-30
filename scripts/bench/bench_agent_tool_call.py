@@ -478,6 +478,7 @@ def main():
     parser.add_argument("--skip-permissions", action="store_true", help="Pass --dangerously-skip-permissions to agent")
     parser.add_argument("--working-dir", help="Working directory for agent (default: /tmp/agent-bench)")
     parser.add_argument("--output", help="JSON output file (default: stdout)")
+    parser.add_argument("--base-url", help="Override base_url for health check (default: from agent config)")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     args = parser.parse_args()
 
@@ -495,7 +496,7 @@ def main():
         sys.exit(1)
 
     model = args.model or config_info.get("default_model", "")
-    base_url = config_info.get("base_url", "")
+    base_url = args.base_url or config_info.get("base_url", "")
 
     print(f"  Config: {config_info.get('config_path', '')}", file=sys.stderr)
     print(f"  Server: {base_url}", file=sys.stderr)

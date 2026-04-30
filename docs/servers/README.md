@@ -6,6 +6,7 @@ Operational runbooks for inference servers on the Mac Studio. Use [`docs/current
 |:--|:--|:--|
 | `vllm-mlx` | [`vllm-mlx/summary.md`](vllm-mlx/summary.md) | Production primary, single-model, OpenAI + Anthropic APIs |
 | `llmster` | [`llmster/summary.md`](llmster/summary.md) | Fast standard MLX/GGUF sidecar on port 1234 |
+| `dflash-mlx` | [`dflash-mlx/summary.md`](dflash-mlx/summary.md) | Provisional DFlash speculative-decoding sidecar on port 8098 |
 | `mlx-openai-server` | [`mlx-openai-server/summary.md`](mlx-openai-server/summary.md) | OpenAI-only multi-model YAML server |
 | `oMLX` | [`omlx/summary.md`](omlx/summary.md) | Homebrew-managed multi-model server with dashboard |
 | `vmlx` | [`vmlx/summary.md`](vmlx/summary.md) | JANGTQ / TurboQuant path via MLX Studio bundled Python |

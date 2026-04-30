@@ -28,7 +28,9 @@ Notes:
 - Ling needs the `bailing_hybrid` vendor file plus the thread-local-stream and inline-generation patches documented in [`models/per-model/model-summary-ling.md`](models/per-model/model-summary-ling.md).
 - Practical context ceiling on the 96 GB Mac Studio is about 64K; 128K OOMs.
 
-## Sidecar
+## Sidecars
+
+### llmster (LM Studio headless)
 
 | Field | Value |
 |:--|:--|
@@ -41,6 +43,31 @@ Notes:
 | Runbook | [`docs/servers/llmster/summary.md`](servers/llmster/summary.md) |
 
 Use llmster for standard MLX/GGUF models when the fast prefill path matters. It does not support JANG, JANGTQ, or `bailing_hybrid`.
+
+### dflash-mlx (DFlash speculative decoding)
+
+| Field | Value |
+|:--|:--|
+| Server | `dflash-mlx` / `dflash-serve` (wraps `mlx_lm.server`) |
+| Target | `mlx-community/Qwen3.6-35B-A3B-4bit` (~22 GB) |
+| Drafter | `z-lab/Qwen3.6-35B-A3B-DFlash` (~1 GB, 0.5B BF16) |
+| Port | `8098` |
+| Auth | None |
+| Client template set | [`configs/clients/dflash-mlx/`](../configs/clients/dflash-mlx/) |
+| Status | Provisional, OpenCode-only template; requires three local patches |
+| Runbook | [`docs/servers/dflash-mlx/summary.md`](servers/dflash-mlx/summary.md) |
+
+Launch shape:
+
+```bash
+~/dflash-mlx-env/bin/dflash-serve \
+  --host 0.0.0.0 --port 8098 \
+  --model mlx-community/Qwen3.6-35B-A3B-4bit \
+  --draft-model z-lab/Qwen3.6-35B-A3B-DFlash \
+  --temp 0.0 --max-tokens 512
+```
+
+Use dflash-mlx for decode-bound single-shot or short-multi-turn workloads. Loses to llmster when prefill dominates (long-context multi-turn agent loops).
 
 ## Fallbacks
 

@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-04-30**
+**Last updated: 2026-04-30 (added dflash-mlx provisional sidecar)**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -15,6 +15,7 @@ For the current production server/model and provisional sidecar state, read [`..
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | **JANGTQ** -- only route for TurboQuant-weight (JANGTQ) CRACK models; runs out of MLX Studio bundled Python | MiniMax-M2.7-JANGTQ-CRACK (~57GB) | Not needed |
 | **llmster** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx for non-JANG models | Qwen3.6-27B-6bit (~22GB) | Not needed |
+| **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
 Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but in practice memory pressure on a 96 GB M3 Ultra means stopping the port-8000 server before loading a model into llmster. vllm-mlx + Ling is the production default; switch to mlx-openai-server for multi-model with low overhead, oMLX when you need the full 9-model roster + admin dashboard, vmlx when you need an uncensored JANGTQ model (the loader + Metal kernels ship only inside the MLX Studio DMG's bundled Python — see [`docs/models/model-summary.md`](../docs/models/model-summary.md#unblocking-path--corrected--deployed-2026-04-20)), or llmster when you need the fastest possible agent loop on a standard MLX model.
 
@@ -124,6 +125,16 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 
 Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
 
+### `clients/dflash-mlx/` -- DFlash Speculative-Decoding Sidecar (Standard MLX, Port 8098)
+
+| File | Copy to | Used by |
+|------|---------|---------|
+| `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
+
+**Target:** `mlx-community/Qwen3.6-35B-A3B-4bit` (~22 GB, hybrid MoE 35B/3B + VL). **Drafter:** `z-lab/Qwen3.6-35B-A3B-DFlash` (~1 GB, 0.5B BF16). Standard MLX safetensors — no JANG/JANGTQ/`bailing_hybrid`/GGUF. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because dflash-mlx is provisional (decode-bound research server; loses to llmster on prefill-bound long-context multi-turn workloads).
+
+Speaks **OpenAI-compatible** API on port **8098** (NOT 8000). No API key required. Wraps `mlx_lm.server` in 0.1.4.1+ (PyPI 0.1.0 has no tool-calling — install from `git+https://github.com/bstnxbt/dflash-mlx.git`). Three local patches required: `patch_dflash_mlx_serve.py`, `patch_mlx_lm_match.py`, `patch_dflash_mlx_host.py` (the last only for 0.1.0). The `--draft-model` flag is **required** for Qwen3.6 (built-in `DRAFT_REGISTRY` only auto-resolves Qwen3.5 family). Full server runbook: [`docs/servers/dflash-mlx/summary.md`](../docs/servers/dflash-mlx/summary.md).
+
 ## 🔀 Switching Servers
 
 ```bash
@@ -159,4 +170,16 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
 pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
 ~/.lmstudio/bin/lms load qwen3.6-27b --gpu max --context-length 65536 -y
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
+
+# Switch to dflash-mlx (port 8098 — does not displace port 8000 but eats ~25 GB unified memory)
+# First-time: pip install 'git+https://github.com/bstnxbt/dflash-mlx.git' in ~/dflash-mlx-env/,
+#             then run patch_dflash_mlx_serve.py + patch_mlx_lm_match.py once.
+# In practice on a 96 GB box, also stop the port-8000 server first if it's serving Ling (~80 GB).
+pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
+nohup ~/dflash-mlx-env/bin/dflash-serve \
+  --host 0.0.0.0 --port 8098 \
+  --model mlx-community/Qwen3.6-35B-A3B-4bit \
+  --draft-model z-lab/Qwen3.6-35B-A3B-DFlash \
+  --temp 0.0 --max-tokens 512 \
+  > /tmp/dflash-mlx.log 2>&1 &
 ```

@@ -27,6 +27,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 
 | Plan | Topic |
 |:--|:--|
+| [`done/plan-dflash-mlx-deploy.md`](done/plan-dflash-mlx-deploy.md) | dflash-mlx sidecar (Qwen3.6-35B-A3B + DFlash drafter) — shipped 2026-04-30, runbook at `docs/servers/dflash-mlx/summary.md` |
 | [`done/plan-hot-cache-max-size-per-model.md`](done/plan-hot-cache-max-size-per-model.md) | oMLX per-model hot cache patch (shipped, lives in `scripts/patches/patch_omlx_cache.py`) |
 | [`done/plan-mac-studio-lmstudio-ollama-benchmark.md`](done/plan-mac-studio-lmstudio-ollama-benchmark.md) | LM Studio / Ollama benchmark — drove llmster adoption 2026-04-30 |
 | [`done/plan-rearrange-docs-organization.md`](done/plan-rearrange-docs-organization.md) | Repo structure reorganization (this layout) |

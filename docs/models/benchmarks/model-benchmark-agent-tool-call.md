@@ -55,6 +55,7 @@ All numbers below are medians; per-model detail sections follow further down.
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
+| Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s 🥈 | **4.74 s** 🏆 |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
@@ -68,14 +69,15 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **12.86 s** 🏆 / 11.47 s | **16.28 s** 🏆 / 14.98 s | 2 / 2 turns; `webfetch`; sparse 3B-active MoE — sweeps both scenarios on the new prompt set |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`; A3B sparsity; close behind JANG_4K on browse, search splits into top-stories + top-item fetches |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search run took the `skill` route); 7.4B active dominated by per-token MLA cost — slower than the Qwen 35B-A3Bs but no thinking overhead |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`; dense 27 B + thinking-on adds 30+ s/turn |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`; A3B but TurboQuant kernels stay slow under deep thinking; one 297 s search outlier |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`; standard 6-bit MLX has no JANG mixed-precision speedup; thinking-on dense path is the slowest browse |
-| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`; **3.1× faster browse, 4.9× faster search than vllm-mlx on the identical model file**. llmster's MLX runtime exposes `<think>` content as `reasoning_content` (~70-79 reasoning tokens captured), and its prefill kernel is dramatically faster (47K tok/s @ 32K vs vllm-mlx's ~310 tok/s on the JANG variant). Direct prompt benchmark in [`model-benchmark-api-server.md`](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx) |
-| MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s / 54.29 s ⚠ | ⛔ **fail** | Browse: 1/3 runs emit invalid tool call, 2/3 hit 8K-token cap before any tool; Search: 0/3 runs ever call a tool — model reasons forever and exhausts max_tokens. Raw `/v1/chat/completions` with a single `webfetch` tool *does* emit valid tool calls, so the issue is OpenCode's 10-tool catalog + thinking-on in this pruned variant, not the server config |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **12.86 s** 🏆 / 11.47 s | **16.28 s** 🏆 / 14.98 s | 2 / 2 turns; `webfetch`.<br>Sparse 3B-active MoE.<br>Sweeps both scenarios on<br>the new prompt set. |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`.<br>A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories<br>+ top-item fetches. |
+| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch`<br>(one search took `skill`).<br>7.4B active dominated by MLA cost.<br>Slower than Qwen 35B-A3Bs but<br>no thinking overhead. |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on<br>adds 30+ s/turn. |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels<br>stay slow under deep thinking;<br>one 297 s search outlier. |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`.<br>Standard 6-bit MLX —<br>no JANG mixed-precision speedup;<br>thinking-on dense path is<br>the slowest browse. |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`.<br>**3.1× browse, 4.9× search**<br>vs vllm-mlx (same model file).<br>Prefill 47K tok/s @ 32K.<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
+| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2 / 3 turns; `webfetch`. 87% draft accept.<br>**13% faster browse vs llmster**<br>(smaller 27B target);<br>**2.1× slower search** — growing<br>context favors prefill. [Raw](qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json). |
+| MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s / 54.29 s ⚠ | ⛔ **fail** | Browse: 1/3 invalid tool call, 2/3 hit 8K cap.<br>Search: 0/3 ever call a tool.<br>API-level harness w/ single tool *works*<br>— issue is OpenCode's 10-tool catalog<br>+ thinking-on, not server. |
 
 **2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
 
@@ -90,6 +92,7 @@ Two medians reported per scenario:
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
+| Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 
 ---
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Documentation and configuration for a local LLM network centered on a **Mac Studio M3 Ultra (96GB)**. The primary server is **vllm-mlx** running `mlx-community/Ling-2.6-flash-mlx-6bit` (sparse 104B / 7.4B-active `bailing_hybrid`, 6-bit MLX, ~80 GB; deployed 2026-04-29 — requires three local patches, see Known Issues). **llmster** (LM Studio headless, port 1234) was added 2026-04-30 as the recommended server for standard MLX models — 3-5× faster end-to-end than vllm-mlx on agent loops. **oMLX** is available as a multi-model server with SSD caching when model variety is needed. vllm-mlx and oMLX speak OpenAI and Anthropic API natively on port 8000; llmster speaks OpenAI only on port 1234.
+Documentation and configuration for a local LLM network centered on a **Mac Studio M3 Ultra (96GB)**. The primary server is **vllm-mlx** running `mlx-community/Ling-2.6-flash-mlx-6bit` (sparse 104B / 7.4B-active `bailing_hybrid`, 6-bit MLX, ~80 GB; deployed 2026-04-29 — requires three local patches, see Known Issues). **llmster** (LM Studio headless, port 1234) was added 2026-04-30 as the recommended server for standard MLX models — 3-5× faster end-to-end than vllm-mlx on agent loops. **dflash-mlx** (DFlash speculative-decoding sidecar, port 8098) was added 2026-04-30 for single-shot decode-bound workloads — sustains 74-89 tok/s on Qwen3.6-35B-A3B-4bit + the matching DFlash drafter at 86.7% draft acceptance. **oMLX** is available as a multi-model server with SSD caching when model variety is needed. vllm-mlx and oMLX speak OpenAI and Anthropic API natively on port 8000; llmster and dflash-mlx speak OpenAI only.
 
 **Data flow:**
 ```
@@ -14,7 +14,8 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (<MAC
   OpenClaw                               oMLX (multi-model) :8000
   Pi                                     vmlx (JANGTQ) :8000
                                          llmster (LM Studio) :1234
-                                         OpenAI + Anthropic API native (llmster: OpenAI only)
+                                         dflash-mlx (sidecar) :8098
+                                         OpenAI + Anthropic API native (llmster + dflash-mlx: OpenAI only)
 ```
 
 SSH aliases: `macstudio` (Mac Studio over LAN), `macstudio-ts` (Mac Studio over Tailscale), `narutaki` (Linux client).
@@ -24,8 +25,9 @@ SSH aliases: `macstudio` (Mac Studio over LAN), `macstudio-ts` (Mac Studio over 
 - **Primary server:** vllm-mlx pip-installed in `~/vllm-mlx-env/` on Mac Studio. **Production model**: `mlx-community/Ling-2.6-flash-mlx-6bit` (104B/7.4B-active `bailing_hybrid` MoE, 6-bit MLX, ~80 GB; deployed 2026-04-29 — requires PR #1227 vendoring + threadlocal-stream patch + inline-gen patch, see Known Issues for the full recipe). Started manually via `~/vllm-mlx-env/bin/vllm-mlx serve` with `--enable-auto-tool-choice --tool-call-parser hermes`. The `run_vllm_jang.py` wrapper is used for JANG-format models (e.g. Qwen3.6-27B JANG 4M dense+VL fallback).
 - **Feature-rich alternative:** mlx-openai-server pip-installed in `~/mlx-openai-server-env/` on Mac Studio. Trie-based prompt caching, speculative decoding, Qwen3.5 reasoning parser, multi-model YAML config with process isolation. 4-15% overhead (worse than vllm-mlx at long contexts). OpenAI API only. JANG support via `.pth` patch (`jang_patch.pth` + `jang_mlx_patch.py` in venv site-packages), activated by `JANG_PATCH_ENABLED=1` env var. Survives pip upgrades. Current roster in `~/mlx-openai-server-multimodel.yaml`: `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` + `mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit`.
 - **Multi-model server:** oMLX installed via Homebrew on Mac Studio, with AlexTzk fork overlay for JANG support (PR #364). Config lives in `~/.omlx/` on the Mac Studio (not in this repo). Models are MLX safetensors or JANG mixed-precision format stored in `~/.omlx/models/`.
+- **DFlash sidecar:** dflash-mlx pip-installed in `~/dflash-mlx-env/` on Mac Studio (Python 3.11). **Pair**: `mlx-community/Qwen3.6-35B-A3B-4bit` target + `z-lab/Qwen3.6-35B-A3B-DFlash` drafter. Wraps `mlx_lm.server` (in 0.1.4.1+ from main-branch git only — PyPI 0.1.0 has no tool-calling). Speculative decoding via block-diffusion drafter, 86.7% draft acceptance on Qwen3.6, 74-89 tok/s sustained decode. OpenAI API on port **8098**. Requires three local patches: `patch_dflash_mlx_serve.py` (two upstream bugs in `DFlashModelProvider` + startup banner), `patch_mlx_lm_match.py` (tool-detection trie reset), and `patch_dflash_mlx_host.py` only if pinned to 0.1.0. `--draft-model` flag is **required** for Qwen3.6 (built-in `DRAFT_REGISTRY` only auto-resolves Qwen3.5 family pairs). Provisional posture (mirrors llmster) — `configs/clients/dflash-mlx/opencode.json` only.
 - **JANGTQ server:** vmlx via the MLX Studio DMG (v1.3.65+) bundled Python at `/Applications/vMLX.app/Contents/Resources/bundled-python/python/`. Only route today for TurboQuant-weight models (`*JANGTQ*` / `*JANGTQ-CRACK*`) because the public `jang-tools` pypi package lacks `load_jangtq` + the `turboquant/*kernel*` Metal kernels ([jjang-ai/jangq#5](https://github.com/jjang-ai/jangq/issues/5)). Runs headlessly — no GUI session needed despite Electron packaging. Invoke as `python3 -m vmlx_engine.cli serve …` (the bundled `bin/vmlx` shebang points at the maintainer's build tree; the CLI module works fine). OpenAI + Anthropic + Ollama API compatible. Incompatible flags: `--smelt` and `--flash-moe` raise on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)).
-- **Client configs** (`configs/clients/`): Organized by server type — `configs/clients/vllm-mlx/` for primary server, `configs/clients/mlx-openai-server/` for feature-rich multi-model, `configs/clients/omlx/` for full multi-model roster, `configs/clients/vmlx/` for JANGTQ CRACK models, `configs/clients/llmster/` for LM Studio headless on port 1234 (added 2026-04-30, currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status). IPs and API keys are stored as placeholders (`<MAC_STUDIO_IP>`, `<YOUR_API_KEY>`) — never commit real values.
+- **Client configs** (`configs/clients/`): Organized by server type — `configs/clients/vllm-mlx/` for primary server, `configs/clients/mlx-openai-server/` for feature-rich multi-model, `configs/clients/omlx/` for full multi-model roster, `configs/clients/vmlx/` for JANGTQ CRACK models, `configs/clients/llmster/` for LM Studio headless on port 1234 (added 2026-04-30, currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status), `configs/clients/dflash-mlx/` for DFlash speculative-decoding sidecar on port 8098 (added 2026-04-30, currently OpenCode-only — same provisional posture as llmster). IPs and API keys are stored as placeholders (`<MAC_STUDIO_IP>`, `<YOUR_API_KEY>`) — never commit real values.
 - **Current state** (`docs/current.md`): Concise live-state pointer for production, sidecar, and fallback server/model choices. Update it whenever production state changes.
 - **Scripts** (`scripts/`): Split into `scripts/patches/` (re-applied after upstream package upgrades — `patch_omlx_cache.py` runs after every `brew upgrade omlx`) and `scripts/bench/` (benchmark drivers). See `scripts/README.md`.
 - **Plans** (`plans/`): Design documents for non-trivial changes before implementation. Plans are non-canonical; active plans live in `plans/active/`, completed in `plans/done/`, abandoned in `plans/archive/`.
@@ -86,11 +88,27 @@ ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; /opt/homebrew/bin/
 ssh macstudio "pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2"
 # then start vllm-mlx as above
 
+# Start dflash-mlx (provisional sidecar on port 8098 — does not displace port 8000)
+# --draft-model REQUIRED for Qwen3.6 (DRAFT_REGISTRY auto-resolves Qwen3.5 only).
+# Patches MUST be applied first (idempotent re-runs are no-ops):
+#   ~/dflash-mlx-env/bin/python ~/setup-llm-macstu/scripts/patches/patch_dflash_mlx_serve.py
+#   ~/dflash-mlx-env/bin/python ~/setup-llm-macstu/scripts/patches/patch_mlx_lm_match.py
+ssh macstudio "nohup ~/dflash-mlx-env/bin/dflash-serve \
+  --host 0.0.0.0 --port 8098 \
+  --model mlx-community/Qwen3.6-35B-A3B-4bit \
+  --draft-model z-lab/Qwen3.6-35B-A3B-DFlash \
+  --temp 0.0 --max-tokens 512 \
+  > /tmp/dflash-mlx.log 2>&1 &"
+
+# Stop dflash-mlx
+ssh macstudio "pkill -f dflash-serve"
+
 # View logs
 ssh macstudio "tail -20 /tmp/vllm-mlx.log"            # vllm-mlx
 ssh macstudio "tail -20 /tmp/mlx-openai-server.log"    # mlx-openai-server
 ssh macstudio "tail -20 ~/.omlx/logs/server.log"       # oMLX
 ssh macstudio "tail -20 /tmp/vmlx.log"                 # vmlx
+ssh macstudio "tail -20 /tmp/dflash-mlx.log"           # dflash-mlx
 
 # Upgrade all client tools (MacBook)
 brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent
@@ -243,6 +261,7 @@ Catch drift while the context is fresh, not three sessions later.
 - **JANG fork overlay**: oMLX currently runs with AlexTzk/omlx fork (PR #364) pip-installed over the Homebrew v0.2.20 base. The original omlx package is backed up at `/opt/homebrew/.../omlx.bak`. `brew upgrade omlx` will overwrite the fork — re-apply fork + patches after upgrades.
 - **vmlx bundled-Python shebang**: the bundled `bin/vmlx` script has a hardcoded shebang pointing at the maintainer's build path (`/Users/eric/mlx/vllm-mlx/panel/bundled-python/python/bin/python3`). Always invoke via `$BP/bin/python3 -m vmlx_engine.cli serve …` (matches the CHANGELOG "Bundled spawn uses `python3 -m vmlx_engine.cli serve` (avoids shebang issues)" note). `BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python`. Re-applies on each DMG upgrade — the app bundle is self-contained, no homebrew coupling.
 - **vmlx MLLM tools-dropped bug**: vmlx 1.0.3 (MLX Studio v1.3.65 bundled Python) drops the OpenAI `tools[]` array on the MLLM code path — `SimpleEngine.chat()` / `.stream_chat()` extract `tools` as a positional param then forward `mllm_kwargs = dict(kwargs)` which no longer contains it, and `MLLM._apply_chat_template` ignores `tools` entirely. Symptom: `prompt_tokens` stays tiny (~24) regardless of how many tools the client sends; model emits `curl` / `fetch` as prose. Fix: `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` — patches `vmlx_engine/engine/simple.py` (both MLLM branches forward `template_tools`) and `vmlx_engine/models/mllm.py` (`_apply_chat_template` accepts `tools`, both call sites pop + pass it). Idempotent. Run once on macstudio (`ssh macstudio "$BP/bin/python3 ~/setup-llm-macstu/scripts/patches/patch_vmlx_jangtq_mllm_tools.py"`) after every MLX Studio DMG upgrade. Required for OpenCode / Claude Code tool use against any `is_mllm=True` model (Qwen3.6-VL JANGTQ4-CRACK, Qwen3.5-VL-122B CRACK).
+- **dflash-mlx 0.1.4.1 + mlx-lm 0.31.3**: three patches required for tool-calling to work end-to-end. (1) `scripts/patches/patch_dflash_mlx_serve.py` — `DFlashModelProvider.load()` references nonexistent `self.default_model_map` (must be `self._model_map`); `_print_startup_banner()` requires `model_key` resolved at startup but model is lazy-loaded (must fall back to `cli_args.draft_model`). (2) `scripts/patches/patch_mlx_lm_match.py` — `mlx_lm.generate.match()` blows up with `KeyError: None` when the tool-detection state machine reaches a terminal state (must reset to initial state when `s is None`). (3) `scripts/patches/patch_dflash_mlx_host.py` — only needed if pinned to dflash-mlx 0.1.0 (no `--host` flag); 0.1.4.1+ has it natively. The PyPI `pip install dflash-mlx` ships 0.1.0 which has no tool-calling — install from main: `pip install 'git+https://github.com/bstnxbt/dflash-mlx.git'`. The `DRAFT_REGISTRY` only auto-resolves Qwen3.5 family pairs; Qwen3.6 targets must pass `--draft-model` explicitly. Re-apply all three patches after `pip install -U dflash-mlx` or `pip install -U mlx-lm`.
 - **Ling-2.6-flash deployment**: `mlx-community/Ling-2.6-flash-mlx-6bit` (`bailing_hybrid`) requires three patches against mlx-lm 0.31.3 + vllm-mlx 0.2.6 to load:
   1. Vendor `mlx_lm/models/bailing_hybrid.py` from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227) (otherwise `ValueError: Model type bailing_hybrid not supported`).
   2. `scripts/patches/patch_mlx_lm_threadlocal_stream.py` — converts module-level `generation_stream` into a per-thread lazy accessor (otherwise `RuntimeError: There is no Stream(gpu, 1) in current thread` from worker threads).

@@ -11,6 +11,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
   OpenClaw                               oMLX (multi-model) :8000
   Pi                                     vmlx (JANGTQ) :8000
                                          llmster (LM Studio) :1234
+                                         dflash-mlx (sidecar) :8098
                                          OpenAI + Anthropic API (+ Ollama for vmlx)
 ```
 
@@ -107,6 +108,19 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
   > /tmp/vmlx.log 2>&1 &
 
+# dflash-mlx — speculative-decoding sidecar on port 8098 (NOT 8000). Pairs a
+# standard MLX target with a DFlash drafter (block-diffusion verifier).
+# Provisional, OpenCode-only client template. Requires three local patches
+# (see docs/servers/dflash-mlx/summary.md). Currently set up for
+# Qwen3.6-35B-A3B-4bit + z-lab/Qwen3.6-35B-A3B-DFlash. --draft-model is
+# REQUIRED for Qwen3.6 (DRAFT_REGISTRY only auto-resolves Qwen3.5).
+nohup ~/dflash-mlx-env/bin/dflash-serve \
+  --host 0.0.0.0 --port 8098 \
+  --model mlx-community/Qwen3.6-35B-A3B-4bit \
+  --draft-model z-lab/Qwen3.6-35B-A3B-DFlash \
+  --temp 0.0 --max-tokens 512 \
+  > /tmp/dflash-mlx.log 2>&1 &
+
 # llmster — LM Studio headless on port 1234 (NOT 8000). Standard MLX safetensors
 # only; no JANG/JANGTQ/bailing_hybrid support. Tool-call + reasoning parsing
 # built into the MLX runtime — no parser flags needed. First-time setup:
@@ -122,6 +136,7 @@ pkill -f mlx-openai-server                                                      
 /opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
 pkill -f vmlx_engine                                                             # stop vmlx
 ~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop llmster
+pkill -f dflash-serve                                                            # stop dflash-mlx
 ```
 
 ### 🩺 Health Check
@@ -131,6 +146,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool            
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
 curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # llmster (port 1234)
+curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            # dflash-mlx (port 8098)
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
 
@@ -140,6 +156,7 @@ tail -f ~/.omlx/logs/server.log                                                 
 tail -f /tmp/vmlx.log                                                           # vmlx logs
 ~/.lmstudio/bin/lms log stream                                                  # llmster live request/response stream
 tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # llmster daily log file
+tail -f /tmp/dflash-mlx.log                                                     # dflash-mlx logs (per-request DFlash telemetry)
 ```
 
 ### 💬 Quick Test
@@ -174,14 +191,15 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
 | **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
+| **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to llmster. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 
-All servers except llmster support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
 [mlx-lm](docs/servers/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) (no separate maintenance doc — single `summary.md` covers install, runtime recovery, and limitations)
+Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) (`llmster` and `dflash-mlx` keep install / runtime / limitations in their single `summary.md`)
 
 Current `vllm-mlx` production primary: `mlx-community/Ling-2.6-flash-mlx-6bit` (sparse 104B / 7.4B-active `bailing_hybrid`, 6-bit MLX, ~80 GB on disk; deployed 2026-04-29 via three local patches — see [model-summary-ling.md](docs/models/per-model/model-summary-ling.md)). The Qwen3.6-27B JANG 4M dense+VL variant remains a documented fallback for VL workloads ([model-summary.md](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl), [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)).
 
@@ -205,6 +223,7 @@ All models fit in **96GB unified memory**.
 | [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5 | 262K | Lightweight coding agent |
 | [Qwen3.5-35B-A3B JANG 4K](docs/models/model-summary.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19 | 262K | Fast small MoE |
 | [Qwen3.6-35B-A3B 6-bit](docs/models/model-summary.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
+| [Qwen3.6-35B-A3B 4-bit](docs/models/model-summary.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
 | [Qwen3.6-27B JANG 4M](docs/models/model-summary.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
 | [Nemotron 3 Super 120B](docs/models/model-summary.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
 | [Nemotron 3 Nano 30B](docs/models/model-summary.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
@@ -301,6 +320,7 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 - **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patches/patch_mlx_openai_tool_args.py)). [Maintenance](docs/servers/mlx-openai-server/maintenance.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/servers/vllm-mlx/maintenance.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/servers/vmlx/maintenance.md)
+- **dflash-mlx** — Standard MLX safetensors only (no JANG/JANGTQ/`bailing_hybrid`/GGUF). PyPI 0.1.0 has no tool-calling — install 0.1.4.1+ from `git+https://github.com/bstnxbt/dflash-mlx.git`. Three local patches required after install: [`patch_dflash_mlx_serve.py`](scripts/patches/patch_dflash_mlx_serve.py) (two upstream bugs), [`patch_mlx_lm_match.py`](scripts/patches/patch_mlx_lm_match.py) (tool-detection trie reset). Built-in `DRAFT_REGISTRY` does not include Qwen3.6 pairs — always pass `--draft-model` explicitly. OpenAI API only. [Runbook](docs/servers/dflash-mlx/summary.md)
 - **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup). Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`). Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**

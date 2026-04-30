@@ -82,7 +82,7 @@ def stream_request(base_url, model, prompt, max_tokens, api_key=None, timeout=60
                 usage = evt["usage"]
             for choice in evt.get("choices", []):
                 delta = choice.get("delta", {})
-                if delta.get("content") or delta.get("reasoning_content"):
+                if delta.get("content") or delta.get("reasoning_content") or delta.get("reasoning"):
                     if ttft is None:
                         ttft = time.perf_counter() - t0
                     n_tokens += 1

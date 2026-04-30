@@ -65,7 +65,7 @@ Idempotent — safe to re-run. Re-apply after every MLX Studio DMG upgrade
 Usage
 -----
     ssh macstudio "/Applications/vMLX.app/Contents/Resources/bundled-python/python/bin/python3 \\
-        ~/setup-llm-macstu/scripts/patch_vmlx_jangtq_mllm_tools.py"
+        ~/setup-llm-macstu/scripts/patches/patch_vmlx_jangtq_mllm_tools.py"
 
 Then restart vmlx with `--enable-auto-tool-choice --tool-call-parser qwen3`
 (see CLAUDE.md vmlx switch snippet).

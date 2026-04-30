@@ -232,7 +232,7 @@ tail -50 /tmp/vllm-mlx.log
 vllm-mlx has no `--log-level` flag. Apply the patch once to make `VLLM_MLX_LOG_LEVEL` work natively with any launch method:
 
 ```bash
-~/vllm-mlx-env/bin/python scripts/patch_vllm_mlx_log_level.py
+~/vllm-mlx-env/bin/python scripts/patches/patch_vllm_mlx_log_level.py
 ```
 
 Re-run after every `pip install --upgrade vllm-mlx` (upgrades overwrite `server.py`). Idempotent — safe to re-run at any time.

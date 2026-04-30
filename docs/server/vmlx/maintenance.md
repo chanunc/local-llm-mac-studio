@@ -142,7 +142,7 @@ OpenAI-style tool calling and the `reasoning_content` split against any `is_mllm
 
 All three are already in the Start recipe above.
 
-### Required source patch (`scripts/patch_vmlx_jangtq_mllm_tools.py`)
+### Required source patch (`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`)
 
 vmlx 1.0.3 (MLX Studio v1.3.65 bundled Python) has three defects on the MLLM path that flags alone cannot fix. The patch script rewrites three sites across two files inside `$BP/lib/python3.12/site-packages/vmlx_engine/`:
 
@@ -154,7 +154,7 @@ Run once on Mac Studio:
 
 ```bash
 ssh macstudio "/Applications/vMLX.app/Contents/Resources/bundled-python/python/bin/python3 \
-  ~/setup-llm-macstu/scripts/patch_vmlx_jangtq_mllm_tools.py"
+  ~/setup-llm-macstu/scripts/patches/patch_vmlx_jangtq_mllm_tools.py"
 ```
 
 Idempotent. Backups land at `mllm.py.bak.tools` / `simple.py.bak.tools` alongside each file. **Re-apply after every MLX Studio DMG upgrade** — the bundled-python tree is overwritten on install.
@@ -172,7 +172,7 @@ Upstream fix belongs at [`jjang-ai/vmlx`](https://github.com/jjang-ai/vmlx) (not
 | `OSError: port already in use` | Another server still holds `:8000` | Run the pre-start cleanup block above |
 | Empty response / hang on first request | First-request JIT compilation of Metal kernels | Wait ~30 s on the first generation; subsequent requests are fast |
 | OpenCode shows the model's `<think>` block as the visible reply ("thinking nonsense") | `--reasoning-parser qwen3` missing OR the OpenCode model entry lacks `"reasoning": true` | Add the flag (see Start recipe) and `"reasoning": true` in `configs/client/vmlx/opencode.json` |
-| Model emits `curl` / `fetch` as prose instead of calling a tool, with `prompt_tokens` ~24 | MLLM path dropped the `tools[]` array before the chat template (bugs 1 + 2 above) | Run `scripts/patch_vmlx_jangtq_mllm_tools.py` on Mac Studio and restart vmlx |
+| Model emits `curl` / `fetch` as prose instead of calling a tool, with `prompt_tokens` ~24 | MLLM path dropped the `tools[]` array before the chat template (bugs 1 + 2 above) | Run `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` on Mac Studio and restart vmlx |
 | Log warns `Failed to apply chat template: Can only get item pairs from a mapping, using last user message` after the first tool call | MLLM path never parses stringified `tool_calls[].function.arguments` (bug 3 above) | Same — the patch script fixes all three bugs together |
 
 For anything loader-related, the canonical public tracker is [`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5).

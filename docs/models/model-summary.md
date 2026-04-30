@@ -677,8 +677,8 @@ InclusionAI's `bailing_hybrid` MoE — **104 B total / 7.4 B active** — sparse
 
 **Requires three local patches** before the model will load:
 1. Vendor `mlx_lm/models/bailing_hybrid.py` from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227)
-2. [`scripts/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patch_mlx_lm_threadlocal_stream.py) — per-thread lazy `generation_stream` accessor
-3. [`scripts/patch_vllm_mlx_inline_gen.py`](../../scripts/patch_vllm_mlx_inline_gen.py) — replace `await asyncio.to_thread(...)` with inline sync calls in `vllm_mlx/engine/simple.py`
+2. [`scripts/patches/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patches/patch_mlx_lm_threadlocal_stream.py) — per-thread lazy `generation_stream` accessor
+3. [`scripts/patches/patch_vllm_mlx_inline_gen.py`](../../scripts/patches/patch_vllm_mlx_inline_gen.py) — replace `await asyncio.to_thread(...)` with inline sync calls in `vllm_mlx/engine/simple.py`
 
 mlx-openai-server is **incompatible** — its inference-worker thread design is more deeply thread-coupled than vllm-mlx and patch #3 doesn't apply directly.
 

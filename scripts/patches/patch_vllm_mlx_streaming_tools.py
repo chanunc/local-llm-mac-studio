@@ -22,9 +22,9 @@ Target: ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/server.py
 Idempotent. Backs up to server.py.bak.streaming-tools.
 
 Usage:
-    python3 scripts/patch_vllm_mlx_streaming_tools.py
+    python3 scripts/patches/patch_vllm_mlx_streaming_tools.py
     # or from MacBook:
-    ssh macstudio "~/vllm-mlx-env/bin/python ~/setup-llm-macstu/scripts/patch_vllm_mlx_streaming_tools.py"
+    ssh macstudio "~/vllm-mlx-env/bin/python ~/setup-llm-macstu/scripts/patches/patch_vllm_mlx_streaming_tools.py"
 """
 
 import re

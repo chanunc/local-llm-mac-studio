@@ -6,13 +6,13 @@ prompts that require tool calls, capturing the full agent loop overhead.
 
 Usage:
     # Auto-discover config, run both scenarios
-    python3 scripts/bench_agent_tool_call.py
+    python3 scripts/bench/bench_agent_tool_call.py
 
     # Override model, single scenario
-    python3 scripts/bench_agent_tool_call.py --model macstudio/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S --scenario browse
+    python3 scripts/bench/bench_agent_tool_call.py --model macstudio/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S --scenario browse
 
     # Verbose single run for debugging
-    python3 scripts/bench_agent_tool_call.py --scenario browse --runs 1 --warmup 0 --verbose
+    python3 scripts/bench/bench_agent_tool_call.py --scenario browse --runs 1 --warmup 0 --verbose
 """
 
 import argparse

@@ -32,7 +32,7 @@ The Qwen3.5 chat template expects `tool_call.arguments` as a dict, but OpenAI AP
 **Apply/re-apply:**
 
 ```bash
-scp scripts/patch_mlx_openai_tool_args.py macstudio:/tmp/
+scp scripts/patches/patch_mlx_openai_tool_args.py macstudio:/tmp/
 ssh macstudio "python3 /tmp/patch_mlx_openai_tool_args.py"
 # Then restart the server
 ```

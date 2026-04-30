@@ -4,7 +4,7 @@ vllm-mlx has no --log-level flag. This patch injects a logging.basicConfig()
 call at the top of server.py so the env var takes effect for any launch method.
 
 Run once after install or upgrade:
-    ~/vllm-mlx-env/bin/python scripts/patch_vllm_mlx_log_level.py
+    ~/vllm-mlx-env/bin/python scripts/patches/patch_vllm_mlx_log_level.py
 
 Idempotent — safe to re-run.
 

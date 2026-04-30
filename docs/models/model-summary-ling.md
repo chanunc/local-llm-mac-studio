@@ -48,7 +48,7 @@ Without this: `ValueError: Model type bailing_hybrid not supported`.
 Stock mlx-lm creates `generation_stream = mx.new_thread_local_stream(...)` at module import on the main thread. vllm-mlx (and mlx-openai-server) run inference in worker threads where that stream object is unreachable. The fix turns `generation_stream` into a per-thread lazy accessor.
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/python3 ~/setup-llm-macstu/scripts/patch_mlx_lm_threadlocal_stream.py \
+ssh macstudio "~/vllm-mlx-env/bin/python3 ~/setup-llm-macstu/scripts/patches/patch_mlx_lm_threadlocal_stream.py \
   ~/vllm-mlx-env/lib/python3.12/site-packages/mlx_lm/generate.py"
 ```
 
@@ -59,7 +59,7 @@ Without this: `RuntimeError: There is no Stream(gpu, 1) in current thread` from 
 Even after step 2, the model's custom `mx.fast.metal_kernel` objects (the GLA SSM kernel and the Lightning linear-attention recurrence kernel) are bound to the thread that built them. vllm-mlx invokes generation via `await asyncio.to_thread(self._model.chat, ...)`, so the kernel call lands on a worker thread that didn't build it. The fix replaces every `await asyncio.to_thread(...)` in `vllm_mlx/engine/simple.py` with a direct synchronous call. Generation now blocks the asyncio loop, which is fine for single-stream inference servers.
 
 ```bash
-ssh macstudio "~/vllm-mlx-env/bin/python3 ~/setup-llm-macstu/scripts/patch_vllm_mlx_inline_gen.py \
+ssh macstudio "~/vllm-mlx-env/bin/python3 ~/setup-llm-macstu/scripts/patches/patch_vllm_mlx_inline_gen.py \
   ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/engine/simple.py"
 ```
 

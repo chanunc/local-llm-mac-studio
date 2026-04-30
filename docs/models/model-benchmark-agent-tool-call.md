@@ -6,7 +6,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)**.
 
 Real agent CLI invocation via `opencode run --format json`, measuring end-to-end response time including agent system prompts, tool definitions, agent loop turns, and reasoning overhead. This captures the actual latency a user experiences — not raw inference tok/s.
 
-Script: [`scripts/bench_agent_tool_call.py`](../../scripts/bench_agent_tool_call.py)
+Script: [`scripts/bench/bench_agent_tool_call.py`](../../scripts/bench/bench_agent_tool_call.py)
 Config switcher: [`scripts/switch_opencode_config.py`](../../scripts/switch_opencode_config.py)
 
 **Why this matters:** Raw benchmarks show 45-85 tok/s for these models. But agent workloads include 2,000-4,000 token system prompts, multiple API round-trips, and reasoning amplification. Measured end-to-end, `opencode run "Hi"` takes 80s vs 2.7s raw curl for the same model — a 30x gap ([analysis](../../docs/clients/opencode-analysis.md)).
@@ -32,7 +32,7 @@ Config switcher: [`scripts/switch_opencode_config.py`](../../scripts/switch_open
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
-- *API-level harness script* — `scripts/bench_api_tool_call.py` (5 single-call scenarios + 3-turn agentic loop, non-streaming, temperature 0)
+- *API-level harness script* — `scripts/bench/bench_api_tool_call.py` (5 single-call scenarios + 3-turn agentic loop, non-streaming, temperature 0)
 - *vllm-mlx streaming + tool-call bug + patch* — see Qwen3.5-35B-A3B JANG 4K § Key Findings #3
 - *vmlx MLLM tools-dropped bug + patch* — see JANGTQ4-CRACK § Key Findings #1 and `CLAUDE.md` Known Issues
 - *300 s OpenCode client timeout (search hits)* — see Qwen3.6-27B-JANG_4M / Qwen3.6-27B-6bit § Key Findings
@@ -83,13 +83,13 @@ Two medians reported per scenario:
 
 | Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
 |:------|:-------|:---------------------|:---------------------|:--------------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patch_vllm_mlx_streaming_tools.py` |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patches/patch_vllm_mlx_streaming_tools.py` |
 | Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as above |
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
 | Qwen3.6-27B 6bit (mlx-community) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patch_vmlx_jangtq_mllm_tools.py` |
-| Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patch_mlx_lm_threadlocal_stream.py` + `scripts/patch_vllm_mlx_inline_gen.py` |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
+| Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
 
 ---
 
@@ -145,7 +145,7 @@ Task: "Read config, fix port to 8080, write back"
 
 Unpatched result: BLOCKED — vllm-mlx streaming path with `--reasoning-parser` bypasses tool-call parsing entirely. The `<tool_call>` XML leaks into `content` as plain text.
 
-**After patch** (`scripts/patch_vllm_mlx_streaming_tools.py`):
+**After patch** (`scripts/patches/patch_vllm_mlx_streaming_tools.py`):
 
 | Scenario | Response Time (median) | Turns | Tools Called |
 |:---------|:----------------------|:------|:------------|
@@ -160,7 +160,7 @@ Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run u
 
 2. **Tool calling works at API level** — 5/5 pass rate with correct tool selection, valid JSON args, and parallel multi-tool calling. Multi-turn agentic loop completes a 3-step task in 5.6s.
 
-3. **vllm-mlx streaming bug (fixed by patch)** — the streaming path has two mutually exclusive branches: the reasoning parser path (`--reasoning-parser`) and the standard path with tool parsing. When both flags are set, reasoning wins and tool calls are never parsed. The patch (`scripts/patch_vllm_mlx_streaming_tools.py`) integrates tool-call detection into the reasoning path using the generic `parse_tool_calls()` function which handles the Nemotron/XML format (`<function=name><parameter=p>v</parameter>`) that Qwen3.5 MoE uses. Re-apply after `pip install -U vllm-mlx`.
+3. **vllm-mlx streaming bug (fixed by patch)** — the streaming path has two mutually exclusive branches: the reasoning parser path (`--reasoning-parser`) and the standard path with tool parsing. When both flags are set, reasoning wins and tool calls are never parsed. The patch (`scripts/patches/patch_vllm_mlx_streaming_tools.py`) integrates tool-call detection into the reasoning path using the generic `parse_tool_calls()` function which handles the Nemotron/XML format (`<function=name><parameter=p>v</parameter>`) that Qwen3.5 MoE uses. Re-apply after `pip install -U vllm-mlx`.
 
 4. **Agentic performance:** Browse task completes in ~37s (2 turns), search task in ~60s (2-4 turns). The model correctly selects appropriate tools and completes multi-step reasoning.
 
@@ -209,7 +209,7 @@ The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json`](benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json`](benchmarks/qwen36-35b-a3b-jangtq4-crack/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -219,7 +219,7 @@ Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmar
 | Multi-tool (list + read + write) | 2.77 s | 83 | 29.9 tok/s | `list_directory` | ✅ PASS (chose serial) |
 | Agentic reasoning | 10.49 s | 588 | 56.1 tok/s | `run_command` | ✅ PASS |
 
-**Pass rate: 5/5** — correct tool selection, valid JSON arguments, `finish_reason: tool_calls`. The MLLM tools patch (`scripts/patch_vmlx_jangtq_mllm_tools.py`) is required for vmlx to forward tool definitions on this model's MLLM code path.
+**Pass rate: 5/5** — correct tool selection, valid JSON arguments, `finish_reason: tool_calls`. The MLLM tools patch (`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`) is required for vmlx to forward tool definitions on this model's MLLM code path.
 
 ### Multi-Turn Agentic Loop (simulated tool results)
 
@@ -258,7 +258,7 @@ The OpenCode-level Search hang seen in the end-to-end bench (`⛔ hung, 0 tool c
 
 ### Key Findings
 
-1. **Tool calling works reliably** — 0 errors across 6 measured runs. The MLLM tools patch (`scripts/patch_vmlx_jangtq_mllm_tools.py`) is required for vmlx to forward tool definitions to the model.
+1. **Tool calling works reliably** — 0 errors across 6 measured runs. The MLLM tools patch (`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`) is required for vmlx to forward tool definitions to the model.
 
 2. **Reasoning tokens: 0** — despite `--reasoning-parser qwen3`, the model did not emit `<think>` blocks in these short agentic tasks. This may be task-dependent.
 
@@ -310,7 +310,7 @@ Verified independently of OpenCode: a streaming `/v1/chat/completions` request w
 
 **Date:** 2026-04-24 (re-run with `--print-logs --log-level=INFO` captured per-run under [`benchmarks/qwen36-27b-jang4m/agent-bench.logs/`](benchmarks/qwen36-27b-jang4m/agent-bench.logs/)).
 
-Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`benchmarks/qwen36-27b-jang4m/agent-bench.json`](benchmarks/qwen36-27b-jang4m/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario, `-v` enables opencode INFO logs per run). Raw JSON: [`benchmarks/qwen36-27b-jang4m/agent-bench.json`](benchmarks/qwen36-27b-jang4m/agent-bench.json).
 
 | Scenario | Median | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -350,7 +350,7 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-27b-6bit/api-tool-test.json`](benchmarks/qwen36-27b-6bit/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-27b-6bit/api-tool-test.json`](benchmarks/qwen36-27b-6bit/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -375,7 +375,7 @@ Task: "Read /tmp/app/config.json, change port to 8080, write back"
 
 ### OpenCode End-to-End Agent Benchmark
 
-Captured via `scripts/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`benchmarks/qwen36-27b-6bit/agent-bench.json`](benchmarks/qwen36-27b-6bit/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py` (1 warmup + 3 measured per scenario). Raw JSON: [`benchmarks/qwen36-27b-6bit/agent-bench.json`](benchmarks/qwen36-27b-6bit/agent-bench.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -456,7 +456,7 @@ This is the headline finding. Same MLX file, same hardware, same client harness,
 **Architecture:** Qwen3.6-35B-A3B (`Qwen3_5MoeForConditionalGeneration`, `model_type=qwen3_5_moe`) — 256 experts, 8 active per token, 40 layers (3 linear / 1 full attention pattern, Mamba-like SSM hybrid), `max_position_embeddings=262144`, vision tokens defined in tokenizer (text-only here). 8-bit MLX uniform quant (group_size=64). Base: `Brooooooklyn/Qwen3.6-35B-A3B-UD-Q8_K_XL-mlx`. LoRA (rank 8, alpha 16) trained on 356K Rust commits (634K samples) for diff generation, then merged into the quantized weights.
 **Model path:** `~/.omlx/models/jedisct1--Qwen3.6-35B-rust.mlx` (35 GB on disk, downloaded via `hf download`)
 
-### Typical Inference (`scripts/bench_api_server.py`, 1 warmup + 2 runs, median)
+### Typical Inference (`scripts/bench/bench_api_server.py`, 1 warmup + 2 runs, median)
 
 Raw JSON: [`benchmarks/qwen36-35b-rust/api-typical.json`](benchmarks/qwen36-35b-rust/api-typical.json).
 
@@ -470,7 +470,7 @@ Generation throughput stays in the 80 tok/s band even at 8K prefill — matches 
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-rust/api-tool-test.json`](benchmarks/qwen36-35b-rust/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-26). Raw JSON: [`benchmarks/qwen36-35b-rust/api-tool-test.json`](benchmarks/qwen36-35b-rust/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -497,7 +497,7 @@ At API level the 4-bit Qwen3.5-35B-A3B JANG 4K baseline (5.64 s, 1.18-1.21 s sin
 
 ### OpenCode End-to-End Agent Benchmark
 
-Captured via `scripts/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions --verbose`. Raw JSON: [`benchmarks/qwen36-35b-rust/agent-bench.json`](benchmarks/qwen36-35b-rust/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions --verbose`. Raw JSON: [`benchmarks/qwen36-35b-rust/agent-bench.json`](benchmarks/qwen36-35b-rust/agent-bench.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|
@@ -537,12 +537,12 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 **Model path:** `mlx-community/Ling-2.6-flash-mlx-6bit` (HF cache)
 **Deployment patches (all required, all idempotent):**
 1. Vendored `mlx_lm/models/bailing_hybrid.py` from open PR [ml-explore/mlx-lm#1227](https://github.com/ml-explore/mlx-lm/pull/1227) into `~/vllm-mlx-env/lib/python3.12/site-packages/mlx_lm/models/`
-2. [`scripts/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patch_mlx_lm_threadlocal_stream.py) — converts module-level thread-local `generation_stream` into a per-thread lazy accessor
-3. [`scripts/patch_vllm_mlx_inline_gen.py`](../../scripts/patch_vllm_mlx_inline_gen.py) — replaces `await asyncio.to_thread(...)` with direct synchronous calls so MLX kernels stay on the asyncio loop thread (required for thread-bound `mx.fast.metal_kernel` objects used by the linear-attention recurrence and GLA SSM kernel)
+2. [`scripts/patches/patch_mlx_lm_threadlocal_stream.py`](../../scripts/patches/patch_mlx_lm_threadlocal_stream.py) — converts module-level thread-local `generation_stream` into a per-thread lazy accessor
+3. [`scripts/patches/patch_vllm_mlx_inline_gen.py`](../../scripts/patches/patch_vllm_mlx_inline_gen.py) — replaces `await asyncio.to_thread(...)` with direct synchronous calls so MLX kernels stay on the asyncio loop thread (required for thread-bound `mx.fast.metal_kernel` objects used by the linear-attention recurrence and GLA SSM kernel)
 
 ### API-Level Tool Calling (non-streaming, 5 tools available)
 
-Captured via `scripts/bench_api_tool_call.py` (2026-04-29). Raw JSON: [`benchmarks/ling-2.6-flash-6bit/api-tool-test.json`](benchmarks/ling-2.6-flash-6bit/api-tool-test.json).
+Captured via `scripts/bench/bench_api_tool_call.py` (2026-04-29). Raw JSON: [`benchmarks/ling-2.6-flash-6bit/api-tool-test.json`](benchmarks/ling-2.6-flash-6bit/api-tool-test.json).
 
 | Scenario | Time | Tokens | Speed | Tools Called | Result |
 |:---------|:-----|:-------|:------|:-------------|:-------|
@@ -569,7 +569,7 @@ Fastest completion of the 3-turn config-fix loop in this doc — beats the prior
 
 ### OpenCode End-to-End Agent Benchmark
 
-Captured via `scripts/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions`. Raw JSON: [`benchmarks/ling-2.6-flash-6bit/agent-bench.json`](benchmarks/ling-2.6-flash-6bit/agent-bench.json).
+Captured via `scripts/bench/bench_agent_tool_call.py --warmup 1 --runs 3 --skip-permissions`. Raw JSON: [`benchmarks/ling-2.6-flash-6bit/agent-bench.json`](benchmarks/ling-2.6-flash-6bit/agent-bench.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:--------:|:-----:|:-----------|:----------------------:|

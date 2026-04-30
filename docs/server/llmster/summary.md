@@ -94,7 +94,7 @@ ssh macstudio "~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --a
 **No parser flags needed.** LM Studio's MLX runtime detects the model's chat-template format (Qwen3 XML, Hermes JSON, etc.) and converts emitted tool calls into OpenAI `tool_calls[]` automatically. `<think>` reasoning blocks are exposed as `reasoning_content` separate from `content`.
 
 Verified on 2026-04-30 with `mlx-community/Qwen3.6-27B-6bit`:
-- API-level harness (`scripts/bench_api_tool_call.py`): 5/5 single-call pass, clean 3-turn agentic loop in 20.28 s
+- API-level harness (`scripts/bench/bench_api_tool_call.py`): 5/5 single-call pass, clean 3-turn agentic loop in 20.28 s
 - OpenCode end-to-end browse: **31.96 s wall** (vs vllm-mlx 97.93 s on the same model file — **3.1× faster**)
 - OpenCode end-to-end search: **25.71 s wall** (vs vllm-mlx 127.28 s — **4.9× faster**)
 - Reasoning tokens captured: 70-79 per scenario (vllm-mlx + `--reasoning-parser qwen3` on the same model emitted 0)
@@ -124,7 +124,7 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 
 ## Performance (Mac Studio M3 Ultra, 96 GB)
 
-`mlx-community/Qwen3.6-27B-6bit` on llmster v0.4.12 + MLX runtime 1.6.0, streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench_api_server.py`](../../../scripts/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](../../models/benchmarks/qwen36-27b-6bit/api-server-llmster.json).
+`mlx-community/Qwen3.6-27B-6bit` on llmster v0.4.12 + MLX runtime 1.6.0, streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](../../models/benchmarks/qwen36-27b-6bit/api-server-llmster.json).
 
 | Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
 |:--------|------------:|----------------:|---------:|

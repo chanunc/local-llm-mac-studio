@@ -45,7 +45,7 @@ ssh macstudio "nohup ~/vllm-mlx-env/bin/vllm-mlx serve jedisct1/MiMo-V2.5-MLX-4b
   > /tmp/vllm-mlx.log 2>&1 &"
 ```
 
-The Ling thread-local-stream + inline-gen patches (`scripts/patch_mlx_lm_threadlocal_stream.py`, `scripts/patch_vllm_mlx_inline_gen.py`) were already applied to this venv from the Ling deployment and are sufficient — no MiMo-specific patches needed. Re-apply both after `pip install -U vllm-mlx` or `pip install -U mlx-lm`.
+The Ling thread-local-stream + inline-gen patches (`scripts/patches/patch_mlx_lm_threadlocal_stream.py`, `scripts/patches/patch_vllm_mlx_inline_gen.py`) were already applied to this venv from the Ling deployment and are sufficient — no MiMo-specific patches needed. Re-apply both after `pip install -U vllm-mlx` or `pip install -U mlx-lm`.
 
 ## Benchmarks (2026-04-30)
 

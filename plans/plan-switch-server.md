@@ -22,7 +22,7 @@ Originally this plan covered a `CLAUDE.md` documentation refresh; that task has 
 
 - Not auto-discovering models in `~/.omlx/models/` — the registry is curated so unsupported variants don't surface.
 - Not updating client configs — that's `switch_opencode_config.py`'s job. Print a follow-up hint instead.
-- Not running benchmarks — separate `scripts/bench_*.py` already do that.
+- Not running benchmarks — separate `scripts/bench/bench_*.py` already do that.
 - Not tracking the live model in any persistent state file — `/v1/models` is the source of truth.
 
 ## Design
@@ -109,7 +109,7 @@ On failure, dump `tail -30 /tmp/<server>.log` automatically so the user doesn't 
 
 1. **Smoke (no SSH):** `python3 scripts/switch_server.py list` should print the 9 profiles with no SSH calls. Pure local read.
 2. **Status (SSH read-only):** `python3 scripts/switch_server.py status` should report whatever is currently running. No state change.
-3. **End-to-end on a non-default profile:** `python3 scripts/switch_server.py start qwen36-27b-6bit`, confirm `/v1/models` flips, then run the API-level diagnostic harness `python3 scripts/bench_api_tool_call.py` (per the JANGTQ4-search-hang triage memory) to confirm tool calls round-trip.
+3. **End-to-end on a non-default profile:** `python3 scripts/switch_server.py start qwen36-27b-6bit`, confirm `/v1/models` flips, then run the API-level diagnostic harness `python3 scripts/bench/bench_api_tool_call.py` (per the JANGTQ4-search-hang triage memory) to confirm tool calls round-trip.
 4. **Switch back:** `python3 scripts/switch_server.py start qwen36-27b-jang4m` (the documented default) so the box ends up where `CLAUDE.md` says it should be.
 5. **Failure path:** while a server is mid-startup, run `start` again and confirm the port-busy escalation path triggers cleanly (pkill → pkill -9 → abort with #1413 hint).
 

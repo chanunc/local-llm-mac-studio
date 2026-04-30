@@ -5,7 +5,7 @@ Enable per-model `hot_cache_max_size` configuration in oMLX by dynamically patch
 
 ## Technical Approach
 
-We will create a script `scripts/patch_omlx_cache.py` that modifies two files in the active `oMLX` Homebrew installation:
+We will create a script `scripts/patches/patch_omlx_cache.py` that modifies two files in the active `oMLX` Homebrew installation:
 
 1. **`omlx/model_settings.py`**: Inject `hot_cache_max_size: Optional[str] = Field(default=None)` into the `ModelSettings` class to ensure the JSON parser accepts it.
 2. **`omlx/engine_pool.py`**: Inject a hook right before engine creation in `_load_engine`.
@@ -20,7 +20,7 @@ The script will use regex and string replacement to locate the injection points 
 
 ## Usage Instructions
 
-After running the `scripts/patch_omlx_cache.py` script on the Mac Studio and restarting the service, you can simply add `"hot_cache_max_size": "10GB"` to any model entry in the admin panel or `model_settings.json`.
+After running the `scripts/patches/patch_omlx_cache.py` script on the Mac Studio and restarting the service, you can simply add `"hot_cache_max_size": "10GB"` to any model entry in the admin panel or `model_settings.json`.
 
 ### Example `model_settings.json`:
 ```json
@@ -40,8 +40,8 @@ After running the `scripts/patch_omlx_cache.py` script on the Mac Studio and res
 ```
 
 ## Implementation Steps
-1. Create `scripts/patch_omlx_cache.py` locally in this repository (Completed).
-2. Run the script on Mac Studio: `python3 scripts/patch_omlx_cache.py`.
+1. Create `scripts/patches/patch_omlx_cache.py` locally in this repository (Completed).
+2. Run the script on Mac Studio: `python3 scripts/patches/patch_omlx_cache.py`.
 3. Restart oMLX: `brew services restart omlx`.
 4. Add instructions to `docs/server/omlx/maintenance.md` on how to run this script after a `brew upgrade omlx`.
 5. Present changes for user review.

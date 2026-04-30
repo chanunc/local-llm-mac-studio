@@ -95,7 +95,7 @@ JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch 
 
 # vmlx — JANGTQ CRACK (MLX Studio bundled Python, headless)
 # Tool use + Qwen3 thinking require all three parser flags AND a one-time
-# source patch (scripts/patch_vmlx_jangtq_mllm_tools.py). See
+# source patch (scripts/patches/patch_vmlx_jangtq_mllm_tools.py). See
 # docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models.
 BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
 SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snapshots/033d5537f48f2f836ce3dfbe392304a2b30f8536
@@ -295,9 +295,9 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 
 **Server constraints:**
 - **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/server/omlx/jang-fork.md)). [Maintenance](docs/server/omlx/maintenance.md)
-- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
+- **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patches/patch_mlx_openai_tool_args.py)). [Maintenance](docs/server/mlx-openai-server/maintenance.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/server/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/server/vllm-mlx/maintenance.md)
-- **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patch_vmlx_jangtq_mllm_tools.py`](scripts/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/server/vmlx/maintenance.md)
+- **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/server/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/server/vmlx/maintenance.md)
 - **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup). Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`). Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**
@@ -307,5 +307,5 @@ Full results: [Standalone](docs/models/model-benchmark-standalone.md) · [API Se
 
 **Maintenance:**
 - **JANG fork overlay** — `brew upgrade omlx` overwrites the fork; re-apply after every upgrade. [Guide](docs/server/omlx/jang-fork.md)
-- **Hot cache patch** — `scripts/patch_omlx_cache.py` must re-run after every `brew upgrade omlx`. [Guide](docs/server/omlx/maintenance.md)
+- **Hot cache patch** — `scripts/patches/patch_omlx_cache.py` must re-run after every `brew upgrade omlx`. [Guide](docs/server/omlx/maintenance.md)
 - **SSH timeouts** — Fix: `sudo pmset -a sleep 0 disksleep 0 displaysleep 10` on Mac Studio

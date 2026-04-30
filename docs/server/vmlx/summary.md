@@ -91,7 +91,7 @@ Without `--reasoning-parser qwen3`, the model's entire thinking monologue appear
 **One-time source patch** — vmlx 1.0.3 has three MLLM-path defects the flags alone cannot fix (tools silently dropped before the chat template, template ignores them anyway, multi-turn tool replay crashes the Jinja template). Fix:
 
 ```bash
-ssh macstudio "$BP/bin/python3 ~/setup-llm-macstu/scripts/patch_vmlx_jangtq_mllm_tools.py"
+ssh macstudio "$BP/bin/python3 ~/setup-llm-macstu/scripts/patches/patch_vmlx_jangtq_mllm_tools.py"
 ```
 
 Idempotent. **Re-apply after every DMG upgrade.** Full bug-by-bug breakdown: [`maintenance.md` § Tool use and reasoning](maintenance.md#tool-use-and-reasoning-mllm-models).
@@ -136,7 +136,7 @@ Full deploy + perf report: [`docs/models/uncen-model/minimax-m27-crack-benchmark
 
 ## Known limitations
 
-- **MLLM tool-use bugs (patch required)**: vmlx 1.0.3 drops `tools[]` before the chat template, ignores it in `_apply_chat_template`, and crashes on multi-turn tool replay with "Can only get item pairs from a mapping". All three are fixed by `scripts/patch_vmlx_jangtq_mllm_tools.py`. Must re-apply after every DMG upgrade. See [§ Tool use and reasoning](#tool-use-and-reasoning) and [`maintenance.md`](maintenance.md#tool-use-and-reasoning-mllm-models).
+- **MLLM tool-use bugs (patch required)**: vmlx 1.0.3 drops `tools[]` before the chat template, ignores it in `_apply_chat_template`, and crashes on multi-turn tool replay with "Can only get item pairs from a mapping". All three are fixed by `scripts/patches/patch_vmlx_jangtq_mllm_tools.py`. Must re-apply after every DMG upgrade. See [§ Tool use and reasoning](#tool-use-and-reasoning) and [`maintenance.md`](maintenance.md#tool-use-and-reasoning-mllm-models).
 - **Incompatible flags**: `--smelt` and `--flash-moe` raise `ValueError` on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)). Do not pass either.
 - **JANGTQ-weight models only**: non-JANGTQ models work too, but there is no reason to use vmlx for them — `vllm-mlx` / `mlx-openai-server` / `oMLX` have better operational stories and matching or faster perf.
 - **Single-vendor dependency risk**: the loader + Metal kernels are not in any public package. A new DMG install is the only supported path after reinstall; there is no `pip install` fallback today. Upstream tracking issue: [`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5).
@@ -147,6 +147,6 @@ Full deploy + perf report: [`docs/models/uncen-model/minimax-m27-crack-benchmark
 
 - [`maintenance.md`](maintenance.md) — lifecycle + upgrade recipe
 - [`maintenance.md` § Tool use and reasoning](maintenance.md#tool-use-and-reasoning-mllm-models) — three MLLM-path bugs, patch script, troubleshooting table
-- [`scripts/patch_vmlx_jangtq_mllm_tools.py`](../../../scripts/patch_vmlx_jangtq_mllm_tools.py) — idempotent source patch for all three bugs
+- [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](../../../scripts/patches/patch_vmlx_jangtq_mllm_tools.py) — idempotent source patch for all three bugs
 - [`docs/models/model-summary.md` § unblocking path](../../models/model-summary.md#unblocking-path--corrected--deployed-2026-04-20) — why pypi `vmlx` alone doesn't work
 - [`docs/models/uncen-model/minimax-m27-crack-benchmark.md`](../../models/uncen-model/minimax-m27-crack-benchmark.md) — per-context perf + RAM detail

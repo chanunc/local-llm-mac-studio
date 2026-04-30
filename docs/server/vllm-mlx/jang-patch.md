@@ -163,7 +163,7 @@ nohup ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \
 
 ### Debug logging
 
-vllm-mlx has no `--log-level` flag. Apply `scripts/patch_vllm_mlx_log_level.py` once (see [maintenance guide](maintenance.md#7-debug-logging)), then `VLLM_MLX_LOG_LEVEL` works with any launch method including the JANG wrapper:
+vllm-mlx has no `--log-level` flag. Apply `scripts/patches/patch_vllm_mlx_log_level.py` once (see [maintenance guide](maintenance.md#7-debug-logging)), then `VLLM_MLX_LOG_LEVEL` works with any launch method including the JANG wrapper:
 
 ```bash
 VLLM_MLX_LOG_LEVEL=DEBUG ~/vllm-mlx-env/bin/python ~/run_vllm_jang.py serve \

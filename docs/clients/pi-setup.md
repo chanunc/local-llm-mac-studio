@@ -41,7 +41,7 @@ Copy config from this repo, or create manually:
 
 ```bash
 mkdir -p ~/.pi/agent
-cp configs/client/omlx/pi-models.json ~/.pi/agent/models.json
+cp configs/clients/omlx/pi-models.json ~/.pi/agent/models.json
 ```
 
 Custom model config at `~/.pi/agent/models.json`:
@@ -137,7 +137,7 @@ Pi sends `role: "developer"` (OpenAI's newer role) for system prompts when `mode
 
 ## 🔁 Changing the Model
 
-1. Load the new model on Mac Studio (see `../server/omlx/summary.md` "Changing the LLM Model")
+1. Load the new model on Mac Studio (see `../servers/omlx/summary.md` "Changing the LLM Model")
 2. Update `~/.pi/agent/models.json`:
    - Change `id` to the new model identifier
    - Update `name`, `contextWindow`, and `maxTokens` as appropriate

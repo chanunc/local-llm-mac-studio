@@ -315,5 +315,5 @@ The existing manual CLI approach provides the same functionality with:
 |------|---------|
 | `Formula/vllm-mlx.rb` | Homebrew formula with service block |
 | `scripts/vllm-mlx-jang` | JANG wrapper shell script |
-| `docs/server/vllm-mlx/summary.md` | vllm-mlx server summary (reference) |
-| `docs/server/vllm-mlx/jang-patch.md` | JANG monkey-patch guide (reference) |
+| `docs/servers/vllm-mlx/summary.md` | vllm-mlx server summary (reference) |
+| `docs/servers/vllm-mlx/jang-patch.md` | JANG monkey-patch guide (reference) |

@@ -25,7 +25,7 @@ MacBook / Linux / WSL                     Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 └─────────────────────┘                   └──────────────────────────────────┘
 ```
 
-Same wire protocol as OpenCode. Qwen Code works against all four servers in this repo (vllm-mlx, mlx-openai-server, oMLX, vmlx) — pick the one currently running and its matching template under `configs/client/<server>/qwen-code-settings.json`.
+Same wire protocol as OpenCode. Qwen Code works against all four servers in this repo (vllm-mlx, mlx-openai-server, oMLX, vmlx) — pick the one currently running and its matching template under `configs/clients/<server>/qwen-code-settings.json`.
 
 ## ⚙️ Installation
 
@@ -47,11 +47,11 @@ Qwen Code reads user-level settings from `~/.qwen/settings.json`. The repo ships
 mkdir -p ~/.qwen
 
 # mlx-openai-server (JANG 4K currently loaded)
-cp configs/client/mlx-openai-server/qwen-code-settings.json ~/.qwen/settings.json
+cp configs/clients/mlx-openai-server/qwen-code-settings.json ~/.qwen/settings.json
 
 # or for the other servers
-cp configs/client/vllm-mlx/qwen-code-settings.json    ~/.qwen/settings.json
-cp configs/client/omlx/qwen-code-settings.json        ~/.qwen/settings.json
+cp configs/clients/vllm-mlx/qwen-code-settings.json    ~/.qwen/settings.json
+cp configs/clients/omlx/qwen-code-settings.json        ~/.qwen/settings.json
 ```
 
 Then replace the `<MAC_STUDIO_IP>` placeholder with the Mac Studio's LAN IP (or Tailscale address) and, for oMLX, replace `<YOUR_API_KEY>` with the real oMLX API key — or export it as `MACSTUDIO_API_KEY` in your shell (env wins over `settings.json`).
@@ -80,9 +80,9 @@ Minimal shape the templates follow:
 
 | Template | Server | Default model | Auth |
 |:---------|:-------|:--------------|:-----|
-| `configs/client/mlx-openai-server/qwen-code-settings.json` | mlx-openai-server | `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` | none (`not-needed`) |
-| `configs/client/vllm-mlx/qwen-code-settings.json` | vllm-mlx | `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` | none (`not-needed`) |
-| `configs/client/omlx/qwen-code-settings.json` | oMLX | `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` | `<YOUR_API_KEY>` |
+| `configs/clients/mlx-openai-server/qwen-code-settings.json` | mlx-openai-server | `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` | none (`not-needed`) |
+| `configs/clients/vllm-mlx/qwen-code-settings.json` | vllm-mlx | `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` | none (`not-needed`) |
+| `configs/clients/omlx/qwen-code-settings.json` | oMLX | `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` | `<YOUR_API_KEY>` |
 
 ### Environment variables
 
@@ -125,7 +125,7 @@ export MACSTUDIO_API_KEY='<YOUR_API_KEY>'   # oMLX
 
 ## 🔁 Changing the Model
 
-1. Load the target model on the Mac Studio server (see the matching `docs/server/<server>/summary.md`).
+1. Load the target model on the Mac Studio server (see the matching `docs/servers/<server>/summary.md`).
 2. Update `~/.qwen/settings.json`:
    - Add or edit an entry in `modelProviders.openai[]` with the new `id`.
    - Point `model.name` at that `id`.

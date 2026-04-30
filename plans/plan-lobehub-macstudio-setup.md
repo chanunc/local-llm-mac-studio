@@ -22,7 +22,7 @@ Expose both API flavors per server — `OPENAI_*` and `ANTHROPIC_*` — because 
 
 ### New env files (primary deliverable)
 
-**`configs/client/vllm-mlx/lobehub.env`** — two slots, both pointed at vllm-mlx:
+**`configs/clients/vllm-mlx/lobehub.env`** — two slots, both pointed at vllm-mlx:
 ```env
 OPENAI_API_KEY=not-needed
 OPENAI_PROXY_URL=http://<MAC_STUDIO_IP>:8000/v1
@@ -32,9 +32,9 @@ ANTHROPIC_API_KEY=not-needed
 ANTHROPIC_PROXY_URL=http://<MAC_STUDIO_IP>:8000
 ANTHROPIC_MODEL_LIST=-all,+JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S=Qwen3.5-122B JANG 2S<200000:fc:reasoning>,+JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K=Qwen3.5-35B JANG 4K<262144:fc:reasoning>
 ```
-Context/capability numbers mirror `configs/client/vllm-mlx/opencode.json` so limits stay in one place conceptually.
+Context/capability numbers mirror `configs/clients/vllm-mlx/opencode.json` so limits stay in one place conceptually.
 
-**`configs/client/vmlx/lobehub.env`** — same shape, vmlx's three JANGTQ-CRACK models:
+**`configs/clients/vmlx/lobehub.env`** — same shape, vmlx's three JANGTQ-CRACK models:
 ```env
 OPENAI_API_KEY=not-needed
 OPENAI_PROXY_URL=http://<MAC_STUDIO_IP>:8000/v1
@@ -44,16 +44,16 @@ ANTHROPIC_API_KEY=not-needed
 ANTHROPIC_PROXY_URL=http://<MAC_STUDIO_IP>:8000
 ANTHROPIC_MODEL_LIST=-all,+dealignai/MiniMax-M2.7-JANGTQ-CRACK=MiniMax-M2.7 JANGTQ-CRACK<131072:fc:reasoning>,+dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK=Qwen3.6-35B JANGTQ4-CRACK<262144:fc:reasoning>,+dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK=Qwen3.6-35B JANGTQ2-CRACK<262144:fc>
 ```
-Capability flags (`fc`, `reasoning`) lifted directly from `configs/client/vmlx/opencode.json`; JANGTQ2-CRACK drops `reasoning` because that config marks it `tools` only.
+Capability flags (`fc`, `reasoning`) lifted directly from `configs/clients/vmlx/opencode.json`; JANGTQ2-CRACK drops `reasoning` because that config marks it `tools` only.
 
 ### New setup doc
 
 **`docs/clients/lobehub-setup.md`** — follow the style of `docs/clients/opencode-setup.md` and `qwen-code-setup.md`. Sections:
 
 1. **Prerequisites** — Docker installed locally; Mac Studio reachable at `<MAC_STUDIO_IP>` over LAN or `macstudio-ts.tailnet` over Tailscale; one of vllm-mlx or vmlx currently running (link to CLAUDE.md Switch commands).
-2. **Fill placeholders** — `sed -i '' 's/<MAC_STUDIO_IP>/192.168.x.y/' configs/client/vllm-mlx/lobehub.env` (and the vmlx one). Note that `not-needed` is LobeHub-required non-empty; vllm-mlx / vmlx ignore auth.
-3. **Docker run example** — `docker run -d --name lobe --env-file configs/client/vllm-mlx/lobehub.env -p 3210:3210 lobehub/lobe-chat`. For persistence / auth-enabled db mode, link to `lobehub/lobe-chat-database` image and the `lobehub/lobe-chat-compose` repo.
-4. **Switching servers** — `docker stop lobe && docker rm lobe && docker run ... --env-file configs/client/vmlx/lobehub.env ...` after switching the Mac Studio server. Or mount both env files and symlink `active.env` — mention briefly.
+2. **Fill placeholders** — `sed -i '' 's/<MAC_STUDIO_IP>/192.168.x.y/' configs/clients/vllm-mlx/lobehub.env` (and the vmlx one). Note that `not-needed` is LobeHub-required non-empty; vllm-mlx / vmlx ignore auth.
+3. **Docker run example** — `docker run -d --name lobe --env-file configs/clients/vllm-mlx/lobehub.env -p 3210:3210 lobehub/lobe-chat`. For persistence / auth-enabled db mode, link to `lobehub/lobe-chat-database` image and the `lobehub/lobe-chat-compose` repo.
+4. **Switching servers** — `docker stop lobe && docker rm lobe && docker run ... --env-file configs/clients/vmlx/lobehub.env ...` after switching the Mac Studio server. Or mount both env files and symlink `active.env` — mention briefly.
 5. **UI verification** — open `http://localhost:3210`, go to `Settings → AI Service Provider → OpenAI`, click "Get Model List". Registered JANG / CRACK IDs should populate. Same flow for Anthropic tab.
 6. **Adding a second concurrent provider via UI** — click "Add Custom Provider" post-boot if you ever run two Mac Studio endpoints on different ports (future-proof note; not needed today since vllm-mlx and vmlx share port 8000).
 7. **Troubleshooting** — empty responses usually mean missing `/v1` on OpenAI base URL ([LobeHub docs](https://lobehub.com/docs/usage/providers/openai)); model not in list usually means `-all` without a matching `+id`; tool calls failing on vllm-mlx → confirm server started with `--tool-call-parser qwen3_coder` (see CLAUDE.md).
@@ -65,7 +65,7 @@ Capability flags (`fc`, `reasoning`) lifted directly from `configs/client/vmlx/o
 
 ## Critical files to read / match during implementation
 
-- `configs/client/vllm-mlx/opencode.json`, `configs/client/vmlx/opencode.json` — canonical model IDs, context limits, capability flags. LobeHub env strings must stay consistent with these.
+- `configs/clients/vllm-mlx/opencode.json`, `configs/clients/vmlx/opencode.json` — canonical model IDs, context limits, capability flags. LobeHub env strings must stay consistent with these.
 - `docs/clients/opencode-setup.md`, `docs/clients/qwen-code-setup.md` — tone and section layout for the new setup doc.
 - `README.md`, `configs/README.md` — structure of the clients / config-files tables so the LobeHub additions slot in cleanly.
 - `CLAUDE.md` "Editing Workflow" — LobeHub env files for vllm-mlx and vmlx do NOT need to be kept in sync across all 4 server folders (per the rule that vllm-mlx configs and vmlx configs are independent). Only vllm-mlx and vmlx get a `lobehub.env`.
@@ -81,7 +81,7 @@ Capability flags (`fc`, `reasoning`) lifted directly from `configs/client/vmlx/o
 
 After implementation:
 
-1. **Placeholder lint** — `grep -R "<MAC_STUDIO_IP>" configs/client/vllm-mlx/lobehub.env configs/client/vmlx/lobehub.env` should show the placeholder (confirming no accidental leak of real IP).
-2. **Env file syntax** — `docker run --rm --env-file configs/client/vllm-mlx/lobehub.env alpine env | grep -E '^(OPENAI|ANTHROPIC)_'` to confirm all 6 vars parse.
+1. **Placeholder lint** — `grep -R "<MAC_STUDIO_IP>" configs/clients/vllm-mlx/lobehub.env configs/clients/vmlx/lobehub.env` should show the placeholder (confirming no accidental leak of real IP).
+2. **Env file syntax** — `docker run --rm --env-file configs/clients/vllm-mlx/lobehub.env alpine env | grep -E '^(OPENAI|ANTHROPIC)_'` to confirm all 6 vars parse.
 3. **End-to-end (user-run)** — with the real IP filled in and vllm-mlx running on Mac Studio: `docker run -d --name lobe --env-file … -p 3210:3210 lobehub/lobe-chat`, open `http://localhost:3210`, Settings → OpenAI → Get Model List → expect the two JANG IDs to populate. Send a message to `Qwen3.5-35B JANG 4K`. Swap env files + restart container and repeat for vmlx with `Qwen3.6-35B JANGTQ4-CRACK`.
 4. **Doc cross-link check** — README link to `docs/clients/lobehub-setup.md` resolves; `configs/README.md` mentions both new env files.

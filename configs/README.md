@@ -2,7 +2,7 @@
 
 **Last updated: 2026-04-30**
 
-Client config files for connecting to the Mac Studio M3 Ultra. Templates now live under `configs/client/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
+Client config files for connecting to the Mac Studio M3 Ultra. Templates now live under `configs/clients/`, organized by server type. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
 ## 🖥️ Server Roles
 
@@ -40,7 +40,7 @@ The speed gap widens significantly at longer contexts -- exactly where coding ag
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Model:** `mlx-community/Ling-2.6-flash-mlx-6bit` -- [bailing_hybrid](../docs/models/model-summary-ling.md) MoE, 6-bit MLX uniform, ~80GB on disk, 64K practical context (128K OOMs), 104B total / 7.4B active. Launched via standard `~/vllm-mlx-env/bin/vllm-mlx serve` (no JANG wrapper) with `--enable-auto-tool-choice --tool-call-parser hermes`. Requires three local patches (PR #1227 vendor + threadlocal-stream + inline-gen) — see [`model-summary-ling.md`](../docs/models/model-summary-ling.md) for the full deploy recipe. Older primaries: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense+VL fallback, 17.5GB) and `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` (122B/10B MoE, 35GB) — both still available via `run_vllm_jang.py` wrapper.
+**Model:** `mlx-community/Ling-2.6-flash-mlx-6bit` -- [bailing_hybrid](../docs/models/per-model/model-summary-ling.md) MoE, 6-bit MLX uniform, ~80GB on disk, 64K practical context (128K OOMs), 104B total / 7.4B active. Launched via standard `~/vllm-mlx-env/bin/vllm-mlx serve` (no JANG wrapper) with `--enable-auto-tool-choice --tool-call-parser hermes`. Requires three local patches (PR #1227 vendor + threadlocal-stream + inline-gen) — see [`model-summary-ling.md`](../docs/models/per-model/model-summary-ling.md) for the full deploy recipe. Older primaries: `JANGQ-AI/Qwen3.6-27B-JANG_4M` (dense+VL fallback, 17.5GB) and `JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S` (122B/10B MoE, 35GB) — both still available via `run_vllm_jang.py` wrapper.
 
 ### `client/mlx-openai-server/` -- Multi-Model Server (Process Isolation)
 
@@ -120,7 +120,7 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 
 **Model:** `qwen3.6-27b` (LM Studio mangles `mlx-community/Qwen3.6-27B-6bit` → lowercases + strips org prefix at load time — verify with `/v1/models`). Standard MLX 6-bit safetensors, ~22 GB on disk under `~/.lmstudio/models/`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
 
-Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/server/llmster/summary.md`](../docs/server/llmster/summary.md).
+Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
 
 ## 🔀 Switching Servers
 

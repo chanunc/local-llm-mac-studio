@@ -215,4 +215,4 @@ find ~/vllm-mlx-env/lib/python3.12/site-packages/vllm_mlx/__pycache__/ -name 'se
 
 ## 🧩 Nemotron Support
 
-vllm-mlx is the **only local server** with full Nemotron support — built-in chat template fallback, `nemotron` tool parser, and `think` reasoning parser. mlx-openai-server and oMLX cannot serve Nemotron models correctly. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.
+vllm-mlx is the **only local server** with full Nemotron support — built-in chat template fallback, `nemotron` tool parser, and `think` reasoning parser. mlx-openai-server and oMLX cannot serve Nemotron models correctly. See [Nemotron Server Compatibility](../../models/per-model/model-summary-nemotron.md#nemotron-server-compatibility) for details.

@@ -18,6 +18,10 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 |:--|:--|
 | [`per-model/model-summary-ling.md`](per-model/model-summary-ling.md) | Ling-2.6-flash deployment recipe (`bailing_hybrid` patches, server flags, caveats). |
 | [`per-model/model-summary-mimo-v2.5.md`](per-model/model-summary-mimo-v2.5.md) | MiMo V2.5 three-config investigation and failure analysis. |
+| [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md) | Qwen3-Coder family (Coder-Next 6-bit, Coder-30B-A3B 4-bit). |
+| [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md) | Qwen3.5 family (4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K). |
+| [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md) | Qwen3.6 family (5 variants: 35B-A3B 6-bit/4-bit, 27B JANG 4M, 27B 6-bit, 35B Rust LoRA). |
+| [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md) | Nemotron family (Nano 30B, Super 120B, Cascade-2 30B) + cross-cutting server compatibility note. |
 
 ## Benchmarks
 

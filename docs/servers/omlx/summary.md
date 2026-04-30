@@ -478,4 +478,4 @@ ssh narutaki "openclaw update"
 
 ## ⚠️ Known Limitations
 
-- **Nemotron family incompatible**: No chat template fallback or tool/reasoning parsers for Nemotron models. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/model-summary.md#nemotron-server-compatibility) for details.
+- **Nemotron family incompatible**: No chat template fallback or tool/reasoning parsers for Nemotron models. Use vllm-mlx instead. See [Nemotron Server Compatibility](../../models/per-model/model-summary-nemotron.md#nemotron-server-compatibility) for details.

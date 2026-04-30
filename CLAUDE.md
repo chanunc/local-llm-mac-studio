@@ -26,8 +26,9 @@ SSH aliases: `macstudio` (Mac Studio over LAN), `macstudio-ts` (Mac Studio over 
 - **Multi-model server:** oMLX installed via Homebrew on Mac Studio, with AlexTzk fork overlay for JANG support (PR #364). Config lives in `~/.omlx/` on the Mac Studio (not in this repo). Models are MLX safetensors or JANG mixed-precision format stored in `~/.omlx/models/`.
 - **JANGTQ server:** vmlx via the MLX Studio DMG (v1.3.65+) bundled Python at `/Applications/vMLX.app/Contents/Resources/bundled-python/python/`. Only route today for TurboQuant-weight models (`*JANGTQ*` / `*JANGTQ-CRACK*`) because the public `jang-tools` pypi package lacks `load_jangtq` + the `turboquant/*kernel*` Metal kernels ([jjang-ai/jangq#5](https://github.com/jjang-ai/jangq/issues/5)). Runs headlessly — no GUI session needed despite Electron packaging. Invoke as `python3 -m vmlx_engine.cli serve …` (the bundled `bin/vmlx` shebang points at the maintainer's build tree; the CLI module works fine). OpenAI + Anthropic + Ollama API compatible. Incompatible flags: `--smelt` and `--flash-moe` raise on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)).
 - **Client configs** (`configs/clients/`): Organized by server type — `configs/clients/vllm-mlx/` for primary server, `configs/clients/mlx-openai-server/` for feature-rich multi-model, `configs/clients/omlx/` for full multi-model roster, `configs/clients/vmlx/` for JANGTQ CRACK models, `configs/clients/llmster/` for LM Studio headless on port 1234 (added 2026-04-30, currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status). IPs and API keys are stored as placeholders (`<MAC_STUDIO_IP>`, `<YOUR_API_KEY>`) — never commit real values.
-- **Scripts** (`scripts/`): `patch_omlx_cache.py` runs on the Mac Studio to monkey-patch oMLX internals. Must be re-run after every `brew upgrade omlx`.
-- **Plans** (`plans/`): Design documents for non-trivial changes before implementation.
+- **Current state** (`docs/current.md`): Concise live-state pointer for production, sidecar, and fallback server/model choices. Update it whenever production state changes.
+- **Scripts** (`scripts/`): Split into `scripts/patches/` (re-applied after upstream package upgrades — `patch_omlx_cache.py` runs after every `brew upgrade omlx`) and `scripts/bench/` (benchmark drivers). See `scripts/README.md`.
+- **Plans** (`plans/`): Design documents for non-trivial changes before implementation. Plans are non-canonical; active plans live in `plans/active/`, completed in `plans/done/`, abandoned in `plans/archive/`.
 
 ## Common Commands
 
@@ -112,11 +113,14 @@ This repo is the operations notebook for a live Mac Studio LLM stack. Every mode
 
 If you stand up a new server type on the Mac Studio, all of these must be updated in the same PR/commit:
 - `README.md` — data flow diagram, Quick Start launch + stop snippets, Health Check (curl + log tail), Servers table row (with link to `docs/servers/<name>/summary.md`), maintenance line, Known Limitations entry
+- `docs/current.md` — add the new server if it is live, sidecar, or a documented fallback
 - `CLAUDE.md` **and `AGENTS.md`** (kept in sync, content identical except for the agent-name header) — overview paragraph, Architecture bullet, data flow diagram, Common Commands launch + stop, Editing Workflow scope note
-- `configs/README.md` — bump `Last updated` date, Server Roles table row, new `client/<name>/` config-files section, Switching Servers command block
+- `configs/README.md` — bump `Last updated` date, Server Roles table row, new `clients/<name>/` config-files section, Switching Servers command block
 - `configs/clients/<name>/opencode.json` — at minimum (other client configs are deferred until the server graduates to permanent status)
+- `configs/clients/README.md` — add the new server row to the Layout table
 - `scripts/switch_opencode_config.py` — append `"<name>"` to the hardcoded `SERVERS` list
 - `docs/servers/<name>/summary.md` — full runbook matching the structure of `docs/servers/vmlx/summary.md` (Overview, Architecture, Installation, Starting the server, Tool use and reasoning, Health check, Performance, Known limitations, See also)
+- `docs/servers/README.md` — add the new server row to the runbook index
 
 If the new server does not support JANG/JANGTQ/`bailing_hybrid`, **also** update the "All servers support JANG…" line in `README.md` (currently reads "All servers except llmster support JANG…").
 
@@ -124,7 +128,8 @@ If the new server does not support JANG/JANGTQ/`bailing_hybrid`, **also** update
 
 When the live process on the Mac Studio changes (e.g. `pkill vllm-mlx; ... vllm-mlx serve <new-model>`), update:
 - `README.md` — "Current `vllm-mlx` production primary" line under the Servers table, Quick Start launch-snippet comment, any inline references in Models table footnotes
-- `CLAUDE.md` — overview paragraph (`Project` section), Architecture bullet ("Primary server" or equivalent), Common Commands example invocation
+- `docs/current.md` — production server/model/client-template row and fallback notes
+- `CLAUDE.md` **and `AGENTS.md`** — overview paragraph (`Project` section), Architecture bullet ("Primary server" or equivalent), Common Commands example invocation
 - `configs/README.md` — Server Roles table model column, the relevant `client/<server>/` section's Model description, the Switching Servers command block
 - `configs/clients/<server>/opencode.json` — `model` and `small_model` fields, plus the `models` map entry; do the equivalent in `claude-code-settings.json`, `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json` if the server has them
 
@@ -142,7 +147,7 @@ If the model needs patches/wrappers (JANG, JANGTQ, `bailing_hybrid`, `mimo_v2`, 
 
 #### Event 4: Running a new benchmark
 
-When you run `bench_api_server.py`, `bench_api_tool_call.py`, or `bench_agent_tool_call.py`:
+When you run `scripts/bench/bench_api_server.py`, `scripts/bench/bench_api_tool_call.py`, or `scripts/bench/bench_agent_tool_call.py`:
 - Save raw JSON output to `docs/models/benchmarks/<model-slug>/<benchmark-type>.json` (or `<benchmark-type>-<server>.json` for cross-server comparisons — see the `agent-bench-llmster.json` precedent)
 - Update `docs/models/benchmarks/model-benchmark-<type>.md` — add the row to the cross-model summary table, add a per-model results section if one doesn't exist, link the raw JSON
 - If the benchmark establishes a new fastest/slowest extreme, update the README Benchmarks section's headline tables
@@ -152,9 +157,9 @@ Do not commit bench JSONs that contain secrets or PII (these scripts don't gener
 
 ### Pre-commit drift check
 
-Before committing any change to live state, grep for stale references across the four primary docs:
+Before committing any change to live state, grep for stale references across the primary docs:
 ```bash
-grep -n "<old-model-name>\|<old-primary>" README.md CLAUDE.md configs/README.md docs/models/model-summary.md
+grep -n "<old-model-name>\|<old-primary>" README.md AGENTS.md CLAUDE.md configs/README.md docs/current.md docs/models/model-summary.md
 ```
 Catch drift while the context is fresh, not three sessions later.
 

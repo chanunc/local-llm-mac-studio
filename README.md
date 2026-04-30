@@ -22,25 +22,28 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 | Path | Purpose | Start Here |
 |:-----|:--------|:-----------|
-| `docs/servers/` | Server runbooks, setup, maintenance, and JANG patches | Pick one `summary.md` per server |
-| `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/model-summary.md` |
-| `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | The client you are configuring |
+| `docs/current.md` | Current live server / model / client-template state | Read before changing production |
+| `docs/servers/` | Server runbooks, setup, maintenance, and JANG patches | `docs/servers/README.md` |
+| `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/README.md` |
+| `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | `docs/clients/README.md` |
 | `configs/` | Ready-to-copy client config templates grouped by server type | `configs/README.md` |
-| `scripts/` | Small local patch helpers for upstream server packages | Read before re-running after upgrades |
-| `plans/` | Research notes and future work, not the primary source of truth for live setup | Use only for backlog/context |
+| `scripts/` | Patch helpers, benchmark drivers, and config-switching utilities | `scripts/README.md` |
+| `plans/` | Research notes and future work, not live runbooks | `plans/README.md` |
 
 ### Canonical reading order
 
-1. Read this `README.md` for the stack overview and server selection.
-2. Read one server runbook in `docs/servers/<server>/summary.md`.
-3. Read `configs/README.md` for the matching client config templates.
-4. Read `docs/models/model-summary.md` when choosing or adding models.
-5. Read the relevant maintenance or patch docs only when upgrading or debugging.
+1. Read this `README.md` for the stack overview.
+2. Read [`docs/current.md`](docs/current.md) for the current live production and sidecar state.
+3. Read one server runbook from [`docs/servers/README.md`](docs/servers/README.md).
+4. Read [`configs/README.md`](configs/README.md) for the matching client config templates.
+5. Read [`docs/models/README.md`](docs/models/README.md) when choosing, adding, or benchmarking models.
+6. Read the relevant maintenance or patch docs only when upgrading or debugging.
 
 ### Summary vs maintenance vs plans
 
 - `summary.md` files are the main operational entry points.
 - `maintenance.md` and `jang-patch.md` files are task-specific follow-ups.
+- [`docs/current.md`](docs/current.md) is the concise live-state pointer.
 - `plans/` captures ideas, experiments, and pending investigations; it is not the live runbook layer.
 
 ## ⚡ Quick Start

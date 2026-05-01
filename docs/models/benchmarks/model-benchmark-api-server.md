@@ -486,6 +486,51 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 
 ---
 
+## Gemma 4 31B-it (6-bit, dense, on llmster)
+
+Model: `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 dense **31B** instruction-tuned, 6-bit MLX, no MoE, no vision — 29 GB on disk, 31.32 GB total weights as reported by `lms get`)
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 3 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](gemma-4-31b-it-6bit/api-server-llmster.json).
+
+**Server:** llmster, MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`, `lms server start --bind 0.0.0.0 --cors`. Model loaded via `lms load gemma-4-31b-it-mlx --gpu max --context-length 65536` (the served identifier from `/v1/models` is `gemma-4-31b-it-mlx` — note LM Studio retains the `-mlx` suffix from the `-MLX-` segment of the HF id, unlike Qwen3.6 where it strips `-6bit`).
+
+### Generation Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **21.8** |
+| 4K | 21.5 |
+| 8K | 21.1 |
+| 32K | 18.3 |
+
+### Prefill Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 1,232 |
+| 4K | 6,028 |
+| 8K | 11,584 |
+| 32K | **36,297** |
+
+### Time to First Token (seconds)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **0.44** |
+| 4K | 0.68 |
+| 8K | 0.71 |
+| 32K | 0.90 |
+
+**Notes:**
+- **Decode tax for the larger dense model:** Gemma 4 31B-it (dense) is ~30–40 % slower in decode than Qwen3.6-27B-6bit on the same llmster (21.8 vs 29.9 tok/s @ 512; 18.3 vs 26.3 tok/s @ 32K). Expected — 31B dense vs 27B dense at the same 6-bit quant pays a roughly proportional bandwidth tax.
+- **Prefill is also lower** at 32K (36K vs 47K tok/s) — same reason, more parameters to stream through the prefill kernel per token.
+- **TTFT stays sub-1 s through 32K** — the headline llmster property holds.
+- **`lms get` failed twice** on this model (timed out at 88 % with hung "Finalizing download…" state, only shards 4–6 of 6 on disk). Working path: kill the hung process, finish the download with `huggingface_hub.snapshot_download`, then `lms ls` recognises it. Detail in [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) "Loader gotcha" callout.
+- **First load ignored `--context-length`** — model came up at 4K context despite the explicit flag, hit `HTTP 400: tokens exceed context length` on the 4K bench. Re-`lms unload` + re-`lms load --context-length 65536` correctly seats 64K.
+
+---
+
 ## Ling-2.6-flash mlx-6bit (104B/7B-active, bailing_hybrid)
 
 Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.

@@ -6,7 +6,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
-- [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — Vision + reasoning + tool use · 15 GB · 256K
+- [Gemma 4 Family](#gemma-4-family) — 2 variants: 26B-A4B (4-bit, MoE multimodal) and 31B-it (6-bit, dense text-only, llmster). Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
 - [Qwen3-Coder Family (MLX 6-bit + 4-bit)](#qwen3-coder-family-mlx-6-bit--4-bit) — 2 variants: Coder-Next 6-bit (daily driver), Coder-30B-A3B 4-bit. Detail at [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md)
 - [Qwen3.5 Family (MoE + dense distilled + JANG)](#qwen35-family-moe--dense-distilled--jang) — 4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K. Detail at [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
@@ -295,56 +295,20 @@ Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`), pruned by `jedisct1` to keep only the 
 
 ---
 
-## Gemma 4 26B-A4B (4-bit)
+## Gemma 4 Family
 
-Google's first mixture-of-experts Gemma. The 26B-A4B activates only ~4B parameters per token (128 experts, top-4 routing) giving MoE-class throughput while supporting 256K context, native vision+video+audio multimodal input, and built-in thinking mode. Verified on Mac Studio M3 Ultra (96 GB) on April 17, 2026.
+Two Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context) and the dense **31B-it** instruction-tuned text-only release (64K context, llmster-deployed). Per-variant deployment details, server configs, benchmarks, and caveats live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**.
 
-| Spec | Value |
-|:-----|:------|
-| Base Model | [google/gemma-4-26b-a4b-it](https://huggingface.co/google/gemma-4-26b-a4b-it) |
-| MLX 4-bit | [mlx-community/gemma-4-26b-a4b-it-4bit](https://huggingface.co/mlx-community/gemma-4-26b-a4b-it-4bit) |
-| Format | MLX safetensors (multimodal / `mlx_vlm` handler) |
-| Vendor | Google DeepMind; MLX conversion by mlx-community |
-| Architecture | `Gemma4ForConditionalGeneration` — MoE text + vision encoder + audio encoder |
-| Parameters | 26B total, ~4B active (128 experts, top-4 routing) |
-| Quantization | 4-bit (group size 64), with 8-bit on MoE gate/up/down projectors of layer 0 |
-| Specialties | Thinking mode (chain-of-thought), image + video + audio input, tool calling, 256K context |
-| On-disk size | ~15 GB |
-| Context Size | 262,144 tokens (256K); sliding window 1024 on intermediate layers |
-| License | Gemma Terms of Use |
-| Requirements | `mlx-openai-server >= 1.7.1`, `mlx-lm >= 0.31.2`, `mlx-vlm >= 0.4.4` |
+| Variant | Type | Size | Quant | Primary server here | Detail |
+|:--------|:-----|----:|:------|:--------------------|:-------|
+| Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
+| Gemma 4 31B-it (6-bit) | Dense 31B text-only | 29 GB | 6-bit MLX | llmster | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
 
-**mlx-openai-server model ID:** `mlx-community/gemma-4-26b-a4b-it-4bit`
+---
 
-**Server config:** `model_type: multimodal`, `tool_call_parser: gemma4`, `reasoning_parser: gemma4`, `context_length: 262144`
+## JANGTQ-CRACK Deployment History (Apr 2026)
 
-**Reference YAML:** [mlx-openai-server-gemma4.yaml](../servers/mlx-openai-server/mlx-openai-server-gemma4.yaml)
-
-### Benchmarks (mlx-openai-server 1.7.1, M3 Ultra 96 GB, Apr 17 2026)
-
-Method: streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens include both `reasoning_content` (thinking) and `content` (answer) phases.
-
-> **512 note:** run 1 was a cold-start (59.4 tok/s gen, 28 tok/s prefill, 18.7s TTFT). Table shows warm values (runs 2–3).
-
-#### Generation Speed (tok/s)
-
-| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
-|:--------|------------:|----------------:|---------:|
-| 512 | **62.5** | 1,710 | 0.30 |
-| 4K | 54.6 | 3,117 | 1.32 |
-| 8K | 60.6 | 3,154 | 2.60 |
-| 32K | 50.6 | 2,892 | 11.34 |
-| 64K | 42.0 | 2,542 | 25.78 |
-| 128K | 27.1 | 1,995 | 65.70 |
-
-Prefill peaks at 8K (~3,154 tok/s) — typical for sliding-window models where GPU utilisation is highest in the mid-range. Generation speed drops gradually with context due to sliding window KV growth.
-
-### Caveats
-
-- **Thinking always on (streaming):** Bug [#280](https://github.com/cubist38/mlx-openai-server/issues/280) — reasoning parser not applied mid-stream in 1.7.1. Fixed on `main` but not yet released. Non-streaming requests separate `content` / `reasoning_content` correctly (verified).
-- **`chat_template_kwargs` ignored:** Bug [#279](https://github.com/cubist38/mlx-openai-server/issues/279) — `enable_thinking: false` has no effect in 1.7.1. Fixed on `main`. Thinking cannot currently be suppressed via API.
-- **vllm-mlx:** Not tested. Bug [#38855](https://github.com/vllm-project/vllm/issues/38855) means reasoning parser strips `<|channel>` markers — not recommended until vllm-mlx picks up the vLLM main fix.
-- **oMLX:** Not tested. The 4-bit MLX port includes `chat_template.jinja` so the tokenizer issue seen with 8-bit variants does not apply here; however, Gemma 4 parsers are not registered in oMLX's parser map.
+Historical narrative of the JANGTQ TurboQuant deployment work that landed alongside the Gemma 4 26B verification — kept here for context on the loader-discovery path and the resulting CRACK variant rankings. Empirical refusal-rate benchmarks for the CRACK variants live in the private [`uncen-model/`](uncen-model/) submodule; this section captures only the deployment story.
 
 ### Variant attempted but blocked: `JANGQ-AI/Qwen3.6-35B-A3B-JANGTQ4`
 

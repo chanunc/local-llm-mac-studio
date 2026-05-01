@@ -22,6 +22,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md) | Qwen3.5 family (4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K). |
 | [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md) | Qwen3.6 family (5 variants: 35B-A3B 6-bit/4-bit, 27B JANG 4M, 27B 6-bit, 35B Rust LoRA). |
 | [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md) | Nemotron family (Nano 30B, Super 120B, Cascade-2 30B) + cross-cutting server compatibility note. |
+| [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md) | Gemma 4 family (26B-A4B 4-bit MoE multimodal, 31B-it 6-bit dense text-only). |
 
 ## Benchmarks
 

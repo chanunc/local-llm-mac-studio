@@ -16,6 +16,15 @@
             "context": 32768,
             "output": 4096
           }
+        },
+        "gemma-4-31b-it-mlx": {
+          "name": "Gemma 4 31B-it 6bit (llmster, standard MLX)",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 65536,
+            "output": 4096
+          }
         }
       }
     }

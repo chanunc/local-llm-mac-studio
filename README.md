@@ -214,7 +214,8 @@ All models fit in **96GB unified memory**.
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--------------------------------------|:------------|----------:|--------:|:---------|
-| [Gemma 4 26B-A4B (4-bit)](docs/models/model-summary.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
+| [Gemma 4 26B-A4B (4-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
+| [Gemma 4 31B-it (6-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) | Dense 31B | 29 | 64K | Fastest agent-loop model on llmster (5–6 s browse) |
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3-Coder-Next 6-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
 | [Qwen3-Coder-30B-A3B Instruct 4-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-30b-a3b-instruct-4-bit) | MoE 30.5B/3.3B | 17.2 | 262K | Compact coding model |

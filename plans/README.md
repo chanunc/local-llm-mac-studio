@@ -31,6 +31,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-hot-cache-max-size-per-model.md`](done/plan-hot-cache-max-size-per-model.md) | oMLX per-model hot cache patch (shipped, lives in `scripts/patches/patch_omlx_cache.py`) |
 | [`done/plan-mac-studio-lmstudio-ollama-benchmark.md`](done/plan-mac-studio-lmstudio-ollama-benchmark.md) | LM Studio / Ollama benchmark — drove llmster adoption 2026-04-30 |
 | [`done/plan-rearrange-docs-organization.md`](done/plan-rearrange-docs-organization.md) | Repo structure reorganization (this layout) |
+| [`done/plan-gemma-4-31b-llmster.md`](done/plan-gemma-4-31b-llmster.md) | Deploy Gemma 4 31B-it on llmster + 3 benchmarks (shipped 2026-05-01) — agent-loop champion at 5–6 s wall |
 
 ### Archive
 

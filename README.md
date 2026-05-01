@@ -121,14 +121,17 @@ nohup ~/dflash-mlx-env/bin/dflash-serve \
   --temp 0.0 --max-tokens 512 \
   > /tmp/dflash-mlx.log 2>&1 &
 
-# llmster — LM Studio headless on port 1234 (NOT 8000). Standard MLX safetensors
+# llmster — LM Studio headless on port 1234 (NOT 8000). Standard MLX / GGUF
 # only; no JANG/JANGTQ/bailing_hybrid support. Tool-call + reasoning parsing
 # built into the MLX runtime — no parser flags needed. First-time setup:
 #   brew install --cask lm-studio
 #   open -a 'LM Studio' && sleep 8 && osascript -e 'quit app "LM Studio"'   # bootstraps ~/.lmstudio/bin/lms
-#   ~/.lmstudio/bin/lms get https://huggingface.co/<org>/<repo> -y          # downloads to ~/.lmstudio/models/
-# Launch sequence (per model):
-~/.lmstudio/bin/lms load qwen3.6-27b --gpu max --context-length 65536 -y
+# HauhauCS custom K_P quants currently mis-resolve through `lms get`; pull the
+# exact GGUF file, import it with a hard link, then load with a stable API id.
+python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced', filename='Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf', local_dir='/Users/chanunc/.cache/hauhau-gguf')"
+~/.lmstudio/bin/lms import -L --user-repo HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced -y ~/.cache/hauhau-gguf/Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf
+# Launch sequence (current llmster sidecar):
+~/.lmstudio/bin/lms load qwen3.6-27b-uncensored-hauhaucs-balanced --gpu max --context-length 65536 --identifier qwen3.6-27b-uncensored-balanced-q8kp -y
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors                          # default port 1234
 
 pkill -f vllm-mlx                                                                # stop vllm-mlx
@@ -190,7 +193,7 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-lm](docs/servers/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
-| **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). Brew cask install. No JANG/JANGTQ/bailing_hybrid. See [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) |
+| **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | Current sidecar: `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` `Q8_K_P` (tool-call smoke test passes). Bench reference: **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K). No JANG/JANGTQ/bailing_hybrid. |
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to llmster. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 
 All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) mixed-precision models via patches:
@@ -226,6 +229,7 @@ All models fit in **96GB unified memory**.
 | [Qwen3.6-35B-A3B 6-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
 | [Qwen3.6-35B-A3B 4-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
 | [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
+| [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) | Dense 27B + VL | 32 | 262K (1M YaRN) | llmster GGUF sidecar; stable tool-use uncensored variant |
 | [Nemotron 3 Super 120B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
 | [Nemotron 3 Nano 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
@@ -323,7 +327,7 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/servers/vllm-mlx/maintenance.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/servers/vmlx/maintenance.md)
 - **dflash-mlx** — Standard MLX safetensors only (no JANG/JANGTQ/`bailing_hybrid`/GGUF). PyPI 0.1.0 has no tool-calling — install 0.1.4.1+ from `git+https://github.com/bstnxbt/dflash-mlx.git`. Three local patches required after install: [`patch_dflash_mlx_serve.py`](scripts/patches/patch_dflash_mlx_serve.py) (two upstream bugs), [`patch_mlx_lm_match.py`](scripts/patches/patch_mlx_lm_match.py) (tool-detection trie reset). Built-in `DRAFT_REGISTRY` does not include Qwen3.6 pairs — always pass `--draft-model` explicitly. OpenAI API only. [Runbook](docs/servers/dflash-mlx/summary.md)
-- **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup). Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`). Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
+- **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/per-model/model-summary-nemotron.md#nemotron-server-compatibility)

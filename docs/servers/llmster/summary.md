@@ -72,11 +72,22 @@ ssh macstudio "~/.lmstudio/bin/lms get 'https://huggingface.co/mlx-community/Qwe
 ssh macstudio "~/.lmstudio/bin/lms ls"
 ```
 
+**Custom GGUFs with nonstandard quant labels** may need a direct Hub download plus import. On 2026-05-01, `lms get --gguf 'https://huggingface.co/HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced@Q8_K_P' -y` mis-resolved to `Q2_K_P`, so the exact `Q8_K_P` file was deployed like this:
+
+```bash
+ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced', filename='Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf', local_dir='/Users/chanunc/.cache/hauhau-gguf')\""
+ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced -y ~/.cache/hauhau-gguf/Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf"
+```
+
 **Load and start** (keep this idempotent — `lms ps` shows current state):
 
 ```bash
 # Load with explicit context length (default is 4096 — too small for agent prompts)
 ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-27b' --gpu max --context-length 65536 -y"
+
+# Current GGUF sidecar (2026-05-01): pin a stable API identifier so client configs
+# do not depend on LM Studio's generated model id.
+ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-27b-uncensored-hauhaucs-balanced' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-uncensored-balanced-q8kp' -y"
 
 # Start the OpenAI-compatible server. --bind 0.0.0.0 is REQUIRED for LAN access
 # (default binds to 127.0.0.1 only). --cors enables web-app clients.
@@ -99,6 +110,11 @@ Verified on 2026-04-30 with `mlx-community/Qwen3.6-27B-6bit`:
 - OpenCode end-to-end search: **25.71 s wall** (vs vllm-mlx 127.28 s — **4.9× faster**)
 - Reasoning tokens captured: 70-79 per scenario (vllm-mlx + `--reasoning-parser qwen3` on the same model emitted 0)
 
+Smoke-tested on 2026-05-01 with `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` `Q8_K_P`:
+- `/v1/models` exposed the pinned id `qwen3.6-27b-uncensored-balanced-q8kp`
+- First `/v1/chat/completions` turn returned `finish_reason: "tool_calls"` with `get_weather({"location":"Paris"})`
+- Tool-result replay produced a normal final answer and separate `reasoning_content`
+
 Full bench: [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](../../models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30).
 
 ## Health check
@@ -112,7 +128,7 @@ curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool
 # Plain chat round-trip
 curl -s http://<MAC_STUDIO_IP>:1234/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -d '{"model":"qwen3.6-27b","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
+  -d '{"model":"qwen3.6-27b-uncensored-balanced-q8kp","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
   | python3 -m json.tool
 
 # Live request/response stream (the tail -f equivalent)
@@ -139,6 +155,7 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 
 - **MLX safetensors / GGUF only.** No JANG, no JANGTQ, no `bailing_hybrid`. Closed-source MLX runtime — model architectures not on LM Studio's supported list will fail to load. Use vllm-mlx, vmlx, or oMLX for those.
 - **`lms get` re-downloads from HuggingFace** into `~/.lmstudio/models/` even when the same repo is already in `~/.cache/huggingface/hub/` (no dedup, no symlink option). For a 22 GB model this means 22 GB of duplicate disk usage.
+- **Custom quant names can confuse LM Studio's resolver.** HauhauCS `K_P` quants currently do not round-trip cleanly through `lms get ...@Q8_K_P`; the resolver tried to download `Q2_K_P` instead. Work around this by downloading the exact GGUF via `huggingface_hub` and importing it with `lms import -L`.
 - **Model IDs are mangled.** LM Studio lowercases and strips the org prefix at load time: `mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`. Check `/v1/models` for the exact served identifier and use that in client configs / `--model` args.
 - **Default context is 4096.** `lms load` without `--context-length` ships with a 4 K window, which fails on agent prompts. Always pass `--context-length 65536` (or larger) explicitly. Memory is allocated up front.
 - **Default bind is 127.0.0.1.** `lms server start` without `--bind 0.0.0.0` will not accept LAN connections. There is no persistent server config file that survives across `start` invocations — pass `--bind 0.0.0.0 --cors` every time.

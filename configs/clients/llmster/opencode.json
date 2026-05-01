@@ -8,6 +8,15 @@
         "apiKey": "not-needed"
       },
       "models": {
+        "qwen3.6-27b-uncensored-balanced-q8kp": {
+          "name": "Qwen3.6-27B Uncensored Balanced Q8_K_P (llmster, GGUF)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 4096
+          }
+        },
         "qwen3.6-27b": {
           "name": "Qwen3.6-27B 6bit (llmster, standard MLX)",
           "tools": true,
@@ -29,6 +38,6 @@
       }
     }
   },
-  "model": "macstudio/qwen3.6-27b",
-  "small_model": "macstudio/qwen3.6-27b"
+  "model": "macstudio/qwen3.6-27b-uncensored-balanced-q8kp",
+  "small_model": "macstudio/qwen3.6-27b-uncensored-balanced-q8kp"
 }

@@ -38,14 +38,14 @@ Notes:
 | Field | Value |
 |:--|:--|
 | Server | `llmster` / LM Studio headless |
-| Model | `qwen3.6-27b` from `mlx-community/Qwen3.6-27B-6bit` |
+| Model | `qwen3.6-27b-uncensored-balanced-q8kp` from `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` |
 | Port | `1234` |
 | Auth | None |
 | Client template set | [`configs/clients/llmster/`](../configs/clients/llmster/) |
 | Status | Provisional, OpenCode-only template |
 | Runbook | [`docs/servers/llmster/summary.md`](servers/llmster/summary.md) |
 
-Use llmster for standard MLX/GGUF models when the fast prefill path matters. It does not support JANG, JANGTQ, or `bailing_hybrid`.
+Use llmster for standard MLX/GGUF models when the fast prefill path matters. Current sidecar is the `Q8_K_P` GGUF imported via hard link from `~/.cache/hauhau-gguf/` because LM Studio's `lms get` resolver mis-picked the HauhauCS custom `K_P` quant as `Q2_K_P`. Tool calling smoke test passed on 2026-05-01: the first turn returned `finish_reason: "tool_calls"` with `get_weather({"location":"Paris"})`, and the tool-result replay produced a normal final answer. llmster does not support JANG, JANGTQ, or `bailing_hybrid`.
 
 ### dflash-mlx (DFlash speculative decoding)
 

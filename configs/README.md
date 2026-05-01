@@ -14,7 +14,7 @@ For the current production server/model and provisional sidecar state, read [`..
 | **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | **Current main** / JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
-| **llmster** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx for non-JANG models | Qwen3.6-27B-6bit (~22GB) | Not needed |
+| **llmster** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx for non-JANG models | HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P (~32GB) | Not needed |
 | **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
 Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but in practice memory pressure on a 96 GB M3 Ultra means stopping the port-8000 server before loading a model into llmster. Current main is vmlx + Osaurus Qwen3.6-35B-A3B JANGTQ4 for the fair JANGTQ benchmark deployment; switch to vllm-mlx + Ling to restore the previous primary, mlx-openai-server for multi-model with low overhead, oMLX when you need the full 9-model roster + admin dashboard, or llmster when you need the fastest possible agent loop on a standard MLX model.
@@ -121,7 +121,7 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 |------|---------|---------|
 | `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 
-**Model:** `qwen3.6-27b` (LM Studio mangles `mlx-community/Qwen3.6-27B-6bit` → lowercases + strips org prefix at load time — verify with `/v1/models`). Standard MLX 6-bit safetensors, ~22 GB on disk under `~/.lmstudio/models/`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
+**Model:** `qwen3.6-27b-uncensored-balanced-q8kp` from `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` — GGUF `Q8_K_P`, ~32 GB on disk. Imported into LM Studio via `lms import -L` after direct `huggingface_hub` download because `lms get` mis-resolves the repo's custom `K_P` quant names and tried to pull `Q2_K_P`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
 
 Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
 
@@ -170,7 +170,9 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
 # Switch to llmster (LM Studio headless, port 1234 — separate from port 8000)
 # First-time setup: brew install --cask lm-studio + one GUI launch to bootstrap ~/.lmstudio/bin/lms
 pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
-~/.lmstudio/bin/lms load qwen3.6-27b --gpu max --context-length 65536 -y
+python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced', filename='Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf', local_dir='/Users/chanunc/.cache/hauhau-gguf')"
+~/.lmstudio/bin/lms import -L --user-repo HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced -y ~/.cache/hauhau-gguf/Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf
+~/.lmstudio/bin/lms load qwen3.6-27b-uncensored-hauhaucs-balanced --gpu max --context-length 65536 --identifier qwen3.6-27b-uncensored-balanced-q8kp -y
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
 
 # Switch to dflash-mlx (port 8098 — does not displace port 8000 but eats ~25 GB unified memory)

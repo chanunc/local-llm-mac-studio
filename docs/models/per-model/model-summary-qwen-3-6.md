@@ -1,6 +1,6 @@
 # Model Summary: Qwen3.6 Family
 
-Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gated Attention** stack (linear-attention recurrence interleaved with classic attention) plus a 27-layer ViT vision tower. The same architecture appears at three model sizes (27 B dense, 35 B/3 B-active MoE) and across multiple quants (uniform 4 / 6 / 8-bit MLX, JANG 4M mixed-precision, JANGTQ CRACK variants — see [`uncen-model/`](../uncen-model/) for the JANGTQ CRACK entries) plus one LoRA-merged variant tuned on Rust diffs.
+Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gated Attention** stack (linear-attention recurrence interleaved with classic attention) plus a 27-layer ViT vision tower. The same architecture appears at three model sizes (27 B dense, 35 B/3 B-active MoE) and across multiple quants (uniform 4 / 6 / 8-bit MLX, JANG 4M mixed-precision, GGUF `Q8_K_P`, JANGTQ CRACK variants — see [`uncen-model/`](../uncen-model/) for the JANGTQ CRACK entries) plus one LoRA-merged variant tuned on Rust diffs.
 
 ## Index
 
@@ -9,6 +9,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · llmster recommended
+- [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · current llmster sidecar
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
 
 ---
@@ -248,6 +249,52 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
 **See also:** [`docs/servers/llmster/summary.md`](../../servers/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](../benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+
+---
+
+## HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P
+
+Same dense 27.3B Qwen3.6 base as the MLX and JANG variants above, but packed as a custom HauhauCS GGUF `Q8_K_P` quant tuned for minimal quality loss at GGUF-compatible runtimes. Deployed on `llmster` on 2026-05-01 because LM Studio is the only server in this stack that can host GGUF directly without conversion.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-27B](https://huggingface.co/Qwen/Qwen3.6-27B) |
+| Quant | [HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced](https://huggingface.co/HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced) |
+| Format | GGUF `Q8_K_P` (`Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf`) |
+| Vendor | HauhauCS quant / refusal-removal on Alibaba Qwen base |
+| Parameters | 27.3 B (dense) |
+| Density | Dense — every param active per token |
+| Quantization | Custom GGUF `Q8_K_P` |
+| Specialties | Agentic coding, tool use, refusal-removed security/ops prompts, GGUF-compatible deployment |
+| On-disk size | ~32 GB |
+| Context Size | 262K native; ~1M with YaRN |
+| License | Apache-2.0 |
+| Key Features | Recommended by the author for stable long tool-call chains; runs on llmster without JANG wrappers |
+
+**Current server:** `llmster` on port `1234` under the pinned identifier `qwen3.6-27b-uncensored-balanced-q8kp`.
+
+**Deployment path:** LM Studio's `lms get` resolver did not handle this repo's custom `K_P` quant labels correctly on 2026-05-01 and attempted to pull `Q2_K_P` when asked for `Q8_K_P`. The working sequence was:
+
+```bash
+ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced', filename='Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf', local_dir='/Users/chanunc/.cache/hauhau-gguf')\""
+ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced -y ~/.cache/hauhau-gguf/Qwen3.6-27B-Uncensored-HauhauCS-Balanced-Q8_K_P.gguf"
+ssh macstudio "~/.lmstudio/bin/lms load qwen3.6-27b-uncensored-hauhaucs-balanced --gpu max --context-length 65536 --identifier qwen3.6-27b-uncensored-balanced-q8kp -y"
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+```
+
+`lms import -L` matters here: it creates a hard link into `~/.lmstudio/models/` so the 32 GB GGUF is not duplicated on disk.
+
+**Tool-calling smoke test** (2026-05-01):
+- `/v1/models` exposed `qwen3.6-27b-uncensored-balanced-q8kp`
+- First turn returned `finish_reason: "tool_calls"` with `get_weather({"location":"Paris"})`
+- Tool-result replay produced `The current weather in Paris is sunny with a temperature of 18°C.`
+- `reasoning_content` was separated cleanly from `content`
+
+**Caveats:**
+- **Resolver mismatch for custom quant names** — use direct Hub download + `lms import`, not `lms get`, until LM Studio handles `K_P` labels correctly.
+- **No benchmark yet** — this deploy only established loadability and tool-call correctness, not throughput. Reuse the existing llmster API and agent bench scripts when you want real perf numbers.
+- **GGUF on llmster only in this repo** — `vllm-mlx`, `mlx-openai-server`, `oMLX`, `vmlx`, and `dflash-mlx` do not host this file format in the current stack.
+- **Uncensored posture is deliberate** — keep this sidecar scoped to local research / eval workflows, not shared endpoints.
 
 ---
 

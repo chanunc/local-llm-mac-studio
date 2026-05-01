@@ -98,6 +98,7 @@ Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../benchmarks/q
 - Requires three local patches against upstream packages — see [`docs/servers/dflash-mlx/summary.md`](../../servers/dflash-mlx/summary.md#installation).
 - PyPI 0.1.0 has no tool-calling — install dflash-mlx from `git+https://github.com/bstnxbt/dflash-mlx.git` (which currently resolves to 0.1.4.1).
 - Decode-bound win only; prefill-bound long-context multi-turn workloads lose to llmster.
+- **DFlash 1.33× speedup does not replicate on M3 Ultra.** Upstream's number is from M5 Max. Standalone `dflash-benchmark` runs on this hardware show DFlash regressing vs baseline at 1k-4k horizons (best-case 0.78×, worst-case 0.62×) and reaching parity at 8k only via essay-text repetition collapse. `--quantize-draft` recovers a marginal 1.05× at 8k. See [`model-benchmark-standalone.md` § DFlash](../benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
 
 ---
 

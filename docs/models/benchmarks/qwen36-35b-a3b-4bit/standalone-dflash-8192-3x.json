@@ -1,0 +1,90 @@
+{
+  "hardware": {
+    "chip": "Apple M3 Ultra",
+    "memory_gb": "96",
+    "mlx_version": "0.31.2",
+    "python": "3.11.15"
+  },
+  "config": {
+    "target_model": "mlx-community/Qwen3.6-35B-A3B-4bit",
+    "draft_model": "z-lab/Qwen3.6-35B-A3B-DFlash",
+    "max_new_tokens": 8192,
+    "block_tokens": 16,
+    "cooldown": 60,
+    "prompt": "Write a long, detailed essay about the history of computing, including major milestones from the abacus to modern AI systems.",
+    "prompt_tokens": 34,
+    "prompt_id": "write_a_long_detailed_essay_about_the_history_of",
+    "repeat": 3,
+    "git_hash": "unknown"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 651.3419998809695,
+        "generation_tps": 101.2553601514296,
+        "peak_memory_gb": 19.800302556
+      },
+      "dflash": {
+        "ttft_ms": 624.7089159999999,
+        "generation_tps": 99.00182603640073,
+        "tokens_per_cycle": 4.430502974580855,
+        "cycles": 1849,
+        "acceptance_ratio": 0.7742919921875,
+        "acceptance_first_20_avg": 4.15,
+        "acceptance_last_20_avg": 13.5,
+        "peak_memory_gb": 20.929665254
+      },
+      "speedup": 0.9777440511627369
+    },
+    {
+      "run": 2,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 659.6686248667538,
+        "generation_tps": 100.60653910250889,
+        "peak_memory_gb": 19.800368014
+      },
+      "dflash": {
+        "ttft_ms": 646.9924579999999,
+        "generation_tps": 98.88208711803311,
+        "tokens_per_cycle": 4.430502974580855,
+        "cycles": 1849,
+        "acceptance_ratio": 0.7742919921875,
+        "acceptance_first_20_avg": 4.15,
+        "acceptance_last_20_avg": 13.5,
+        "peak_memory_gb": 20.929550818
+      },
+      "speedup": 0.9828594443277815
+    },
+    {
+      "run": 3,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 655.7851666584611,
+        "generation_tps": 100.44124552163561,
+        "peak_memory_gb": 19.800466064
+      },
+      "dflash": {
+        "ttft_ms": 623.401292,
+        "generation_tps": 98.69397147006028,
+        "tokens_per_cycle": 4.430502974580855,
+        "cycles": 1849,
+        "acceptance_ratio": 0.7742919921875,
+        "acceptance_first_20_avg": 4.15,
+        "acceptance_last_20_avg": 13.5,
+        "peak_memory_gb": 20.929665382
+      },
+      "speedup": 0.9826040184736762
+    }
+  ],
+  "summary": {
+    "baseline_tps_median": 100.60653910250889,
+    "dflash_tps_median": 98.88208711803311,
+    "dflash_tps_min": 98.69397147006028,
+    "dflash_tps_max": 99.00182603640073,
+    "speedup_median": 0.9826040184736762,
+    "acceptance_ratio_median": 0.7742919921875
+  }
+}

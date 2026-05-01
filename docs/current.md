@@ -67,7 +67,7 @@ Launch shape:
   --temp 0.0 --max-tokens 512
 ```
 
-Use dflash-mlx for decode-bound single-shot or short-multi-turn workloads. Loses to llmster when prefill dominates (long-context multi-turn agent loops).
+Use dflash-mlx for decode-bound single-shot or short-multi-turn workloads. Loses to llmster when prefill dominates (long-context multi-turn agent loops). **Note (2026-05-01):** `dflash-benchmark` on M3 Ultra shows DFlash regressing vs baseline `mlx_lm` at 1k-4k token horizons (best 1.05× at 8k with `--quantize-draft`); upstream's 1.33× number is M5-Max-specific. Sidecar's value here is upstream-feature tracking, not throughput. See [`model-benchmark-standalone.md` § DFlash](models/benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
 
 ## Fallbacks
 

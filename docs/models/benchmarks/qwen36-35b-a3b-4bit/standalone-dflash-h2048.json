@@ -1,0 +1,50 @@
+{
+  "hardware": {
+    "chip": "Apple M3 Ultra",
+    "memory_gb": "96",
+    "mlx_version": "0.31.2",
+    "python": "3.11.15"
+  },
+  "config": {
+    "target_model": "mlx-community/Qwen3.6-35B-A3B-4bit",
+    "draft_model": "z-lab/Qwen3.6-35B-A3B-DFlash",
+    "max_new_tokens": 2048,
+    "block_tokens": 16,
+    "cooldown": 30,
+    "prompt": "Write a long, detailed essay about the history of computing, including major milestones from the abacus to modern AI systems.",
+    "prompt_tokens": 34,
+    "prompt_id": "write_a_long_detailed_essay_about_the_history_of",
+    "repeat": 1,
+    "git_hash": "unknown"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 680.8277498930693,
+        "generation_tps": 103.53910771282824,
+        "peak_memory_gb": 19.653911216
+      },
+      "dflash": {
+        "ttft_ms": 653.702083,
+        "generation_tps": 74.23023566924971,
+        "tokens_per_cycle": 3.1751937984496124,
+        "cycles": 645,
+        "acceptance_ratio": 0.68505859375,
+        "acceptance_first_20_avg": 4.15,
+        "acceptance_last_20_avg": 1.7,
+        "peak_memory_gb": 20.757135418
+      },
+      "speedup": 0.7169294511898983
+    }
+  ],
+  "summary": {
+    "baseline_tps_median": 103.53910771282824,
+    "dflash_tps_median": 74.23023566924971,
+    "dflash_tps_min": 74.23023566924971,
+    "dflash_tps_max": 74.23023566924971,
+    "speedup_median": 0.7169294511898983,
+    "acceptance_ratio_median": 0.68505859375
+  }
+}

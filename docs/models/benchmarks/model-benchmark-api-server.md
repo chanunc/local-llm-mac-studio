@@ -145,6 +145,51 @@ A ~15-line wrapper script intercepts `mlx_lm.load()` / `mlx_lm.utils.load()` and
 
 ---
 
+## Osaurus Qwen3.6-35B-A3B JANGTQ4 on vmlx
+
+Model: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4`  
+Server: `vmlx` (MLX Studio bundled Python), main port 8000  
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
+
+Raw JSON: [`qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json)
+
+### Generation Speed (tok/s)
+
+| Context | vmlx |
+|:--|--:|
+| 512 | 64.9 |
+| 4K | 64.8 |
+| 8K | 64.0 |
+| 32K | 58.8 |
+| 64K | 52.6 |
+
+### Prefill Speed (tok/s)
+
+| Context | vmlx |
+|:--|--:|
+| 512 | 359.7 |
+| 4K | 365.1 |
+| 8K | 362.0 |
+| 32K | 346.3 |
+| 64K | 325.7 |
+
+### Time to First Token
+
+| Context | TTFT |
+|:--|--:|
+| 512 | 1.49 s |
+| 4K | 11.29 s |
+| 8K | 22.70 s |
+| 32K | 94.71 s |
+| 64K | 201.32 s |
+
+Notes:
+- Startup logs confirmed native JANGTQ VLM fast path: `load_jangtq_vlm`, 120 TurboQuant modules replaced, and no fallback warning.
+- Decode is stable around 64 tok/s through 8K and 52.6 tok/s at 64K.
+- Agent-loop latency is dominated by prefill: OpenCode sends ~11K tokens on first turn and grows to ~42K tokens for the Hacker News scenario.
+
+---
+
 ---
 
 ## Gemma 4 26B-A4B-it (4-bit)

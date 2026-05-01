@@ -6,6 +6,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision · 3 B active · 262 K native (1 M YaRN)
 - [Qwen3.6-35B-A3B (4-bit)](#qwen36-35b-a3b-4-bit) — Same hybrid arch · 4-bit MLX (~22 GB) · dflash-mlx target paired with `z-lab/Qwen3.6-35B-A3B-DFlash`
+- [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · llmster recommended
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
@@ -98,7 +99,48 @@ Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../benchmarks/q
 - Requires three local patches against upstream packages — see [`docs/servers/dflash-mlx/summary.md`](../../servers/dflash-mlx/summary.md#installation).
 - PyPI 0.1.0 has no tool-calling — install dflash-mlx from `git+https://github.com/bstnxbt/dflash-mlx.git` (which currently resolves to 0.1.4.1).
 - Decode-bound win only; prefill-bound long-context multi-turn workloads lose to llmster.
-- **DFlash 1.33× speedup does not replicate on M3 Ultra.** Upstream's number is from M5 Max. Standalone `dflash-benchmark` runs on this hardware show DFlash regressing vs baseline at 1k-4k horizons (best-case 0.78×, worst-case 0.62×) and reaching parity at 8k only via essay-text repetition collapse. `--quantize-draft` recovers a marginal 1.05× at 8k. See [`model-benchmark-standalone.md` § DFlash](../benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
+- **DFlash is workload-gated on M3 Ultra.** The essay-style local benchmark still regresses vs baseline at 1k-4k horizons (best-case 0.78×, worst-case 0.62×) and reaches only 1.05× at 8k with `--quantize-draft`, but the same host reproduces strong wins on high-agreement prompts: `1.61x` on the upstream math/reasoning prompt at 8192 tokens and `1.46x` on constrained JSON at 4096 tokens. See [`model-benchmark-standalone.md` § DFlash](../benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
+
+---
+
+## Osaurus Qwen3.6-35B-A3B JANGTQ4
+
+JANGTQ4 / `mxtq` quantization of the 35B/3B-active Qwen3.6 MoE+VL model, served through `vmlx` because stock `mlx_lm.load()` cannot parse `.tq_packed` tensors and the required `load_jangtq_vlm` loader lives in the MLX Studio bundled Python.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| Quant | [OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4](https://huggingface.co/OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4) |
+| Format | JANGTQ4 / `mxtq` safetensors with `jangtq_runtime.safetensors` |
+| Vendor | OsaurusAI quantization of Alibaba Qwen base |
+| Parameters | 35B total, ~3B active |
+| Quantization | 4-bit TurboQuant routed experts; attention/embed/shared expert/lm head 8-bit or fp16 |
+| Specialties | Vision-language, tool use through vmlx, long-context Qwen3.6 hybrid stack |
+| On-disk size | ~19.7 GB |
+| Context Size | 262K native |
+| License | Apache-2.0 |
+
+**Current server:** `vmlx` on port 8000 (deployed 2026-05-01). Startup logs confirm native JANGTQ VLM fast path (`load_jangtq_vlm`), 120 TurboQuant modules replaced, and no fallback warning.
+
+**Performance** ([api-server raw](../benchmarks/qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json)):
+
+| Context | Gen tok/s | Prefill tok/s | TTFT |
+|:--|--:|--:|--:|
+| 512 | 64.9 | 359.7 | 1.49 s |
+| 4K | 64.8 | 365.1 | 11.29 s |
+| 8K | 64.0 | 362.0 | 22.70 s |
+| 32K | 58.8 | 346.3 | 94.71 s |
+| 64K | 52.6 | 325.7 | 201.32 s |
+
+**Tool / agent benchmark** ([agent raw](../benchmarks/qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json)):
+- API tool harness: 5/5 pass; 3-turn read/write/summary loop completes in 11.65 s.
+- OpenCode browse: 72.75 s wall median / 71.52 s LLM median.
+- OpenCode search: 135.06 s wall median / 133.87 s LLM median.
+
+**Caveats:**
+- Requires MLX Studio bundled Python + `scripts/patches/patch_vmlx_jangtq_mllm_tools.py`; public `jang-tools` is insufficient.
+- `--smelt` and `--flash-moe` are not compatible with `weight_format=mxtq`.
+- Simple chat can emit natural-language thinking in `content`; OpenCode tool calls still parse correctly in the benchmark.
 
 ---
 

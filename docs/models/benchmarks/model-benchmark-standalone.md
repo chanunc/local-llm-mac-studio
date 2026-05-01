@@ -151,6 +151,22 @@ Direct `dflash-benchmark` CLI from `~/dflash-mlx-env/bin/`. Loads target + draft
 |---:|---:|---:|---:|---:|
 | 8192 | 133.20 | 177.45 | **1.33×** | **87.01%** |
 
+### Reproduced upstream-style prompt on M3 Ultra (3x with 60s cooldown)
+
+| Prompt | Prompt tokens | Baseline | DFlash | Speedup | Acceptance | tok/cycle |
+|---|---:|---:|---:|---:|---:|---:|
+| Upstream math/reasoning | 102 | 100.49 | 161.64 | **1.61×** | **86.66%** | 7.49 |
+
+This benchmark used the upstream math/reasoning prompt instead of the local essay prompt. It does reproduce a strong DFlash win on the same M3 Ultra hardware, which points to workload sensitivity rather than a blanket Apple Silicon regression. Raw JSON: [`standalone-dflash-upstream-prompt-m3ultra.json`](qwen36-35b-a3b-4bit/standalone-dflash-upstream-prompt-m3ultra.json).
+
+### Structured JSON prompt on M3 Ultra (3x with 60s cooldown, 4096 tokens)
+
+| Prompt | Prompt tokens | Baseline | DFlash | Speedup | Acceptance | tok/cycle |
+|---|---:|---:|---:|---:|---:|---:|
+| Minified JSON array | 66 | 101.97 | 149.27 | **1.46×** | **84.55%** | 6.47 |
+
+This run used a constrained structured-output prompt and still reproduced a large DFlash gain. That broadens the winning zone from one reasoning prompt to at least one additional high-agreement output family. Raw JSON: [`standalone-dflash-sweep-structured-json.json`](qwen36-35b-a3b-4bit/standalone-dflash-sweep-structured-json.json).
+
 ### Our results (M3 Ultra, single run, `--cooldown 30`)
 
 | max_tokens | Baseline t/s | DFlash t/s | Speedup | Acceptance | tok/cycle | last-20 avg |
@@ -191,11 +207,12 @@ Quantizing the drafter recovers a marginal 5% net win. Memory savings modest (~4
 | Ours worst (4096) | 102.73 | 63.89 | 0.62× | 64.72% |
 
 - **Baseline gap (~24%)**: M3 Ultra vs M5 Max — confirmed by upstream's own hardware spec.
-- **DFlash gap (~40%)**: Speedup does not scale on M3 Ultra. Best is 1.05× with `--quantize-draft`; default config regresses.
-- **Acceptance gap (~10pp)**: Their 87% vs our 77-79%. Likely different prompt + MLX kernel tuning.
-- **Production implication**: For the dflash-mlx sidecar on Mac Studio M3 Ultra, DFlash is **not** a speedup over plain `mlx_lm.server` baseline at realistic horizons. Keep the sidecar only for upstream-feature-tracking and parity verification, not throughput.
+- **Workload split is the main driver**: the local essay prompt regresses, but the upstream math/reasoning prompt reaches **1.61×** and constrained JSON reaches **1.46×** on the same machine.
+- **Acceptance gap explains most of the swing**: prose sits at 65-79%, while the winning prompt families are at **84.55-86.66%**.
+- **Production implication**: On Mac Studio M3 Ultra, DFlash is **workload-gated**, not universally faster or universally broken. Use it for deterministic reasoning-heavy single-shot tasks; avoid it for open-ended prose until more sweep data lands.
+- **Structured output also qualifies**: constrained JSON generation appears to be inside the “good” acceptance regime, not just math reasoning.
 
-Raw JSONs: [`standalone-dflash-8192.json`](qwen36-35b-a3b-4bit/standalone-dflash-8192.json), [`-8192-3x.json`](qwen36-35b-a3b-4bit/standalone-dflash-8192-3x.json), [`-8192-qd.json`](qwen36-35b-a3b-4bit/standalone-dflash-8192-qd.json), [`-h1024.json`](qwen36-35b-a3b-4bit/standalone-dflash-h1024.json), [`-h2048.json`](qwen36-35b-a3b-4bit/standalone-dflash-h2048.json), [`-h4096.json`](qwen36-35b-a3b-4bit/standalone-dflash-h4096.json), [`-h8192.json`](qwen36-35b-a3b-4bit/standalone-dflash-h8192.json).
+Raw JSONs: [`standalone-dflash-8192.json`](qwen36-35b-a3b-4bit/standalone-dflash-8192.json), [`-8192-3x.json`](qwen36-35b-a3b-4bit/standalone-dflash-8192-3x.json), [`-8192-qd.json`](qwen36-35b-a3b-4bit/standalone-dflash-8192-qd.json), [`-h1024.json`](qwen36-35b-a3b-4bit/standalone-dflash-h1024.json), [`-h2048.json`](qwen36-35b-a3b-4bit/standalone-dflash-h2048.json), [`-h4096.json`](qwen36-35b-a3b-4bit/standalone-dflash-h4096.json), [`-h8192.json`](qwen36-35b-a3b-4bit/standalone-dflash-h8192.json), [`-upstream-prompt-m3ultra.json`](qwen36-35b-a3b-4bit/standalone-dflash-upstream-prompt-m3ultra.json), [`-sweep-structured-json.json`](qwen36-35b-a3b-4bit/standalone-dflash-sweep-structured-json.json).
 
 ---
 

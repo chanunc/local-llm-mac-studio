@@ -1,0 +1,90 @@
+{
+  "hardware": {
+    "chip": "Apple M3 Ultra",
+    "memory_gb": "96",
+    "mlx_version": "0.31.2",
+    "python": "3.11.15"
+  },
+  "config": {
+    "target_model": "mlx-community/Qwen3.6-35B-A3B-4bit",
+    "draft_model": "z-lab/Qwen3.6-35B-A3B-DFlash",
+    "max_new_tokens": 4096,
+    "block_tokens": 16,
+    "cooldown": 60,
+    "prompt": "Output only valid minified JSON. Generate an array of 400 objects in order, each with keys id, parity, square, cube, and binary for the integers 1 through 400. No prose, no markdown, no explanation, no trailing text.",
+    "prompt_tokens": 66,
+    "prompt_id": "output_only_valid_minified_json_generate_an_arra",
+    "repeat": 3,
+    "git_hash": "unknown"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 2055.714957881719,
+        "generation_tps": 102.8152779753942,
+        "peak_memory_gb": 19.700645355
+      },
+      "dflash": {
+        "ttft_ms": 704.48925,
+        "generation_tps": 150.2008208645523,
+        "tokens_per_cycle": 6.470774091627172,
+        "cycles": 633,
+        "acceptance_ratio": 0.845458984375,
+        "acceptance_first_20_avg": 5.4,
+        "acceptance_last_20_avg": 7.35,
+        "peak_memory_gb": 20.826936446
+      },
+      "speedup": 1.4608803654695992
+    },
+    {
+      "run": 2,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 983.9635002426803,
+        "generation_tps": 101.97226691716608,
+        "peak_memory_gb": 19.700595722
+      },
+      "dflash": {
+        "ttft_ms": 708.814792,
+        "generation_tps": 149.26751856182207,
+        "tokens_per_cycle": 6.470774091627172,
+        "cycles": 633,
+        "acceptance_ratio": 0.845458984375,
+        "acceptance_first_20_avg": 5.4,
+        "acceptance_last_20_avg": 7.35,
+        "peak_memory_gb": 20.826887226
+      },
+      "speedup": 1.463805043022872
+    },
+    {
+      "run": 3,
+      "thermal_pressure": "unknown",
+      "baseline": {
+        "ttft_ms": 978.4913342446088,
+        "generation_tps": 101.88203101027581,
+        "peak_memory_gb": 19.700694442
+      },
+      "dflash": {
+        "ttft_ms": 703.8785829999999,
+        "generation_tps": 148.88505940772984,
+        "tokens_per_cycle": 6.470774091627172,
+        "cycles": 633,
+        "acceptance_ratio": 0.845458984375,
+        "acceptance_first_20_avg": 5.4,
+        "acceptance_last_20_avg": 7.35,
+        "peak_memory_gb": 20.826903486
+      },
+      "speedup": 1.4613475794638733
+    }
+  ],
+  "summary": {
+    "baseline_tps_median": 101.97226691716608,
+    "dflash_tps_median": 149.26751856182207,
+    "dflash_tps_min": 148.88505940772984,
+    "dflash_tps_max": 150.2008208645523,
+    "speedup_median": 1.4613475794638733,
+    "acceptance_ratio_median": 0.845458984375
+  }
+}

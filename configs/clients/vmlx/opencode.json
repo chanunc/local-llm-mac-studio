@@ -26,6 +26,15 @@
             "output": 8192
           }
         },
+        "OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4": {
+          "name": "Osaurus Qwen3.6-35B-A3B JANGTQ4 (35B MoE + VL, 4-bit TurboQuant)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
+        },
         "dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK": {
           "name": "Qwen3.6-35B-A3B JANGTQ2-CRACK (35B MoE, Uncensored, 2-bit TurboQuant, needs enable_thinking=false)",
           "tools": true,
@@ -37,6 +46,6 @@
       }
     }
   },
-  "model": "macstudio/dealignai/MiniMax-M2.7-JANGTQ-CRACK",
-  "small_model": "macstudio/dealignai/MiniMax-M2.7-JANGTQ-CRACK"
+  "model": "macstudio/OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4",
+  "small_model": "macstudio/OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4"
 }

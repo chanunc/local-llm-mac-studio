@@ -16,7 +16,9 @@ How JANG and nvfp4 model support was added to the oMLX server via [AlexTzk/omlx]
 
 ## 🔎 Background
 
-oMLX v0.2.20 (Homebrew) only loads standard MLX safetensors. To serve JANG-quantized models (adaptive mixed-precision) and nvfp4 models, we pip-install AlexTzk's fork over the Homebrew package. The fork adds a `JANGLoader` engine (+1,130 lines) that handles JANG's custom weight format, and the existing MLX engine handles nvfp4 natively.
+oMLX v0.2.20 (Homebrew) only loads standard MLX safetensors. To serve JANG and nvfp4 models, pip-install [AlexTzk/omlx](https://github.com/AlexTzk/omlx) (PR [#364](https://github.com/jundot/omlx/pull/364)) over the Homebrew package. The fork adds a `JANGLoader` engine (`omlx/engine/jang.py`, ~675 lines, +1,130 lines total); nvfp4 is handled by the unchanged MLX engine.
+
+> **What JANG is + cross-server perf + Nemotron-H caveat:** [`docs/models/techniques/model-quantization-jang.md`](../../models/techniques/model-quantization-jang.md). This doc covers oMLX integration only.
 
 **Architecture after fork overlay:**
 ```
@@ -117,9 +119,7 @@ After the fork overlay, oMLX serves three model formats:
 
 ## ⚠️ Known Limitations
 
-- **JANG + Nemotron-H architecture**: JANG-quantized models using the Nemotron-H architecture (Mamba-2 + latent MoE gate) fail with `[matmul] shape mismatch` at the expert router gate. This is a bug in PR #364's weight mapping for latent MoE projections. Affects: `JANGQ-AI/Nemotron-Cascade-2-30B-A3B-JANG_4M`, `JANGQ-AI/Nemotron-3-Super-120B-A12B-JANG_4M`. **Workaround:** Use MLX nvfp4/mxfp4 quantizations instead for Nemotron models.
-- **Non-Nemotron JANG models work fine**: Qwen3.5-35B-A3B, Qwen3.5-122B-A10B, and other non-Nemotron architectures load and run correctly via JANG.
-- **Unreviewed code**: The fork has not been merged upstream. JANG loader code is unreviewed by oMLX maintainers.
+- **JANG-format and unreviewed-fork caveats** (Nemotron-H matmul mismatch, non-Nemotron JANG models OK, fork code unreviewed): see [`docs/models/techniques/model-quantization-jang.md`](../../models/techniques/model-quantization-jang.md#known-limitations).
 - **Breaks Homebrew upgrade path**: `brew upgrade omlx` will overwrite the fork — must re-apply after every upgrade (see below).
 
 ---

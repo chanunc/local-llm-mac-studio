@@ -2,31 +2,34 @@
 
 Short source of truth for the Mac Studio stack's live operating state. Detailed runbooks live under [`docs/servers/`](servers/), model details under [`docs/models/`](models/), and client templates under [`configs/clients/`](../configs/clients/).
 
-Last verified: 2026-04-30
+Last verified: 2026-05-01
 
 ## Production
 
 | Field | Value |
 |:--|:--|
-| Server | `vllm-mlx` |
-| Model | `mlx-community/Ling-2.6-flash-mlx-6bit` |
+| Server | `vmlx` |
+| Model | `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` |
 | Port | `8000` |
 | Auth | None |
-| Client template set | [`configs/clients/vllm-mlx/`](../configs/clients/vllm-mlx/) |
-| Runbook | [`docs/servers/vllm-mlx/summary.md`](servers/vllm-mlx/summary.md) |
+| Client template set | [`configs/clients/vmlx/`](../configs/clients/vmlx/) |
+| Runbook | [`docs/servers/vmlx/summary.md`](servers/vmlx/summary.md) |
 
 Launch shape:
 
 ```bash
-~/vllm-mlx-env/bin/vllm-mlx serve mlx-community/Ling-2.6-flash-mlx-6bit \
-  --served-model-name mlx-community/Ling-2.6-flash-mlx-6bit \
-  --port 8000 --host 0.0.0.0 \
-  --enable-auto-tool-choice --tool-call-parser hermes
+BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
+SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapshots/40c1de58e06a9737427e5d64938e56aa339a6204
+nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
+  --host 0.0.0.0 --port 8000 \
+  --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  > /tmp/vmlx-osaurus-qwen36-jangtq4.log 2>&1 &
 ```
 
 Notes:
-- Ling needs the `bailing_hybrid` vendor file plus the thread-local-stream and inline-generation patches documented in [`models/per-model/model-summary-ling.md`](models/per-model/model-summary-ling.md).
-- Practical context ceiling on the 96 GB Mac Studio is about 64K; 128K OOMs.
+- Osaurus Qwen3.6-35B-A3B JANGTQ4 is served through the MLX Studio bundled Python because JANGTQ / `mxtq` requires `jang_tools.load_jangtq_vlm` and TurboQuant Metal kernels.
+- Tool use requires `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` plus `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`.
+- Current benchmark: API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw data: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/).
 
 ## Sidecars
 
@@ -67,12 +70,13 @@ Launch shape:
   --temp 0.0 --max-tokens 512
 ```
 
-Use dflash-mlx for decode-bound single-shot or short-multi-turn workloads. Loses to llmster when prefill dominates (long-context multi-turn agent loops). **Note (2026-05-01):** `dflash-benchmark` on M3 Ultra shows DFlash regressing vs baseline `mlx_lm` at 1k-4k token horizons (best 1.05× at 8k with `--quantize-draft`); upstream's 1.33× number is M5-Max-specific. Sidecar's value here is upstream-feature tracking, not throughput. See [`model-benchmark-standalone.md` § DFlash](models/benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
+Use dflash-mlx for workload-gated decode-bound tasks. It wins on high-agreement deterministic prompts such as math/reasoning (`1.61x` at 8192 tokens, `86.66%` acceptance) and constrained JSON (`1.46x` at 4096 tokens, `84.55%` acceptance), but regresses on open-ended prose (`0.62-0.98x`, `64-79%` acceptance). It still loses to llmster when prefill dominates (long-context multi-turn agent loops). See [`model-benchmark-standalone.md` § DFlash](models/benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
 
 ## Fallbacks
 
 | Use case | Server | Model |
 |:--|:--|:--|
+| Previous Ling primary | `vllm-mlx` | `mlx-community/Ling-2.6-flash-mlx-6bit` |
 | Dense Qwen3.6 fallback | `vllm-mlx` | `JANGQ-AI/Qwen3.6-27B-JANG_4M` |
 | Full multi-model roster | `oMLX` | See [`configs/clients/omlx/`](../configs/clients/omlx/) and `/v1/models` |
 | JANGTQ CRACK models | `vmlx` | `dealignai/MiniMax-M2.7-JANGTQ-CRACK` |

@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-04-30 (added dflash-mlx provisional sidecar)**
+**Last updated: 2026-05-01 (vmlx Osaurus Qwen3.6-35B-A3B JANGTQ4 main benchmark deployment)**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -10,14 +10,14 @@ For the current production server/model and provisional sidecar state, read [`..
 
 | Server | Port | Role | Model(s) | API Key |
 |--------|------|------|----------|---------|
-| **vllm-mlx** | 8000 | **Primary** -- fastest inference, single model | Ling-2.6-flash mlx-6bit (~80GB, current production) | Not needed |
+| **vllm-mlx** | 8000 | Previous primary / fallback -- fastest inference, single model | Ling-2.6-flash mlx-6bit (~80GB) | Not needed |
 | **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
-| **vmlx** | 8000 | **JANGTQ** -- only route for TurboQuant-weight (JANGTQ) CRACK models; runs out of MLX Studio bundled Python | MiniMax-M2.7-JANGTQ-CRACK (~57GB) | Not needed |
+| **vmlx** | 8000 | **Current main** / JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
 | **llmster** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx for non-JANG models | Qwen3.6-27B-6bit (~22GB) | Not needed |
 | **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but in practice memory pressure on a 96 GB M3 Ultra means stopping the port-8000 server before loading a model into llmster. vllm-mlx + Ling is the production default; switch to mlx-openai-server for multi-model with low overhead, oMLX when you need the full 9-model roster + admin dashboard, vmlx when you need an uncensored JANGTQ model (the loader + Metal kernels ship only inside the MLX Studio DMG's bundled Python — see [`docs/models/model-summary.md`](../docs/models/model-summary.md#unblocking-path--corrected--deployed-2026-04-20)), or llmster when you need the fastest possible agent loop on a standard MLX model.
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but in practice memory pressure on a 96 GB M3 Ultra means stopping the port-8000 server before loading a model into llmster. Current main is vmlx + Osaurus Qwen3.6-35B-A3B JANGTQ4 for the fair JANGTQ benchmark deployment; switch to vllm-mlx + Ling to restore the previous primary, mlx-openai-server for multi-model with low overhead, oMLX when you need the full 9-model roster + admin dashboard, or llmster when you need the fastest possible agent loop on a standard MLX model.
 
 ### Why vllm-mlx is Primary
 
@@ -109,7 +109,7 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Model:** `dealignai/MiniMax-M2.7-JANGTQ-CRACK` -- MiniMax-M2.7 MoE (230B total / ~10B active / 256 experts), JANGTQ quant (2-bit TurboQuant codebook + 8-bit attention/embeddings, Hadamard rotation, Metal-fused dequant+matmul), CRACK-abliterated for uncensored use. ~57 GB on disk. Educational / experimental -- see [`docs/models/uncen-model/minimax-m27-crack-benchmark.md`](../docs/models/uncen-model/minimax-m27-crack-benchmark.md) for the deploy + perf report.
+**Current model:** `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). Other available vmlx models include `dealignai/MiniMax-M2.7-JANGTQ-CRACK` and Qwen3.6 JANGTQ CRACK variants.
 
 Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs out of the MLX Studio DMG's bundled Python (`/Applications/vMLX.app/Contents/Resources/bundled-python/python/`) because the TurboQuant loader (`jang_tools.load_jangtq`) and Metal kernels (`turboquant/{tq_kernel,hadamard_kernel,gather_tq_kernel,fused_gate_up_kernel}`) are not distributed via the public pypi `jang` or `vmlx` wheels ([`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5) tracks this).
 
@@ -158,12 +158,14 @@ nohup ~/vllm-mlx-env/bin/vllm-mlx serve \
   --enable-auto-tool-choice --tool-call-parser hermes \
   > /tmp/vllm-mlx.log 2>&1 &
 
-# Switch to vmlx (JANGTQ CRACK — bundled-Python headless)
+# Switch to vmlx (current main: Osaurus Qwen3.6-35B-A3B JANGTQ4 — bundled-Python headless)
 pkill -f vllm-mlx; pkill -f mlx-openai-server; /opt/homebrew/bin/brew services stop omlx; sleep 2
 BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
-SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snapshots/033d5537f48f2f836ce3dfbe392304a2b30f8536
+SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapshots/40c1de58e06a9737427e5d64938e56aa339a6204
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
-  --host 0.0.0.0 --port 8000 > /tmp/vmlx.log 2>&1 &
+  --host 0.0.0.0 --port 8000 \
+  --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  > /tmp/vmlx-osaurus-qwen36-jangtq4.log 2>&1 &
 
 # Switch to llmster (LM Studio headless, port 1234 — separate from port 8000)
 # First-time setup: brew install --cask lm-studio + one GUI launch to bootstrap ~/.lmstudio/bin/lms

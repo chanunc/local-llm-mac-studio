@@ -5,7 +5,7 @@
     "OPENAI_API_KEY": "not-needed",
     "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8000",
     "ANTHROPIC_API_KEY": "not-needed",
-    "ANTHROPIC_MODEL": "dealignai/MiniMax-M2.7-JANGTQ-CRACK",
-    "ANTHROPIC_SMALL_FAST_MODEL": "dealignai/MiniMax-M2.7-JANGTQ-CRACK"
+    "ANTHROPIC_MODEL": "OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4",
+    "ANTHROPIC_SMALL_FAST_MODEL": "OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4"
   }
 }

@@ -17,6 +17,8 @@
 
 `dflash-mlx` is a research-grade speculative-decoding server for Apple Silicon. It pairs a **target model** (standard MLX safetensors) with a small **DFlash drafter** (block-diffusion drafter from [arXiv:2602.06036](https://arxiv.org/abs/2602.06036)) to verify drafted token blocks against the target. On Qwen3.6-35B-A3B-4bit + the matching `z-lab/Qwen3.6-35B-A3B-DFlash` drafter, the runtime sustains **~89 tok/s decode at 512-token context** with **86.7% draft acceptance** on a single-shot prompt.
 
+> **Technique reference:** for what DFlash is at the algorithm level, the cross-fork landscape (bstnxbt vs Aryagm), and the M3 Ultra workload-gated regression analysis, see [`docs/models/techniques/model-technique-dflash.md`](../../models/techniques/model-technique-dflash.md). This runbook covers operational steps only.
+
 The PyPI package (`pip install dflash-mlx`) is published by [bstnxbt](https://github.com/bstnxbt/dflash-mlx). Version **0.1.4.1+** (from main branch) wraps `mlx_lm.server` and exposes the full OpenAI semantics — `tools[]`, `temperature`, `top_p`, `prompt_cache_size`, etc. — while the older 0.1.0 PyPI release uses a custom HTTPServer with no tool-call surface.
 
 **Status: provisional sidecar.** Used for single-shot decode-throughput experiments and Qwen3.6 family DFlash benchmarks. Not yet a production candidate — depends on three local patches against upstream packages (see [Known limitations](#known-limitations)).
@@ -149,9 +151,9 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 | 8K   | 87.0 | 1,524 | 5.40 |
 | 32K  | 74.1 | 837 | 39.2 |
 
-**Headline:** sustained decode rate stays above **74 tok/s even at 32K context** — DFlash's block-diffusion drafter accepts 86.7% of drafted tokens on Qwen3.6 at 50-token outputs, so each verify cycle delivers ~14 accepted tokens at the cost of one target forward pass. Compare to llmster on `Qwen3.6-27B-6bit` at 32K: 26.3 tok/s decode (3.4× slower decode at the cost of 56× faster prefill). DFlash wins on decode-bound single-turn workloads; llmster wins on prefill-bound long-context multi-turn workloads.
+**Headline:** sustained decode rate stays above **74 tok/s even at 32K context** at 86.7% draft acceptance. Compare to llmster on `Qwen3.6-27B-6bit` at 32K: 26.3 tok/s decode (3.4× slower decode at the cost of 56× faster prefill). DFlash wins on decode-bound single-turn workloads; llmster wins on prefill-bound long-context multi-turn workloads.
 
-**Caveat — DFlash speedup does NOT replicate at long horizons on M3 Ultra.** The upstream README claims **1.33× speedup at 8192 output tokens** on M5 Max (133 → 177 tok/s, 87% acceptance). On M3 Ultra + mlx 0.31.2, baseline-vs-DFlash side-by-side via `dflash-benchmark` shows DFlash *regressing* at every horizon: **0.78× at 1k, 0.72× at 2k, 0.62× at 4k, 0.98× at 8k** (with text-repetition collapse boosting acceptance), and only **1.05× with `--quantize-draft`** at 8k. Acceptance averages 65-79%, ~10pp below upstream. Three repeats with 60 s cooldown rule out thermal noise. Full data: [`model-benchmark-standalone.md` § DFlash speculative decoding](../../models/benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter). On this hardware DFlash's value is upstream-feature tracking and Qwen3.6 family parity verification, not throughput — plain `mlx_lm.server` baseline is faster for typical 1k-4k generation.
+**Workload-gated, not universally faster on M3 Ultra.** Local essay prompts regress (0.62×–0.98× across 1k–8k horizons) while math/reasoning and structured JSON reproduce upstream's wins (1.61× / 1.46×). Treat as a workload-gated throughput tool for deterministic reasoning or structured-output tasks, not a default replacement for plain `mlx_lm.server`. Full analysis + cross-fork comparison: [`docs/models/techniques/model-technique-dflash.md`](../../models/techniques/model-technique-dflash.md).
 
 **Tool-call latency** ([`api-tool-test-dflash-mlx.json`](../../models/benchmarks/qwen36-35b-a3b-4bit/api-tool-test-dflash-mlx.json)): 5/5 single-call scenarios pass at 1.68-6.08 s, 3-turn multi-turn loop completes in 5.9 s.
 
@@ -168,10 +170,11 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 - **Single greedy default.** `--temp 0.0` is the bench-friendly default; sampling controls work but DFlash's published numbers assume greedy decoding. Higher temperature reduces draft acceptance (drafter generations diverge from target's argmax path).
 - **OpenCode tool-call benches need a `--base-url` override.** The agent-bench script's `discover_config()` reads the global OpenCode config's `baseURL`, not the project-local one — patched to accept `--base-url` as an override.
 - **Closed acceptance for Qwen3.6-27B target.** No `z-lab/Qwen3.6-27B-DFlash` in any of the three MLX implementations' supported lists. Use Qwen3.6-35B-A3B (this server) or Qwen3.5-27B (via `ddtree-mlx`) instead.
-- **Aryagm fork is not used here.** A second DFlash-MLX fork ([`Aryagm/dflash-mlx`](https://github.com/Aryagm/dflash-mlx)) was evaluated 2026-04-30 on the same `Qwen/Qwen3.5-4B` + `z-lab/Qwen3.5-4B-DFlash` pair. **bstnxbt sustained 1.8-5.5× faster decode** across context lengths and is the only fork supporting `tools[]` (Aryagm drops the array silently) and `qwen3_5_moe` model_type (Aryagm has no adapter for it, rejects Qwen3.6-35B-A3B-4bit). Cross-fork numbers in [`docs/models/benchmarks/model-benchmark-api-server.md` § bstnxbt vs Aryagm](../../models/benchmarks/model-benchmark-api-server.md#qwen35-4b--dflash-drafter--bstnxbt-vs-aryagm-cross-fork-comparison-2026-04-30).
+- **Aryagm fork is not used here.** Cross-fork landscape (bstnxbt vs Aryagm — `tools[]` support, `qwen3_5_moe` adapter, decode tok/s) is in [`docs/models/techniques/model-technique-dflash.md`](../../models/techniques/model-technique-dflash.md#cross-fork-landscape-2026-04-30).
 
 ## See also
 
+- [`docs/models/techniques/model-technique-dflash.md`](../../models/techniques/model-technique-dflash.md) — DFlash technique reference + M3 Ultra regression analysis
 - [`docs/models/per-model/`](../../models/per-model/) — per-model deep dives (catalog stub: [`docs/models/model-summary.md`](../../models/model-summary.md))
 - [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../../models/benchmarks/qwen36-35b-a3b-4bit/) — raw bench JSONs
 - [`docs/models/benchmarks/model-benchmark-api-server.md`](../../models/benchmarks/model-benchmark-api-server.md) — cross-server prefill / decode comparison

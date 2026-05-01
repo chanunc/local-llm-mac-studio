@@ -14,9 +14,9 @@ Step-by-step guide to run JANG-quantized models on Apple's built-in `mlx-lm.serv
 
 ## 🔎 Background
 
-`mlx-lm.server` uses `mlx_lm.load()` to load models, which only supports standard MLX safetensors. JANG models use a custom weight format (adaptive mixed-precision) that requires `jang_tools.load_jang_model()` to load. However, both loaders return the **identical model class** (`mlx_lm.models.qwen3_5_moe.Model`) -- the difference is only in weight loading.
+`mlx-lm.server` uses `mlx_lm.load()` to load models, which only supports standard MLX safetensors. The fix: monkey-patch `mlx_lm.load` (and `mlx_lm.utils.load`, since `server.py` imports from there) before `mlx_lm.server.main()` runs, so JANG paths get delegated to `jang_tools.load_jang_model()` while standard MLX paths fall through unchanged.
 
-This means we can monkey-patch `mlx_lm.load()` to detect JANG model paths and delegate to the JANG loader, with zero changes to the server code.
+> **What JANG is + the shared monkey-patch shape across servers + cross-server perf:** [`docs/models/techniques/model-quantization-jang.md`](../../models/techniques/model-quantization-jang.md). This doc covers `mlx-lm.server` operational steps only.
 
 **Prerequisites:**
 - `mlx-lm` installed (comes with oMLX Homebrew venv)

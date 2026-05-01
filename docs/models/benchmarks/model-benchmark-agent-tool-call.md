@@ -25,6 +25,7 @@ Config switcher: [`scripts/switch_opencode_config.py`](../../../scripts/switch_o
 **Per-model results** (typical inference + agent bench + key findings):
 - [JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K](#results-jangq-aiqwen35-35b-a3b-jang_4k) — 35 B sparse MoE, 3 B active, JANG 4-bit mixed (vllm-mlx + patch) — *2026-04-21, re-bench 2026-04-27*
 - [dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK](#results-dealignaiqwen36-35b-a3b-jangtq4-crack) — 35 B sparse MoE, TurboQuant 4-bit, abliterated (vmlx + MLLM patch) — *2026-04-21, re-bench 2026-04-27 (search hang fixed)*
+- [OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4](#results-osaurusaiqwen36-35b-a3b-jangtq4) — 35 B sparse MoE + VL, TurboQuant 4-bit (vmlx + MLLM patch) — *2026-05-01*
 - [JANGQ-AI/Qwen3.6-27B-JANG_4M](#results-jangq-aiqwen36-27b-jang_4m) — 27 B dense + ViT, hybrid attn, JANG 4.45-bit mixed (vllm-mlx + JANG wrapper + patch) — *2026-04-23, re-bench 2026-04-27*
 - [mlx-community/Qwen3.6-27B-6bit](#results-mlx-communityqwen36-27b-6bit) — 27 B dense + ViT, uniform 6-bit MLX (vllm-mlx, no patches) — *2026-04-24, re-bench 2026-04-27*
 - [jedisct1/Qwen3.6-35B-rust.mlx](#results-jedisct1qwen36-35b-rustmlx) — 35 B sparse MoE, 3 B active, uniform 8-bit MLX, Rust LoRA merged (vllm-mlx, no patches) — *2026-04-24, re-bench 2026-04-27*
@@ -53,6 +54,7 @@ All numbers below are medians; per-model detail sections follow further down.
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🏆 | **1.51 - 1.53 s** 🏆 | 5.64 s 🥈 |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s 🥈 | 1.42 - 2.70 s | 6.99 s |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | ✅ **5/5** | 3.28 - 13.14 s | 2.87 - 3.84 s | 11.65 s |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
@@ -76,6 +78,7 @@ Two medians reported per scenario:
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost.<br>Slower than Qwen 35B-A3Bs, no thinking overhead. |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 72.75 s / 71.52 s | 135.06 s / 133.87 s | 2 / 3 turns median; `webfetch`, one search run used `bash`.<br>Main port-8000 deployment for fair benchmark.<br>Raw: [`agent-bench-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json). |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking;<br>one 297 s search outlier. |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`. Standard 6-bit MLX —<br>no JANG mixed-precision speedup;<br>thinking-on dense path is the slowest browse. |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>**3.1× browse, 4.9× search** vs vllm-mlx (same model file).<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
@@ -94,6 +97,7 @@ Two medians reported per scenario:
 | Qwen3.6-27B 6bit (mlx-community) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
@@ -184,6 +188,7 @@ Prompt: `"Browse www.example.com"`
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 25.75 s | 2 | `webfetch` | ~10.8K in / ~135 out |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 72.75 s | 2 | `webfetch` | ~21.9K in / ~140 out |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s | 2 | `webfetch` | ~10.7K in / ~137 out |
 
 The new prompt removes the clarification round the old `Browse github.com` triggered on every model — every model now fires `webfetch https://www.example.com` on turn 1 and emits the page summary on turn 2. Wall-time spread reflects pure inference latency (sparsity + thinking-on density), not model decision-making.
@@ -201,9 +206,40 @@ Prompt: `"Browse Hackernews, get the only one latest topic"`
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 127.28 s | 2 | `webfetch` | ~23K | ~12K/turn |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 135.06 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
 
 The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3 webfetch turns for every model — JANG_4K's 2-turn convergence (it inlines top-id-fetch + top-item-fetch into a single reasoned call) is what gives it the win over Rust LoRA's 3-turn approach. JANGTQ4-CRACK's outlier search wall (one run hit 297 s) is the abliterated TurboQuant kernels stalling under deep thinking, not a tool-loop problem.
+
+---
+
+## 🤖 Results: OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4
+
+**Date:** 2026-05-01
+**Server:** vmlx (MLX Studio bundled Python) on port 8000 with `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`
+**Architecture:** Qwen3.6 MoE+VL — 35B total, ~3B active, JANGTQ4 / `mxtq`, 262K context
+**Raw JSON:** [`qwen36-35b-a3b-jangtq4-osaurus/`](qwen36-35b-a3b-jangtq4-osaurus/)
+
+### API-Level Tool Calling
+
+| Scenario | Time | Tools Called | Result |
+|:--|--:|:--|:--|
+| Single tool (file read) | 3.28 s | `read_file` | PASS |
+| Single tool (command) | 13.14 s | `run_command` | PASS |
+| Multi-tool (search + read) | 3.84 s | `search_web`, `read_file` | PASS |
+| Multi-tool (list + read + write) | 2.87 s | `list_directory` | PASS |
+| Agentic reasoning | 12.08 s | `run_command` | PASS |
+
+Pass rate: **5/5**. Multi-turn loop completed in **3 turns / 11.65 s**.
+
+### OpenCode Agent Benchmark
+
+| Scenario | Wall median | LLM median | Turns | Tools |
+|:--|--:|--:|--:|:--|
+| Browse www.example.com | 72.75 s | 71.52 s | 2 | `webfetch` |
+| Browse Hackernews latest topic | 135.06 s | 133.87 s | 3 | `webfetch`, `bash` |
+
+Key finding: the model works end-to-end with OpenCode tool calls, but remains much slower than the best agent-loop choices because each turn carries large OpenCode prompts and vmlx JANGTQ prefill is ~360 tok/s at short/medium contexts.
 
 ---
 

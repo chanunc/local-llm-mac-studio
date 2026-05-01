@@ -8,6 +8,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 |:--|:--|
 | [`model-summary.md`](model-summary.md) | Canonical catalog. Index + per-model spec tables. Start here. |
 | [`per-model/`](per-model/) | Long-form deployment write-ups for individual models (Ling, MiMo). Catalog entry should stub-link here when a per-model file exists. |
+| [`techniques/`](techniques/) | Inference-side technique notes (speculative decoding, caching, quantisation profiles) — what they are, when they help, hardware sensitivity. |
 | [`benchmarks/`](benchmarks/) | Cross-model benchmark write-ups + raw JSON/log outputs grouped by model slug. |
 | [`how-to/`](how-to/) | One-off conversion / template / debugging guides. |
 | [`uncen-model/`](uncen-model/) | Private submodule for uncensored-model research. |

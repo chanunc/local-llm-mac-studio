@@ -12,7 +12,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
 - [Nemotron Family (vllm-mlx only)](#nemotron-family-vllm-mlx-only) — 3 variants + server compatibility note: Nano 30B, Super 120B, Cascade-2 30B. Detail at [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md)
 - [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
-- [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 5 variants: 35B-A3B 6-bit / 4-bit, 27B JANG 4M, 27B 6-bit, 35B Rust LoRA. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
+- [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 6 variants: 35B-A3B 6-bit / 4-bit / Osaurus JANGTQ4, 27B JANG 4M, 27B 6-bit, 35B Rust LoRA. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
 - [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
 - [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
@@ -214,12 +214,13 @@ Chat template is in `tokenizer_config.json` (5,919 chars) with full tool support
 
 ## Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)
 
-Five Qwen3.6 variants currently catalogued in this stack — all sharing the **hybrid Gated DeltaNet (linear-attention) + full Gated Attention** architecture plus a 27-layer ViT vision tower. Per-variant deployment details, server configs, benchmarks, and caveats live in the dedicated per-model file: **[`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)**.
+Six Qwen3.6 variants currently catalogued in this stack — all sharing the **hybrid Gated DeltaNet (linear-attention) + full Gated Attention** architecture plus a 27-layer ViT vision tower. Per-variant deployment details, server configs, benchmarks, and caveats live in the dedicated per-model file: **[`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)**.
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | Qwen3.6-35B-A3B 6-bit | MoE 35B/3B + VL | 27 GB | Uniform 6-bit MLX | mlx-openai-server | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) |
 | Qwen3.6-35B-A3B 4-bit | MoE 35B/3B + VL | 22 GB target + 1 GB drafter | 4-bit MLX + DFlash drafter | dflash-mlx (provisional) | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | MoE 35B/3B + VL | 19.7 GB | JANGTQ4 / `mxtq` | vmlx (current main) | [link](per-model/model-summary-qwen-3-6.md#osaurus-qwen36-35b-a3b-jangtq4) |
 | Qwen3.6-27B JANG 4M | Dense 27B + VL | 17.5 GB | JANG mixed 4/8-bit | vllm-mlx (text-only) | [link](per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) |
 | Qwen3.6-27B 6-bit standard MLX | Dense 27B + VL | 22 GB | Uniform 6-bit MLX | llmster | [link](per-model/model-summary-qwen-3-6.md#qwen36-27b-6-bit-standard-mlx) |
 | Qwen3.6-35B Rust LoRA (jedisct1) | MoE 35B/3B (LoRA-merged) | 35 GB | Uniform 8-bit MLX | vllm-mlx | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-rust-lora-jedisct1-8-bit) |

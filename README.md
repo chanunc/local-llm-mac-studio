@@ -201,7 +201,7 @@ All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) 
 
 Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) (`llmster` and `dflash-mlx` keep install / runtime / limitations in their single `summary.md`)
 
-Current `vllm-mlx` production primary: `mlx-community/Ling-2.6-flash-mlx-6bit` (sparse 104B / 7.4B-active `bailing_hybrid`, 6-bit MLX, ~80 GB on disk; deployed 2026-04-29 via three local patches — see [model-summary-ling.md](docs/models/per-model/model-summary-ling.md)). The Qwen3.6-27B JANG 4M dense+VL variant remains a documented fallback for VL workloads ([model-summary.md](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl), [bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)).
+Current production main: `vmlx` serving `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` on port 8000 (JANGTQ4 / `mxtq`, 35B / ~3B-active MoE+VL, ~19.7 GB; deployed 2026-05-01 for fair agent benchmarking). API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search ([raw](docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/), [summary](docs/models/benchmarks/model-benchmark-agent-tool-call.md#results-osaurusaiqwen36-35b-a3b-jangtq4)). Previous `vllm-mlx` primary `mlx-community/Ling-2.6-flash-mlx-6bit` remains a documented fallback ([model-summary-ling.md](docs/models/per-model/model-summary-ling.md)).
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
@@ -230,6 +230,7 @@ All models fit in **96GB unified memory**.
 | [Nemotron 3 Nano 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
 | MiniMax-M2.7 JANGTQ-CRACK | MoE 230B/10B | 57 | 128K | Uncensored, TurboQuant (vmlx only) — see [uncen-model](docs/models/uncen-model/) |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | MoE 35B/3B + VL | 19.7 | 262K | Current vmlx main; tool-capable JANGTQ4, 64.9 tok/s @ 512, 52.6 tok/s @ 64K |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | MoE 35B/3B + VL | 19.7 | 262K | Uncensored efficiency winner (vmlx only) |
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
 

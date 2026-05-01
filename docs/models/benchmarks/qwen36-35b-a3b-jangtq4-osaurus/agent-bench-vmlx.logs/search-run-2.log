@@ -1,0 +1,487 @@
+# bench stderr capture: opencode run --format json --model macstudio/OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 --print-logs --log-level INFO Browse Hackernews, get the only one latest topic
+# cwd: /tmp/agent-bench
+# exit_code: 0  elapsed_s: 149.21  timed_out: False
+
+INFO  2026-05-01T22:13:17 +211ms service=default version=1.14.31 args=["run","--format","json","--model","macstudio/OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4","--print-logs","--log-level","INFO","Browse Hackernews, get the only one latest topic"] process_role=main run_id=f9f9f3d0-8cf8-41eb-bfad-492e1b4676ae opencode
+INFO  2026-05-01T22:13:17 +1ms service=default directory=/private/tmp/agent-bench creating instance
+INFO  2026-05-01T22:13:17 +3ms service=project directory=/private/tmp/agent-bench fromDirectory
+INFO  2026-05-01T22:13:17 +4ms service=db path=/Users/chanunc/.local/share/opencode/opencode.db opening database
+INFO  2026-05-01T22:13:17 +9ms service=db count=14 mode=bundled applying migrations
+INFO  2026-05-01T22:13:17 +19ms service=file init
+INFO  2026-05-01T22:13:17 +28ms service=default directory=/private/tmp/agent-bench bootstrapping
+INFO  2026-05-01T22:13:17 +4ms service=config path=/Users/chanunc/.config/opencode/config.json loading
+INFO  2026-05-01T22:13:17 +0ms service=config path=/Users/chanunc/.config/opencode/opencode.json loading
+INFO  2026-05-01T22:13:17 +13ms service=config path=/Users/chanunc/.config/opencode/opencode.jsonc loading
+INFO  2026-05-01T22:13:17 +11ms service=plugin name=cH loading internal plugin
+INFO  2026-05-01T22:13:17 +1ms service=plugin name=sH loading internal plugin
+INFO  2026-05-01T22:13:17 +0ms service=plugin name=zj loading internal plugin
+INFO  2026-05-01T22:13:17 +0ms service=plugin name=FZ loading internal plugin
+INFO  2026-05-01T22:13:17 +0ms service=plugin name=Fj loading internal plugin
+INFO  2026-05-01T22:13:17 +0ms service=plugin name=wj loading internal plugin
+INFO  2026-05-01T22:13:17 +0ms service=plugin name=Uj loading internal plugin
+INFO  2026-05-01T22:13:17 +0ms service=bus type=* subscribing
+INFO  2026-05-01T22:13:17 +1ms service=bus type=command.executed subscribing
+INFO  2026-05-01T22:13:17 +9ms service=server opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 server backend selected
+INFO  2026-05-01T22:13:17 +4ms service=server method=POST path=/session opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server status=started method=POST path=/session opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +3ms service=session id=ses_21a658d93ffeSIvZ0Zk2v8vZou slug=gentle-nebula version=1.14.31 projectID=global directory=/private/tmp/agent-bench path=private/tmp/agent-bench title=New session - 2026-05-01T22:13:17.548Z permission=[{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] time={"created":1777673597548,"updated":1777673597548} created
+INFO  2026-05-01T22:13:17 +2ms service=bus type=session.created publishing
+INFO  2026-05-01T22:13:17 +0ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:13:17 +0ms service=server status=completed duration=5 method=POST path=/session opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +1ms service=server method=GET path=/config opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server status=started method=GET path=/config opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server status=completed duration=0 method=GET path=/config opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +1ms service=server method=GET path=/event opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server status=started method=GET path=/event opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server method=POST path=/session/ses_21a658d93ffeSIvZ0Zk2v8vZou/message opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server status=started method=POST path=/session/ses_21a658d93ffeSIvZ0Zk2v8vZou/message opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +1ms service=server event connected
+INFO  2026-05-01T22:13:17 +1ms service=bus type=* subscribing
+INFO  2026-05-01T22:13:17 +6ms service=server status=completed duration=8 method=GET path=/event opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +0ms service=server status=completed duration=8 method=POST path=/session/ses_21a658d93ffeSIvZ0Zk2v8vZou/message opencode.server.backend=hono opencode.server.backend.reason=stable opencode.installation.channel=latest opencode.installation.version=1.14.31 request
+INFO  2026-05-01T22:13:17 +2ms service=lsp all LSPs are disabled
+INFO  2026-05-01T22:13:17 +0ms service=bus type=session.updated subscribing
+INFO  2026-05-01T22:13:17 +0ms service=bus type=message.updated subscribing
+INFO  2026-05-01T22:13:17 +0ms service=bus type=message.part.updated subscribing
+INFO  2026-05-01T22:13:17 +0ms service=bus type=session.diff subscribing
+INFO  2026-05-01T22:13:17 +0ms service=bus type=session.deleted subscribing
+INFO  2026-05-01T22:13:17 +1ms service=format all formatters are disabled
+INFO  2026-05-01T22:13:17 +0ms service=format init
+INFO  2026-05-01T22:13:17 +1ms service=file.watcher directory=/private/tmp/agent-bench init
+INFO  2026-05-01T22:13:17 +170ms service=file.watcher directory=/private/tmp/agent-bench platform=darwin backend=fs-events watcher backend
+INFO  2026-05-01T22:13:17 +23ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:13:17 +3ms service=provider status=started state
+INFO  2026-05-01T22:13:17 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:13:17 +2ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:13:17 +20ms service=provider init
+INFO  2026-05-01T22:13:17 +2ms service=bus type=session.status publishing
+INFO  2026-05-01T22:13:17 +1ms service=session.prompt session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou step=0 loop
+INFO  2026-05-01T22:13:17 +157ms service=provider instanceUrl=https://gitlab.com gitlab model discovery starting
+INFO  2026-05-01T22:13:17 +9ms service=provider gitlab model discovery skipped: no models found
+INFO  2026-05-01T22:13:17 +0ms service=provider providerID=gitlab found
+INFO  2026-05-01T22:13:17 +0ms service=provider providerID=opencode found
+INFO  2026-05-01T22:13:17 +1ms service=provider providerID=macstudio found
+INFO  2026-05-01T22:13:17 +0ms service=provider status=completed duration=193 state
+INFO  2026-05-01T22:13:17 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:13:17 +2ms service=session.prompt status=started resolveTools
+INFO  2026-05-01T22:13:17 +2ms service=bash-tool shell=/bin/zsh bash tool using shell
+INFO  2026-05-01T22:13:17 +1ms service=tool.registry status=started invalid
+INFO  2026-05-01T22:13:17 +1ms service=tool.registry status=completed duration=1 invalid
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started question
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 question
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started bash
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 bash
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started read
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 read
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started glob
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 glob
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started grep
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 grep
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started edit
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 edit
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started write
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 write
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started task
+INFO  2026-05-01T22:13:17 +0ms service=permission permission=task pattern=explore ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:13:17 +1ms service=permission permission=task pattern=general ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=1 task
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started webfetch
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 webfetch
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started todowrite
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=0 todowrite
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=started skill
+INFO  2026-05-01T22:13:17 +3ms service=llm providerID=macstudio modelID=OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou small=true agent=title mode=primary stream
+INFO  2026-05-01T22:13:17 +0ms service=provider status=started providerID=macstudio getSDK
+INFO  2026-05-01T22:13:17 +0ms service=provider providerID=macstudio pkg=@ai-sdk/openai-compatible using bundled provider
+INFO  2026-05-01T22:13:17 +3ms service=provider status=completed duration=3 providerID=macstudio getSDK
+INFO  2026-05-01T22:13:17 +2ms service=skill count=2 init
+INFO  2026-05-01T22:13:17 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:13:17 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:13:17 +0ms service=tool.registry status=completed duration=8 skill
+INFO  2026-05-01T22:13:17 +3ms service=session.prompt status=completed duration=16 resolveTools
+INFO  2026-05-01T22:13:17 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:13:17 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:13:17 +10ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:13:17 +12ms service=bus type=session.diff publishing
+INFO  2026-05-01T22:13:17 +0ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:13:17 +1ms service=session.processor session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou messageID=msg_de59a7401001P2kXr4haAGAVEk process
+INFO  2026-05-01T22:13:17 +1ms service=llm providerID=macstudio modelID=OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou small=false agent=build mode=primary stream
+INFO  2026-05-01T22:13:17 +2ms service=bus type=session.status publishing
+INFO  2026-05-01T22:13:18 +145ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:13:30 +12560ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:14:01 +30319ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:01 +1ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +19ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +19ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:01 +32ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:01 +2ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:01 +0ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:03 +1971ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:03 +4ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:03 +4ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:03 +19ms service=permission permission=bash pattern=gh api items --method GET -q '.[0]' 2>/dev/null ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=gh api items --method GET -q '.[0]' 2>/dev/null action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=curl -s 'https://hacker-news.firebaseio.com/v0/topstories.json' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=curl -s 'https://hacker-news.firebaseio.com/v0/topstories.json' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=jq -r '.[0]' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=jq -r '.[0]' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=xargs -I{} curl -s "https://hacker-news.firebaseio.com/v0/item/{}.json" ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:03 +0ms service=permission permission=bash pattern=xargs -I{} curl -s "https://hacker-news.firebaseio.com/v0/item/{}.json" action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:03 +2ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:03 +264ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:04 +470ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:04 +2ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:04 +2ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:04 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:04 +2ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:04 +0ms service=bus type=session.status publishing
+INFO  2026-05-01T22:14:04 +0ms service=session.prompt session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou step=1 loop
+INFO  2026-05-01T22:14:04 +2ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:04 +0ms service=session.prompt status=started resolveTools
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started invalid
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 invalid
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started question
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 question
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started bash
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 bash
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started read
+INFO  2026-05-01T22:14:04 +1ms service=tool.registry status=completed duration=1 read
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started glob
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 glob
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started grep
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 grep
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started edit
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 edit
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started write
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 write
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started task
+INFO  2026-05-01T22:14:04 +0ms service=permission permission=task pattern=explore ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:04 +0ms service=permission permission=task pattern=general ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 task
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started webfetch
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 webfetch
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started todowrite
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 todowrite
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=started skill
+INFO  2026-05-01T22:14:04 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:04 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:04 +0ms service=tool.registry status=completed duration=0 skill
+INFO  2026-05-01T22:14:04 +1ms service=session.prompt status=completed duration=2 resolveTools
+INFO  2026-05-01T22:14:04 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:04 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:04 +2ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:14:04 +1ms service=bus type=session.diff publishing
+INFO  2026-05-01T22:14:04 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:04 +1ms service=session.processor session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou messageID=msg_de59b2900001Obn18Pn4ub74gy process
+INFO  2026-05-01T22:14:04 +1ms service=llm providerID=macstudio modelID=OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou small=false agent=build mode=primary stream
+INFO  2026-05-01T22:14:04 +3ms service=bus type=session.status publishing
+INFO  2026-05-01T22:14:04 +10ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:35 +30760ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:35 +1ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +20ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +19ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +14ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:35 +34ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:35 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:35 +0ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:14:37 +1790ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:37 +3ms service=permission permission=bash pattern=curl -s 'https://hacker-news.firebaseio.com/v0/topstories.json' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=curl -s 'https://hacker-news.firebaseio.com/v0/topstories.json' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=jq -r '.[0]' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=jq -r '.[0]' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=xargs -I{} curl -s "https://hacker-news.firebaseio.com/v0/item/{}.json" ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=xargs -I{} curl -s "https://hacker-news.firebaseio.com/v0/item/{}.json" action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=jq -r 'title, url, by, time, score' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:14:37 +0ms service=permission permission=bash pattern=jq -r 'title, url, by, time, score' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:14:37 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:37 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:37 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:37 +15ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:38 +468ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:38 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:14:38 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:38 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:38 +0ms service=bus type=session.status publishing
+INFO  2026-05-01T22:14:38 +0ms service=session.prompt session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou step=2 loop
+INFO  2026-05-01T22:14:38 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:38 +0ms service=session.prompt status=started resolveTools
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started invalid
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 invalid
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started question
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 question
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started bash
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 bash
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started read
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 read
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started glob
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 glob
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started grep
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 grep
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started edit
+INFO  2026-05-01T22:14:38 +1ms service=tool.registry status=completed duration=1 edit
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started write
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 write
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started task
+INFO  2026-05-01T22:14:38 +0ms service=permission permission=task pattern=explore ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:38 +0ms service=permission permission=task pattern=general ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 task
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started webfetch
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 webfetch
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started todowrite
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 todowrite
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=started skill
+INFO  2026-05-01T22:14:38 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:38 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:38 +0ms service=tool.registry status=completed duration=0 skill
+INFO  2026-05-01T22:14:38 +1ms service=session.prompt status=completed duration=2 resolveTools
+INFO  2026-05-01T22:14:38 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:38 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:14:38 +3ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:14:38 +0ms service=bus type=session.diff publishing
+INFO  2026-05-01T22:14:38 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:14:38 +1ms service=session.processor session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou messageID=msg_de59bacd1001GAx6ljL5loEsev process
+INFO  2026-05-01T22:14:38 +0ms service=llm providerID=macstudio modelID=OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou small=false agent=build mode=primary stream
+INFO  2026-05-01T22:14:38 +3ms service=bus type=session.status publishing
+INFO  2026-05-01T22:14:38 +10ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:09 +31721ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:09 +1ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +21ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +13ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +21ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:09 +12ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:10 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:10 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:10 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:10 +35ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:10 +0ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:10 +1ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:11 +1846ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:11 +2ms service=permission permission=bash pattern=curl -s 'https://hacker-news.firebaseio.com/v0/topstories.json' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:15:11 +0ms service=permission permission=bash pattern=curl -s 'https://hacker-news.firebaseio.com/v0/topstories.json' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:15:11 +0ms service=permission permission=bash pattern=jq -r '.[0]' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:15:11 +1ms service=permission permission=bash pattern=jq -r '.[0]' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:15:11 +0ms service=permission permission=bash pattern=curl -s "https://hacker-news.firebaseio.com/v0/item/$STORY_ID.json" ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:15:11 +0ms service=permission permission=bash pattern=curl -s "https://hacker-news.firebaseio.com/v0/item/$STORY_ID.json" action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:15:11 +0ms service=permission permission=bash pattern=jq '{title, url, by, time, score}' ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] evaluate
+INFO  2026-05-01T22:15:11 +0ms service=permission permission=bash pattern=jq '{title, url, by, time, score}' action={"permission":"*","action":"allow","pattern":"*"} evaluated
+INFO  2026-05-01T22:15:11 +0ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:11 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:11 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:12 +475ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:12 +2ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:12 +0ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:12 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:15:12 +0ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:15:12 +1ms service=bus type=session.status publishing
+INFO  2026-05-01T22:15:12 +0ms service=session.prompt session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou step=3 loop
+INFO  2026-05-01T22:15:12 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:15:12 +0ms service=session.prompt status=started resolveTools
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started invalid
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 invalid
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started question
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 question
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started bash
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 bash
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started read
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 read
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started glob
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 glob
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started grep
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 grep
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started edit
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 edit
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started write
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 write
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started task
+INFO  2026-05-01T22:15:12 +0ms service=permission permission=task pattern=explore ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:15:12 +0ms service=permission permission=task pattern=general ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:15:12 +1ms service=tool.registry status=completed duration=1 task
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started webfetch
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 webfetch
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started todowrite
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 todowrite
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=started skill
+INFO  2026-05-01T22:15:12 +0ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:15:12 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:15:12 +0ms service=tool.registry status=completed duration=0 skill
+INFO  2026-05-01T22:15:12 +0ms service=session.prompt status=completed duration=1 resolveTools
+INFO  2026-05-01T22:15:12 +1ms service=permission permission=skill pattern=convert-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:15:12 +0ms service=permission permission=skill pattern=watch-vdo ruleset=[{"permission":"*","action":"allow","pattern":"*"},{"permission":"doom_loop","action":"ask","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"},{"permission":"external_directory","pattern":"/var/folders/dz/q867nc7x4czbys7ft6s638_m0000gn/T/opencode/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/watch-vdo/*","action":"allow"},{"permission":"external_directory","pattern":"/Users/chanunc/.claude/skills/convert-vdo/*","action":"allow"},{"permission":"question","action":"deny","pattern":"*"},{"permission":"plan_enter","action":"deny","pattern":"*"},{"permission":"plan_exit","action":"deny","pattern":"*"},{"permission":"read","pattern":"*","action":"allow"},{"permission":"read","pattern":"*.env","action":"ask"},{"permission":"read","pattern":"*.env.*","action":"ask"},{"permission":"read","pattern":"*.env.example","action":"allow"},{"permission":"question","action":"allow","pattern":"*"},{"permission":"plan_enter","action":"allow","pattern":"*"},{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"/Users/chanunc/.local/share/opencode/tool-output/*","action":"allow"}] evaluate
+INFO  2026-05-01T22:15:12 +2ms service=bus type=session.updated publishing
+INFO  2026-05-01T22:15:12 +1ms service=bus type=session.diff publishing
+INFO  2026-05-01T22:15:12 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:15:12 +1ms service=session.processor session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou messageID=msg_de59c331c001waUv2OsT2cLvGM process
+INFO  2026-05-01T22:15:12 +0ms service=llm providerID=macstudio modelID=OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou small=false agent=build mode=primary stream
+INFO  2026-05-01T22:15:12 +2ms service=bus type=session.status publishing
+INFO  2026-05-01T22:15:12 +14ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:44 +32154ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:44 +0ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +22ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +19ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +14ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +34ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:44 +0ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:44 +0ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:44 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +20ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +13ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +15ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +18ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +16ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +17ms service=bus type=message.part.delta publishing
+INFO  2026-05-01T22:15:45 +23ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:45 +1ms service=bus type=message.part.updated publishing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:15:45 +1ms service=bus type=message.updated publishing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=session.status publishing
+INFO  2026-05-01T22:15:45 +0ms service=session.prompt session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou step=4 loop
+INFO  2026-05-01T22:15:45 +1ms service=session.prompt session.id=ses_21a658d93ffeSIvZ0Zk2v8vZou exiting loop
+INFO  2026-05-01T22:15:45 +1ms service=bus type=session.status publishing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=session.idle publishing
+INFO  2026-05-01T22:15:45 +1ms service=default directory=/private/tmp/agent-bench disposing instance
+INFO  2026-05-01T22:15:45 +2ms service=bus type=* unsubscribing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=session.updated unsubscribing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=message.updated unsubscribing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=message.part.updated unsubscribing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=session.diff unsubscribing
+INFO  2026-05-01T22:15:45 +0ms service=bus type=session.deleted unsubscribing
+INFO  2026-05-01T22:15:45 +2ms service=bus type=* unsubscribing
+INFO  2026-05-01T22:15:45 +0ms service=server event disconnected

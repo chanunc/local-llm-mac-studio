@@ -23,6 +23,15 @@
         "maxTokens": 8192
       },
       {
+        "id": "OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4",
+        "name": "Osaurus Qwen3.6-35B-A3B JANGTQ4 (35B MoE + VL, 4-bit TurboQuant)",
+        "reasoning": true,
+        "input": ["text", "image"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 262144,
+        "maxTokens": 8192
+      },
+      {
         "id": "dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK",
         "name": "Qwen3.6-35B-A3B JANGTQ2-CRACK (35B MoE, Uncensored, 2-bit TurboQuant, needs enable_thinking=false)",
         "reasoning": false,

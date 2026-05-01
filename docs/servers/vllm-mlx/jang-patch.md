@@ -14,9 +14,9 @@ Step-by-step guide to run JANG-quantized models on [vllm-mlx](https://github.com
 
 ## 🔎 Background
 
-vllm-mlx uses `mlx_lm.load()` internally (via `vllm_mlx.utils.tokenizer.load_model_with_fallback()`). Like mlx-lm.server, it cannot load JANG models natively because `mlx_lm.load()` fails on JANG's custom weight shapes.
+vllm-mlx funnels model loading through `mlx_lm.load()` (called from `vllm_mlx.utils.tokenizer.load_model_with_fallback()`), so the same monkey-patch shape used for `mlx-lm.server` works here. v0.2.6 also has a `tokenizer.py` return-statement bug that must be patched alongside the JANG hook (see step 3 below).
 
-The same monkey-patch approach works: intercept `mlx_lm.load()` before vllm-mlx starts, detect JANG paths, and delegate to `jang_tools.load_jang_model()`.
+> **What JANG is + the shared monkey-patch shape across servers + cross-server perf:** [`docs/models/techniques/model-quantization-jang.md`](../../models/techniques/model-quantization-jang.md). This doc covers `vllm-mlx` operational steps only.
 
 **Prerequisites:**
 - vllm-mlx installed in a Python 3.10+ venv (system Python 3.9 is too old)

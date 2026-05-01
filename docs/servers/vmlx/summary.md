@@ -16,9 +16,9 @@
 
 ## Overview
 
-`vmlx` is the **JANGTQ-only** server in this repo. It exists because TurboQuant-weight (JANGTQ) models need `jang_tools.load_jangtq` + the `turboquant/*kernel*` Metal kernels at load time — and **none of that ships via the public pypi `jang` or `vmlx` wheels** ([`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5)). The loader + kernels are bundled only inside the MLX Studio Electron DMG's relocatable Python (`panel/scripts/bundle-python.sh` per the vmlx 1.3.62 CHANGELOG). `vmlx` runs headlessly out of that bundled Python — no GUI session is needed despite the Electron packaging.
+`vmlx` is the **JANGTQ-only** server in this repo. The loader + Metal kernels live exclusively in the MLX Studio Electron DMG's bundled Python; `vmlx` runs headlessly out of that Python (no GUI session required). Speaks **OpenAI + Anthropic + Ollama** APIs on port 8000. Served model on this Mac Studio: `dealignai/MiniMax-M2.7-JANGTQ-CRACK` (230B / ~10B active MoE, JANGTQ 2-bit codebook + 8-bit attn/embed, CRACK-abliterated, ~57 GB on disk).
 
-Speaks **OpenAI + Anthropic + Ollama** APIs on port 8000. Served model on this Mac Studio: `dealignai/MiniMax-M2.7-JANGTQ-CRACK` (230B / ~10B active MoE, JANGTQ 2-bit codebook + 8-bit attn/embed, CRACK-abliterated, ~57 GB on disk).
+> **What TurboQuant + JANGTQ are, why public pypi can't load them, MLX implementation landscape, MLLM tool-use bug list:** [`docs/models/techniques/model-quantization-turboquant.md`](../../models/techniques/model-quantization-turboquant.md). This runbook covers operational steps only.
 
 ## Architecture
 
@@ -98,14 +98,7 @@ Idempotent. **Re-apply after every DMG upgrade.** Full bug-by-bug breakdown: [`m
 
 ## Verifying the fast path
 
-On startup, `tail /tmp/vmlx.log` should contain:
-
-```
-JANGTQ v2 loaded in ~10s: <model-name> (0.0-bit avg, native TQ, no dequant)
-Replaced <N> modules with TurboQuantLinear / TurboQuantSwitchLinear
-```
-
-**Absence** of `JANGTQ fast path unavailable` is the real verification — that warning means the dequant-and-requant fallback path in `vmlx_engine/utils/jang_loader.py` triggered, which produces gibberish output on the MiniMax family ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)).
+On startup, `tail /tmp/vmlx.log` must contain `JANGTQ v2 loaded in ~10s` + `Replaced <N> modules with TurboQuantLinear`. **Absence of `JANGTQ fast path unavailable`** is the real check — that warning means the dequant-and-requant fallback triggered, which produces gibberish on MiniMax. Full log shape + diagnosis: [`docs/models/techniques/model-quantization-turboquant.md` § Verifying the fast path](../../models/techniques/model-quantization-turboquant.md#verifying-the-fast-path).
 
 ## Health check
 
@@ -136,10 +129,8 @@ Full deploy + perf report: [`docs/models/uncen-model/minimax-m27-crack-benchmark
 
 ## Known limitations
 
-- **MLLM tool-use bugs (patch required)**: vmlx 1.0.3 drops `tools[]` before the chat template, ignores it in `_apply_chat_template`, and crashes on multi-turn tool replay with "Can only get item pairs from a mapping". All three are fixed by `scripts/patches/patch_vmlx_jangtq_mllm_tools.py`. Must re-apply after every DMG upgrade. See [§ Tool use and reasoning](#tool-use-and-reasoning) and [`maintenance.md`](maintenance.md#tool-use-and-reasoning-mllm-models).
-- **Incompatible flags**: `--smelt` and `--flash-moe` raise `ValueError` on `weight_format=mxtq` ([vmlx#81](https://github.com/jjang-ai/vmlx/issues/81)). Do not pass either.
+- **MLLM tool-use bugs, incompatible flags (`--smelt`, `--flash-moe`), single-vendor DMG dependency**: see [`docs/models/techniques/model-quantization-turboquant.md`](../../models/techniques/model-quantization-turboquant.md#mllm-tool-use-bugs).
 - **JANGTQ-weight models only**: non-JANGTQ models work too, but there is no reason to use vmlx for them — `vllm-mlx` / `mlx-openai-server` / `oMLX` have better operational stories and matching or faster perf.
-- **Single-vendor dependency risk**: the loader + Metal kernels are not in any public package. A new DMG install is the only supported path after reinstall; there is no `pip install` fallback today. Upstream tracking issue: [`jjang-ai/jangq#5`](https://github.com/jjang-ai/jangq/issues/5).
 - **No Homebrew service entry**: vmlx is launched via `nohup … &` and killed via `pkill -f vmlx_engine`. See [`maintenance.md`](maintenance.md) for the lifecycle script.
 - **Refusal-rate benchmarking is a separate step**: the CRACK prompt suite ([`uncen-model-prompts.md`](../../models/uncen-model/uncen-model-prompts.md)) produces content that requires explicit per-session authorization to generate/log. The deploy doc leaves the 2026-04-20 refusal-rate row unchecked for that reason.
 

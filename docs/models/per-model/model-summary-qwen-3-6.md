@@ -290,9 +290,11 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 - Tool-result replay produced `The current weather in Paris is sunny with a temperature of 18°C.`
 - `reasoning_content` was separated cleanly from `content`
 
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520 sample)** — 2026-05-02, `temperature=1.0`, `max_tokens=300`, `top_p=1.0`, no system prompt: **9/10 keyword-match** (1 false-positive on P10 — combined-stream matcher caught "as an AI" + "harmful" inside a contextual-acknowledgement frame, model committed to comply). Avg 16.2 s/prompt at ~18.7 tok/s — slow because vmlx-osaurus (~30 GB) was co-resident on the Mac Studio for the run. All 10 prompts produced comply-oriented planning in `reasoning_content`; LM Studio's reasoning parser auto-splits `<think>` blocks so `content` stayed empty at 300 tokens (`finish_reason: length`). Useful post-thinking compliance is **unverified** at this token budget — same caveat as JANGTQ2-CRACK. Raw: [`docs/models/benchmarks/qwen36-27b-hauhaucs-q8kp/refusal-rate-llmster.json`](../benchmarks/qwen36-27b-hauhaucs-q8kp/refusal-rate-llmster.json). Cross-model context: [`docs/models/uncen-model/uncen-model-test-results.md`](../uncen-model/uncen-model-test-results.md).
+
 **Caveats:**
 - **Resolver mismatch for custom quant names** — use direct Hub download + `lms import`, not `lms get`, until LM Studio handles `K_P` labels correctly.
-- **No benchmark yet** — this deploy only established loadability and tool-call correctness, not throughput. Reuse the existing llmster API and agent bench scripts when you want real perf numbers.
+- **Throughput not yet benchmarked solo** — the 16.2 s/prompt above includes contention with co-resident vmlx-osaurus. Re-bench with that process stopped to get the model's standalone tok/s.
 - **GGUF on llmster only in this repo** — `vllm-mlx`, `mlx-openai-server`, `oMLX`, `vmlx`, and `dflash-mlx` do not host this file format in the current stack.
 - **Uncensored posture is deliberate** — keep this sidecar scoped to local research / eval workflows, not shared endpoints.
 

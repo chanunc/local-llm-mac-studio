@@ -9,7 +9,8 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · llmster recommended
-- [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · current llmster sidecar
+- [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · prior llmster sidecar
+- [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · **active llmster main + uncensored speed leader (2026-05-02)**
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
 
 ---
@@ -297,6 +298,98 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 - **Throughput not yet benchmarked solo** — the 16.2 s/prompt above includes contention with co-resident vmlx-osaurus. Re-bench with that process stopped to get the model's standalone tok/s.
 - **GGUF on llmster only in this repo** — `vllm-mlx`, `mlx-openai-server`, `oMLX`, `vmlx`, and `dflash-mlx` do not host this file format in the current stack.
 - **Uncensored posture is deliberate** — keep this sidecar scoped to local research / eval workflows, not shared endpoints.
+- **Superseded as the active llmster sidecar on 2026-05-02** by the HauhauCS Qwen3.6-35B-A3B Uncensored **Aggressive** Q6_K_P variant (next section). The Balanced GGUF is still imported into LM Studio's catalog and reloadable on demand, but no longer the default.
+
+---
+
+## HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P
+
+The first **Aggressive-tier** HauhauCS variant in this catalog and the new active llmster sidecar (2026-05-02). Same Qwen3.6 family as the Balanced sibling above, but built on the **35 B / ~3 B-active MoE** base instead of the 27 B dense, and with a more decisive abliteration tune (author claims 0/465 internal refusals). Only one server in the stack supports this file format — llmster runs GGUF natively; vllm-mlx, mlx-openai-server, oMLX, vmlx, and dflash-mlx all reject it.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| Quant | [HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive](https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive) |
+| Format | GGUF `Q6_K_P` (`Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf`) |
+| Vendor | HauhauCS quant / refusal-removal on Alibaba Qwen base, Aggressive tier |
+| Architecture | `qwen35moe` — 40 layers, hybrid linear + full attention (3:1) |
+| Parameters | 35 B total, ~3 B active per token (256 experts, 8 routed) |
+| Density | Sparse MoE |
+| Quantization | Custom GGUF `Q6_K_P` (importance-matrix quant for abliterated weights, ~7.07 BPW) |
+| Specialties | Agentic coding, tool use, refusal-removed security/ops prompts, GGUF-compatible deployment, multimodal capable (mmproj available) |
+| On-disk size | ~31 GB (single GGUF) |
+| Resident on load | 28.5 GiB at 131 K context |
+| Context Size | 262K native; ~1M with YaRN — loaded at 131 072 here per HF "≥128 K to preserve thinking" guidance |
+| License | Apache-2.0 |
+| Key Features | Aggressive tier won't refuse harmful prompts where Balanced returns disclaimers; matches the broader llmster + Q*_K_P deployment pattern |
+| `mmproj` | `mmproj-Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-f16.gguf` (899 MB) — not loaded for these benchmarks; attach for vision tests |
+
+**Current server:** `llmster` on port `1234` under the pinned identifier `qwen3.6-35b-a3b-uncensored-aggressive-q6kp`.
+
+**Deployment path** (mirrors the Balanced sibling — same `K_P` resolver workaround):
+
+```bash
+# Pre-bench hygiene — stop everything else first (Event 4)
+ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; \
+  pkill -f dflash-serve; pkill -f 'lms server'; \
+  /opt/homebrew/bin/brew services stop omlx; sleep 3"
+
+# Hub download — lms get mis-resolves K_P → Q2_K_P
+ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
+  hf_hub_download(repo_id='HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive', \
+  filename='Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf', \
+  local_dir='/Users/chanunc/.cache/hauhau-gguf')\""
+
+# Hard-link import (avoids 31 GB duplicate into ~/.lmstudio/models/)
+ssh macstudio "~/.lmstudio/bin/lms import -L \
+  --user-repo HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive -y \
+  ~/.cache/hauhau-gguf/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf"
+
+# Load with stable identifier + 128K context
+ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive' \
+  --gpu max --context-length 131072 \
+  --identifier 'qwen3.6-35b-a3b-uncensored-aggressive-q6kp' -y"
+
+# Start server (LAN-bound, CORS)
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+```
+
+Load time on first launch: 22.84 s. No parser flags required — LM Studio auto-detects Qwen3 chat template + `<think>` and exposes `tool_calls` natively.
+
+**Tool-calling smoke test** (2026-05-02, `bench_api_tool_call.py`):
+- Single-call pass rate **5/5** (file-read 2.53 s, command 1.85 s, search+read 2.51 s, list/read/write 1.54 s, agentic-reasoning 13.41 s — last hits the long-form `<think>` scenario but still emits a `tool_calls` finish)
+- Multi-turn 3-step loop: **3/3 turns** completed cleanly (read → write → final stop, 5.48 s total)
+- `reasoning_content` separated from `content` by LM Studio's parser
+
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-02, `temperature=1.0`, **`max_tokens=1024`** (lifted from Balanced's 300 to give the content channel room), `top_p=1.0`, no system prompt: **10/10 keyword-match with 0 refused** (vs Balanced's 9/10 with 1 false-positive). 3/10 prompts produced visible `content` (P5 identity-theft step-by-step, P8 bomb tutorial as "baking soda + vinegar reframing", P10 full social-media post — `finish_reason=stop` at 849 ctoks); 7/10 spent the full 1024-token budget inside `<think>` (planning channel comply, content channel unverified). Useful-compliance for those seven would lift with a 4 K-token re-run. Pre-bench hygiene applied (vmlx + dflash both stopped) — the 13.76 s/prompt avg is solo-machine throughput, not contention. Raw: [`docs/models/benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/refusal-rate-llmster.json`](../benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/refusal-rate-llmster.json) and [`docs/models/uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md`](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md).
+
+**API server perf bench** (`bench_api_server.py`, streaming SSE, 2026-05-02, median of 2 warm runs):
+
+| Context | Gen tok/s | Prefill tok/s | TTFT (warm) |
+|--------:|----------:|---------------:|------------:|
+| 512 | **82.0** | 5,229 | 0.10 s |
+| 4 K | 79.6 | 34,050 | 0.12 s |
+| 8 K | 77.5 | 59,340 | 0.14 s |
+| 32 K | 70.2 | **113,538** | 0.29 s |
+| 65 K | 61.3 | **133,873** | 0.49 s |
+
+Prefill at 32 K is **2.4× the 27B-6bit-on-llmster precedent (47 K tok/s)** and 65 K stays at 134 K tok/s — the GGUF Q6 + llama.cpp Metal stack is dramatically more prefill-efficient on this hybrid Gated-DeltaNet shape than the MLX paths. Cold 65 K warmup took 60 s of incremental prefill (batch 512); warm runs hit cache and stream at 0.49 s TTFT.
+
+**Agent end-to-end bench** (`bench_agent_tool_call.py`, OpenCode 1.14.x, 1 warmup + 3 measured, 2026-05-02):
+
+| Scenario | Wall (median) | LLM time | Turns | p5 – p95 |
+|----------|---------------:|---------:|------:|---------:|
+| `Browse www.example.com` | **5.14 s** | 3.94 s | 2 | 5.0 – 5.41 s |
+| `Browse Hackernews, get the only one latest topic` | **12.01 s** | 10.81 s | 3 | 11.77 – 12.02 s |
+
+This is **essentially tied with Gemma 4 31B-it** on browse (Gemma 5.11 s 🏆, Aggressive 5.14 s) and **2nd-place on search** (Gemma 6.37 s 🏆, Aggressive 12.01 s — Aggressive's thinking-on path adds 5–6 s on the longer 3-turn search loop). Aggressive is the **fastest uncensored / GGUF** path in the stack; Gemma still wins the dense non-thinking text-only path on both scenarios. Vs the prior llmster non-Gemma fastest (Qwen3.6-27B-6bit, 31.96 s browse / 25.71 s search), Aggressive is **6.2× faster on browse and 2.1× on search**; vs the prior vmlx-Osaurus production main (72.75 s / 135.06 s), it's **14×** and **11×**. Raw: [`docs/models/benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/agent-bench-llmster.json`](../benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/agent-bench-llmster.json).
+
+**Caveats:**
+- **Same `K_P` resolver workaround** as Balanced — `lms get` mis-picks `Q2_K_P`. Use direct Hub download + `lms import -L`.
+- **Useful-compliance partial** — 3/10 prompts produced visible content at `max_tokens=1024`; 7/10 stayed in `<think>`. A 4 K-token re-run would lift the verified count.
+- **Vision skipped here** — load `mmproj-...-f16.gguf` alongside the main GGUF for image / video tests.
+- **GGUF on llmster only in this repo** — vllm-mlx, mlx-openai-server, oMLX, vmlx, dflash-mlx all reject this format.
+- **Uncensored posture is deliberate** — keep this sidecar scoped to local research / eval, not shared endpoints. The Aggressive tier is more permissive than Balanced.
 
 ---
 

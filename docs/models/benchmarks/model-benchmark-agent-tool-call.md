@@ -51,6 +51,7 @@ All numbers below are medians; per-model detail sections follow further down.
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | **1.54 - 2.53 s** | 1.54 - 2.51 s | 5.48 s 🥈 |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🏆 | **1.51 - 1.53 s** 🏆 | 5.64 s 🥈 |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s 🥈 | 1.42 - 2.70 s | 6.99 s |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
@@ -73,7 +74,8 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 / 11.47 s | 16.28 s 🥈 / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥈 / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. **Active production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>**6.2× browse, 2.1× search** vs Qwen3.6-27B 6bit on llmster.<br>**14× browse, 11× search** vs vmlx-Osaurus-JANGTQ4. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | **5.11 s** 🏆 / 3.94 s | **6.37 s** 🏆 / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**6.3× browse, 4.0× search** vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost.<br>Slower than Qwen 35B-A3Bs, no thinking overhead. |

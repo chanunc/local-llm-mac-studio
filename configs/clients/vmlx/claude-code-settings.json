@@ -1,5 +1,5 @@
 {
-  "_comment": "vmlx (MLX Studio bundled Python) serving JANGTQ-CRACK model. Speaks OpenAI + Anthropic + Ollama API natively. No API key required.",
+  "_comment": "vmlx (MLX Studio bundled Python) serving the censored JANGTQ model (OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4). Speaks OpenAI + Anthropic + Ollama API natively. No API key required. For uncensored JANGTQ CRACK variants (dealignai MiniMax-M2.7 / Qwen3.6 JANGTQ4-CRACK / JANGTQ2-CRACK) use the matching templates under docs/models/uncen-model/client-configs/vmlx/.",
   "env": {
     "OPENAI_BASE_URL": "http://<MAC_STUDIO_IP>:8000/v1",
     "OPENAI_API_KEY": "not-needed",

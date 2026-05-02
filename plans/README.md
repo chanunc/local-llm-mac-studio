@@ -24,6 +24,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |
 | [`active/plan-vllm-mlx-homebrew-formula.md`](active/plan-vllm-mlx-homebrew-formula.md) | vllm-mlx Homebrew formula/tap |
+| [`active/plan-deploy-run-benchmark-uncen-model-skill.md`](active/plan-deploy-run-benchmark-uncen-model-skill.md) | Build `/deploy-run-benchmark-uncen-model` skill encoding the 2026-05-02 deploy-and-bench recipe |
 
 ### Done
 

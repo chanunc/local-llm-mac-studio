@@ -8,36 +8,27 @@
         "apiKey": "not-needed"
       },
       "models": {
-        "qwen3.6-27b-uncensored-balanced-q8kp": {
-          "name": "Qwen3.6-27B Uncensored Balanced Q8_K_P (llmster, GGUF)",
+        "gemma-4-31b-it-mlx": {
+          "name": "Gemma 4 31B-it 6bit (llmster, standard MLX) — dense agent-loop speed leader (browse 5.11 s, search 6.37 s)",
           "tools": true,
-          "reasoning": true,
+          "reasoning": false,
           "limit": {
             "context": 65536,
             "output": 4096
           }
         },
         "qwen3.6-27b": {
-          "name": "Qwen3.6-27B 6bit (llmster, standard MLX)",
+          "name": "Qwen3.6-27B 6bit (llmster, standard MLX) — dense + ViT, Qwen3 instruction-tuned",
           "tools": true,
           "reasoning": false,
           "limit": {
             "context": 32768,
             "output": 4096
           }
-        },
-        "gemma-4-31b-it-mlx": {
-          "name": "Gemma 4 31B-it 6bit (llmster, standard MLX)",
-          "tools": true,
-          "reasoning": false,
-          "limit": {
-            "context": 65536,
-            "output": 4096
-          }
         }
       }
     }
   },
-  "model": "macstudio/qwen3.6-27b-uncensored-balanced-q8kp",
-  "small_model": "macstudio/qwen3.6-27b-uncensored-balanced-q8kp"
+  "model": "macstudio/gemma-4-31b-it-mlx",
+  "small_model": "macstudio/gemma-4-31b-it-mlx"
 }

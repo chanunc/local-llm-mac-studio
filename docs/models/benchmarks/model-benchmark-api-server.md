@@ -576,6 +576,53 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 
 ---
 
+## prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (GGUF, on llmster)
+
+Model: `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` (`Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf`) — prithivMLmods abliteration, mradermacher quantization. 28.51 GB on disk, 26.56 GiB resident at 65536 context.
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](qwen36-35b-a3b-prithiv-aggressive/api-server-llmster.json).
+
+**Server:** llmster v0.4.12, GGUF runtime (not MLX — note this is `.Q6_K.gguf`, not a safetensors MLX repo). Loaded with `lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y`. Parser flags not required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively for this model.
+
+**Deployment gotcha:** LM Studio memory guardrail (`modelLoadingGuardrails.mode: "high"`) counts only ~24 GB free pages, ignoring ~62 GB inactive/reclaimable — blocks load with "insufficient system resources." Workaround: temporarily set `mode` to `"off"` via `~/.lmstudio/settings.json`, load, restore to `"high"`. See [`qwen36-35b-a3b-prithiv-aggressive-benchmark.md`](../../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) for the full recipe.
+
+### Generation Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **83.6** |
+| 4K | 80.8 |
+| 8K | 79.0 |
+| 32K | 70.6 |
+
+### Prefill Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 5,350 |
+| 4K | 35,118 |
+| 8K | 56,616 |
+| 32K | **113,519** |
+
+### Time to First Token (seconds)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **0.10** |
+| 4K | 0.12 |
+| 8K | 0.15 |
+| 32K | 0.29 |
+
+**Notes:**
+- **TTFT is flat and sub-300 ms through 32K** — same headline llmster GGUF property seen on the 27B-6bit and HauhauCS variants. At 32K the TTFT is 0.29s vs 0.70s on the 27B-6bit run.
+- **Generation is ~2.3–2.8× faster than Qwen3.6-27B-6bit** on the same llmster (83.6 vs 29.9 tok/s @ 512; 70.6 vs 26.3 tok/s @ 32K). The MoE 3B-active GGUF wins decisively over dense 27B on bandwidth-bound decode.
+- **Prefill scales unusually fast:** 5K → 35K → 57K → 114K tok/s across 512 → 32K context. Compare to llmster 27B-6bit (MLX): 1K → 8K → 15K → 47K tok/s at the same contexts. The GGUF prefill kernel in LM Studio's GGUF runtime benefits from MoE sparsity more aggressively than the MLX uniform-quant kernel.
+- **65K probe not run** — model loaded at exactly `--context-length 65536`; the bench's 65K filler probe fills the context exactly, leaving no headroom for `max_tokens=50`. Would require reloading at 70K context to probe accurately.
+- **GGUF vs MLX runtime distinction:** unlike the MLX-safetensors models in the rest of this doc, this model runs through LM Studio's GGUF engine. Prefill rates are not directly comparable to the MLX-based servers — the LM Studio GGUF engine uses its own quantization-kernel path.
+
+---
+
 ## Ling-2.6-flash mlx-6bit (104B/7B-active, bailing_hybrid)
 
 Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.

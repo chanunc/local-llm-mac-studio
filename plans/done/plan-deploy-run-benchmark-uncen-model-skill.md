@@ -1,8 +1,19 @@
 # Plan: Build `/deploy-run-benchmark-uncen-model` Skill
 
-Status: active
+Status: done
 Created: 2026-05-02
+Completed: 2026-05-02
 Canonical: no
+
+## Implementation
+
+Skill shipped at `~/.claude/skills/deploy-run-benchmark-uncen-model/`:
+
+- `SKILL.md` — six-phase script (validate+sniff → hygiene → deploy → benchmarks → docs → drift+stage) + Phase 4b agent-failure triage subroutine
+- `refusal_harness.py` — port of `/tmp/refusal_bench_aggressive.py`, the inline mlabonne 10/520 driver
+- `README.md` — contributor docs covering the six-phase shape, what to extend when adding a new vendor / server / benchmark, and the acceptance criteria
+
+CLAUDE.md and AGENTS.md note the skill in the Project section so future agents discover it without grepping.
 
 ## Context
 

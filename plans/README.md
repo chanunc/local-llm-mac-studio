@@ -24,7 +24,6 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |
 | [`active/plan-vllm-mlx-homebrew-formula.md`](active/plan-vllm-mlx-homebrew-formula.md) | vllm-mlx Homebrew formula/tap |
-| [`active/plan-deploy-run-benchmark-uncen-model-skill.md`](active/plan-deploy-run-benchmark-uncen-model-skill.md) | Build `/deploy-run-benchmark-uncen-model` skill encoding the 2026-05-02 deploy-and-bench recipe |
 
 ### Done
 
@@ -35,6 +34,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-mac-studio-lmstudio-ollama-benchmark.md`](done/plan-mac-studio-lmstudio-ollama-benchmark.md) | LM Studio / Ollama benchmark — drove llmster adoption 2026-04-30 |
 | [`done/plan-rearrange-docs-organization.md`](done/plan-rearrange-docs-organization.md) | Repo structure reorganization (this layout) |
 | [`done/plan-gemma-4-31b-llmster.md`](done/plan-gemma-4-31b-llmster.md) | Deploy Gemma 4 31B-it on llmster + 3 benchmarks (shipped 2026-05-01) — agent-loop champion at 5–6 s wall |
+| [`done/plan-deploy-run-benchmark-uncen-model-skill.md`](done/plan-deploy-run-benchmark-uncen-model-skill.md) | `/deploy-run-benchmark-uncen-model` skill — six-phase deploy + bench + docs runner, shipped 2026-05-02 to `~/.claude/skills/deploy-run-benchmark-uncen-model/` |
 
 ### Archive
 

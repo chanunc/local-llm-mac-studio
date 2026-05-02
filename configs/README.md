@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-05-02 (llmster HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P deploy-and-benchmark — new active main)**
+**Last updated: 2026-05-02 (llmster prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K deploy-and-benchmark — new active main)**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -14,10 +14,10 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding; currently stopped | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard; currently stopped | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python; **currently stopped** (was last main 2026-05-01 with Osaurus JANGTQ4) | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
-| **llmster** | **1234** | **Current main (2026-05-02)** / **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx on the prior 27B-6bit precedent | HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P (~31GB) | Not needed |
+| **llmster** | **1234** | **Current main (2026-05-02)** / **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx on the prior 27B-6bit precedent | prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K (26.56 GiB) | Not needed |
 | **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance; **currently stopped** | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **llmster + HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P** (deployed 2026-05-02 after Event-4 hygiene); restart vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the JANGTQ comparison again, or switch to vllm-mlx + Ling, mlx-openai-server, or oMLX from each server's runbook.
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **llmster + prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K** (deployed 2026-05-02 after Event-4 hygiene); restart the HauhauCS Aggressive Q6_K_P or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
 
 ### Why vllm-mlx is Primary
 
@@ -109,7 +109,7 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). vmlx was stopped 2026-05-02 per Event-4 hygiene before deploying HauhauCS Aggressive Q6_K_P on llmster; restart command in [`docs/current.md`](../docs/current.md).
+**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). vmlx was stopped 2026-05-02 per Event-4 hygiene before deploying prithivMLmods Aggressive Q6_K on llmster; restart command in [`docs/current.md`](../docs/current.md).
 
 For uncensored vmlx JANGTQ-CRACK variants (`dealignai/MiniMax-M2.7-JANGTQ-CRACK`, `dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK`, `dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK`) use the matching templates under [`docs/models/uncen-model/client-configs/vmlx/`](../docs/models/uncen-model/client-configs/vmlx/).
 
@@ -125,7 +125,7 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 
 **Templates pin censored / standard MLX models on llmster.** Default is `gemma-4-31b-it-mlx` (Gemma 4 31B-it 6-bit) — the dense agent-loop speed leader on llmster (browse 5.11 s, search 6.37 s). Also lists `qwen3.6-27b` (Qwen3.6-27B 6-bit MLX). **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
 
-For uncensored llmster GGUFs (HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/llmster/`](../docs/models/uncen-model/client-configs/llmster/). Custom `K_P` quant labels mis-resolve through `lms get` — direct Hub download + `lms import -L` is required for the HauhauCS family. The current Mac Studio main is HauhauCS Aggressive Q6_K_P (per [`docs/current.md`](../docs/current.md)) — copy from the uncen submodule when you want OpenCode pointed at the live abliterated model.
+For uncensored llmster GGUFs (prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/llmster/`](../docs/models/uncen-model/client-configs/llmster/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`. The current Mac Studio main is prithivMLmods Aggressive Q6_K (per [`docs/current.md`](../docs/current.md)) — copy the uncen-model template when you want OpenCode pointed at the live abliterated model.
 
 Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
 
@@ -172,11 +172,14 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   > /tmp/vmlx-osaurus-qwen36-jangtq4.log 2>&1 &
 
 # Switch to llmster (LM Studio headless, port 1234 — separate from port 8000)
-# First-time setup: brew install --cask lm-studio + one GUI launch to bootstrap ~/.lmstudio/bin/lms
+# Active main: prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (26.56 GiB at 65K context)
+# NOTE: if guardrail blocks load ("insufficient system resources"), temporarily set
+#   modelLoadingGuardrails.mode to "off" in ~/.lmstudio/settings.json, load, then restore.
 pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
-python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive', filename='Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf', local_dir='/Users/chanunc/.cache/hauhau-gguf')"
-~/.lmstudio/bin/lms import -L --user-repo HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive -y ~/.cache/hauhau-gguf/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf
-~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive --gpu max --context-length 131072 --identifier qwen3.6-35b-a3b-uncensored-aggressive-q6kp -y
+~/.lmstudio/bin/lms unload --all
+python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF', filename='Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf', local_dir='/Users/chanunc/.cache/prithiv-gguf')"
+~/.lmstudio/bin/lms import -L --user-repo mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF -y ~/.cache/prithiv-gguf/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf
+~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
 
 # Switch to dflash-mlx (port 8098 — does not displace port 8000 but eats ~25 GB unified memory)

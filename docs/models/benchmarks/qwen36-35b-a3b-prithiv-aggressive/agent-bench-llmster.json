@@ -1,0 +1,592 @@
+{
+  "benchmark": "agent-tool-call",
+  "version": "1.0",
+  "timestamp": "2026-05-02T16:21:22.644263+00:00",
+  "config": {
+    "agent": "opencode",
+    "model": "macstudio-llmster/qwen3.6-35b-a3b-prithiv-aggressive-q6k",
+    "server_url": "http://192.168.31.4:1234/v1",
+    "discovered_from": "/Users/chanunc/.config/opencode/opencode.json",
+    "warmup_runs": 1,
+    "measured_runs": 3,
+    "log_dir": null
+  },
+  "scenarios": {
+    "browse": {
+      "prompt": "Browse www.example.com",
+      "runs": 3,
+      "response_time_s": {
+        "median": 5.05,
+        "p5": 4.89,
+        "p95": 5.3,
+        "mean": 5.08,
+        "stddev": 0.21,
+        "values": [
+          5.05,
+          4.89,
+          5.3
+        ]
+      },
+      "llm_time_s": {
+        "median": 3.82,
+        "p5": 3.7,
+        "p95": 4.1,
+        "mean": 3.87,
+        "stddev": 0.21,
+        "values": [
+          3.82,
+          3.7,
+          4.1
+        ]
+      },
+      "agent_turns": {
+        "median": 2,
+        "p5": 2,
+        "p95": 2,
+        "mean": 2,
+        "stddev": 0.0,
+        "values": [
+          2,
+          2,
+          2
+        ]
+      },
+      "total_tokens": {
+        "median": 22145,
+        "p5": 22137,
+        "p95": 22146,
+        "mean": 22142.67,
+        "stddev": 4.93,
+        "values": [
+          22145,
+          22137,
+          22146
+        ]
+      },
+      "input_tokens": {
+        "median": 22041,
+        "p5": 22041,
+        "p95": 22046,
+        "mean": 22042.67,
+        "stddev": 2.89,
+        "values": [
+          22041,
+          22046,
+          22041
+        ]
+      },
+      "output_tokens": {
+        "median": 104,
+        "p5": 91,
+        "p95": 105,
+        "mean": 100,
+        "stddev": 7.81,
+        "values": [
+          104,
+          91,
+          105
+        ]
+      },
+      "reasoning_tokens": {
+        "median": 50,
+        "p5": 43,
+        "p95": 57,
+        "mean": 50,
+        "stddev": 7.0,
+        "values": [
+          43,
+          50,
+          57
+        ]
+      },
+      "tool_calls_per_run": [
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch"
+        ]
+      ],
+      "per_turn_samples": [
+        [
+          {
+            "turn": 1,
+            "duration_s": 1.9,
+            "input_tokens": 10960,
+            "output_tokens": 43,
+            "reasoning_tokens": 26
+          },
+          {
+            "turn": 2,
+            "duration_s": 1.92,
+            "input_tokens": 11081,
+            "output_tokens": 61,
+            "reasoning_tokens": 17
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 2.01,
+            "input_tokens": 10960,
+            "output_tokens": 43,
+            "reasoning_tokens": 31
+          },
+          {
+            "turn": 2,
+            "duration_s": 1.69,
+            "input_tokens": 11086,
+            "output_tokens": 48,
+            "reasoning_tokens": 19
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 1.86,
+            "input_tokens": 10960,
+            "output_tokens": 43,
+            "reasoning_tokens": 26
+          },
+          {
+            "turn": 2,
+            "duration_s": 2.24,
+            "input_tokens": 11081,
+            "output_tokens": 62,
+            "reasoning_tokens": 31
+          }
+        ]
+      ],
+      "error_count": 0,
+      "raw_runs": [
+        {
+          "scenario": "browse",
+          "prompt": "Browse www.example.com",
+          "response_time_s": 5.05,
+          "llm_time_s": 3.82,
+          "agent_turns": 2,
+          "tool_calls": [
+            "webfetch"
+          ],
+          "total_input_tokens": 22041,
+          "total_output_tokens": 104,
+          "total_reasoning_tokens": 43,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 1.9,
+              "input_tokens": 10960,
+              "output_tokens": 43,
+              "reasoning_tokens": 26
+            },
+            {
+              "turn": 2,
+              "duration_s": 1.92,
+              "input_tokens": 11081,
+              "output_tokens": 61,
+              "reasoning_tokens": 17
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 2,
+            "step_finish": 2,
+            "text": 2,
+            "tool_use": 1,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "browse",
+          "prompt": "Browse www.example.com",
+          "response_time_s": 4.89,
+          "llm_time_s": 3.7,
+          "agent_turns": 2,
+          "tool_calls": [
+            "webfetch"
+          ],
+          "total_input_tokens": 22046,
+          "total_output_tokens": 91,
+          "total_reasoning_tokens": 50,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 2.01,
+              "input_tokens": 10960,
+              "output_tokens": 43,
+              "reasoning_tokens": 31
+            },
+            {
+              "turn": 2,
+              "duration_s": 1.69,
+              "input_tokens": 11086,
+              "output_tokens": 48,
+              "reasoning_tokens": 19
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 2,
+            "step_finish": 2,
+            "text": 2,
+            "tool_use": 1,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "browse",
+          "prompt": "Browse www.example.com",
+          "response_time_s": 5.3,
+          "llm_time_s": 4.1,
+          "agent_turns": 2,
+          "tool_calls": [
+            "webfetch"
+          ],
+          "total_input_tokens": 22041,
+          "total_output_tokens": 105,
+          "total_reasoning_tokens": 57,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 1.86,
+              "input_tokens": 10960,
+              "output_tokens": 43,
+              "reasoning_tokens": 26
+            },
+            {
+              "turn": 2,
+              "duration_s": 2.24,
+              "input_tokens": 11081,
+              "output_tokens": 62,
+              "reasoning_tokens": 31
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 2,
+            "step_finish": 2,
+            "text": 2,
+            "tool_use": 1,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        }
+      ]
+    },
+    "search": {
+      "prompt": "Browse Hackernews, get the only one latest topic",
+      "runs": 3,
+      "response_time_s": {
+        "median": 13.56,
+        "p5": 12.36,
+        "p95": 14.75,
+        "mean": 13.56,
+        "stddev": 1.2,
+        "values": [
+          14.75,
+          12.36,
+          13.56
+        ]
+      },
+      "llm_time_s": {
+        "median": 12.35,
+        "p5": 11.12,
+        "p95": 13.52,
+        "mean": 12.33,
+        "stddev": 1.2,
+        "values": [
+          13.52,
+          11.12,
+          12.35
+        ]
+      },
+      "agent_turns": {
+        "median": 3,
+        "p5": 2,
+        "p95": 3,
+        "mean": 2.67,
+        "stddev": 0.58,
+        "values": [
+          2,
+          3,
+          3
+        ]
+      },
+      "total_tokens": {
+        "median": 42714,
+        "p5": 26963,
+        "p95": 43757,
+        "mean": 37811.33,
+        "stddev": 9409.4,
+        "values": [
+          26963,
+          42714,
+          43757
+        ]
+      },
+      "input_tokens": {
+        "median": 42536,
+        "p5": 26834,
+        "p95": 43575,
+        "mean": 37648.33,
+        "stddev": 9379.88,
+        "values": [
+          26834,
+          42536,
+          43575
+        ]
+      },
+      "output_tokens": {
+        "median": 178,
+        "p5": 129,
+        "p95": 182,
+        "mean": 163,
+        "stddev": 29.51,
+        "values": [
+          129,
+          178,
+          182
+        ]
+      },
+      "reasoning_tokens": {
+        "median": 148,
+        "p5": 117,
+        "p95": 260,
+        "mean": 175,
+        "stddev": 75.23,
+        "values": [
+          260,
+          117,
+          148
+        ]
+      },
+      "tool_calls_per_run": [
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch",
+          "webfetch"
+        ],
+        [
+          "webfetch",
+          "webfetch"
+        ]
+      ],
+      "per_turn_samples": [
+        [
+          {
+            "turn": 1,
+            "duration_s": 2.59,
+            "input_tokens": 10966,
+            "output_tokens": 47,
+            "reasoning_tokens": 29
+          },
+          {
+            "turn": 2,
+            "duration_s": 10.93,
+            "input_tokens": 15868,
+            "output_tokens": 82,
+            "reasoning_tokens": 231
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 3.07,
+            "input_tokens": 10966,
+            "output_tokens": 50,
+            "reasoning_tokens": 67
+          },
+          {
+            "turn": 2,
+            "duration_s": 5.72,
+            "input_tokens": 15599,
+            "output_tokens": 58,
+            "reasoning_tokens": 33
+          },
+          {
+            "turn": 3,
+            "duration_s": 2.33,
+            "input_tokens": 15971,
+            "output_tokens": 70,
+            "reasoning_tokens": 17
+          }
+        ],
+        [
+          {
+            "turn": 1,
+            "duration_s": 2.72,
+            "input_tokens": 10966,
+            "output_tokens": 54,
+            "reasoning_tokens": 46
+          },
+          {
+            "turn": 2,
+            "duration_s": 6.27,
+            "input_tokens": 16082,
+            "output_tokens": 62,
+            "reasoning_tokens": 35
+          },
+          {
+            "turn": 3,
+            "duration_s": 3.36,
+            "input_tokens": 16527,
+            "output_tokens": 66,
+            "reasoning_tokens": 67
+          }
+        ]
+      ],
+      "error_count": 0,
+      "raw_runs": [
+        {
+          "scenario": "search",
+          "prompt": "Browse Hackernews, get the only one latest topic",
+          "response_time_s": 14.75,
+          "llm_time_s": 13.52,
+          "agent_turns": 2,
+          "tool_calls": [
+            "webfetch"
+          ],
+          "total_input_tokens": 26834,
+          "total_output_tokens": 129,
+          "total_reasoning_tokens": 260,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 2.59,
+              "input_tokens": 10966,
+              "output_tokens": 47,
+              "reasoning_tokens": 29
+            },
+            {
+              "turn": 2,
+              "duration_s": 10.93,
+              "input_tokens": 15868,
+              "output_tokens": 82,
+              "reasoning_tokens": 231
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 2,
+            "step_finish": 2,
+            "text": 2,
+            "tool_use": 1,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "search",
+          "prompt": "Browse Hackernews, get the only one latest topic",
+          "response_time_s": 12.36,
+          "llm_time_s": 11.12,
+          "agent_turns": 3,
+          "tool_calls": [
+            "webfetch",
+            "webfetch"
+          ],
+          "total_input_tokens": 42536,
+          "total_output_tokens": 178,
+          "total_reasoning_tokens": 117,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 3.07,
+              "input_tokens": 10966,
+              "output_tokens": 50,
+              "reasoning_tokens": 67
+            },
+            {
+              "turn": 2,
+              "duration_s": 5.72,
+              "input_tokens": 15599,
+              "output_tokens": 58,
+              "reasoning_tokens": 33
+            },
+            {
+              "turn": 3,
+              "duration_s": 2.33,
+              "input_tokens": 15971,
+              "output_tokens": 70,
+              "reasoning_tokens": 17
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 3,
+            "step_finish": 3,
+            "text": 3,
+            "tool_use": 2,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        },
+        {
+          "scenario": "search",
+          "prompt": "Browse Hackernews, get the only one latest topic",
+          "response_time_s": 13.56,
+          "llm_time_s": 12.35,
+          "agent_turns": 3,
+          "tool_calls": [
+            "webfetch",
+            "webfetch"
+          ],
+          "total_input_tokens": 43575,
+          "total_output_tokens": 182,
+          "total_reasoning_tokens": 148,
+          "per_turn": [
+            {
+              "turn": 1,
+              "duration_s": 2.72,
+              "input_tokens": 10966,
+              "output_tokens": 54,
+              "reasoning_tokens": 46
+            },
+            {
+              "turn": 2,
+              "duration_s": 6.27,
+              "input_tokens": 16082,
+              "output_tokens": 62,
+              "reasoning_tokens": 35
+            },
+            {
+              "turn": 3,
+              "duration_s": 3.36,
+              "input_tokens": 16527,
+              "output_tokens": 66,
+              "reasoning_tokens": 67
+            }
+          ],
+          "errors": [],
+          "exit_code": 0,
+          "events_summary": {
+            "step_start": 3,
+            "step_finish": 3,
+            "text": 3,
+            "tool_use": 2,
+            "reasoning": 0,
+            "error": 0,
+            "other": 0
+          }
+        }
+      ]
+    }
+  }
+}

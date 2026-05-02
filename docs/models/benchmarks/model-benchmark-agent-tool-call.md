@@ -51,6 +51,8 @@ All numbers below are medians; per-model detail sections follow further down.
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | **1.60 - 1.98 s** | 1.60 - 4.27 s | 5.87 s | 
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | **1.60 - 1.98 s** | 1.60 - 4.27 s | 5.87 s |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | **1.54 - 2.53 s** | 1.54 - 2.51 s | 5.48 s 🥈 |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🏆 | **1.51 - 1.53 s** 🏆 | 5.64 s 🥈 |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s 🥈 | 1.42 - 2.70 s | 6.99 s |
@@ -74,7 +76,8 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥈 / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. **Active production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>**6.2× browse, 2.1× search** vs Qwen3.6-27B 6bit on llmster.<br>**14× browse, 11× search** vs vmlx-Osaurus-JANGTQ4. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s** 🥈 / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Active production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Browse leader among uncensored GGUFs (60 ms faster than Gemma 🥇, 90 ms faster than HauhauCS).<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s 🥈 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | **5.11 s** 🏆 / 3.94 s | **6.37 s** 🏆 / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**6.3× browse, 4.0× search** vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
@@ -103,6 +106,8 @@ Two medians reported per scenario:
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | llmster | (built-in) | (built-in) | none — same as HauhauCS/Gemma; LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | llmster | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
 
 ---
 

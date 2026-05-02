@@ -126,12 +126,13 @@ nohup ~/dflash-mlx-env/bin/dflash-serve \
 # parsing built into the MLX runtime — no parser flags needed. First-time setup:
 #   brew install --cask lm-studio
 #   open -a 'LM Studio' && sleep 8 && osascript -e 'quit app "LM Studio"'   # bootstraps ~/.lmstudio/bin/lms
-# HauhauCS custom K_P quants currently mis-resolve through `lms get`; pull the
-# exact GGUF file, import it with a hard link, then load with a stable API id.
-python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive', filename='Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf', local_dir='/Users/chanunc/.cache/hauhau-gguf')"
-~/.lmstudio/bin/lms import -L --user-repo HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive -y ~/.cache/hauhau-gguf/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf
-# Launch sequence (current llmster main, 2026-05-02 — 131K context per HF guidance):
-~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive --gpu max --context-length 131072 --identifier qwen3.6-35b-a3b-uncensored-aggressive-q6kp -y
+# If LM Studio memory guardrail blocks load with "insufficient system resources", temporarily
+# set modelLoadingGuardrails.mode to "off" in ~/.lmstudio/settings.json, then restore after load.
+~/.lmstudio/bin/lms unload --all
+python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF', filename='Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf', local_dir='/Users/chanunc/.cache/prithiv-gguf')"
+~/.lmstudio/bin/lms import -L --user-repo mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF -y ~/.cache/prithiv-gguf/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf
+# Launch sequence (current llmster main, 2026-05-02 — 65K context):
+~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors                          # default port 1234
 
 pkill -f vllm-mlx                                                                # stop vllm-mlx
@@ -193,7 +194,7 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-lm](docs/servers/mlx-lm/summary.md)** | 🟡 Good | Single | OpenAI | Lightweight dev/testing |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant CRACK models — 43.7 tok/s on MiniMax-M2.7 |
-| **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **Current production main:** `HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` `Q6_K_P` GGUF (deployed 2026-05-02, 5/5 tool-call smoke + 10/10 refusal compliance + browse 5.14 s / search 12.01 s on OpenCode — essentially tied with Gemma 4 31B-it on browse, 2nd on search). Bench reference: **3-5× faster than vllm-mlx end-to-end** on Qwen3.6-27B-6bit (47K tok/s prefill @ 32K); the new GGUF Q6 path on this Aggressive variant pushes prefill to **134K tok/s @ 65K**. No JANG/JANGTQ/bailing_hybrid. |
+| **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **Current production main:** `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` `Q6_K` (prithivMLmods abliteration, deployed 2026-05-02, 5/5 tool-call smoke + 10/10 refusal compliance + **browse 5.05 s (uncensored GGUF browse leader)** / search 13.56 s). GGUF Q6_K prefill: 5K → 113K tok/s @ 512 → 32K; TTFT flat sub-300ms. Prior main: HauhauCS Aggressive Q6_K_P (5.14 s browse / 12.01 s search — search-speed leader). No JANG/JANGTQ/bailing_hybrid. |
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to llmster. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 
 All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) mixed-precision models via patches:
@@ -204,7 +205,7 @@ All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) 
 
 Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) (`llmster` and `dflash-mlx` keep install / runtime / limitations in their single `summary.md`)
 
-Current production main: `llmster` serving `HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` `Q6_K_P` on port **1234** (custom GGUF Q6_K_P, MoE 35B / ~3B-active + VL, ~31 GB on disk / 28.5 GiB resident; deployed 2026-05-02). 5/5 API tool-call smoke + 3/3 multi-turn loop. Refusal-rate **10/10 with 0 refused** at `max_tokens=1024`. Throughput 82–61 tok/s gen across 512–65K context with 113K–134K tok/s prefill at long context. **OpenCode browse 5.14 s (essentially tied with Gemma 4 31B-it on llmster, the browse leader at 5.11 s) / search 12.01 s (2nd behind Gemma's 6.37 s)** — but 14× faster than the prior vmlx-Osaurus production main on browse and 6× the prior fastest llmster non-Gemma entry ([raw](docs/models/benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/), [bench writeup](docs/models/uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md)). Aggressive is the fastest **uncensored / GGUF** option in the stack; Gemma still wins the dense non-thinking text-only path. Previous `vmlx` primary `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` and Balanced sibling on llmster are stopped but documented in [`docs/current.md`](docs/current.md) for restart.
+Current production main: `llmster` serving `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` `Q6_K` (prithivMLmods abliteration) on port **1234** (GGUF Q6_K, MoE 35B / ~3B-active + VL, 28.51 GB on disk / 26.56 GiB resident; deployed 2026-05-02). 5/5 API tool-call smoke + 3/3 multi-turn loop. Refusal-rate **10/10 with 0 refused** at `max_tokens=1024`. Throughput 83.6–70.6 tok/s gen across 512–32K context, prefill 5K–114K tok/s (TTFT sub-300ms through 32K). **OpenCode browse 5.05 s (uncensored GGUF browse leader — 60 ms faster than HauhauCS 5.14 s and 90 ms faster than Gemma 5.11 s was prior) / search 13.56 s** (+1.55 s vs HauhauCS 12.01 s search leader). Prior main (HauhauCS Aggressive Q6_K_P — search-speed leader) stopped but documented in [`docs/current.md`](docs/current.md) for restart ([raw](docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/), [bench writeup](docs/models/uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)).
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
@@ -230,7 +231,8 @@ All models fit in **96GB unified memory**.
 | [Qwen3.6-35B-A3B 4-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
 | [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
 | [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) | Dense 27B + VL | 32 | 262K (1M YaRN) | Prior llmster GGUF sidecar (superseded 2026-05-02) |
-| [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) | Hybrid MoE 35B/3B + VL | 31 | 262K (1M YaRN) | **Active llmster main + uncensored speed leader** (browse 5.14 s, search 12.01 s — close behind Gemma on browse, 2nd on search) |
+| [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) | Hybrid MoE 35B/3B + VL | 31 | 262K (1M YaRN) | Prior llmster main (superseded 2026-05-02) — uncensored search-speed leader (12.01 s) |
+| [**prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K**](docs/models/per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) | Hybrid MoE 35B/3B + VL | 28.5 | 65K | **Active llmster main** — uncensored GGUF browse leader (browse 5.05 s, search 13.56 s) |
 | [Nemotron 3 Super 120B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
 | [Nemotron 3 Nano 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |

@@ -64,6 +64,7 @@ All numbers below are medians; per-model detail sections follow further down.
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s 🥈 | **4.74 s** 🏆 |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
@@ -81,6 +82,7 @@ Two medians reported per scenario:
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s 🥈 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | **5.11 s** 🏆 / 3.94 s | **6.37 s** 🏆 / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**6.3× browse, 4.0× search** vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>**6.6× slower browse** vs standard Gemma 4 31B-it (5.11 s 🏆), **1.8× slower** vs DavidAU 40B (18.73 s).<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost.<br>Slower than Qwen 35B-A3Bs, no thinking overhead. |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |

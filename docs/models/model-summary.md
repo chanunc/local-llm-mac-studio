@@ -6,7 +6,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
-- [Gemma 4 Family](#gemma-4-family) — 2 variants: 26B-A4B (4-bit, MoE multimodal) and 31B-it (6-bit, dense text-only, llmster). Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
+- [Gemma 4 Family](#gemma-4-family) — 3 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, llmster), **DavidAU Heretic 31B Q6_k GGUF (uncensored, benchmarked 2026-05-03, 7/10 mlabonne)**. Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
 - [Qwen3-Coder Family (MLX 6-bit + 4-bit)](#qwen3-coder-family-mlx-6-bit--4-bit) — 2 variants: Coder-Next 6-bit (daily driver), Coder-30B-A3B 4-bit. Detail at [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md)
 - [Qwen3.5 Family (MoE + dense distilled + JANG)](#qwen35-family-moe--dense-distilled--jang) — 4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K. Detail at [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
@@ -302,12 +302,13 @@ Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`), pruned by `jedisct1` to keep only the 
 
 ## Gemma 4 Family
 
-Two Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context) and the dense **31B-it** instruction-tuned text-only release (64K context, llmster-deployed). Per-variant deployment details, server configs, benchmarks, and caveats live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**.
+Three Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context), the dense **31B-it** instruction-tuned text-only release (64K context, llmster-deployed), and the **DavidAU HERETIC 31B** uncensored fine-tune (Q6_k GGUF, llmster). Per-variant deployment details, server configs, benchmarks, and caveats for the censored variants live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**. Uncensored benchmark data lives in the submodule: [`uncen-model/gemma4-31b-davidau-heretic-benchmark.md`](uncen-model/gemma4-31b-davidau-heretic-benchmark.md).
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
 | Gemma 4 31B-it (6-bit) | Dense 31B text-only | 29 GB | 6-bit MLX | llmster | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
+| **DavidAU Gemma 4 31B Heretic Q6_k** | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | llmster | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
 
 ---
 

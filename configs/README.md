@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-05-03 (llmster DavidAU Qwen3.6-40B Heretic Q6_K IMatrix deploy-and-benchmark — new active main)**
+**Last updated: 2026-05-03 (llmster DavidAU Gemma 4 31B Heretic Q6_k deploy-and-benchmark — DavidAU 40B remains active main)**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 

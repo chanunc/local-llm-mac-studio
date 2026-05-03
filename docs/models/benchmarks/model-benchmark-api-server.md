@@ -670,6 +670,53 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ---
 
+## DavidAU Gemma 4 31B Heretic Q6_k (GGUF, on llmster)
+
+Model: `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` (`gemma-4-31B-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Q6_k.gguf`) — Thinking variant, DavidAU HERETIC + Mystery Fine Tune on Gemma 4 31B dense base. 25.20 GB on disk, 23.47 GiB resident at 131072 context.
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](gemma4-31b-davidau-heretic/api-server-llmster.json).
+
+**Server:** llmster, GGUF runtime. Loaded with `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier 'gemma4-31b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Gemma 4 tool-calls natively.
+
+### Generation Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **24.2** |
+| 4K | 23.0 |
+| 8K | 23.2 |
+| 32K | 20.9 |
+| 64K | 21.0 |
+
+### Prefill Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 1,132 |
+| 4K | 12,658 |
+| 8K | 20,175 |
+| 32K | 54,332 |
+| 64K | 53,531 |
+
+### Time to First Token (seconds)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 0.48 |
+| 4K | 0.33 |
+| 8K | 0.41 |
+| 32K | 0.60 |
+| 64K | 1.22 |
+
+**Notes:**
+- **Prefill superlinear scaling:** 1,132 tok/s @ 512 → 54,332 tok/s @ 32K — a 48× improvement for 64× more context. Flash attention parallelism peaks at mid-to-long contexts on M3 Ultra.
+- **Gen speed stable:** 20.9–24.2 tok/s across contexts — significantly faster than DavidAU 40B (8.8–9.7 tok/s) and ~10% faster than the standard Gemma 4 31B-it MLX 6-bit (21.8–18.3 tok/s). GGUF Q6_k on llama.cpp backend outpaces MLX safetensors on short contexts.
+- **Thinking overhead:** The 50-token bench measures raw decode speed. In practice, the Thinking variant spends its token budget on `<|channel>thought` content at the same speed — agent turns effectively run at ~4–5 tok/s for visible output.
+- **GGUF vs MLX runtime:** numbers not directly comparable to MLX-based servers.
+
+---
+
 ## Ling-2.6-flash mlx-6bit (104B/7B-active, bailing_hybrid)
 
 Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.

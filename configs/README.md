@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-05-02 (llmster prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K deploy-and-benchmark — new active main)**
+**Last updated: 2026-05-03 (llmster DavidAU Qwen3.6-40B Heretic Q6_K IMatrix deploy-and-benchmark — new active main)**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -14,10 +14,10 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding; currently stopped | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard; currently stopped | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python; **currently stopped** (was last main 2026-05-01 with Osaurus JANGTQ4) | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
-| **llmster** | **1234** | **Current main (2026-05-02)** / **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; **3-5× faster agent loops** than vllm-mlx on the prior 27B-6bit precedent | prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K (26.56 GiB) | Not needed |
+| **llmster** | **1234** | **Current main (2026-05-03)** / **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for dense 40B + 131K load | DavidAU Qwen3.6-40B Heretic Uncensored Thinking Q6_K IMatrix (30.17 GiB) | Not needed |
 | **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance; **currently stopped** | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **llmster + prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K** (deployed 2026-05-02 after Event-4 hygiene); restart the HauhauCS Aggressive Q6_K_P or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **llmster + DavidAU Qwen3.6-40B Heretic Q6_K IMatrix** (deployed 2026-05-03 after Event-4 hygiene); restart prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
 
 ### Why vllm-mlx is Primary
 

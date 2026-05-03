@@ -16,6 +16,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 
 | Plan | Topic |
 |:--|:--|
+| [`active/plan-bench-eval-local.md`](active/plan-bench-eval-local.md) | MMLU-Pro + TruthfulQA-gen local benchmark driver (`bench_eval_local.py`) |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |
 | [`active/plan-llmster-uncen-benchmark.md`](active/plan-llmster-uncen-benchmark.md) | llmster uncensored-model benchmark slate |
 | [`active/plan-lobehub-macstudio-setup.md`](active/plan-lobehub-macstudio-setup.md) | LobeHub config against Mac Studio servers |

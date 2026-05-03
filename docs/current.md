@@ -2,17 +2,17 @@
 
 Short source of truth for the Mac Studio stack's live operating state. Detailed runbooks live under [`docs/servers/`](servers/), model details under [`docs/models/`](models/), and client templates under [`configs/clients/`](../configs/clients/).
 
-Last verified: 2026-05-02
+Last verified: 2026-05-03
 
 ## Production
 
 | Field | Value |
 |:--|:--|
 | Server | `llmster` / LM Studio headless |
-| Model | `qwen3.6-35b-a3b-prithiv-aggressive-q6k` from `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` (prithivMLmods abliteration) |
+| Model | `qwen36-40b-davidau-heretic-q6k` from `DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF` (full abliteration + Deckard/PDK) |
 | Port | `1234` |
 | Auth | None |
-| Client template set | [`configs/clients/llmster/`](../configs/clients/llmster/) |
+| Client template set | [`docs/models/uncen-model/client-configs/llmster/`](models/uncen-model/client-configs/llmster/) |
 | Runbook | [`docs/servers/llmster/summary.md`](servers/llmster/summary.md) |
 
 Launch shape (after Event-4 hygiene):
@@ -21,32 +21,40 @@ Launch shape (after Event-4 hygiene):
 # Unload any previously loaded models first
 ssh macstudio "~/.lmstudio/bin/lms unload --all"
 
+# IMPORTANT: LM Studio guardrail blocks dense 40B + 131K context load.
+# Temporarily disable before loading, restore after.
+ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
+  s=json.load(open(f'{h}/.lmstudio/settings.json')); \
+  s['modelLoadingGuardrails']['mode']='off'; \
+  json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
+
 ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
-  hf_hub_download(repo_id='mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF', \
-  filename='Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf', \
-  local_dir='/Users/chanunc/.cache/prithiv-gguf')\""
+  hf_hub_download(repo_id='DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF', \
+  filename='Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf', \
+  local_dir='/Users/chanunc/.cache/davidau-gguf')\""
 
 ssh macstudio "~/.lmstudio/bin/lms import -L \
-  --user-repo mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF -y \
-  ~/.cache/prithiv-gguf/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf"
+  --user-repo DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF -y \
+  ~/.cache/davidau-gguf/Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf"
 
-# NOTE: LM Studio guardrail may block with 'insufficient system resources' (mode: "high" counts
-# only free pages ~24 GB, ignoring ~60 GB inactive). Fix:
-#   python3 -c "import json; s=json.load(open(f'{home}/.lmstudio/settings.json')); \
-#     s['modelLoadingGuardrails']['mode']='off'; json.dump(s, open(f'{home}/.lmstudio/settings.json','w'), indent=2)"
-# Restore 'mode' to 'high' after load.
-ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-35b-a3b-uncensored-aggressive' \
-  --gpu max --context-length 65536 \
-  --identifier 'qwen3.6-35b-a3b-prithiv-aggressive-q6k' -y"
+ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' \
+  --gpu max --context-length 131072 \
+  --identifier 'qwen36-40b-davidau-heretic-q6k' -y"
+
+# Restore guardrail after load
+ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
+  s=json.load(open(f'{h}/.lmstudio/settings.json')); \
+  s['modelLoadingGuardrails']['mode']='high'; \
+  json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
 
 ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 ```
 
 Notes:
-- prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive (mradermacher Q6_K GGUF, 28.51 GB on disk, 26.56 GiB resident at 65 K context) deployed 2026-05-02, replacing HauhauCS Aggressive as the active Mac Studio LLM process.
+- DavidAU Qwen3.6-40B Heretic Uncensored Thinking Q6_K IMatrix (30.17 GiB on disk) deployed 2026-05-03, replacing prithivMLmods Aggressive Q6_K as the active Mac Studio LLM process.
 - LM Studio handles Qwen3 chat-template tool-calls + `<think>` natively — **no parser flags required**.
-- Current benchmarks: API tool harness 5/5 single-call + 3/3 multi-turn; refusal rate 10/10 complied with 0 refused (`max_tokens=1024`); throughput 83.6 tok/s @ 512, 70.6 tok/s @ 32 K, 113 K tok/s prefill; **OpenCode browse 5.05 s** (uncensored GGUF browse leader — 60 ms faster than Gemma 5.11 s and 90 ms faster than HauhauCS 5.14 s) **/ search 13.56 s** (+1.55 s vs HauhauCS 12.01 s; 2nd behind HauhauCS among uncensored GGUFs). Raw data: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/`](models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/).
-- Key deployment gotcha: LM Studio guardrail `mode: "high"` blocked initial load (counts free pages ~24 GB only, ignores 60+ GB inactive). Temporarily set to `"off"` to load; restored to `"high"` after. See benchmark doc for recipe.
+- Current benchmarks: API tool harness 5/5 single-call + 3/3 multi-turn (30.31s); refusal rate 9/10 (1 soft-refusal P2, 1 timeout P7), avg 70.56s; throughput 9.7 tok/s @ 512, 8.8 tok/s @ 32K, 32K prefill @ 32K; **OpenCode browse 18.73 s / search 71.02 s** (dense 40B — slower than MoE siblings as expected). Raw data: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/`](models/benchmarks/qwen36-40b-davidau-heretic/).
+- Key deployment gotcha: LM Studio guardrail `mode: "high"` blocks dense 40B + 131K context load (counts free pages ~24 GB only, ignores 60+ GB inactive). Must temporarily set to `"off"`, load, then restore to `"high"`.
 - vmlx (port 8000) and dflash-mlx (port 8098) remain stopped per Event-4 hygiene.
 
 ## Stopped / Documented Fallbacks
@@ -55,7 +63,8 @@ These were live before the 2026-05-02 deploy-and-benchmark run and remain **off*
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
-| Prior llmster main (HauhauCS Aggressive, search-faster) | `llmster` | `qwen3.6-35b-a3b-uncensored-aggressive-q6kp` from `HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` | On disk — reload via `lms load qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive --identifier qwen3.6-35b-a3b-uncensored-aggressive-q6kp --gpu max --context-length 131072 -y` |
+| Prior llmster main (prithivMLmods Aggressive, browse leader) | `llmster` | `qwen3.6-35b-a3b-prithiv-aggressive-q6k` from `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` | On disk — reload via `lms load qwen3.6-35b-a3b-uncensored-aggressive --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --gpu max --context-length 65536 -y` |
+| Prior llmster main (HauhauCS Aggressive, search leader) | `llmster` | `qwen3.6-35b-a3b-uncensored-aggressive-q6kp` from `HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` | On disk — reload via `lms load qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive --identifier qwen3.6-35b-a3b-uncensored-aggressive-q6kp --gpu max --context-length 131072 -y` |
 | Prior production main (JANGTQ4 reference) | `vmlx` | `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` | Stopped 2026-05-02 |
 | Prior llmster sidecar (Balanced GGUF, dense + VL) | `llmster` (alt slot) | `qwen3.6-27b-uncensored-balanced-q8kp` from `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` | Cataloged on disk, not loaded — reload via `lms load qwen3.6-27b-uncensored-hauhaucs-balanced --identifier qwen3.6-27b-uncensored-balanced-q8kp -y` |
 | DFlash speculative decoding sidecar | `dflash-mlx` | `mlx-community/Qwen3.6-35B-A3B-4bit` + `z-lab/Qwen3.6-35B-A3B-DFlash` | Stopped 2026-05-02 |

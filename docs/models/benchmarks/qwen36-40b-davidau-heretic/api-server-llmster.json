@@ -1,0 +1,61 @@
+{
+  "model": "qwen36-40b-davidau-heretic-q6k",
+  "base_url": "http://192.168.31.4:1234/v1",
+  "server": "llmster",
+  "date": "2026-05-03",
+  "note": "40B dense model (not MoE) — gen speed is ~8-10 tok/s vs 70-83 tok/s for 35B-A3B MoE; all 40B params active per decode step. Warmup TTFT scales with context: 512→4.49s, 4K→22.53s, 8K→44.92s, 32K→195.92s (warm cache). Bench stopped after 32K — 65K/131K warmup would take 6-13 min each.",
+  "results": [
+    {
+      "context": 512,
+      "prompt_tokens": 536,
+      "warmup_ttft_s": 4.49,
+      "warmup_total_s": 9.64,
+      "runs": [
+        {"ttft_s": 0.78, "gen_tok_s": 9.7, "prefill_tok_s": 686, "tokens": 49},
+        {"ttft_s": 0.80, "gen_tok_s": 9.7, "prefill_tok_s": 670, "tokens": 49}
+      ],
+      "median_gen_tok_s": 9.7,
+      "median_prefill_tok_s": 678,
+      "median_ttft_s": 0.79
+    },
+    {
+      "context": 4096,
+      "prompt_tokens": 4121,
+      "warmup_ttft_s": 22.53,
+      "warmup_total_s": 27.73,
+      "runs": [
+        {"ttft_s": 0.80, "gen_tok_s": 9.6, "prefill_tok_s": 5181, "tokens": 49},
+        {"ttft_s": 0.79, "gen_tok_s": 9.6, "prefill_tok_s": 5238, "tokens": 49}
+      ],
+      "median_gen_tok_s": 9.6,
+      "median_prefill_tok_s": 5210,
+      "median_ttft_s": 0.80
+    },
+    {
+      "context": 8192,
+      "prompt_tokens": 8216,
+      "warmup_ttft_s": 44.92,
+      "warmup_total_s": 50.16,
+      "runs": [
+        {"ttft_s": 0.82, "gen_tok_s": 9.5, "prefill_tok_s": 10046, "tokens": 49},
+        {"ttft_s": 0.81, "gen_tok_s": 9.5, "prefill_tok_s": 10150, "tokens": 49}
+      ],
+      "median_gen_tok_s": 9.5,
+      "median_prefill_tok_s": 10098,
+      "median_ttft_s": 0.82
+    },
+    {
+      "context": 32768,
+      "prompt_tokens": 32792,
+      "warmup_ttft_s": 195.92,
+      "warmup_total_s": 201.56,
+      "runs": [
+        {"ttft_s": 1.01, "gen_tok_s": 8.8, "prefill_tok_s": 32326, "tokens": 49},
+        {"ttft_s": 1.01, "gen_tok_s": 8.8, "prefill_tok_s": 32561, "tokens": 49}
+      ],
+      "median_gen_tok_s": 8.8,
+      "median_prefill_tok_s": 32444,
+      "median_ttft_s": 1.01
+    }
+  ]
+}

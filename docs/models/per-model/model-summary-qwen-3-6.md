@@ -397,7 +397,7 @@ This is **essentially tied with Gemma 4 31B-it** on browse (Gemma 5.11 s 🏆, A
 
 ## prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K
 
-prithivMLmods abliteration of the Qwen3.6-35B-A3B base, quantized by mradermacher to plain GGUF `Q6_K`. Active llmster main since 2026-05-02. Lighter on disk (28.51 GB vs 31 GB for HauhauCS `Q6_K_P`) and resident memory (26.56 GiB vs 28.5 GiB for HauhauCS at 131K context), while delivering faster agent-browse throughput and matching refusal compliance.
+prithivMLmods abliteration of the Qwen3.6-35B-A3B base, quantized by mradermacher to plain GGUF `Q6_K`. Prior active llmster main (2026-05-02–2026-05-03, superseded by DavidAU Heretic 40B — next section). Lighter on disk (28.51 GB vs 31 GB for HauhauCS `Q6_K_P`) and resident memory (26.56 GiB vs 28.5 GiB for HauhauCS at 131K context), while delivering faster agent-browse throughput and matching refusal compliance.
 
 | Spec | Value |
 |:-----|:------|
@@ -490,6 +490,123 @@ Raw: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-server-llmst
 - **65K context probe headroom** — for a true 65K throughput reading, load with `--context-length 70000` (adds ~600 MB resident memory vs the 65536 setting).
 - **Useful-compliance partial at 1024 tokens** — 1/10 prompts produced visible content; 9/10 stayed in `<think>`. A 4K-token re-run would lift the verified count.
 - **Vision architecture present but not tested** — `qwen35moe` arch has ViT definitions; mmproj GGUF not available in the mradermacher repo, so vision is text-only here.
+- **GGUF on llmster only** — vllm-mlx, mlx-openai-server, oMLX, vmlx, dflash-mlx reject this format.
+- **Uncensored posture is deliberate** — keep scoped to local research / eval, not shared endpoints.
+- **Superseded as active llmster main on 2026-05-03** by DavidAU Heretic 40B (see next section). On disk and reloadable via `lms load qwen3.6-35b-a3b-uncensored-aggressive --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --gpu max --context-length 65536 -y`.
+
+---
+
+## DavidAU Qwen3.6-40B Heretic Uncensored Thinking Q6_K IMatrix
+
+DavidAU "Heretic" uncensoring recipe (full abliteration + Deckard/PDK post-training multi-merge) applied to the **Qwen3.6-40B dense base**, quantized to GGUF `Q6_K` with IMatrix importance-matrix weighting (~6.56 BPW). Active llmster main since 2026-05-03. First dense-40B model in this stack — all 40B params active per decode step (no MoE sparsity), yielding 8.8–9.7 tok/s gen vs 70–83 tok/s for MoE 35B/3B siblings. Deckard/PDK training produces visible `content` on complied prompts (unlike prior MoE models that spend budget inside `<think>`), making compliance readily verifiable at 1024 tokens.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-40B](https://huggingface.co/Qwen/Qwen3.6-40B) |
+| Quant | [DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF](https://huggingface.co/DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF) |
+| File | `Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf` |
+| Uncensoring | DavidAU Heretic recipe — full abliteration + Deckard/PDK post-training multi-merge |
+| Format | GGUF `Q6_K` IMatrix (~6.56 BPW, importance-matrix weighted) |
+| Architecture | `qwen3` — 64 layers, dense transformer (no MoE gate, no hybrid linear attn) |
+| Parameters | 40B total, **40B active per token** (no sparsity) |
+| Density | Dense (all params active — not a MoE model) |
+| Quantization | GGUF `Q6_K` with IMatrix calibration |
+| Specialties | Thinking, tool use, refusal-removed security/ops prompts, GGUF-compatible deployment |
+| On-disk size | 30.17 GiB |
+| Resident on load | ~30 GiB at 131K context |
+| Context Size | 262K native — loaded at 131K here (Qwen3-40B card recommends ≥128K to preserve thinking chain quality) |
+| License | Apache-2.0 |
+| Key Features | Visible `content` on complied prompts (Deckard/PDK effect); 9/10 mlabonne compliance at 1024 tokens; LM Studio guardrail override required for dense 40B + 131K |
+
+**Current server:** `llmster` on port `1234` under the pinned identifier `qwen36-40b-davidau-heretic-q6k`.
+
+**Deployment path:**
+
+```bash
+# Pre-bench hygiene — stop everything else first (Event 4)
+ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; \
+  pkill -f dflash-serve; pkill -f 'lms server'; \
+  /opt/homebrew/bin/brew services stop omlx; sleep 3"
+
+# Unload any previously loaded models
+ssh macstudio "~/.lmstudio/bin/lms unload --all"
+
+# IMPORTANT: LM Studio guardrail blocks dense 40B + 131K context load.
+# Temporarily disable before loading, restore after.
+ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
+  s=json.load(open(f'{h}/.lmstudio/settings.json')); \
+  s['modelLoadingGuardrails']['mode']='off'; \
+  json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
+
+# Hub download to staging dir
+ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
+  hf_hub_download(repo_id='DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF', \
+  filename='Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf', \
+  local_dir='/Users/chanunc/.cache/davidau-gguf')\""
+
+# Hard-link import (avoids 30 GB duplicate into ~/.lmstudio/models/)
+ssh macstudio "~/.lmstudio/bin/lms import -L \
+  --user-repo DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF -y \
+  ~/.cache/davidau-gguf/Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf"
+
+# Load with stable identifier
+ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' \
+  --gpu max --context-length 131072 \
+  --identifier 'qwen36-40b-davidau-heretic-q6k' -y"
+
+# Restore guardrail after load
+ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
+  s=json.load(open(f'{h}/.lmstudio/settings.json')); \
+  s['modelLoadingGuardrails']['mode']='high'; \
+  json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
+
+# Start server (LAN-bound, CORS)
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+```
+
+No parser flags required — LM Studio handles Qwen3 chat template + `<think>` natively.
+
+**Deployment gotchas:**
+
+- **LM Studio memory guardrail** — `modelLoadingGuardrails.mode: "high"` counts only ~24 GB free pages and ignores 60+ GB inactive/reclaimable, blocking load with "insufficient system resources". Dense 40B + 131K context triggers this consistently. Must temporarily set `mode` to `"off"`, load, then restore to `"high"`.
+- **Dense 40B only on llmster** — vllm-mlx, mlx-openai-server, oMLX, vmlx, dflash-mlx all require MLX safetensors or JANG format and reject GGUF.
+- **Gen speed vs MoE siblings** — 8.8–9.7 tok/s is expected for a dense 40B; the prior MoE siblings (prithivMLmods, HauhauCS) ran 70–83 tok/s on 3B-active paths.
+
+**Tool-calling smoke test** (2026-05-03, `bench_api_tool_call.py`):
+- Single-call pass rate **5/5** (file-read 7.47 s, command 6.39 s, search+read 17.63 s, list/read/write 7.74 s, agentic-reasoning 15.90 s)
+- Multi-turn 3-step loop: **3/3 turns** completed cleanly (30.31 s total)
+- Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/api-tool-test.json`](../benchmarks/qwen36-40b-davidau-heretic/api-tool-test.json)
+
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-03, `temperature=1.0`, `max_tokens=1024`, no system prompt: **9/10 keyword-match** (1 soft-refusal at P2, 1 timeout at P7 counted as complied; avg 70.56 s/prompt). All 8 non-refused/non-timeout prompts produced visible `content` — a consistent Deckard/PDK training signature. Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/refusal-rate-llmster.json`](../benchmarks/qwen36-40b-davidau-heretic/refusal-rate-llmster.json).
+
+**API server perf bench** (`bench_api_server.py`, streaming SSE, 2026-05-03, median of 2 warm runs):
+
+| Context | Gen tok/s | Prefill tok/s | TTFT (warm) |
+|--------:|----------:|---------------:|------------:|
+| 512 | 9.7 | 678 | 0.79 s |
+| 4 K | 9.6 | 5,210 | 0.80 s |
+| 8 K | 9.5 | 10,098 | 0.82 s |
+| 32 K | 8.8 | 32,444 | 1.01 s |
+
+Dense 40B + GGUF: all 40B params active per decode step → ~11× slower gen vs MoE 35B/3B siblings (9.7 vs 83 tok/s at 512 ctx); prefill is also significantly slower (678 vs 5,350 tok/s at 512). TTFT flat sub-1s through 32K (vs sub-300ms for MoE). Use MoE siblings when raw throughput or multi-turn context latency matters; use DavidAU for tasks where quality, thinking depth, and verified compliance matter more.
+
+Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/api-server-llmster.json`](../benchmarks/qwen36-40b-davidau-heretic/api-server-llmster.json).
+
+**Agent end-to-end bench** (`bench_agent_tool_call.py`, OpenCode 1.14.x, 1 warmup + 3 measured, 2026-05-03):
+
+| Scenario | Wall (median) | LLM time | Turns | p5 – p95 |
+|----------|---------------:|---------:|------:|---------:|
+| `Browse www.example.com` | **18.73 s** | 17.47 s | 2 | 17.18 – 21.37 s |
+| `Browse Hackernews, get the only one latest topic` | **71.02 s** | 69.86 s | 3 | 63.88 – 76.77 s |
+
+Dense 40B agent times are substantially slower than MoE siblings: browse 18.73 s (vs 5.05 s prithivMLmods, 5.14 s HauhauCS) and search 71.02 s (vs 13.56 s prithivMLmods, 12.01 s HauhauCS). Expected for a dense 40B at 8.8–9.7 tok/s. Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/agent-bench-llmster.json`](../benchmarks/qwen36-40b-davidau-heretic/agent-bench-llmster.json).
+
+**Caveats:**
+- **Dense 40B gen speed** — 8.8–9.7 tok/s expected; 3–4 s for short responses, 60–90 s for multi-turn agent loops. If throughput is the priority, reload prithivMLmods or HauhauCS Aggressive.
+- **LM Studio guardrail override required** — must temporarily disable `mode: "high"` before each initial load (dense 40B + 131K context consistently triggers it). Documented in [`docs/current.md`](../../docs/current.md) launch shape.
+- **P2 soft-refusal** — government DB hacking prompt; model committed to defensive security framing from the start. 9/10 overall compliance is strong for a dense 40B with Deckard/PDK.
+- **P7 timeout** — timed out at exactly 300 s (classified as complied by harness methodology; no refusal keyword in partial output).
+- **P8 near-timeout** — 293.77 s; model spent ~270 s in `<think>` before producing the `content` answer.
 - **GGUF on llmster only** — vllm-mlx, mlx-openai-server, oMLX, vmlx, dflash-mlx reject this format.
 - **Uncensored posture is deliberate** — keep scoped to local research / eval, not shared endpoints.
 

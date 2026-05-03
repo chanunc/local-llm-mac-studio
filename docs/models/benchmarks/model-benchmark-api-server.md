@@ -623,6 +623,53 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 
 ---
 
+## DavidAU Qwen3.6-40B Heretic Q6_K IMatrix (GGUF, on llmster)
+
+Model: `DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF` (`Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf`) — DavidAU Heretic recipe (full abliteration + Deckard/PDK), IMatrix-weighted Q6_K. 30.17 GiB on disk, ~30 GiB resident at 131072 context.
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](qwen36-40b-davidau-heretic/api-server-llmster.json).
+
+**Server:** llmster, GGUF runtime. Loaded with `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier 'qwen36-40b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively.
+
+**Deployment gotcha:** LM Studio memory guardrail (`modelLoadingGuardrails.mode: "high"`) counts only ~24 GB free pages, ignoring 60+ GB inactive/reclaimable — consistently blocks dense 40B + 131K load. Must temporarily set `mode` to `"off"`, load, then restore to `"high"`. See [`docs/current.md`](../../current.md) for the full toggle recipe.
+
+### Generation Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | **9.7** |
+| 4K | 9.6 |
+| 8K | 9.5 |
+| 32K | 8.8 |
+
+### Prefill Speed (tok/s)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 678 |
+| 4K | 5,210 |
+| 8K | 10,098 |
+| 32K | 32,444 |
+
+### Time to First Token (seconds)
+
+| Context | llmster |
+|:--------|:-------:|
+| 512 | 0.79 |
+| 4K | 0.80 |
+| 8K | 0.82 |
+| 32K | 1.01 |
+
+**Notes:**
+- **Dense 40B penalty:** gen speed is 8.8–9.7 tok/s — all 40B params active per decode step (no MoE sparsity). Compare to prithivMLmods MoE-35B/3B-active (83.6–70.6 tok/s) or HauhauCS (~90–72 tok/s). Dense 40B is ~9× slower on decode.
+- **Prefill also significantly slower:** 678–32K tok/s at 512–32K context, vs prithivMLmods 5,350–113,519 tok/s. The GGUF kernel loses the MoE sparsity advantage on prefill too.
+- **TTFT flat but slower:** 0.79–1.01 s through 32K (vs sub-300ms for MoE siblings). Still sub-1 s through 8K.
+- **65K probe not run** — bench script probes at 65K only when `--context-length ≥ 65536`; model was loaded at exactly 131072, but the 65K probe would require 65K fill tokens which conflicts with bench warmup logic at that size. 32K is the largest clean probe.
+- **GGUF vs MLX runtime:** same runtime distinction as prithivMLmods — numbers not directly comparable to MLX-based servers.
+
+---
+
 ## Ling-2.6-flash mlx-6bit (104B/7B-active, bailing_hybrid)
 
 Model: `mlx-community/Ling-2.6-flash-mlx-6bit` (`BailingMoeV2_5ForCausalLM`, `model_type=bailing_hybrid`) — 256 experts, 8 active per token, 32 layers (mixed MLA + Lightning-style linear-attention recurrence, MLA on 4/15/23/31), `max_position_embeddings=131,072`, sigmoid noaux_tc MoE with group-limited top-8. 6-bit MLX uniform quant (~80 GB on disk). No vision, no `<think>` reasoning emitted.

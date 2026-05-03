@@ -51,7 +51,7 @@ All numbers below are medians; per-model detail sections follow further down.
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | **1.60 - 1.98 s** | 1.60 - 4.27 s | 5.87 s | 
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | **1.60 - 1.98 s** | 1.60 - 4.27 s | 5.87 s |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | **1.54 - 2.53 s** | 1.54 - 2.51 s | 5.48 s 🥈 |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🏆 | **1.51 - 1.53 s** 🏆 | 5.64 s 🥈 |
@@ -76,7 +76,8 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s** 🥈 / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Active production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Browse leader among uncensored GGUFs (60 ms faster than Gemma 🥇, 90 ms faster than HauhauCS).<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. **Active production main (2026-05-03)**. Dense 40B all-active, thinking-on (Deckard/PDK).<br>Slowest agent times in stack (dense 40B at 8.8–9.7 tok/s); quality + compliance tradeoff. See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s** 🥈 / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Prior production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Browse leader among uncensored GGUFs (60 ms faster than Gemma 🥇, 90 ms faster than HauhauCS).<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s 🥈 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | **5.11 s** 🏆 / 3.94 s | **6.37 s** 🏆 / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**6.3× browse, 4.0× search** vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
@@ -106,6 +107,7 @@ Two medians reported per scenario:
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | llmster | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | llmster | (built-in) | (built-in) | none — same as HauhauCS/Gemma; LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | llmster | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
 

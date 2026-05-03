@@ -1,0 +1,105 @@
+{
+  "model": "qwen36-40b-davidau-heretic-q6k",
+  "base_url": "http://192.168.31.4:1234/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 7.19,
+      "output_tokens": 59,
+      "rate_tps": 8.2,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 6.39,
+      "output_tokens": 56,
+      "rate_tps": 8.8,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 10.82,
+      "output_tokens": 120,
+      "rate_tps": 11.1,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web"
+      ],
+      "tool_args": [
+        "{\"query\":\"openai api docs\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 8.56,
+      "output_tokens": 85,
+      "rate_tps": 9.9,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 17.63,
+      "output_tokens": 226,
+      "rate_tps": 12.8,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"find /tmp -maxdepth 1 -type f -exec ls -lhS {} \\\\; | head -n 1\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 8.33,
+      "output_tokens": 79,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 10.77,
+      "output_tokens": 154,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 11.21,
+      "output_tokens": 163,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 30.31
+}

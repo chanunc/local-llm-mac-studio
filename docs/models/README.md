@@ -41,6 +41,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 |:--|:--|
 | [`how-to/model-conversion-gguf-mlx.md`](how-to/model-conversion-gguf-mlx.md) | GGUF → MLX safetensors conversion. |
 | [`how-to/model-qwen-null-think-template-test.md`](how-to/model-qwen-null-think-template-test.md) | Qwen null-think chat template test. |
+| [`how-to/eval-benchmark-local-runners.md`](how-to/eval-benchmark-local-runners.md) | Run MMLU / MMLU-Pro / TruthfulQA / HarmBench / refusal-rate locally against llmster / vmlx / vllm-mlx OpenAI endpoints. |
 
 ## Conventions
 

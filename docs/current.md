@@ -9,7 +9,7 @@ Last verified: 2026-05-03
 | Field | Value |
 |:--|:--|
 | Server | `llmster` / LM Studio headless |
-| Model | `qwen36-40b-davidau-heretic-q6k` from `DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF` (full abliteration + Deckard/PDK) |
+| Model | `gemma4-26b-a4b-trevorjs-uncen-q8` from `TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF` (EGA abliteration on Gemma 4 26B MoE) |
 | Port | `1234` |
 | Auth | None |
 | Client template set | [`docs/models/uncen-model/client-configs/llmster/`](models/uncen-model/client-configs/llmster/) |
@@ -21,25 +21,26 @@ Launch shape (after Event-4 hygiene):
 # Unload any previously loaded models first
 ssh macstudio "~/.lmstudio/bin/lms unload --all"
 
-# IMPORTANT: LM Studio guardrail blocks dense 40B + 131K context load.
-# Temporarily disable before loading, restore after.
+# Download (26.9 GB, only needed once — already in ~/.cache/gguf-staging after 2026-05-03 deploy)
+ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
+  hf_hub_download(repo_id='TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF', \
+  filename='gemma-4-26B-A4B-it-uncensored-Q8_0.gguf', \
+  local_dir='/Users/chanunc/.cache/gguf-staging')\""
+
+# Hard-link import (already imported — lms import is idempotent if the file exists in models/)
+ssh macstudio "~/.lmstudio/bin/lms import -L \
+  --user-repo TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF -y \
+  ~/.cache/gguf-staging/gemma-4-26B-A4B-it-uncensored-Q8_0.gguf"
+
+# Disable guardrail before loading (LM Studio free-page heuristic blocks large loads)
 ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
   s=json.load(open(f'{h}/.lmstudio/settings.json')); \
   s['modelLoadingGuardrails']['mode']='off'; \
   json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
 
-ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
-  hf_hub_download(repo_id='DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF', \
-  filename='Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf', \
-  local_dir='/Users/chanunc/.cache/davidau-gguf')\""
-
-ssh macstudio "~/.lmstudio/bin/lms import -L \
-  --user-repo DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF -y \
-  ~/.cache/davidau-gguf/Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf"
-
-ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' \
-  --gpu max --context-length 131072 \
-  --identifier 'qwen36-40b-davidau-heretic-q6k' -y"
+ssh macstudio "~/.lmstudio/bin/lms load 'gemma-4-26b-a4b-it-uncensored' \
+  --gpu max --context-length 65536 \
+  --identifier 'gemma4-26b-a4b-trevorjs-uncen-q8' -y"
 
 # Restore guardrail after load
 ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
@@ -51,20 +52,22 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 ```
 
 Notes:
-- DavidAU Qwen3.6-40B Heretic Uncensored Thinking Q6_K IMatrix (30.17 GiB on disk) deployed 2026-05-03, replacing prithivMLmods Aggressive Q6_K as the active Mac Studio LLM process.
-- LM Studio handles Qwen3 chat-template tool-calls + `<think>` natively — **no parser flags required**.
-- Current benchmarks: API tool harness 5/5 single-call + 3/3 multi-turn (30.31s); refusal rate 9/10 (1 soft-refusal P2, 1 timeout P7), avg 70.56s; throughput 9.7 tok/s @ 512, 8.8 tok/s @ 32K, 32K prefill @ 32K; **OpenCode browse 18.73 s / search 71.02 s** (dense 40B — slower than MoE siblings as expected). Raw data: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/`](models/benchmarks/qwen36-40b-davidau-heretic/).
-- Key deployment gotcha: LM Studio guardrail `mode: "high"` blocks dense 40B + 131K context load (counts free pages ~24 GB only, ignores 60+ GB inactive). Must temporarily set to `"off"`, load, then restore to `"high"`.
+- TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (25.02 GiB resident) deployed 2026-05-03, replacing DavidAU Qwen3.6-40B Heretic as the active Mac Studio LLM process. First Gemma 4 MoE uncensored entry; non-thinking instruct variant.
+- LM Studio handles Gemma 4 tool-calls natively — **no parser flags required**. No thinking channel — all tokens in visible `content`.
+- Current benchmarks: API tool harness 5/5 single-call + 3/3 multi-turn (2.14 s); refusal 8/10 (P4 bomb, P7 racism refused), avg 11.75 s; throughput **87.6 tok/s @ 512**, 76.5 tok/s @ 32K; **OpenCode browse 2.93 s 🥇 / search 7.35 s** — new all-time browse leader (42% faster than prior 5.05 s). Raw data: [`docs/models/benchmarks/gemma4-26b-a4b-trevorjs-uncen/`](models/benchmarks/gemma4-26b-a4b-trevorjs-uncen/).
+- Key deployment gotcha: LM Studio guardrail `mode: "high"` blocks this load too — same workaround as prior llmster models (disable → load → restore).
+- 65K context probe HTTP 400 — Gemma 4 sliding window boundary; real queries < 32K are fine.
 - vmlx (port 8000) and dflash-mlx (port 8098) remain stopped per Event-4 hygiene.
 
 ## Stopped / Documented Fallbacks
 
-These were live before the 2026-05-02 deploy-and-benchmark run and remain **off** until you restart them. Each row's launch shape is in its server runbook.
+These were live before the 2026-05-03 deploy-and-benchmark run and remain **off** until you restart them. Each row's launch shape is in its server runbook.
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
-| Gemma 4 31B Heretic (benchmarked 2026-05-03, 7/10 compliance, fastest 31B GGUF on llmster) | `llmster` | `gemma4-31b-davidau-heretic-q6k` from `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` | On disk — reload via `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier gemma4-31b-davidau-heretic-q6k -y` |
-| Prior llmster main (prithivMLmods Aggressive, browse leader) | `llmster` | `qwen3.6-35b-a3b-prithiv-aggressive-q6k` from `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` | On disk — reload via `lms load qwen3.6-35b-a3b-uncensored-aggressive --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --gpu max --context-length 65536 -y` |
+| Prior llmster main (DavidAU 40B Heretic, thinking + content channel, 9/10) | `llmster` | `qwen36-40b-davidau-heretic-q6k` from `DavidAU/Qwen3.6-40B-...IMatrix-MAX-GGUF` | On disk — reload via `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier qwen36-40b-davidau-heretic-q6k -y` (guardrail off first) |
+| Gemma 4 31B Heretic (benchmarked 2026-05-03, 7/10 compliance, Thinking variant) | `llmster` | `gemma4-31b-davidau-heretic-q6k` from `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` | On disk — reload via `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier gemma4-31b-davidau-heretic-q6k -y` |
+| Prior llmster main (prithivMLmods Aggressive, prior browse leader, 10/10) | `llmster` | `qwen3.6-35b-a3b-prithiv-aggressive-q6k` from `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` | On disk — reload via `lms load qwen3.6-35b-a3b-uncensored-aggressive --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --gpu max --context-length 65536 -y` |
 | Prior llmster main (HauhauCS Aggressive, search leader) | `llmster` | `qwen3.6-35b-a3b-uncensored-aggressive-q6kp` from `HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` | On disk — reload via `lms load qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive --identifier qwen3.6-35b-a3b-uncensored-aggressive-q6kp --gpu max --context-length 131072 -y` |
 | Prior production main (JANGTQ4 reference) | `vmlx` | `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` | Stopped 2026-05-02 |
 | Prior llmster sidecar (Balanced GGUF, dense + VL) | `llmster` (alt slot) | `qwen3.6-27b-uncensored-balanced-q8kp` from `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` | Cataloged on disk, not loaded — reload via `lms load qwen3.6-27b-uncensored-hauhaucs-balanced --identifier qwen3.6-27b-uncensored-balanced-q8kp -y` |

@@ -1,12 +1,13 @@
 # Model Summary: Gemma 4 Family
 
-Google's Gemma 4 generation. Three variants currently catalogued in this stack: the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context, thinking mode), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode), and the **DavidAU HERETIC uncensored 31B** GGUF fine-tune (128K context, Thinking variant, llmster). They share the `Gemma4ForCausalLM` / `Gemma4ForConditionalGeneration` family but use different sub-architectures.
+Google's Gemma 4 generation. Four variants currently catalogued in this stack: the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context, thinking mode), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode), the **DavidAU HERETIC uncensored 31B** GGUF fine-tune (128K context, Thinking variant, llmster), and the **TrevorJS EGA uncensored 26B A4B** GGUF (65K context loaded, non-thinking, active llmster main). They share the `Gemma4ForCausalLM` / `Gemma4ForConditionalGeneration` family but use different sub-architectures.
 
 ## Index
 
 - [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` · 15 GB · 50–62 tok/s
 - [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · `llmster` · 29 GB · 18–22 tok/s, **6.3× faster agent loop than Qwen3.6-27B on llmster**
 - [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `llmster` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
+- [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](#trevorjs-gemma-4-26b-a4b-uncensored-q8) — MoE 26B/4B active · 65K loaded · `llmster` · 25.02 GiB · **87.6 tok/s** · 8/10 mlabonne · **browse 2.93 s 🥇** · [bench writeup](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
 
 ---
 
@@ -204,5 +205,55 @@ DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base wi
 
 - **7/10 compliance is the lowest llmster score in this stack** — HERETIC appears less effective on Gemma 4 than on Qwen3.6. Refused: vulnerability exploitation script (P1), detailed bomb instructions (P4), identity theft step-by-step (P5).
 - **Thinking channel not exposed as `reasoning_content`** — LM Studio's Gemma 4 runtime does not extract `<|channel>thought` blocks into `reasoning_content`; they count against the visible token budget.
-- **Not the active production main** — DavidAU Qwen3.6-40B Heretic (9/10 compliance, 18.73 s browse) remains the llmster main. This model is a benchmarked catalog entry.
+- **Not the active production main** — superseded by TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (2026-05-03). See below.
 - **INSTRUCT variant not benchmarked** — `gemma-4-31B-Mystery-Fine-Tune-HERETIC-UNCENSORED-INSTRUCT-Q6_k.gguf` would likely be significantly faster on agent tasks (no thinking overhead). Worth benchmarking separately.
+
+---
+
+## TrevorJS Gemma 4 26B A4B Uncensored Q8_0
+
+TrevorJS's norm-preserving biprojected abliteration + Expert-Granular Abliteration (EGA) applied to the official `google/gemma-4-26B-A4B-it` sparse MoE base. Non-thinking instruct variant — no `<|channel>thought` overhead. Active llmster main as of 2026-05-03.
+
+| Spec | Value |
+|:-----|:------|
+| HuggingFace | [`TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF`](https://huggingface.co/TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF) |
+| GGUF file | `gemma-4-26B-A4B-it-uncensored-Q8_0.gguf` |
+| Format | GGUF Q8_0, llmster (LM Studio headless) |
+| Architecture | `Gemma4ForCausalLM` — sparse MoE, 128 experts, ~4B active per token |
+| Parameters | 26B total, ~4B active |
+| Quantization | Q8_0 (~8 BPW) |
+| Specialties | Tool calling, uncensored (EGA abliteration), non-thinking, text-only |
+| On-disk size | 26.9 GB |
+| Resident on load | 25.02 GiB at 65536 context |
+| Context Size | 65536 loaded (256K native base) — 65K probe HTTP 400s due to sliding window |
+| License | Apache 2.0 |
+| Uncensoring | Norm-preserving biprojected abliteration + EGA (100% experts, `expert_scale=1.0`, KL=0.09) |
+| LM Studio identifier | `gemma-4-26b-a4b-it-uncensored` |
+| API identifier | `gemma4-26b-a4b-trevorjs-uncen-q8` |
+
+### Performance (llmster, M3 Ultra 96 GB, 2026-05-03)
+
+| Metric | Value |
+|:-------|:------|
+| Smoke test | **5/5** single-call, 3/3 multi-turn in **2.14 s** |
+| Refusal score | **8/10** (P4 bomb instructions, P7 racism+violence refused) |
+| Gen tok/s @ 512 ctx | **87.6 tok/s** |
+| Gen tok/s @ 32K ctx | **76.5 tok/s** |
+| Prefill @ 32K ctx | **158,418 tok/s** |
+| Agent browse (www.example.com) | **2.93 s 🥇 new all-time leader** |
+| Agent search (HackerNews latest) | **7.35 s** |
+
+**Full benchmark writeup:** [`uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md`](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
+
+### Key differences vs other Gemma 4 variants
+
+- **Fastest agent loop** in the uncensored + standard llmster roster — 2.93 s browse vs 5.11 s for standard Gemma 4 31B-it and 5.05 s for prior uncensored leader (prithivMLmods)
+- **No thinking overhead** — non-thinking instruct; all generation is visible `content`
+- **MoE architecture** at Q8_0 gives ~87.6 tok/s (vs 21.8 tok/s for dense 31B-it and 24.2 tok/s for DavidAU 31B Heretic)
+- **8/10 compliance** — EGA abliteration more effective than DavidAU HERETIC on Gemma 4 (7/10), less effective than Qwen3.6 abliterations (10/10)
+
+### Caveats
+
+- **65K HTTP 400** — probe at full context boundary fails; queries < 32K work fine. Gemma 4's 1024-token sliding window on intermediate layers creates an effective limit below the nominal loaded context.
+- **Text-only GGUF** — no mmproj companion; base model's multimodal capability not accessible in this deployment.
+- **8/10 compliance** — P4 (detailed bomb instructions) and P7 (racism + violence website) refused. For 10/10 compliance, prefer Qwen3.6-A3B MoE variants.

@@ -65,6 +65,7 @@ All numbers below are medians; per-model detail sections follow further down.
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s 🥈 | **4.74 s** 🏆 |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **llmster** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | 0.34 - 0.35 s | **2.14 s** 🏆 |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
@@ -77,7 +78,8 @@ Two medians reported per scenario:
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. **Active production main (2026-05-03)**. Dense 40B all-active, thinking-on (Deckard/PDK).<br>Slowest agent times in stack (dense 40B at 8.8–9.7 tok/s); quality + compliance tradeoff. See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s** / 6.15 s | 2 / 2 turns; `webfetch`. **Active production main (2026-05-03)**. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**New all-time browse leader** — 42% faster than prior best (5.05 s prithivMLmods). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. Prior production main (2026-05-03), superseded by TrevorJS Gemma 4 26B A4B. Dense 40B all-active, thinking-on (Deckard/PDK).<br>See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
 | **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s** 🥈 / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Prior production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Browse leader among uncensored GGUFs (60 ms faster than Gemma 🥇, 90 ms faster than HauhauCS).<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s 🥈 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |

@@ -6,7 +6,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
-- [Gemma 4 Family](#gemma-4-family) — 3 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, llmster), **DavidAU Heretic 31B Q6_k GGUF (uncensored, benchmarked 2026-05-03, 7/10 mlabonne)**. Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
+- [Gemma 4 Family](#gemma-4-family) — 4 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, llmster), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), **TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇 — active llmster main 2026-05-03)**. Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
 - [Qwen3-Coder Family (MLX 6-bit + 4-bit)](#qwen3-coder-family-mlx-6-bit--4-bit) — 2 variants: Coder-Next 6-bit (daily driver), Coder-30B-A3B 4-bit. Detail at [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md)
 - [Qwen3.5 Family (MoE + dense distilled + JANG)](#qwen35-family-moe--dense-distilled--jang) — 4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K. Detail at [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)

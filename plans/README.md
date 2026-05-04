@@ -18,6 +18,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 |:--|:--|
 | [`active/plan-bench-eval-local.md`](active/plan-bench-eval-local.md) | MMLU-Pro + TruthfulQA-gen local benchmark driver (`bench_eval_local.py`) |
 | [`active/plan-chk-llm-macstu.md`](active/plan-chk-llm-macstu.md) | `scripts/chk_llm_macstu.py` — Mac Studio LLM server + model status probe with `--client` / `--logs` / `--all` emit modes |
+| [`active/plan-deploy-run-benchmark-model-skill.md`](active/plan-deploy-run-benchmark-model-skill.md) | `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner with disk guard and censored / uncensored branching |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |
 | [`active/plan-list-rm-model-macstu.md`](active/plan-list-rm-model-macstu.md) | `/list-rm-model-macstu` skill — interactive model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf |
 | [`active/plan-llmster-uncen-benchmark.md`](active/plan-llmster-uncen-benchmark.md) | llmster uncensored-model benchmark slate |

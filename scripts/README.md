@@ -9,6 +9,15 @@ Operational helpers split by purpose: benchmark drivers, server-package patches,
 | [`bench/`](bench/) | Benchmark drivers (run from any client; output lands under `docs/models/benchmarks/<model>/`). |
 | [`patches/`](patches/) | Monkey-patches for installed server packages on the Mac Studio. Re-run after upstream upgrades. |
 | `switch_opencode_config.py` | Local-only helper that swaps OpenCode's config between server templates in `configs/clients/`. |
+| `chk_llm_macstu.py` | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on ports 8000 / 1234 / 8098. |
+
+## Status Checks
+
+| Script | Purpose |
+|:--|:--|
+| [`chk_llm_macstu.py`](chk_llm_macstu.py) | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on ports 8000 / 1234 / 8098. Supports `--client {opencode,pi,openclaw,qwen-code,claude-code,all}` to emit the matching client config for the detected server, `--logs` to emit the per-server log-tail command, and `--all` to bundle status + all client configs + log command into one copy-friendly text block (or `--all --json` for a machine-readable object). |
+
+Useful as the **Event 4 pre-benchmark hygiene** primitive — see [the Sync Policy](../CLAUDE.md#event-4-running-a-new-benchmark) for the full clean-machine recipe.
 
 ## Benchmarks
 

@@ -30,7 +30,7 @@ Config switcher: [`scripts/switch_opencode_config.py`](../../../scripts/switch_o
 - [mlx-community/Qwen3.6-27B-6bit](#results-mlx-communityqwen36-27b-6bit) — 27 B dense + ViT, uniform 6-bit MLX (vllm-mlx, no patches) — *2026-04-24, re-bench 2026-04-27*
 - [jedisct1/Qwen3.6-35B-rust.mlx](#results-jedisct1qwen36-35b-rustmlx) — 35 B sparse MoE, 3 B active, uniform 8-bit MLX, Rust LoRA merged (vllm-mlx, no patches) — *2026-04-24, re-bench 2026-04-27*
 - [mlx-community/Ling-2.6-flash-mlx-6bit](#results-mlx-communityling-26-flash-mlx-6bit) — 104 B sparse MoE, 7.4 B active, hybrid MLA + linear-attention SSM, uniform 6-bit MLX (vllm-mlx, requires PR-1227 vendor + 2 thread-local patches) — *2026-04-29*
-- [lmstudio-community/gemma-4-31B-it-MLX-6bit](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) — 31 B dense, text-only, uniform 6-bit MLX (llmster, no patches; LM Studio runtime auto-detects Gemma 4 tool-call + reasoning) — **fastest agent loop in doc** (5–6 s wall) — *2026-05-01*
+- [lmstudio-community/gemma-4-31B-it-MLX-6bit](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) — 31 B dense, text-only, uniform 6-bit MLX (llmster, no patches; LM Studio runtime auto-detects Gemma 4 tool-call + reasoning) — **fastest search in doc** (6.37 s wall 🏆); 🥉 browse (5.11 s wall) — *2026-05-01*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -49,23 +49,25 @@ All numbers below are medians; per-model detail sections follow further down.
 
 ### API-level tool calling (direct `/v1/chat/completions`, 5-tool harness)
 
+Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
+
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | **1.60 - 1.98 s** | 1.60 - 4.27 s | 5.87 s |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | **1.54 - 2.53 s** | 1.54 - 2.51 s | 5.48 s 🥈 |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🏆 | **1.51 - 1.53 s** 🏆 | 5.64 s 🥈 |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s 🥈 | 1.42 - 2.70 s | 6.99 s |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **llmster** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
+| Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥈 | **1.51 - 1.53 s** 🥈 | 5.64 s |
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
+| Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
+| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | ✅ **5/5** | 3.28 - 13.14 s | 2.87 - 3.84 s | 11.65 s |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
-| Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
-| Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s 🥈 | **4.74 s** 🏆 |
-| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **llmster** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | 0.34 - 0.35 s | **2.14 s** 🏆 |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s | 1.42 - 2.70 s | 6.99 s |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
@@ -76,44 +78,50 @@ Two medians reported per scenario:
 - **Wall time** — full `opencode run` subprocess elapsed (bootstrap + LLM turns + tool execution + teardown). What a user waits for.
 - **LLM time** — sum of per-turn assistant `time.completed - time.created` from the session export. Matches the duration that opencode's TUI status bar displays (e.g. `▣ Build · ... · 50.8s`). Isolates model-side latency from client-side overhead.
 
+Rows ordered by browse wall time (ascending).
+
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s** / 6.15 s | 2 / 2 turns; `webfetch`. **Active production main (2026-05-03)**. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**New all-time browse leader** — 42% faster than prior best (5.05 s prithivMLmods). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🥈** / 6.15 s | 2 / 2 turns; `webfetch`. **Active production main (2026-05-03)**. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader** — 42% faster than prior best (5.05 s prithivMLmods). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Prior production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
+| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | 5.11 s 🥉 / 3.94 s | **6.37 s 🏆** / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**Fastest search in doc.** 6.3× browse, 4.0× search vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the 2026-04-30 prompt set. |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. Prior production main (2026-05-03), superseded by TrevorJS Gemma 4 26B A4B. Dense 40B all-active, thinking-on (Deckard/PDK).<br>See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s** 🥈 / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Prior production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Browse leader among uncensored GGUFs (60 ms faster than Gemma 🥇, 90 ms faster than HauhauCS).<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s 🥈 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the new prompt set. |
-| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | **5.11 s** 🏆 / 3.94 s | **6.37 s** 🏆 / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**6.3× browse, 4.0× search** vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
-| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>**6.6× slower browse** vs standard Gemma 4 31B-it (5.11 s 🏆), **1.8× slower** vs DavidAU 40B (18.73 s).<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 / 12.72 s | 26.31 s 🥈 / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost.<br>Slower than Qwen 35B-A3Bs, no thinking overhead. |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 72.75 s / 71.52 s | 135.06 s / 133.87 s | 2 / 3 turns median; `webfetch`, one search run used `bash`.<br>Main port-8000 deployment for fair benchmark.<br>Raw: [`agent-bench-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json). |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking;<br>one 297 s search outlier. |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`. Standard 6-bit MLX —<br>no JANG mixed-precision speedup;<br>thinking-on dense path is the slowest browse. |
-| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>**3.1× browse, 4.9× search** vs vllm-mlx (same model file).<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2 / 3 turns; `webfetch`. 87% draft accept.<br>**13% faster browse vs llmster** (smaller 27B target);<br>**2.1× slower search** — growing context favors prefill. [Raw](qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json). |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>**3.1× browse, 4.9× search** vs vllm-mlx (same model file).<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>**6.6× slower browse** vs standard Gemma 4 31B-it (5.11 s 🥉), **1.8× slower** vs DavidAU 40B (18.73 s).<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
 | MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s / 54.29 s ⚠ | ⛔ **fail** | Browse: 1/3 invalid tool call, 2/3 hit 8K cap. Search: 0/3 zero tool calls.<br>API-level harness w/ single tool *works* — issue is<br>OpenCode's 10-tool catalog + thinking-on, not server. |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking;<br>one 297 s search outlier. |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 72.75 s / 71.52 s | 135.06 s / 133.87 s | 2 / 3 turns median; `webfetch`, one search run used `bash`.<br>Main port-8000 deployment for fair benchmark.<br>Raw: [`agent-bench-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json). |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`. Standard 6-bit MLX —<br>no JANG mixed-precision speedup;<br>thinking-on dense path is the slowest browse. |
 
 **2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
 
 ### Server / parser flag matrix
 
+Rows ordered alphabetically by model name.
+
 | Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
 |:------|:-------|:---------------------|:---------------------|:--------------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patches/patch_vllm_mlx_streaming_tools.py` |
-| Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as above |
-| Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
-| Qwen3.6-27B 6bit (mlx-community) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
-| Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | llmster | (built-in) | (built-in — `<\|channel>thought` → `reasoning_content`) | none — LM Studio Gemma 4 runtime. Guardrail override **required** before initial load (see [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)) |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | llmster | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | llmster | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | llmster | (built-in) | (built-in) | none — same as HauhauCS/Gemma; LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | llmster | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
+| Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | llmster | (built-in) | (built-in) | none — LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patches/patch_vllm_mlx_streaming_tools.py` |
+| Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as JANG 4K |
+| Qwen3.6-27B 6bit (mlx-community) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
+| Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
 
 ---
 
@@ -194,10 +202,13 @@ Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run u
 
 Prompt: `"Browse www.example.com"`
 
-| Model | Server | Response Time (2026-04-30 median) | Turns | Tools | Tokens |
+Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for all except TrevorJS (2026-05-03).
+
+| Model | Server | Response Time (median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **12.86 s** 🏆 | 2 | `webfetch` | ~10.8K in / ~136 out |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s | 2 | `webfetch` | ~10.8K in / ~136 out |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 25.75 s | 2 | `webfetch` | ~10.8K in / ~135 out |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
@@ -212,10 +223,13 @@ The new prompt removes the clarification round the old `Browse github.com` trigg
 
 Prompt: `"Browse Hackernews, get the only one latest topic"`
 
-| Model | Server | Response Time (2026-04-30 median) | Turns | Tools | Tokens | Context Growth |
+Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for all except TrevorJS (2026-05-03).
+
+| Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | **16.28 s** 🏆 | 2 | `webfetch` | ~26K | ~13K/turn |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥈 | 3 | `webfetch` | ~43K | ~13K/turn |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | **7.35 s 🏆** | 2 | `webfetch` | ~26K | ~13K/turn |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 16.28 s 🥈 | 2 | `webfetch` | ~26K | ~13K/turn |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s | 3 | `webfetch` | ~43K | ~13K/turn |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 127.28 s | 2 | `webfetch` | ~23K | ~12K/turn |

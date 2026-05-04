@@ -774,6 +774,32 @@ Prompt-token counts reported by the server are 0 (vllm-mlx field-fill bug, same 
 
 ---
 
+## 🤖 IBM Granite 4.1 30B Q8_0 (Dense, GGUF) on llmster
+
+Model: `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF`
+
+Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-05.
+
+**Server:** llmster / LM Studio headless on port 1234. Raw JSON: [`granite-4.1-30b-q8/api-server-llmster.json`](granite-4.1-30b-q8/api-server-llmster.json).
+
+### Generation Speed (tok/s)
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|------------:|----------------:|---------:|
+| 512 | **24.8** | 2,520 | 0.22 |
+| 4K | **26.0** | 17,890 | 0.23 |
+| 8K | 23.6 | 34,200 | 0.24 |
+| 32K | 18.7 | 92,600 | 0.36 |
+
+**65K context:** HTTP 400 (sliding window boundary). Real queries < 32K work fine.
+
+**Notes:**
+- Dense 30B: all parameters active every token → 24–26 tok/s gen is expected for this class. Prefill scales well (2.5K → 92K tok/s from 512 → 32K) due to well-behaved dense attention.
+- 3–3.5× slower than TrevorJS Gemma 4 26B A4B MoE (87.6 tok/s) due to MoE sparsity advantage.
+- Comparable to Gemma 4 31B-it on llmster (18–22 tok/s).
+
+---
+
 ## 128K Cross-Model Summary
 
 All models benchmarked at the 128K-context bucket (closest standard size to the 100K-class workload):

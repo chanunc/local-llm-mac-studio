@@ -6,7 +6,8 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
-- [Gemma 4 Family](#gemma-4-family) — 4 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, llmster), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), **TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇 — active llmster main 2026-05-03)**. Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
+- [IBM Granite 4.1 Family](#ibm-granite-41-family) — 1 variant: **30B Q8_0 GGUF (unsloth, Apache 2.0, 24.8 tok/s, browse 6.24 s — active llmster main 2026-05-05)**. Detail at [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md)
+- [Gemma 4 Family](#gemma-4-family) — 4 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, llmster), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇 — prior llmster main 2026-05-03). Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
 - [Qwen3-Coder Family (MLX 6-bit + 4-bit)](#qwen3-coder-family-mlx-6-bit--4-bit) — 2 variants: Coder-Next 6-bit (daily driver), Coder-30B-A3B 4-bit. Detail at [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md)
 - [Qwen3.5 Family (MoE + dense distilled + JANG)](#qwen35-family-moe--dense-distilled--jang) — 4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K. Detail at [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
@@ -297,6 +298,16 @@ Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`), pruned by `jedisct1` to keep only the 
 - **Retry only with a less-aggressive pruning variant** (e.g. `first200experts`) when one becomes available.
 
 **See also:** [`docs/models/per-model/model-summary-mimo-v2.5.md`](per-model/model-summary-mimo-v2.5.md) for the TL;DR (Findings / Limitations / Blocker), full three-config benchmark comparison, and deployment instructions.
+
+---
+
+## IBM Granite 4.1 Family
+
+IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. One variant currently deployed: **Q8_0 GGUF** from Unsloth (28.57 GiB resident, 65K context, llmster). Active production main as of 2026-05-05. Full deployment recipe, smoke/perf/agent benchmarks, and caveats at **[`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md)**.
+
+| Variant | Type | Size | Quant | Primary server here | Detail |
+|:--------|:-----|----:|:------|:--------------------|:-------|
+| **Granite 4.1 30B Q8_0 (unsloth GGUF)** | Dense 30B, no MoE | 29 GB | Q8_0 GGUF | **llmster (active main 2026-05-05)** | [link](per-model/model-summary-granite-4.1.md) |
 
 ---
 

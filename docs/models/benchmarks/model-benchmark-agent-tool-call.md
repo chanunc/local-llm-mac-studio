@@ -54,6 +54,7 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **llmster** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
+| IBM Granite 4.1 30B Q8_0 | **llmster** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s | |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥈 | **1.51 - 1.53 s** 🥈 | 5.64 s |
@@ -82,7 +83,8 @@ Rows ordered by browse wall time (ascending).
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🥈** / 6.15 s | 2 / 2 turns; `webfetch`. **Active production main (2026-05-03)**. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader** — 42% faster than prior best (5.05 s prithivMLmods). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🥈** / 6.15 s | 2 / 2 turns; `webfetch`. Prior production main (2026-05-03). Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader** — 42% faster than prior best (5.05 s prithivMLmods). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| IBM Granite 4.1 30B Q8_0 | **llmster** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2 / 2 turns; `webfetch`. **Active production main (2026-05-05)**. Dense 30B, non-thinking, 24.8 tok/s gen.<br>Apache 2.0. See [per-model](../per-model/model-summary-granite-4.1.md). Raw: [`agent-bench-llmster.json`](granite-4.1-30b-q8/agent-bench-llmster.json). |
 | **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Prior production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | 5.11 s 🥉 / 3.94 s | **6.37 s 🏆** / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**Fastest search in doc.** 6.3× browse, 4.0× search vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
@@ -108,6 +110,7 @@ Rows ordered alphabetically by model name.
 | Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
 |:------|:-------|:---------------------|:---------------------|:--------------|
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | llmster | (built-in) | (built-in — `<\|channel>thought` → `reasoning_content`) | none — LM Studio Gemma 4 runtime. Guardrail override **required** before initial load (see [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)) |
+| IBM Granite 4.1 30B Q8_0 | llmster | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | llmster | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
@@ -740,3 +743,40 @@ Cross-model comparison (current best-of-doc on the new 2026-04-30 prompt set):
 5. **`lms get` is unreliable for >20 GB models.** First two `lms get` attempts hung at 88 % with no resume capability (only shards 4–6 of 6 reached disk). Working path: kill the hung process, complete the download with `huggingface_hub.snapshot_download(repo_id=…, local_dir=~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit)`. LM Studio recognises the on-disk layout afterward. See [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) "Loader gotcha" callout.
 
 6. **First load ignored `--context-length`** — model came up at 4K despite `--context-length 65536`, hit `HTTP 400: tokens exceed context length` on the 4K bench. Re-`lms unload` + re-`lms load --context-length 65536 -y` correctly seats 64K. Verify with `lms ps` after every load.
+
+---
+
+## 🤖 Results: IBM Granite 4.1 30B Q8_0 on llmster
+
+**Date:** 2026-05-05
+**Server:** llmster / LM Studio headless on port 1234, GGUF Q8_0 runtime. No parser flags required.
+**Architecture:** IBM Granite — dense 30B decoder-only, no MoE, no thinking channel.
+
+### Typical Inference
+
+| Scenario | Gen tok/s | Context | TTFT (s) |
+|:---------|----------:|--------:|---------:|
+| 512 tok | 24.8 | 512 | 0.22 |
+| 4K tok | 26.0 | 4K | 0.23 |
+| 32K tok | 18.7 | 32K | 0.36 |
+
+### OpenCode Agent Loop (browse + search)
+
+Raw JSON: [`granite-4.1-30b-q8/agent-bench-llmster.json`](granite-4.1-30b-q8/agent-bench-llmster.json).
+
+| Scenario | Wall time (median) | LLM time | Turns | Tools |
+|:---------|:------------------:|:--------:|:-----:|:------|
+| Browse www.example.com | **6.24 s** | 5.02 s | 2 | webfetch |
+| Browse Hackernews latest | **10.51 s** | 9.31 s | 2 | webfetch |
+
+### Key Findings
+
+1. **Dense 30B decode is 3–3.5× slower than Gemma 4 26B A4B MoE** (24.8 vs 87.6 tok/s @ 512). The MoE architecture (4B active per step) is the structural advantage — all 30B Granite params are loaded per token.
+
+2. **Browse latency is mid-table** (6.24 s) — competitive with Gemma 4 31B-it (5.11 s) and well below the Qwen3.6 GGUF family (12–33 s range). Short output-token count per turn (15–30 tokens) keeps the loop tight despite the lower tok/s.
+
+3. **No thinking overhead** — Granite 4.1 is a standard instruct model with no `<think>` channel. All tokens land in visible `content`.
+
+4. **Apache 2.0 license** — fully permissive, no Gemma Terms / community license restriction.
+
+5. **Tool-call correctness: 5/5.** LM Studio handles Granite 4.1's tool-call format natively.

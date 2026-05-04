@@ -1,6 +1,6 @@
 # Client Configs
 
-**Last updated: 2026-05-03 (llmster TrevorJS Gemma 4 26B A4B Uncensored Q8_0 deploy-and-benchmark — new active main, browse 2.93 s 🥇)**
+**Last updated: 2026-05-05 (llmster IBM Granite 4.1 30B Q8_0 deploy-and-benchmark — new active main, browse 6.24 s)**
 
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
@@ -14,10 +14,10 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | **mlx-openai-server** | 8000 | **OpenAI server** -- process isolation, prompt cache, speculative decoding; currently stopped | Superset config (see below) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard; currently stopped | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python; **currently stopped** (was last main 2026-05-01 with Osaurus JANGTQ4) | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
-| **llmster** | **1234** | **Current main (2026-05-03)** / **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for initial load | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (25.02 GiB, EGA abliteration, 87.6 tok/s, browse 2.93 s 🥇) | Not needed |
+| **llmster** | **1234** | **Current main (2026-05-05)** / **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for initial load | IBM Granite 4.1 30B Q8_0 (28.57 GiB, Apache 2.0, 24.8 tok/s, browse 6.24 s) | Not needed |
 | **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance; **currently stopped** | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **llmster + TrevorJS Gemma 4 26B A4B Uncensored Q8_0** (deployed 2026-05-03 after Event-4 hygiene); restart DavidAU 40B Heretic, prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **llmster + IBM Granite 4.1 30B Q8_0** (deployed 2026-05-05 after Event-4 hygiene); restart TrevorJS Gemma 4 26B A4B, DavidAU 40B Heretic, prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
 
 ### Why vllm-mlx is Primary
 
@@ -123,9 +123,9 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 |------|---------|---------|
 | `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 
-**Templates pin censored / standard MLX models on llmster.** Default is `gemma-4-31b-it-mlx` (Gemma 4 31B-it 6-bit) — the dense agent-loop speed leader on llmster (browse 5.11 s, search 6.37 s). Also lists `qwen3.6-27b` (Qwen3.6-27B 6-bit MLX). **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
+**Templates pin censored / standard models on llmster.** Default is `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0) — the current active main (2026-05-05, browse 6.24 s, search 10.51 s). Also lists `gemma-4-31b-it-mlx` (dense agent-loop speed leader, browse 5.11 s, search 6.37 s) and `qwen3.6-27b`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because llmster's role is provisional (3-5× faster agent loops than vllm-mlx on non-JANG models, but closed-source runtime and no JANG/JANGTQ/`bailing_hybrid` support).
 
-For uncensored llmster GGUFs (TrevorJS Gemma 4 26B A4B Q8_0 — active main; prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/llmster/`](../docs/models/uncen-model/client-configs/llmster/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`. The current Mac Studio main is TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (per [`docs/current.md`](../docs/current.md)) — copy the uncen-model template when you want OpenCode pointed at the live abliterated model.
+For uncensored llmster GGUFs (TrevorJS Gemma 4 26B A4B Q8_0 — prior main; prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/llmster/`](../docs/models/uncen-model/client-configs/llmster/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`.
 
 Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
 

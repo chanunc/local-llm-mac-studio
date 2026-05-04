@@ -1,0 +1,105 @@
+{
+  "model": "granite-4.1-30b-q8",
+  "base_url": "http://192.168.31.4:1234/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 2.99,
+      "output_tokens": 23,
+      "rate_tps": 7.7,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 1.13,
+      "output_tokens": 20,
+      "rate_tps": 17.7,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 1.29,
+      "output_tokens": 23,
+      "rate_tps": 17.9,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web"
+      ],
+      "tool_args": [
+        "{\"query\":\"openai api docs\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 1.13,
+      "output_tokens": 20,
+      "rate_tps": 17.6,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 1.14,
+      "output_tokens": 20,
+      "rate_tps": 17.6,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 2.74,
+      "output_tokens": 23,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 3.14,
+      "output_tokens": 60,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 4.5,
+      "output_tokens": 90,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 10.37
+}

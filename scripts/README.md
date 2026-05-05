@@ -26,6 +26,7 @@ Useful as the **Event 4 pre-benchmark hygiene** primitive — see [the Sync Poli
 | [`bench/bench_api_server.py`](bench/bench_api_server.py) | Streaming `/v1/chat/completions` throughput, TTFT, and prefill benchmark (recognizes `delta.content` / `delta.reasoning_content` / `delta.reasoning` for TTFT — last is mlx-lm-server naming used by dflash-mlx) |
 | [`bench/bench_api_tool_call.py`](bench/bench_api_tool_call.py) | API-level tool-call harness for OpenAI-compatible servers |
 | [`bench/bench_agent_tool_call.py`](bench/bench_agent_tool_call.py) | End-to-end OpenCode/Pi-style agent loop benchmark (accepts `--base-url` to override the OpenCode-config-discovered server during health check) |
+| [`bench/bench_agent_local.py`](bench/bench_agent_local.py) | In-process agent harness via [`gary149/llama-agent`](https://github.com/gary149/llama-agent) — embeds llama.cpp inference + the agent loop in one process (no OpenAI-compatible server in the path). Drives the resident TUI over a PTY with bracketed-paste prompts, runs the same 5 single-call scenarios + 3-turn loop as `bench_api_tool_call.py` against a sandbox at the realpath of `/tmp/bench-llama-agent` (macOS `/tmp` symlink + `--yolo` external-file warning gotcha — see script header). Captures token counts and avg gen tok/s from the agent's `/stats` between turns. Posix-only; uses stdlib `pty`. |
 
 Save raw output under [`docs/models/benchmarks/<model-slug>/`](../docs/models/benchmarks/) per the [Sync Policy](../CLAUDE.md#sync-policy-read-this-first-when-changing-live-state).
 

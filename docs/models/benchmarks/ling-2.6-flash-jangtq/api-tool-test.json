@@ -1,0 +1,76 @@
+{
+  "model": "JANGQ-AI/Ling-2.6-flash-JANGTQ",
+  "base_url": "http://192.168.31.4:8000/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 21.19,
+      "output_tokens": 1024,
+      "rate_tps": 48.3,
+      "finish_reason": "length",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 3.19,
+      "output_tokens": 29,
+      "rate_tps": 9.1,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 3.51,
+      "output_tokens": 43,
+      "rate_tps": 12.2,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web"
+      ],
+      "tool_args": [
+        "{\"query\": \"openai api docs\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 20.9,
+      "output_tokens": 1024,
+      "rate_tps": 49.0,
+      "finish_reason": "length",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 3.42,
+      "output_tokens": 41,
+      "rate_tps": 12.0,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\": \"/tmp\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 3.28,
+      "output_tokens": 19,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 1,
+  "total_time_s": 3.28,
+  "aborted": "no tool call on turn 1"
+}

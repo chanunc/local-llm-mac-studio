@@ -115,7 +115,7 @@ Smoke-tested on 2026-05-01 with `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanc
 - First `/v1/chat/completions` turn returned `finish_reason: "tool_calls"` with `get_weather({"location":"Paris"})`
 - Tool-result replay produced a normal final answer and separate `reasoning_content`
 
-Full bench: [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](../../models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30).
+Full bench: [`docs/models/benchmarks/model-benchmark-tool-call.md` § Server comparison](../../models/benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30).
 
 ## Health check
 
@@ -166,7 +166,7 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 
 ## See also
 
-- [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § llmster vs vllm-mlx](../../models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) — full agent-bench comparison with raw numbers
+- [`docs/models/benchmarks/model-benchmark-tool-call.md` § llmster vs vllm-mlx](../../models/benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) — full agent-bench comparison with raw numbers
 - [`docs/models/benchmarks/model-benchmark-api-server.md` § Qwen3.6-27B 6-bit on llmster](../../models/benchmarks/model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx) — direct prompt benchmark detail
 - [`configs/clients/llmster/opencode.json`](../../../configs/clients/llmster/opencode.json) — OpenCode client template (substitutes `<MAC_STUDIO_IP>` via `scripts/switch_opencode_config.py`)
 - [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py) — handles `--server llmster` to swap OpenCode between vllm-mlx (port 8000) and llmster (port 1234)

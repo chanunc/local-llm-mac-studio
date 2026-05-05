@@ -282,7 +282,7 @@ After successful runs:
 
 - Validate JSON: `jq empty docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/*.json`.
 - Add a section to `docs/models/benchmarks/model-benchmark-api-server.md` for API throughput.
-- Add a row and per-model note to `docs/models/benchmarks/model-benchmark-agent-tool-call.md`.
+- Add a row and per-model note to `docs/models/benchmarks/model-benchmark-tool-call.md`.
 - Add a Qwen3.6 family entry to `docs/models/per-model/model-summary-qwen-3-6.md`.
 - Add a model row to `README.md` only if the result is worth keeping as a documented model in the roster.
 - Update `docs/models/techniques/model-quantization-turboquant.md` if the run reveals new JANGTQ/vmlx behavior.

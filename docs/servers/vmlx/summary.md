@@ -67,6 +67,7 @@ SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snaps
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  --continuous-batching \
   > /tmp/vmlx.log 2>&1 &
 ```
 
@@ -76,7 +77,7 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
 
 ## Tool use and reasoning
 
-OpenAI-style tool calling and Qwen3 thinking-token separation both work on vmlx but require **three runtime flags and a one-time source patch** applied to the bundled Python.
+OpenAI-style tool calling and Qwen3 thinking-token separation both work on vmlx but require **four runtime flags and a one-time source patch** applied to the bundled Python.
 
 **Runtime flags** (already in the Start snippet above):
 
@@ -85,6 +86,7 @@ OpenAI-style tool calling and Qwen3 thinking-token separation both work on vmlx 
 | `--enable-auto-tool-choice` | `tool_choice: auto` semantics + qwen3 tool-call parser wiring |
 | `--tool-call-parser qwen3` | Extracts `<tool_call>…</tool_call>` into structured `tool_calls[]` |
 | `--reasoning-parser qwen3` | Extracts `<think>…</think>` into `reasoning_content` (keeps `content` clean) |
+| `--continuous-batching` | **Required on vmlx 1.5.20+.** Without it, the MLLM/VLM path crashes mid-generation with `AttributeError: Qwen2Tokenizer has no attribute stopping_criteria` (from `mlx_vlm/generate.py:854`), and `bailing_hybrid` text models crash with `RuntimeError: There is no Stream(gpu, 1) in current thread` mid-prefill. Validated against `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` (5/5 smoke restored) on 2026-05-05 after vMLX 1.3.65 → 1.5.20 DMG upgrade. |
 
 Without `--reasoning-parser qwen3`, the model's entire thinking monologue appears in `content` and clients like OpenCode show it as the visible reply ("thinking nonsense").
 

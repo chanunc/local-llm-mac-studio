@@ -31,7 +31,8 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | File | Coverage |
 |:--|:--|
 | [`benchmarks/model-benchmark-api-server.md`](benchmarks/model-benchmark-api-server.md) | API throughput / TTFT / prefill across servers. |
-| [`benchmarks/model-benchmark-agent-tool-call.md`](benchmarks/model-benchmark-agent-tool-call.md) | OpenCode agent loop end-to-end latency. |
+| [`benchmarks/model-benchmark-tool-call.md`](benchmarks/model-benchmark-tool-call.md) | OpenCode agent loop end-to-end latency. |
+| [`benchmarks/model-benchmark-agent-local.md`](benchmarks/model-benchmark-agent-local.md) | llama-agent in-process agent loop (no API server in the path). |
 | [`benchmarks/model-benchmark-standalone.md`](benchmarks/model-benchmark-standalone.md) | Standalone generation benchmarks. |
 | [`benchmarks/model-benchmark-turboquant-jang.md`](benchmarks/model-benchmark-turboquant-jang.md) | TurboQuant / JANG benchmark notes. |
 | [`benchmarks/<model-slug>/`](benchmarks/) | Raw `agent-bench.json`, `api-server-<server>.json`, and per-run logs. |

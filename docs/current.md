@@ -83,6 +83,7 @@ SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapsho
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  --continuous-batching \
   > /tmp/vmlx-osaurus-qwen36-jangtq4.log 2>&1 &
 ```
 

@@ -29,12 +29,13 @@ SNAP=~/.cache/huggingface/hub/models--dealignai--MiniMax-M2.7-JANGTQ-CRACK/snaps
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  --continuous-batching \
   > /tmp/vmlx.log 2>&1 &
 ```
 
 First-boot weight load is ~10 s on a warm FS cache (`JANGTQ v2 loaded in 10.1s` in the log), up to ~60 s on cold first access after reboot.
 
-The three parser flags are required for OpenCode / Claude Code tool use and Qwen3 thinking. See [§ Tool use and reasoning (MLLM models)](#tool-use-and-reasoning-mllm-models) for what each flag does and why a one-time source patch is also needed.
+The four flags are required for OpenCode / Claude Code tool use, Qwen3 thinking, and to dodge two vmlx 1.5.20 regressions (MLLM tokenizer crash, `bailing_hybrid` Stream-not-in-thread). See [§ Tool use and reasoning (MLLM models)](#tool-use-and-reasoning-mllm-models) for what each flag does and why a one-time source patch is also needed.
 
 ### Stop
 

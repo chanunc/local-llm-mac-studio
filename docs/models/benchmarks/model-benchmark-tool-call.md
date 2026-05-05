@@ -1,13 +1,16 @@
-# Benchmark: Agent Tool-Call Latency
+# Benchmark: Tool-Call Latency
 
 Tested on **Mac Studio M3 Ultra (96 GB)**.
 
 ## 🧪 Method
 
-Real agent CLI invocation via `opencode run --format json`, measuring end-to-end response time including agent system prompts, tool definitions, agent loop turns, and reasoning overhead. This captures the actual latency a user experiences — not raw inference tok/s.
+Two complementary harnesses, both reported per model:
 
-Script: [`scripts/bench/bench_agent_tool_call.py`](../../../scripts/bench/bench_agent_tool_call.py)
-Config switcher: [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py)
+1. **API-level tool-call harness** — direct `/v1/chat/completions` with a 5-tool fixture (`read_file`, `write_file`, `run_command`, `search_web`, `list_directory`). Five single-call scenarios + a 3-turn agentic loop (`read_file → write_file → final answer`, with simulated tool results between turns). Non-streaming, `temperature=0.0`, `max_tokens=1024`. Pass criterion per scenario: `finish_reason: "tool_calls"` with at least one well-formed entry in `message.tool_calls[]`.
+   - Script: [`scripts/bench/bench_api_tool_call.py`](../../../scripts/bench/bench_api_tool_call.py)
+2. **OpenCode end-to-end harness** — real agent CLI invocation via `opencode run --format json`, measuring wall time (subprocess elapsed) and LLM time (sum of per-turn assistant durations from the session export). Captures agent system prompts, tool definitions, multi-turn loop, and reasoning overhead — the actual latency a user experiences, not raw inference tok/s.
+   - Script: [`scripts/bench/bench_agent_tool_call.py`](../../../scripts/bench/bench_agent_tool_call.py)
+   - Config switcher: [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py)
 
 **Why this matters:** Raw benchmarks show 45-85 tok/s for these models. But agent workloads include 2,000-4,000 token system prompts, multiple API round-trips, and reasoning amplification. Measured end-to-end, `opencode run "Hi"` takes 80s vs 2.7s raw curl for the same model — a 30x gap ([analysis](../../../docs/clients/opencode-analysis.md)).
 
@@ -54,21 +57,21 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **llmster** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
-| IBM Granite 4.1 30B Q8_0 | **llmster** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s | |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥈 | **1.51 - 1.53 s** 🥈 | 5.64 s |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥉 | **1.51 - 1.53 s** 🥉 | 5.64 s |
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
+| IBM Granite 4.1 30B Q8_0 | **llmster** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | ✅ **5/5** | 3.28 - 13.14 s | 2.87 - 3.84 s | 11.65 s |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | ✅ **5/5** | 1.31 - 6.63 s | 2.50 - 9.80 s | 15.48 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s | 1.42 - 2.70 s | 6.99 s |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s | 1.42 - 2.70 s | 6.99 s ⚠ |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
@@ -83,23 +86,23 @@ Rows ordered by browse wall time (ascending).
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🥈** / 6.15 s | 2 / 2 turns; `webfetch`. Prior production main (2026-05-03). Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader** — 42% faster than prior best (5.05 s prithivMLmods). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
-| IBM Granite 4.1 30B Q8_0 | **llmster** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2 / 2 turns; `webfetch`. **Active production main (2026-05-05)**. Dense 30B, non-thinking, 24.8 tok/s gen.<br>Apache 2.0. See [per-model](../per-model/model-summary-granite-4.1.md). Raw: [`agent-bench-llmster.json`](granite-4.1-30b-q8/agent-bench-llmster.json). |
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. **Prior production main (2026-05-02)**. MoE 35B/3B active + VL, thinking-on.<br>Search +1.55 s vs HauhauCS sibling. See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
-| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | 5.11 s 🥉 / 3.94 s | **6.37 s 🏆** / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**Fastest search in doc.** 6.3× browse, 4.0× search vs Qwen3.6-27B 6bit on llmster.<br>See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. Prior llmster main (2026-05-02). MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE.<br>Sweeps both scenarios on the 2026-04-30 prompt set. |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Close behind JANG_4K on browse;<br>search splits into top-stories + item fetches. |
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. Prior production main (2026-05-03), superseded by TrevorJS Gemma 4 26B A4B. Dense 40B all-active, thinking-on (Deckard/PDK).<br>See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost.<br>Slower than Qwen 35B-A3Bs, no thinking overhead. |
-| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2 / 3 turns; `webfetch`. 87% draft accept.<br>**13% faster browse vs llmster** (smaller 27B target);<br>**2.1× slower search** — growing context favors prefill. [Raw](qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json). |
-| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | **31.96 s / 30.74 s** | **25.71 s / 24.51 s** | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>**3.1× browse, 4.9× search** vs vllm-mlx (same model file).<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
-| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>**6.6× slower browse** vs standard Gemma 4 31B-it (5.11 s 🥉), **1.8× slower** vs DavidAU 40B (18.73 s).<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
-| MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s / 54.29 s ⚠ | ⛔ **fail** | Browse: 1/3 invalid tool call, 2/3 hit 8K cap. Search: 0/3 zero tool calls.<br>API-level harness w/ single tool *works* — issue is<br>OpenCode's 10-tool catalog + thinking-on, not server. |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🥈** / 6.15 s | 2 / 2 turns; `webfetch`. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader.** 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
+| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | 5.11 s 🥉 / 3.94 s | **6.37 s 🏆** / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**Fastest search in doc.** See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
+| IBM Granite 4.1 30B Q8_0 | **llmster** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2 / 2 turns; `webfetch`. Dense 30B, non-thinking, 24.8 tok/s gen.<br>Apache 2.0. See [per-model](../per-model/model-summary-granite-4.1.md). |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE. |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Search splits into top-stories + item fetches. |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2 / 2 turns; `webfetch`. JANGTQ4 / `mxtq` MoE 35B/3B + VL.<br>Search dominated by 8K-token turn-2 reply on long-context decode. |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. Dense 40B all-active, thinking-on (Deckard/PDK).<br>See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
+| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost. |
+| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2 / 3 turns; `webfetch`. 87% draft accept.<br>**Search 2.1× slower than llmster** — growing context favors prefill. |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | 31.96 s / 30.74 s | 25.71 s / 24.51 s | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
+| MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s ⚠ / 54.29 s | ⛔ **fail** | Browse: 1/3 invalid tool call, 2/3 hit 8K cap. Search: 0/3 zero tool calls.<br>API-level w/ single tool *works* — issue is OpenCode's 10-tool catalog + thinking-on. |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking;<br>one 297 s search outlier. |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 72.75 s / 71.52 s | 135.06 s / 133.87 s | 2 / 3 turns median; `webfetch`, one search run used `bash`.<br>Main port-8000 deployment for fair benchmark.<br>Raw: [`agent-bench-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json). |
-| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`. Standard 6-bit MLX —<br>no JANG mixed-precision speedup;<br>thinking-on dense path is the slowest browse. |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking. |
+| Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`. Standard 6-bit MLX, no JANG speedup.<br>Thinking-on dense path is the slowest browse. |
 
 **2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
 
@@ -211,11 +214,11 @@ Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for 
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s | 2 | `webfetch` | ~10.8K in / ~136 out |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥉 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 25.75 s | 2 | `webfetch` | ~10.8K in / ~135 out |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 72.75 s | 2 | `webfetch` | ~21.9K in / ~140 out |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s | 2 | `webfetch` | ~10.7K in / ~137 out |
 
 The new prompt removes the clarification round the old `Browse github.com` triggered on every model — every model now fires `webfetch https://www.example.com` on turn 1 and emits the page summary on turn 2. Wall-time spread reflects pure inference latency (sparsity + thinking-on density), not model decision-making.
@@ -232,12 +235,12 @@ Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for 
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | **7.35 s 🏆** | 2 | `webfetch` | ~26K | ~13K/turn |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 16.28 s 🥈 | 2 | `webfetch` | ~26K | ~13K/turn |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s | 3 | `webfetch` | ~43K | ~13K/turn |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥉 | 3 | `webfetch` | ~43K | ~13K/turn |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 127.28 s | 2 | `webfetch` | ~23K | ~12K/turn |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | 135.06 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 252.67 s _(was 135.06 s on 1.3.65)_ | 2 | `webfetch` | ~13K | turn 2 = 8,192 out tokens at regressed long-context decode |
 
 The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3 webfetch turns for every model — JANG_4K's 2-turn convergence (it inlines top-id-fetch + top-item-fetch into a single reasoned call) is what gives it the win over Rust LoRA's 3-turn approach. JANGTQ4-CRACK's outlier search wall (one run hit 297 s) is the abliterated TurboQuant kernels stalling under deep thinking, not a tool-loop problem.
 
@@ -245,31 +248,31 @@ The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3
 
 ## 🤖 Results: OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4
 
-**Date:** 2026-05-01
-**Server:** vmlx (MLX Studio bundled Python) on port 8000 with `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`
+**Date:** original 2026-05-01 (vMLX 1.3.65); refreshed **2026-05-05** under vMLX 1.5.20 + `--continuous-batching`
+**Server:** vmlx (MLX Studio bundled Python) on port 8000 with `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 --continuous-batching` (last flag mandatory on 1.5.20+ per [`docs/servers/vmlx/maintenance.md`](../../servers/vmlx/maintenance.md))
 **Architecture:** Qwen3.6 MoE+VL — 35B total, ~3B active, JANGTQ4 / `mxtq`, 262K context
-**Raw JSON:** [`qwen36-35b-a3b-jangtq4-osaurus/`](qwen36-35b-a3b-jangtq4-osaurus/)
+**Raw JSON:** [`qwen36-35b-a3b-jangtq4-osaurus/`](qwen36-35b-a3b-jangtq4-osaurus/) (current files reflect 2026-05-05 refresh; prior numbers preserved in git history)
 
-### API-Level Tool Calling
+### API-Level Tool Calling (2026-05-05 refresh)
 
-| Scenario | Time | Tools Called | Result |
-|:--|--:|:--|:--|
-| Single tool (file read) | 3.28 s | `read_file` | PASS |
-| Single tool (command) | 13.14 s | `run_command` | PASS |
-| Multi-tool (search + read) | 3.84 s | `search_web`, `read_file` | PASS |
-| Multi-tool (list + read + write) | 2.87 s | `list_directory` | PASS |
-| Agentic reasoning | 12.08 s | `run_command` | PASS |
+| Scenario | Time | Tools Called | Result | vs. 2026-05-01 |
+|:--|--:|:--|:--|:--|
+| Single tool (file read) | 1.73 s | `read_file` | PASS | was 3.28 s |
+| Single tool (command) | 1.31 s | `run_command` | PASS | was 13.14 s — large variance run-to-run |
+| Multi-tool (search + read) | 1.84 s | `search_web`, `read_file` | PASS | was 3.84 s |
+| Multi-tool (list + read + write) | 1.68 s | `list_directory` | PASS | was 2.87 s |
+| Agentic reasoning | 6.63 s | `run_command` | PASS | was 12.08 s |
 
-Pass rate: **5/5**. Multi-turn loop completed in **3 turns / 11.65 s**.
+Pass rate: **5/5**. Multi-turn loop completed in **3 turns / 15.48 s** (was 11.65 s — within run-to-run variance, slightly slower because turn 3 generates more tokens).
 
-### OpenCode Agent Benchmark
+### OpenCode Agent Benchmark (2026-05-05 refresh)
 
-| Scenario | Wall median | LLM median | Turns | Tools |
-|:--|--:|--:|--:|:--|
-| Browse www.example.com | 72.75 s | 71.52 s | 2 | `webfetch` |
-| Browse Hackernews latest topic | 135.06 s | 133.87 s | 3 | `webfetch`, `bash` |
+| Scenario | Wall median | LLM median | Turns | Tools | vs. 2026-05-01 |
+|:--|--:|--:|--:|:--|:--|
+| Browse www.example.com | **14.11 s** | 12.9 s | 2 | `webfetch` | **5.2× faster** (was 72.75 s — prefill speedup dominates) |
+| Browse Hackernews latest topic | **252.67 s** | 251.46 s | 2 | `webfetch` | **1.9× slower** (was 135.06 s — turn 2 produces 8,192 output tokens at the regressed long-context decode rate, ~18 tok/s @ 64K vs prior 52 tok/s) |
 
-Key finding: the model works end-to-end with OpenCode tool calls, but remains much slower than the best agent-loop choices because each turn carries large OpenCode prompts and vmlx JANGTQ prefill is ~360 tok/s at short/medium contexts.
+Key finding (2026-05-05): vMLX 1.5.20 changes the latency profile dramatically. Prefill jumps from ~360 tok/s to ~900 tok/s across all contexts (2.5×), but long-context decode regresses 36–65 % at 32–64K. Net effect on agent loops depends on output length — short replies win big, long replies lose.
 
 ---
 
@@ -749,7 +752,7 @@ Cross-model comparison (current best-of-doc on the new 2026-04-30 prompt set):
 ## 🤖 Results: IBM Granite 4.1 30B Q8_0 on llmster
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, GGUF Q8_0 runtime. No parser flags required.
+**Server:** llmster / LM Studio headless on port 1234, GGUF Q8_0 runtime. Loaded with `--identifier granite-4.1-30b-q8 --context-length 65536`. No parser flags required.
 **Architecture:** IBM Granite — dense 30B decoder-only, no MoE, no thinking channel.
 
 ### Typical Inference
@@ -759,6 +762,28 @@ Cross-model comparison (current best-of-doc on the new 2026-04-30 prompt set):
 | 512 tok | 24.8 | 512 | 0.22 |
 | 4K tok | 26.0 | 4K | 0.23 |
 | 32K tok | 18.7 | 32K | 0.36 |
+
+### API-Level Tool Calling (5-tool harness)
+
+Raw JSON: [`granite-4.1-30b-q8/api-tool-test.json`](granite-4.1-30b-q8/api-tool-test.json).
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 2.99 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 1.13 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 1.29 | `tool_calls` | `search_web` |
+| 4 | Multi-tool (list + read + write) | 1.13 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 1.14 | `tool_calls` | `list_directory` |
+
+**Pass rate: 5/5.** LM Studio handles Granite 4.1's tool-call format natively — no `--tool-call-parser` flag at load time.
+
+#### Multi-turn agentic loop (3 turns, total 10.37 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 2.74 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 3.14 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 4.50 | `stop` | — final answer |
 
 ### OpenCode Agent Loop (browse + search)
 
@@ -780,3 +805,109 @@ Raw JSON: [`granite-4.1-30b-q8/agent-bench-llmster.json`](granite-4.1-30b-q8/age
 4. **Apache 2.0 license** — fully permissive, no Gemma Terms / community license restriction.
 
 5. **Tool-call correctness: 5/5.** LM Studio handles Granite 4.1's tool-call format natively.
+
+---
+
+## 🤖 Results: prithivMLmods/Qwen3.6-35B-A3B Aggressive Q6_K
+
+**Date:** 2026-05-02
+**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Loaded with `--identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --context-length 65536`. No parser flags required.
+**Architecture:** Qwen3.6 MoE — 35B total, ~3B active, Q6_K GGUF.
+**Raw JSON:** [`qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json`](qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 1.79 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 1.98 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 4.27 | `tool_calls` | `search_web`, `read_file` |
+| 4 | Multi-tool (list + read + write) | 1.60 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 5.79 | `tool_calls` | `run_command` |
+
+**Pass rate: 5/5.** Tool arguments are well-formed JSON; model emits `run_command` with a `find | sort | head` pipeline for the agentic scenario. LM Studio handles the Qwen3 chat-template tool-call format natively.
+
+#### Multi-turn agentic loop (3 turns, total 5.87 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 1.67 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 2.44 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 1.77 | `stop` | — final answer |
+
+### Caveats
+
+- LM Studio's GGUF runtime handles `<think>` and tool calls natively for this Qwen3 GGUF — no parser flags at load time.
+- **Model key collision:** `lms load qwen3.6-35b-a3b-uncensored-aggressive` matches both prithivMLmods and HauhauCS models; use `--identifier` to pin the stable API id, and `-y` to select non-interactively (picks first alphabetically, which is the prithivMLmods model).
+
+---
+
+## 🤖 Results: Qwen3.6-35B-A3B 4-bit + z-lab/Qwen3.6-35B-A3B-DFlash drafter
+
+**Date:** 2026-04-30
+**Server:** dflash-mlx 0.1.4.1 (`pip install 'git+https://github.com/bstnxbt/dflash-mlx.git'`) + three local patches: [`patch_dflash_mlx_serve.py`](../../../scripts/patches/patch_dflash_mlx_serve.py), [`patch_mlx_lm_match.py`](../../../scripts/patches/patch_mlx_lm_match.py), and (only for 0.1.0) [`patch_dflash_mlx_host.py`](../../../scripts/patches/patch_dflash_mlx_host.py). Started with `--host 0.0.0.0 --port 8098 --temp 0.0 --chat-template-args '{"enable_thinking":false}'`.
+**Architecture:** mlx-community/Qwen3.6-35B-A3B-4bit target + z-lab/Qwen3.6-35B-A3B-DFlash drafter (block-diffusion verifier).
+**Raw JSON:** [`qwen36-35b-a3b-4bit/api-tool-test-dflash-mlx.json`](qwen36-35b-a3b-4bit/api-tool-test-dflash-mlx.json)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 1.84 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 1.88 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 2.23 | `tool_calls` | `search_web`, `read_file` |
+| 4 | Multi-tool (list + read + write) | 1.68 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 6.08 | `tool_calls` | `run_command` |
+
+**Pass rate: 5/5.** Tool calls are well-formed — JSON-encoded `arguments`, correct `function.name`, `type: "function"`, UUID `id`. Reasoning routed to `message.reasoning` (separate from `content`).
+
+#### Multi-turn agentic loop (3 turns, total 5.9 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 2.39 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 1.43 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 2.09 | `stop` | — final answer |
+
+The state-machine reset patch (`patch_mlx_lm_match.py`) is what unblocks turn 2 onward — without it, the second invocation of `match()` after a tool-call match terminal hits `KeyError: None`. The fix is `mlx_lm.generate.match()`'s state machine, not dflash-mlx-specific.
+
+### Caveats
+
+- **Greedy only.** `--temp 0.0` is the bench setting. Higher temperature reduces draft acceptance below 86%, eroding DFlash's win.
+- **Disable thinking for tool-call benches.** `--chat-template-args '{"enable_thinking":false}'` keeps the model from emitting long `<think>` blocks before each tool call. Tool-call correctness unaffected, but bench is 2-4× faster per turn.
+- **Server log telemetry** confirms DFlash is active: per-request lines like `122.3 tok/s | 81.2% accepted | 695 tokens` appear in `/tmp/dflash-mlx.log`.
+
+---
+
+## 🤖 Results: DavidAU/Qwen3.6-40B-Heretic Q6_K IMatrix on llmster
+
+**Date:** 2026-05-03
+**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Loaded with `--identifier qwen36-40b-davidau-heretic-q6k --context-length 131072`. No parser flags required.
+**Architecture:** DavidAU dense **40B** Qwen3.6 derivative, Heretic abliteration, Q6_K IMatrix GGUF.
+**Raw JSON:** [`qwen36-40b-davidau-heretic/api-tool-test.json`](qwen36-40b-davidau-heretic/api-tool-test.json)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 7.47 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 6.39 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 17.63 | `tool_calls` | `search_web`, `read_file` |
+| 4 | Multi-tool (list + read + write) | 7.74 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 15.90 | `tool_calls` | `run_command` |
+
+**Pass rate: 5/5.** Tool calls are well-formed across all scenarios. Dense 40B at 8.8–9.7 tok/s: single-call latencies are 5–8× slower than MoE siblings (prithivMLmods 1.60–5.79 s vs 6.39–17.63 s). LM Studio handles Qwen3 tool-call format natively.
+
+#### Multi-turn agentic loop (3 turns, total 30.31 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 10.35 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 11.88 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 8.08 | `stop` | — final answer |
+
+### Caveats
+
+- Dense 40B at 8.8–9.7 tok/s is expected. Reload prithivMLmods Aggressive Q6_K (`lms load qwen3.6-35b-a3b-uncensored-aggressive --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --context-length 65536 -y`) when throughput matters.
+- LM Studio memory guardrail must be set to `"off"` before loading this model (dense 40B + 131K context) — see `docs/current.md` launch shape for the full toggle recipe.
+- Thinking mode is on by default; the model produces `<think>` reasoning before each tool call, contributing to latency but not blocking tool-call correctness.

@@ -95,7 +95,8 @@ ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; /opt/homebrew/bin/
   BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python; \
   SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapshots/40c1de58e06a9737427e5d64938e56aa339a6204; \
   nohup \$BP/bin/python3 -m vmlx_engine.cli serve \$SNAP --host 0.0.0.0 --port 8000 \
-    --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 > /tmp/vmlx.log 2>&1 &"
+    --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+    --continuous-batching > /tmp/vmlx.log 2>&1 &"
 
 # Switch back to vllm-mlx
 ssh macstudio "pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2"

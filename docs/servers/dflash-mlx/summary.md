@@ -178,8 +178,8 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 - [`docs/models/per-model/`](../../models/per-model/) — per-model deep dives (catalog stub: [`docs/models/model-summary.md`](../../models/model-summary.md))
 - [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../../models/benchmarks/qwen36-35b-a3b-4bit/) — raw bench JSONs
 - [`docs/models/benchmarks/model-benchmark-api-server.md`](../../models/benchmarks/model-benchmark-api-server.md) — cross-server prefill / decode comparison
-- [`docs/models/benchmarks/model-benchmark-api-tool-call.md`](../../models/benchmarks/model-benchmark-api-tool-call.md) — cross-server tool-call latency
-- [`docs/models/benchmarks/model-benchmark-agent-tool-call.md`](../../models/benchmarks/model-benchmark-agent-tool-call.md) — end-to-end agent loop
+- [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — cross-server tool-call latency
+- [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — end-to-end agent loop
 - [`configs/clients/dflash-mlx/opencode.json`](../../../configs/clients/dflash-mlx/opencode.json) — OpenCode template (provisional, mirrors llmster posture)
 - [`scripts/patches/patch_dflash_mlx_serve.py`](../../../scripts/patches/patch_dflash_mlx_serve.py) — dflash-mlx 0.1.4.1 startup + load fixes
 - [`scripts/patches/patch_mlx_lm_match.py`](../../../scripts/patches/patch_mlx_lm_match.py) — mlx-lm tool-detection trie reset

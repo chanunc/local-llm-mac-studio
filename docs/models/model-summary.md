@@ -263,7 +263,7 @@ InclusionAI's `bailing_hybrid` MoE — **104 B total / 7.4 B active** — sparse
 
 mlx-openai-server is **incompatible** — its inference-worker thread design is more deeply thread-coupled than vllm-mlx and patch #3 doesn't apply directly.
 
-**Tool calling** ([`benchmarks/model-benchmark-agent-tool-call.md`](benchmarks/model-benchmark-agent-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)):
+**Tool calling** ([`benchmarks/model-benchmark-tool-call.md`](benchmarks/model-benchmark-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)):
 - API-level: 5/5 single-call pass · 3-turn agentic loop **4.74 s** 🏆 (fastest in this stack)
 - OpenCode end-to-end (2026-04-30): browse 25.75 s · search 29.64 s — third-fastest, behind only the two A3B-sparse Qwen3.6 variants
 

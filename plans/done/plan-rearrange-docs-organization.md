@@ -35,7 +35,7 @@ Sweep references in: `README.md`, `CLAUDE.md`, `AGENTS.md`, `plans/*.md`, `docs/
 |:---|:---|
 | `docs/models/` (root, catalog) | `model-summary.md` |
 | `docs/models/per-model/` | `model-summary-ling.md`, `model-summary-mimo-v2.5.md` |
-| `docs/models/benchmarks/` (already exists with JSON results) | `model-benchmark-agent-tool-call.md`, `model-benchmark-api-server.md`, `model-benchmark-standalone.md`, `model-benchmark-turboquant-jang.md` |
+| `docs/models/benchmarks/` (already exists with JSON results) | `model-benchmark-tool-call.md`, `model-benchmark-api-server.md`, `model-benchmark-standalone.md`, `model-benchmark-turboquant-jang.md` |
 | `docs/models/how-to/` | `model-conversion-gguf-mlx.md`, `model-qwen-null-think-template-test.md` |
 | (untouched — submodule) | `docs/models/uncen-model/` |
 

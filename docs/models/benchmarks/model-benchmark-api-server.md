@@ -149,44 +149,45 @@ A ~15-line wrapper script intercepts `mlx_lm.load()` / `mlx_lm.utils.load()` and
 
 Model: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4`  
 Server: `vmlx` (MLX Studio bundled Python), main port 8000  
-Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
+Tested on **Mac Studio M3 Ultra (96 GB)** — original May 1, 2026 (vMLX 1.3.65); refreshed May 5, 2026 under vMLX 1.5.20 + `--continuous-batching`.
 
-Raw JSON: [`qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json)
+Raw JSON: [`qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json`](qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json) — current file reflects the 2026-05-05 refresh; prior 2026-05-01 numbers preserved in git history.
 
 ### Generation Speed (tok/s)
 
-| Context | vmlx |
-|:--|--:|
-| 512 | 64.9 |
-| 4K | 64.8 |
-| 8K | 64.0 |
-| 32K | 58.8 |
-| 64K | 52.6 |
+| Context | vMLX 1.5.20 (2026-05-05) | vMLX 1.3.65 (2026-05-01) |
+|:--|--:|--:|
+| 512 | 65.7 | 64.9 |
+| 4K | 64.0 | 64.8 |
+| 8K | 61.1 | 64.0 |
+| 32K | **37.4** | 58.8 |
+| 64K | **18.4** | 52.6 |
 
 ### Prefill Speed (tok/s)
 
-| Context | vmlx |
-|:--|--:|
-| 512 | 359.7 |
-| 4K | 365.1 |
-| 8K | 362.0 |
-| 32K | 346.3 |
-| 64K | 325.7 |
+| Context | vMLX 1.5.20 (2026-05-05) | vMLX 1.3.65 (2026-05-01) |
+|:--|--:|--:|
+| 512 | **919** | 359.7 |
+| 4K | **990** | 365.1 |
+| 8K | **956** | 362.0 |
+| 32K | **877** | 346.3 |
+| 64K | **758** | 325.7 |
 
 ### Time to First Token
 
-| Context | TTFT |
-|:--|--:|
-| 512 | 1.49 s |
-| 4K | 11.29 s |
-| 8K | 22.70 s |
-| 32K | 94.71 s |
-| 64K | 201.32 s |
+| Context | vMLX 1.5.20 | vMLX 1.3.65 |
+|:--|--:|--:|
+| 512 | **0.58 s** | 1.49 s |
+| 4K | **4.16 s** | 11.29 s |
+| 8K | **8.59 s** | 22.70 s |
+| 32K | **37.36 s** | 94.71 s |
+| 64K | **86.52 s** | 201.32 s |
 
 Notes:
-- Startup logs confirmed native JANGTQ VLM fast path: `load_jangtq_vlm`, 120 TurboQuant modules replaced, and no fallback warning.
-- Decode is stable around 64 tok/s through 8K and 52.6 tok/s at 64K.
-- Agent-loop latency is dominated by prefill: OpenCode sends ~11K tokens on first turn and grows to ~42K tokens for the Hacker News scenario.
+- vMLX 1.5.20 (with `--continuous-batching` mandatory — see [`docs/servers/vmlx/maintenance.md`](../servers/vmlx/maintenance.md)) **ships ~2.5× faster prefill** at every context length, cutting TTFT by 57-63 %. Net win for prefill-bound agent loops.
+- **Long-context decode regression:** gen falls 36 % @ 32K and 65 % @ 64K versus the prior runtime. Tasks generating >2K output tokens at >16K input feel noticeably slower (see the OpenCode search result in [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md)).
+- Startup logs (both runtimes) confirm native JANGTQ VLM fast path: `load_jangtq_vlm`, 120 TurboQuant modules replaced, no fallback warning.
+- Agent-loop latency in 1.3.65 was dominated by prefill (OpenCode sends ~11K tokens on first turn, growing to ~42K). With 1.5.20's prefill speedup, agent loops are now decode-bound at long context.
 
 ---
 
@@ -479,7 +480,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 23, 2026.
 - vllm-mlx + this model returns `usage.prompt_tokens=0` for both streaming and non-streaming responses; prefill rates above are computed against the actual chat-templated token counts measured locally with the model's own tokenizer (536 / 4,121 / 8,216 / 32,792 / 65,561 tokens for the 5 contexts respectively). The `notes` field in the raw JSON records this.
 - 128K not tested — extrapolating from the 32K → 64K curve (TTFT 2.3× per context doubling), 128K TTFT would land around ~9-10 minutes per request, outside a useful interactive band for a dense 27B
 - Compared to `Qwen3.6-35B-A3B (6-bit)` on `mlx-openai-server` at the same contexts: dense 27B is **~30-40% slower at gen** (27.0 vs 40.3 tok/s @ 64K) and **~5× slower at prefill** (274 vs 1,408 tok/s @ 64K). The MoE 3B-active sibling wins decisively for through-server throughput; the dense 27B's value is on quality (full 27B params per token) and the JANG mixed-precision compression
-- Tool calling and `<think>` reasoning both work via this server config — see [`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m) for API-level + agentic-loop results
+- Tool calling and `<think>` reasoning both work via this server config — see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#results-jangq-aiqwen36-27b-jang_4m) for API-level + agentic-loop results
 - Vision input is NOT exposed: vllm-mlx loads the model as `MLLM=False` (text-only). For VL inference, deploy on `vmlx` (MLX Studio bundled Python) or `mlx-openai-server` with the `multimodal` handler — neither has been validated for this specific model
 
 ---
@@ -527,7 +528,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 - **Generation speed is ~10–20 % slower than vllm-mlx + JANG 4M** at equal contexts (e.g. 512: 29.9 vs 36.5 tok/s; 32K: 26.3 vs 30.9 tok/s). Expected: 6-bit uniform > 4.45-bit mixed on memory bandwidth. The big win is prefill, not decode.
 - 64K not tested on llmster — context-length limit was set to 65,536 at load time but the bench's 64K filler probe pushed past the model's hard ceiling (resolved: ran 4 contexts instead of 5).
 - vllm-mlx baseline for this exact model file (`mlx-community/Qwen3.6-27B-6bit`) was never run for the api-server benchmark — only agent-bench. Direct vs JANG-variant comparison is the closest available.
-- Tool calling works out of the box on llmster's MLX runtime — see [`model-benchmark-agent-tool-call.md`](model-benchmark-agent-tool-call.md#results-mlx-communityqwen36-27b-6bit-on-llmster) for the agent-loop comparison (llmster is **3–5× faster than vllm-mlx end-to-end** on the same model file).
+- Tool calling works out of the box on llmster's MLX runtime — see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#results-mlx-communityqwen36-27b-6bit-on-llmster) for the agent-loop comparison (llmster is **3–5× faster than vllm-mlx end-to-end** on the same model file).
 
 ---
 

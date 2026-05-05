@@ -98,14 +98,18 @@ JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch 
 /opt/homebrew/bin/brew services start omlx
 
 # vmlx — JANGTQ CRACK (MLX Studio bundled Python, headless)
-# Tool use + Qwen3 thinking require all three parser flags AND a one-time
+# Tool use + Qwen3 thinking require all four flags AND a one-time
 # source patch (scripts/patches/patch_vmlx_jangtq_mllm_tools.py). See
 # docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models.
+# --continuous-batching is mandatory on vmlx 1.5.20+: without it the MLLM/VLM
+# path crashes (Qwen2Tokenizer.stopping_criteria) and bailing_hybrid text
+# models crash mid-prefill (Stream(gpu, 1) not in thread).
 BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
 SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapshots/40c1de58e06a9737427e5d64938e56aa339a6204
 nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --host 0.0.0.0 --port 8000 \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  --continuous-batching \
   > /tmp/vmlx.log 2>&1 &
 
 # dflash-mlx — speculative-decoding sidecar on port 8098 (NOT 8000). Pairs a
@@ -306,7 +310,7 @@ Hybrid Gated DeltaNet pays off at long context — Qwen3.6's 35.6 tok/s @ 128K i
 | Qwen3.5-35B-A3B JANG 4K | oMLX (Mar leaderboard) | 33.8 | 295 | — |
 | Gemma 4 26B-A4B 4-bit (MoE + VL) | mlx-openai-server | 27.1 | 1,995 | 66 |
 
-Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md) · [API Server](docs/models/benchmarks/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/benchmarks/model-benchmark-turboquant-jang.md) · [Agent Tool-Call](docs/models/benchmarks/model-benchmark-agent-tool-call.md)
+Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md) · [API Server](docs/models/benchmarks/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/benchmarks/model-benchmark-turboquant-jang.md) · [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call.md)
 
 ---
 
@@ -328,9 +332,9 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 - **oMLX** — No GGUF, no MXFP8, starlette 1.0 dashboard bug ([#361](https://github.com/jundot/omlx/issues/361)). JANG+Nemotron-H matmul mismatch ([details](docs/servers/omlx/jang-fork.md)). [Maintenance](docs/servers/omlx/maintenance.md)
 - **mlx-openai-server** — No Anthropic API, single-request queue, 15% overhead at 64K context, tool arg string bug ([patch](scripts/patches/patch_mlx_openai_tool_args.py)). [Maintenance](docs/servers/mlx-openai-server/maintenance.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/servers/vllm-mlx/maintenance.md)
-- **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3`. [Maintenance](docs/servers/vmlx/maintenance.md)
+- **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 --continuous-batching` (the last flag is mandatory on vmlx 1.5.20+ — without it MLLM/VLM models crash with `Qwen2Tokenizer.stopping_criteria` and `bailing_hybrid` text models crash with `Stream(gpu, 1) not in thread`). [Maintenance](docs/servers/vmlx/maintenance.md)
 - **dflash-mlx** — Standard MLX safetensors only (no JANG/JANGTQ/`bailing_hybrid`/GGUF). PyPI 0.1.0 has no tool-calling — install 0.1.4.1+ from `git+https://github.com/bstnxbt/dflash-mlx.git`. Three local patches required after install: [`patch_dflash_mlx_serve.py`](scripts/patches/patch_dflash_mlx_serve.py) (two upstream bugs), [`patch_mlx_lm_match.py`](scripts/patches/patch_mlx_lm_match.py) (tool-detection trie reset). Built-in `DRAFT_REGISTRY` does not include Qwen3.6 pairs — always pass `--draft-model` explicitly. OpenAI API only. [Runbook](docs/servers/dflash-mlx/summary.md)
-- **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
+- **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/per-model/model-summary-nemotron.md#nemotron-server-compatibility)

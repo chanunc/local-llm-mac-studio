@@ -123,27 +123,41 @@ JANGTQ4 / `mxtq` quantization of the 35B/3B-active Qwen3.6 MoE+VL model, served 
 | Context Size | 262K native |
 | License | Apache-2.0 |
 
-**Current server:** `vmlx` on port 8000 (deployed 2026-05-01). Startup logs confirm native JANGTQ VLM fast path (`load_jangtq_vlm`), 120 TurboQuant modules replaced, and no fallback warning.
+**Current server:** `vmlx` on port 8000 (deployed 2026-05-01, refreshed under vMLX 1.5.20 on 2026-05-05). Startup logs confirm native JANGTQ VLM fast path (`load_jangtq_vlm`), 120 TurboQuant modules replaced, and no fallback warning.
 
-**Performance** ([api-server raw](../benchmarks/qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json)):
+**Launch shape** (vmlx 1.5.20 — `--continuous-batching` is mandatory; without it the MLLM/VLM path crashes with `Qwen2Tokenizer has no attribute stopping_criteria` from `mlx_vlm/generate.py:854`):
 
-| Context | Gen tok/s | Prefill tok/s | TTFT |
-|:--|--:|--:|--:|
-| 512 | 64.9 | 359.7 | 1.49 s |
-| 4K | 64.8 | 365.1 | 11.29 s |
-| 8K | 64.0 | 362.0 | 22.70 s |
-| 32K | 58.8 | 346.3 | 94.71 s |
-| 64K | 52.6 | 325.7 | 201.32 s |
+```bash
+BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
+SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapshots/40c1de58e06a9737427e5d64938e56aa339a6204
+nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" --host 0.0.0.0 --port 8000 \
+  --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
+  --continuous-batching > /tmp/vmlx.log 2>&1 &
+```
 
-**Tool / agent benchmark** ([agent raw](../benchmarks/qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json)):
-- API tool harness: 5/5 pass; 3-turn read/write/summary loop completes in 11.65 s.
-- OpenCode browse: 72.75 s wall median / 71.52 s LLM median.
-- OpenCode search: 135.06 s wall median / 133.87 s LLM median.
+**Performance** ([api-server raw](../benchmarks/qwen36-35b-a3b-jangtq4-osaurus/api-server-vmlx.json)) — 2026-05-05 refresh under vMLX 1.5.20 + `--continuous-batching`:
+
+| Context | Gen tok/s | Prefill tok/s | TTFT | vs. 2026-05-01 (vmlx 1.3.65) |
+|:--|--:|--:|--:|:--|
+| 512 | 65.7 | 919 | 0.58 s | gen +1 %, prefill **+155 %**, TTFT −61 % |
+| 4K | 64.0 | 990 | 4.16 s | gen ≈, prefill +171 %, TTFT −63 % |
+| 8K | 61.1 | 956 | 8.59 s | gen −5 %, prefill +164 %, TTFT −62 % |
+| 32K | 37.4 | 877 | 37.36 s | **gen −36 %**, prefill +153 %, TTFT −60 % |
+| 64K | 18.4 | 758 | 86.52 s | **gen −65 %**, prefill +133 %, TTFT −57 % |
+
+vMLX 1.5.20 trades long-context decode throughput for **~2.5× faster prefill across all context lengths**. Net win for prefill-bound agent workloads (large system prompt + tool catalog), net loss for long-output text generation.
+
+**Tool / agent benchmark** ([agent raw](../benchmarks/qwen36-35b-a3b-jangtq4-osaurus/agent-bench-vmlx.json)) — 2026-05-05 refresh:
+- API tool harness: 5/5 pass; 3-turn read/write/summary loop completes in 15.48 s (was 11.65 s in 2026-05-01 — within run-to-run variance).
+- OpenCode browse: **14.11 s wall median** (was 72.75 s — **5.2× faster** thanks to prefill speedup on the small-payload, 2-turn flow).
+- OpenCode search: **252.67 s wall median** (was 135.06 s — **1.9× slower** because turn 2 generated 8,192 output tokens at the regressed long-context decode rate).
 
 **Caveats:**
 - Requires MLX Studio bundled Python + `scripts/patches/patch_vmlx_jangtq_mllm_tools.py`; public `jang-tools` is insufficient.
 - `--smelt` and `--flash-moe` are not compatible with `weight_format=mxtq`.
 - Simple chat can emit natural-language thinking in `content`; OpenCode tool calls still parse correctly in the benchmark.
+- **vMLX 1.5.20 long-context decode regression:** gen tok/s falls 36 % @ 32K and 65 % @ 64K vs. vmlx 1.3.65. Tasks generating >2K output tokens at >16K input context will be noticeably slower. Prefill is faster across the board, so net effect depends on workload shape.
+- **`--continuous-batching` mandatory on vmlx 1.5.20+** — without it the MLLM/VLM path crashes mid-generation. Captured in `docs/servers/vmlx/{summary,maintenance}.md` launch snippets.
 
 ---
 
@@ -176,7 +190,7 @@ Dense 27.3B-parameter sibling of `Qwen3.6-35B-A3B`. Same Qwen3.6 hybrid attentio
 - TTFT: 1.7 s @ 512, 23.8 s @ 8K, 240 s @ 64K
 - ~30-40 % slower gen and ~5× slower prefill than `Qwen3.6-35B-A3B-6bit` on `mlx-openai-server` (the MoE 3B-active sibling) — the dense-vs-MoE tradeoff is exactly as expected at full context
 
-**Tool calling** ([`benchmarks/model-benchmark-agent-tool-call.md`](../benchmarks/model-benchmark-agent-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)):
+**Tool calling** ([`benchmarks/model-benchmark-tool-call.md`](../benchmarks/model-benchmark-tool-call.md#results-jangq-aiqwen36-27b-jang_4m)):
 - API-level: 5/5 single-call pass, 3-turn agentic loop completes in 14.84 s (read → write → summary)
 - Streaming `tool_calls` deltas verified via direct curl
 - OpenCode end-to-end (2026-04-24): browse 114.25 s median, search 163.59 s median (medians across 3 measured runs each; p5-p95 89-251 s browse, 162-266 s search). ~2.7× slower than Qwen3.5-35B-A3B JANG 4K on the same scenarios — the expected dense-vs-sparse gap at OpenCode's ~10k-token system prompt
@@ -250,7 +264,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **First-time install needs one GUI launch** to bootstrap `~/.lmstudio/bin/lms` after the cask install. Headless-only macOS hosts need a screen-share session for that single step.
 - **Closed-source MLX runtime** — llmster's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
-**See also:** [`docs/servers/llmster/summary.md`](../../servers/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-agent-tool-call.md` § Server comparison](../benchmarks/model-benchmark-agent-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+**See also:** [`docs/servers/llmster/summary.md`](../../servers/llmster/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-tool-call.md` § Server comparison](../benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
 
 ---
 
@@ -636,7 +650,7 @@ Qwen3.6-35B-A3B base with a rank-8 LoRA (alpha 16) trained on **356 K Rust commi
 
 **Server config (vllm-mlx):** standard CLI with `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` (same parser flags as the non-LoRA Qwen3.6 variants — the LoRA-merged weights still emit the Qwen3-coder XML tool-call format).
 
-**Tool calling** ([`benchmarks/model-benchmark-agent-tool-call.md`](../benchmarks/model-benchmark-agent-tool-call.md#results-jedisct1qwen36-35b-rustmlx)):
+**Tool calling** ([`benchmarks/model-benchmark-tool-call.md`](../benchmarks/model-benchmark-tool-call.md#results-jedisct1qwen36-35b-rustmlx)):
 - API-level: 4/5 single-call pass · single-tool 1.42-1.80 s 🥈 · 3-turn agentic loop 6.99 s
 - OpenCode end-to-end (2026-04-30): browse 13.94 s 🥈 · search 26.31 s 🥈 — second-fastest in the stack on both scenarios
 - ⚠ One agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). Other scenarios pass cleanly.

@@ -9,7 +9,7 @@ Canonical: no
 - Runbook: [`docs/servers/dflash-mlx/summary.md`](../../docs/servers/dflash-mlx/summary.md)
 - Patches: [`scripts/patches/patch_dflash_mlx_serve.py`](../../scripts/patches/patch_dflash_mlx_serve.py), [`scripts/patches/patch_mlx_lm_match.py`](../../scripts/patches/patch_mlx_lm_match.py), [`scripts/patches/patch_dflash_mlx_host.py`](../../scripts/patches/patch_dflash_mlx_host.py) (0.1.0 only)
 - Bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../../docs/models/benchmarks/qwen36-35b-a3b-4bit/)
-- Cross-model summary: [`docs/models/benchmarks/model-benchmark-api-tool-call.md`](../../docs/models/benchmarks/model-benchmark-api-tool-call.md) (new)
+- Cross-model summary: [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../docs/models/benchmarks/model-benchmark-tool-call.md) (new)
 - Catalog entry: [`docs/models/per-model/model-summary-qwen-3-6.md` § Qwen3.6-35B-A3B (4-bit)](../../docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit)
 - Client config: [`configs/clients/dflash-mlx/opencode.json`](../../configs/clients/dflash-mlx/opencode.json) (provisional, OpenCode-only)
 - Production primary unchanged (still Ling-2.6-flash on `vllm-mlx` :8000); dflash-mlx runs as a sidecar on :8098.
@@ -235,10 +235,10 @@ Production primary (`vllm-mlx` running Ling-2.6-flash on port 8000) shares the M
 
 37. The three JSON files from Phase 4 (steps 17, 19, 21) are already at the correct paths.
 38. Update `docs/models/benchmarks/model-benchmark-api-server.md` — add a row for `qwen36-35b-a3b-4bit + dflash-mlx`, link the JSON.
-39. Update `docs/models/benchmarks/model-benchmark-agent-tool-call.md` — add a row, link the JSON, include the headline speedup vs llmster on Qwen3.6-27B if material.
+39. Update `docs/models/benchmarks/model-benchmark-tool-call.md` — add a row, link the JSON, include the headline speedup vs llmster on Qwen3.6-27B if material.
 40. **Decision point — `model-benchmark-tool-call.md`?** No such file exists yet for tool-call API benches. Two options:
-    - **(a)** Create `docs/models/benchmarks/model-benchmark-api-tool-call.md` mirroring `model-benchmark-agent-tool-call.md`.
-    - **(b)** Roll the API tool-call results into a section of `model-benchmark-agent-tool-call.md`.
+    - **(a)** Create `docs/models/benchmarks/model-benchmark-tool-call.md` mirroring `model-benchmark-tool-call.md`.
+    - **(b)** Roll the API tool-call results into a section of `model-benchmark-tool-call.md`.
 
     **Recommended: (a)** for searchability and to keep Sync Policy honest. Small file, easy index lookup.
 41. README.md Benchmarks section — update the headline tables only if a new fastest/slowest extreme emerges (e.g., dflash-mlx beats llmster's ~26-32 s end-to-end on a comparable model, or fails to).
@@ -284,8 +284,8 @@ Production primary (`vllm-mlx` running Ling-2.6-flash on port 8000) shares the M
 - `docs/models/benchmarks/qwen36-35b-a3b-4bit/api-tool-test-dflash-mlx.json`
 - `docs/models/benchmarks/qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json`
 - `docs/models/benchmarks/model-benchmark-api-server.md` — new row
-- `docs/models/benchmarks/model-benchmark-agent-tool-call.md` — new row
-- `docs/models/benchmarks/model-benchmark-api-tool-call.md` — **new file** if option 40a is chosen
+- `docs/models/benchmarks/model-benchmark-tool-call.md` — new row
+- `docs/models/benchmarks/model-benchmark-tool-call.md` — **new file** if option 40a is chosen
 
 **Plan lifecycle:**
 - `plans/done/plan-dflash-mlx-deploy.md` (after merge)
@@ -305,6 +305,6 @@ Production primary (`vllm-mlx` running Ling-2.6-flash on port 8000) shares the M
 1. OK to consume ~24 GB of disk on macstudio for the target+drafter pair?
 2. Is now an acceptable maintenance window for Phase 4 (~2 hrs of Ling-2.6-flash downtime) — or schedule it?
 3. **Sync Policy decision — option 34**: add a sibling 4-bit entry next to the existing 6-bit `model-summary.md` row (recommended), or append as a Variants sub-row?
-4. **Sync Policy decision — option 40**: create `docs/models/benchmarks/model-benchmark-api-tool-call.md` (recommended) or fold the API tool-call results into the existing agent-tool-call file?
+4. **Sync Policy decision — option 40**: create `docs/models/benchmarks/model-benchmark-tool-call.md` (recommended) or fold the API tool-call results into the existing agent-tool-call file?
 5. Provisional client-config posture (mirrors llmster: `opencode.json` only) — agreed, or backfill the full client config set up front?
 6. Default port for dflash-mlx: stick with the upstream default `8098`, or override to a different port? (Not 8000 — production primary needs that.)

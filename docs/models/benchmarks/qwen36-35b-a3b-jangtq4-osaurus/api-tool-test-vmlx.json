@@ -5,9 +5,9 @@
     {
       "scenario": "Single tool (file read)",
       "prompt": "Read the file /tmp/notes.txt and tell me its contents",
-      "time_s": 3.28,
-      "output_tokens": 85,
-      "rate_tps": 25.9,
+      "time_s": 1.73,
+      "output_tokens": 80,
+      "rate_tps": 46.3,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "read_file"
@@ -19,9 +19,9 @@
     {
       "scenario": "Single tool (command)",
       "prompt": "Run uptime to check system status",
-      "time_s": 13.14,
-      "output_tokens": 750,
-      "rate_tps": 57.1,
+      "time_s": 1.31,
+      "output_tokens": 66,
+      "rate_tps": 50.5,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "run_command"
@@ -33,9 +33,9 @@
     {
       "scenario": "Multi-tool (search + read)",
       "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
-      "time_s": 3.84,
-      "output_tokens": 152,
-      "rate_tps": 39.6,
+      "time_s": 1.84,
+      "output_tokens": 104,
+      "rate_tps": 56.4,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "search_web",
@@ -49,9 +49,9 @@
     {
       "scenario": "Multi-tool (list + read + write)",
       "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
-      "time_s": 2.87,
-      "output_tokens": 84,
-      "rate_tps": 29.3,
+      "time_s": 1.68,
+      "output_tokens": 92,
+      "rate_tps": 54.7,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "list_directory"
@@ -63,23 +63,23 @@
     {
       "scenario": "Agentic reasoning",
       "prompt": "Find the largest file in /tmp",
-      "time_s": 12.08,
-      "output_tokens": 685,
-      "rate_tps": 56.7,
+      "time_s": 6.63,
+      "output_tokens": 451,
+      "rate_tps": 68.0,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "run_command"
       ],
       "tool_args": [
-        "{\"cmd\": \"find /tmp -type f -printf '%s %p\\\\n' 2>/dev/null | sort -n -r | head -n 1\"}"
+        "{\"cmd\": \"find /tmp -type f -exec ls -l {} \\\\; 2>/dev/null | sort -k5 -n -r | head -n 1\"}"
       ]
     }
   ],
   "multi_turn": [
     {
       "turn": 1,
-      "time_s": 3.02,
-      "output_tokens": 93,
+      "time_s": 2.5,
+      "output_tokens": 149,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "read_file"
@@ -87,8 +87,8 @@
     },
     {
       "turn": 2,
-      "time_s": 4.39,
-      "output_tokens": 166,
+      "time_s": 3.18,
+      "output_tokens": 193,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "write_file"
@@ -96,12 +96,14 @@
     },
     {
       "turn": 3,
-      "time_s": 4.24,
-      "output_tokens": 142,
-      "finish_reason": "stop",
-      "tool_calls": []
+      "time_s": 9.8,
+      "output_tokens": 688,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
     }
   ],
   "total_turns": 3,
-  "total_time_s": 11.65
+  "total_time_s": 15.48
 }

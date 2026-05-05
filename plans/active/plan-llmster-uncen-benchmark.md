@@ -130,7 +130,7 @@ For each: download → load with `--context-length 65536` → bench → unload. 
     - `hermes-43-36b/refusal-rate-llmster.json`
 16. **Decision point — cross-model summary file.** "Refusal-rate" / harmful_behaviors compliance is not currently a benchmark type in the parent repo; the only existing equivalent table lives inside the submodule (`uncen-model-test-results.md`). Two options:
     - **(a) Submodule-only** — keep the table inside the submodule and skip a `model-benchmark-refusal-rate.md` parent file. Cleanest, but breaks the Event 4 "update `docs/models/benchmarks/model-benchmark-<type>.md`" requirement.
-    - **(b) Create `docs/models/benchmarks/model-benchmark-refusal-rate.md`** — new cross-model summary file in the parent, mirrors the structure of `model-benchmark-agent-tool-call.md`, links into the submodule for prompt-level detail. Compliant with Sync Policy; small duplication cost.
+    - **(b) Create `docs/models/benchmarks/model-benchmark-refusal-rate.md`** — new cross-model summary file in the parent, mirrors the structure of `model-benchmark-tool-call.md`, links into the submodule for prompt-level detail. Compliant with Sync Policy; small duplication cost.
 
     Recommended: **(b)**, because it keeps the Sync Policy honest and makes refusal-rate searchable from the parent repo's benchmark index. Flag for explicit user confirmation.
 
@@ -170,7 +170,7 @@ For each: download → load with `--context-length 65536` → bench → unload. 
 
 **Parent repo:**
 - `docs/models/benchmarks/<model-slug>/refusal-rate-llmster.json` — one per slate entry (six files), per-model directory convention from `agent-bench-llmster.json` precedent
-- `docs/models/benchmarks/model-benchmark-refusal-rate.md` (recommended option 16(b)) — new cross-model summary file in the parent, mirrors `model-benchmark-agent-tool-call.md` structure
+- `docs/models/benchmarks/model-benchmark-refusal-rate.md` (recommended option 16(b)) — new cross-model summary file in the parent, mirrors `model-benchmark-tool-call.md` structure
 - `docs/models/model-summary.md` (recommended option 17(b)) — six stub entries linking into the submodule
 - `README.md` — six Models-table rows (only if 17(b) is chosen), plus headline-bench updates if applicable
 - (optional) `scripts/bench_uncen_llmster.py` only if existing `bench_api_server.py` can't cover harmful_behaviors with a fixture swap; otherwise reuse it

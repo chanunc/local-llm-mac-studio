@@ -5,7 +5,7 @@ Created: 2026-04-30
 Completed: 2026-05-01
 Canonical: no
 
-> **Implementation:** All five phases shipped 2026-05-01. Model deployed at `~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit/` (downloaded via `huggingface_hub.snapshot_download` after `lms get` hung at 88% twice — see Phase 5 per-model file for the gotcha). Three benchmarks under `docs/models/benchmarks/gemma-4-31b-it-6bit/`. Per-model file `docs/models/per-model/model-summary-gemma.md` covers both 26B-A4B (migrated from catalog) and 31B-it (new). Headline finding: **6.3× faster browse, 4× faster search vs Qwen3.6-27B on the same llmster** — output 15-23 tok/turn with no thinking-prelude makes Gemma 4 31B-it the new agent-loop champion in `model-benchmark-agent-tool-call.md`.
+> **Implementation:** All five phases shipped 2026-05-01. Model deployed at `~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit/` (downloaded via `huggingface_hub.snapshot_download` after `lms get` hung at 88% twice — see Phase 5 per-model file for the gotcha). Three benchmarks under `docs/models/benchmarks/gemma-4-31b-it-6bit/`. Per-model file `docs/models/per-model/model-summary-gemma.md` covers both 26B-A4B (migrated from catalog) and 31B-it (new). Headline finding: **6.3× faster browse, 4× faster search vs Qwen3.6-27B on the same llmster** — output 15-23 tok/turn with no thinking-prelude makes Gemma 4 31B-it the new agent-loop champion in `model-benchmark-tool-call.md`.
 
 ## Context
 
@@ -181,7 +181,7 @@ Server config block: llmster on 1234, no parser flags (built-in detection). Cave
 - `docs/models/benchmarks/gemma-4-31b-it-6bit/api-tool-test-llmster.json` — produced in 4b.
 - `docs/models/benchmarks/gemma-4-31b-it-6bit/agent-bench-llmster.json` — produced in 4c.
 - `docs/models/benchmarks/model-benchmark-api-server.md` — append a row to the cross-model table; add per-model results section linking the JSON.
-- `docs/models/benchmarks/model-benchmark-agent-tool-call.md` — append a row; add per-model results section linking the JSON. If 4b/4c failed (no tool calls), record the failure mode in the row rather than omitting.
+- `docs/models/benchmarks/model-benchmark-tool-call.md` — append a row; add per-model results section linking the JSON. If 4b/4c failed (no tool calls), record the failure mode in the row rather than omitting.
 - `docs/models/benchmarks/model-benchmark-standalone.md` — only update if Phase 4a establishes a new fastest/slowest extreme on dense 30B-class MLX.
 - `docs/models/README.md` Benchmarks table — **no change** (no new benchmark *type* introduced).
 - `README.md` Benchmarks section — only update if Phase 4 establishes a new fastest/slowest extreme worth surfacing on the front page.
@@ -195,7 +195,7 @@ Server config block: llmster on 1234, no parser flags (built-in detection). Cave
 - `README.md` (add Models table row near the existing 26B-A4B row at `README.md:217`)
 - `docs/models/benchmarks/gemma-4-31b-it-6bit/{api-server-llmster,api-tool-test-llmster,agent-bench-llmster}.json` (new dir + 3 files)
 - `docs/models/benchmarks/model-benchmark-api-server.md` (add row + section)
-- `docs/models/benchmarks/model-benchmark-agent-tool-call.md` (add row + section)
+- `docs/models/benchmarks/model-benchmark-tool-call.md` (add row + section)
 
 Reused (no edits):
 - `scripts/bench/bench_api_server.py`, `scripts/bench/bench_api_tool_call.py`, `scripts/bench/bench_agent_tool_call.py`

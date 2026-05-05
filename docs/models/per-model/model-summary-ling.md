@@ -43,7 +43,7 @@ ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engi
 ## Benchmarks
 
 - API server inference (gen / prefill / TTFT across context lengths, 128K OOM note): [`model-benchmark-api-server.md`](../benchmarks/model-benchmark-api-server.md#ling-26-flash-mlx-6bit-104b7b-active-bailing_hybrid)
-- API-level + OpenCode end-to-end tool calling (5/5 pass, 3-turn loop, browse/search wall times): [`model-benchmark-agent-tool-call.md`](../benchmarks/model-benchmark-agent-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)
+- API-level + OpenCode end-to-end tool calling (5/5 pass, 3-turn loop, browse/search wall times): [`model-benchmark-tool-call.md`](../benchmarks/model-benchmark-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit)
 
 ## Caveats
 

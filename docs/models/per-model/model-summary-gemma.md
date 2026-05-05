@@ -130,7 +130,7 @@ Raw JSON: [`gemma-4-31b-it-6bit/api-server-llmster.json`](../benchmarks/gemma-4-
 | **Single-call pass rate** | — | **5/5** |
 | 3-turn loop (read → write → summary) | **9.8 s** total | ✅ all turns complete |
 
-Median single-tool latency 2.4 s, 3-turn loop 9.8 s — both **about 2× faster than Qwen3.6-27B on llmster** (5.4 s / 20.3 s respectively per the [llmster benchmarks](../benchmarks/model-benchmark-agent-tool-call.md#opencode-end-to-end-opencode-run---format-json-real-agent-loop)).
+Median single-tool latency 2.4 s, 3-turn loop 9.8 s — both **about 2× faster than Qwen3.6-27B on llmster** (5.4 s / 20.3 s respectively per the [llmster benchmarks](../benchmarks/model-benchmark-tool-call.md#opencode-end-to-end-opencode-run---format-json-real-agent-loop)).
 
 Raw JSON: [`gemma-4-31b-it-6bit/api-tool-test-llmster.json`](../benchmarks/gemma-4-31b-it-6bit/api-tool-test-llmster.json).
 

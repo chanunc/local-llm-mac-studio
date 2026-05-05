@@ -1,0 +1,146 @@
+{
+  "harness": "llama-agent (resident PTY, in-process, no API server)",
+  "harness_repo": "https://github.com/gary149/llama-agent",
+  "model": "/Users/chanunc/.lmstudio/models/mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf",
+  "binary": "/Users/chanunc/llama-agent-bin/llama-agent",
+  "max_iterations": 12,
+  "model_load_s": 14.82,
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /private/tmp/bench-llama-agent/notes.txt and tell me its contents",
+      "time_s": 4.0,
+      "iterations": 2,
+      "prompt_tokens": 1970,
+      "output_tokens": 134,
+      "prompt_time_s": 1.61,
+      "gen_time_s": 1.78,
+      "avg_speed_tps": 75.1,
+      "tool_sequence": [
+        "read"
+      ],
+      "expected_any_of": [
+        "read"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 3.94,
+      "iterations": 2,
+      "prompt_tokens": 558,
+      "output_tokens": 170,
+      "prompt_time_s": 0.71,
+      "gen_time_s": 2.21,
+      "avg_speed_tps": 76.9,
+      "tool_sequence": [
+        "bash"
+      ],
+      "expected_any_of": [
+        "bash"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Multi-tool (grep + read)",
+      "prompt": "Search for the string 'charlie' under /private/tmp/bench-llama-agent and read the file you find",
+      "time_s": 5.43,
+      "iterations": 3,
+      "prompt_tokens": 585,
+      "output_tokens": 277,
+      "prompt_time_s": 0.8,
+      "gen_time_s": 3.61,
+      "avg_speed_tps": 76.7,
+      "tool_sequence": [
+        "bash",
+        "read"
+      ],
+      "expected_any_of": [
+        "bash",
+        "glob",
+        "read"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /private/tmp/bench-llama-agent, read the first .txt file, then write a one-line summary to /private/tmp/bench-llama-agent/summary.txt",
+      "time_s": 6.96,
+      "iterations": 4,
+      "prompt_tokens": 639,
+      "output_tokens": 387,
+      "prompt_time_s": 0.96,
+      "gen_time_s": 4.95,
+      "avg_speed_tps": 78.1,
+      "tool_sequence": [
+        "bash",
+        "glob",
+        "bash",
+        "glob",
+        "read",
+        "write"
+      ],
+      "expected_any_of": [
+        "bash",
+        "glob",
+        "read",
+        "write"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file under /private/tmp/bench-llama-agent and report its name",
+      "time_s": 5.19,
+      "iterations": 3,
+      "prompt_tokens": 622,
+      "output_tokens": 224,
+      "prompt_time_s": 0.83,
+      "gen_time_s": 2.91,
+      "avg_speed_tps": 76.9,
+      "tool_sequence": [
+        "bash"
+      ],
+      "expected_any_of": [
+        "bash",
+        "glob",
+        "read"
+      ],
+      "passed": true,
+      "status": "found"
+    }
+  ],
+  "multi_turn": {
+    "prompt": "Read /private/tmp/bench-llama-agent/app/config.json, change port to 8080, write the modified config back to the same path, then summarize.",
+    "time_s": 5.1,
+    "iterations": 3,
+    "prompt_tokens": 707,
+    "output_tokens": 271,
+    "prompt_time_s": 0.95,
+    "gen_time_s": 3.54,
+    "avg_speed_tps": 76.5,
+    "tool_sequence": [
+      "read",
+      "edit"
+    ],
+    "config_after": {
+      "host": "0.0.0.0",
+      "port": 8080,
+      "debug": true
+    },
+    "port_rewritten": true,
+    "passed": true,
+    "status": "found"
+  },
+  "summary": {
+    "single_pass": 5,
+    "single_total": 5,
+    "multi_pass": true,
+    "scenarios_wall_s": 30.62
+  }
+}

@@ -110,6 +110,23 @@ Method: `bench_agent_tool_call.py`, `opencode run --format json`, 3 measured run
 
 Browse is ~2× slower than TrevorJS Gemma 4 26B A4B (2.93 s) but competitive with Gemma 4 31B-it (5.11 s) for a dense 30B GGUF.
 
+### Agent Benchmark (llama-agent in-process, 2026-05-05)
+
+Method: [`bench_agent_local.py`](../../../scripts/bench/bench_agent_local.py) — drives [`gary149/llama-agent`](https://github.com/gary149/llama-agent) (build b9121 pre-built binary) over a PTY, with the model resident across all scenarios. **No OpenAI-compatible server in the path** — inference and the agent loop run in one process. Tools execute for real against a sandbox at `/private/tmp/bench-llama-agent`. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/agent-local.json`](../benchmarks/granite-4.1-30b-q8/agent-local.json). See [`model-benchmark-agent-local.md`](../benchmarks/model-benchmark-agent-local.md) for methodology + harness caveats.
+
+Model load: **3.84 s** (one-time). Steady gen rate per scenario: **21.0–21.4 tok/s** (vs 24.8 tok/s raw streaming via LM Studio — small gap is per-turn agent-loop reset, not server overhead).
+
+| # | Scenario | Wall (s) | Iter | Output tok | tok/s | Tools called |
+|:--|:---------|---------:|-----:|-----------:|------:|:-------------|
+| 1 | Single tool (file read) | 10.11 | 2 | 61 | 21.4 | `read` |
+| 2 | Single tool (command) | 6.60 | 2 | 63 | 21.4 | `bash` |
+| 3 | Multi-tool (grep + read) | 8.69 | 3 | 147 | 21.1 | `glob` → `read` |
+| 4 | Multi-tool (list + read + write) | 11.74 | 4 | 203 | 21.0 | `glob` → `read` → `write` |
+| 5 | Agentic reasoning (largest file) | 12.85 | 4 | 138 | 21.2 | `glob` → `bash` |
+| — | **Multi-turn (port=8080)** | **15.35** | 5 | 265 | 21.0 | `read` → `edit` → `read` → `edit` ✅ port rewritten |
+
+**Pass rate: 6/6.** The multi-turn `read → edit → read → edit` sequence shows the model double-checks the file after editing — real agent behaviour, not a regression. Total scenarios wall: 65.34 s after a single 3.84 s model load.
+
 ### Caveats
 
 - **65K context probe HTTP 400** — Granite 4.1 sliding window boundary; real queries < 32K work fine. Same pattern as Gemma 4 on llmster.

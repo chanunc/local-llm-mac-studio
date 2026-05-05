@@ -1,0 +1,153 @@
+{
+  "harness": "llama-agent (resident PTY, in-process, no API server)",
+  "harness_repo": "https://github.com/gary149/llama-agent",
+  "model": "/Users/chanunc/.lmstudio/models/TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF/gemma-4-26B-A4B-it-uncensored-Q8_0.gguf",
+  "binary": "/Users/chanunc/llama-agent-bin/llama-agent",
+  "max_iterations": 12,
+  "model_load_s": 11.86,
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /private/tmp/bench-llama-agent/notes.txt and tell me its contents",
+      "time_s": 2.78,
+      "iterations": 2,
+      "prompt_tokens": 1737,
+      "output_tokens": 63,
+      "prompt_time_s": 1.42,
+      "gen_time_s": 0.78,
+      "avg_speed_tps": 80.5,
+      "tool_sequence": [
+        "read"
+      ],
+      "expected_any_of": [
+        "read"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 2.39,
+      "iterations": 2,
+      "prompt_tokens": 76,
+      "output_tokens": 74,
+      "prompt_time_s": 0.42,
+      "gen_time_s": 0.93,
+      "avg_speed_tps": 80.0,
+      "tool_sequence": [
+        "bash"
+      ],
+      "expected_any_of": [
+        "bash"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Multi-tool (grep + read)",
+      "prompt": "Search for the string 'charlie' under /private/tmp/bench-llama-agent and read the file you find",
+      "time_s": 4.71,
+      "iterations": 5,
+      "prompt_tokens": 278,
+      "output_tokens": 228,
+      "prompt_time_s": 0.8,
+      "gen_time_s": 2.86,
+      "avg_speed_tps": 79.7,
+      "tool_sequence": [
+        "update_plan",
+        "bash",
+        "read",
+        "update_plan"
+      ],
+      "expected_any_of": [
+        "bash",
+        "glob",
+        "read"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /private/tmp/bench-llama-agent, read the first .txt file, then write a one-line summary to /private/tmp/bench-llama-agent/summary.txt",
+      "time_s": 5.76,
+      "iterations": 6,
+      "prompt_tokens": 402,
+      "output_tokens": 297,
+      "prompt_time_s": 0.98,
+      "gen_time_s": 3.74,
+      "avg_speed_tps": 79.5,
+      "tool_sequence": [
+        "update_plan",
+        "bash",
+        "read",
+        "write",
+        "update_plan"
+      ],
+      "expected_any_of": [
+        "bash",
+        "glob",
+        "read",
+        "write"
+      ],
+      "passed": true,
+      "status": "found"
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file under /private/tmp/bench-llama-agent and report its name",
+      "time_s": 3.6,
+      "iterations": 4,
+      "prompt_tokens": 196,
+      "output_tokens": 154,
+      "prompt_time_s": 0.66,
+      "gen_time_s": 1.92,
+      "avg_speed_tps": 80.1,
+      "tool_sequence": [
+        "update_plan",
+        "bash",
+        "update_plan"
+      ],
+      "expected_any_of": [
+        "bash",
+        "glob",
+        "read"
+      ],
+      "passed": true,
+      "status": "found"
+    }
+  ],
+  "multi_turn": {
+    "prompt": "Read /private/tmp/bench-llama-agent/app/config.json, change port to 8080, write the modified config back to the same path, then summarize.",
+    "time_s": 7.92,
+    "iterations": 7,
+    "prompt_tokens": 725,
+    "output_tokens": 485,
+    "prompt_time_s": 1.18,
+    "gen_time_s": 6.11,
+    "avg_speed_tps": 79.4,
+    "tool_sequence": [
+      "update_plan",
+      "read",
+      "edit",
+      "update_plan",
+      "read",
+      "update_plan"
+    ],
+    "config_after": {
+      "host": "0.0.0.0",
+      "port": 8080,
+      "debug": true
+    },
+    "port_rewritten": true,
+    "passed": true,
+    "status": "found"
+  },
+  "summary": {
+    "single_pass": 5,
+    "single_total": 5,
+    "multi_pass": true,
+    "scenarios_wall_s": 27.16
+  }
+}

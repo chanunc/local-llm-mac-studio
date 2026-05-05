@@ -68,15 +68,6 @@
         "maxTokens": 8192
       },
       {
-        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
-        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)",
-        "reasoning": true,
-        "input": ["text"],
-        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-        "contextWindow": 262144,
-        "maxTokens": 8192
-      },
-      {
         "id": "RepublicOfKorokke/Nemotron-Cascade-2-30B-A3B-mlx-nvfp4",
         "name": "Nemotron Cascade 2 30B-A3B nvfp4 (Mamba-2 Hybrid)",
         "reasoning": true,

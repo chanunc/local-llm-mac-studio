@@ -256,6 +256,8 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 
 ## HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P
 
+> **Removed from disk 2026-05-05** — deleted from both `~/.lmstudio/models/` and `~/.cache/hauhau-gguf/` during the post-Granite storage cleanup. Re-download from `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced` if needed.
+
 Same dense 27.3B Qwen3.6 base as the MLX and JANG variants above, but packed as a custom HauhauCS GGUF `Q8_K_P` quant tuned for minimal quality loss at GGUF-compatible runtimes. Deployed on `llmster` on 2026-05-01 because LM Studio is the only server in this stack that can host GGUF directly without conversion.
 
 | Spec | Value |

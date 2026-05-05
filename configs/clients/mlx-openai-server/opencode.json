@@ -56,13 +56,6 @@
             "context": 262144,
             "output": 8192
           }
-        },
-        "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K": {
-          "name": "Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)",
-          "limit": {
-            "context": 262144,
-            "output": 8192
-          }
         }
       }
     }

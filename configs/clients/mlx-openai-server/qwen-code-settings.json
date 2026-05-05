@@ -1,14 +1,7 @@
 {
-  "_comment": "qwen-code settings for mlx-openai-server on Mac Studio. Default model is Qwen3.5-35B-A3B JANG 4K (currently loaded per mlx-openai-server-multimodel.yaml). mlx-openai-server does not require auth, but qwen-code expects an envKey — set MACSTUDIO_API_KEY=not-needed. Install target: ~/.qwen/settings.json.",
+  "_comment": "qwen-code settings for mlx-openai-server on Mac Studio. Default model is Qwen3.6-35B-A3B-6bit. mlx-openai-server does not require auth, but qwen-code expects an envKey — set MACSTUDIO_API_KEY=not-needed. Install target: ~/.qwen/settings.json.",
   "modelProviders": {
     "openai": [
-      {
-        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
-        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mac Studio, Primary)",
-        "description": "MoE 35B/3B, JANG mixed precision, 262K context — default for mlx-openai-server",
-        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
-        "envKey": "MACSTUDIO_API_KEY"
-      },
       {
         "id": "mlx-community/Qwen3.6-35B-A3B-6bit",
         "name": "Qwen3.6-35B-A3B 6-bit (Hybrid MoE + Vision, Thinking)",
@@ -44,6 +37,6 @@
     }
   },
   "model": {
-    "name": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
+    "name": "mlx-community/Qwen3.6-35B-A3B-6bit"
   }
 }

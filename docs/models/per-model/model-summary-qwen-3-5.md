@@ -86,6 +86,8 @@ JANG 2-bit quantization of the 122B MoE model. Uses aggressive mixed-precision: 
 
 ## 🤖 Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)
 
+> **Removed from disk 2026-05-05** — deleted from `~/.omlx/models/` during the post-Granite storage cleanup. Re-download from `JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K` if needed.
+
 First JANG-format model on the oMLX server. Uses adaptive mixed-precision quantization (JANG_4K profile): attention layers at 8-bit for coherence, MoE expert layers at 4-bit for compression. Same base architecture as the MLX 8-bit variant but **48% smaller** (19GB vs 37GB) with sub-second model loading via zero-copy mmap.
 
 | Spec | Value |

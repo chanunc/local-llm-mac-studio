@@ -1,14 +1,7 @@
 {
-  "_comment": "qwen-code settings for oMLX on Mac Studio. oMLX requires an API key — export MACSTUDIO_API_KEY=<YOUR_API_KEY> or replace the env value below. Default model is Qwen3.5-35B-A3B JANG 4K. Install target: ~/.qwen/settings.json.",
+  "_comment": "qwen-code settings for oMLX on Mac Studio. oMLX requires an API key — export MACSTUDIO_API_KEY=<YOUR_API_KEY> or replace the env value below. Default model is Qwen3.5-122B-A10B JANG 2S. Install target: ~/.qwen/settings.json.",
   "modelProviders": {
     "openai": [
-      {
-        "id": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K",
-        "name": "Qwen3.5-35B-A3B JANG 4-bit (Mac Studio, Primary)",
-        "description": "MoE 35B/3B, JANG mixed precision, 262K context — default for oMLX",
-        "baseUrl": "http://<MAC_STUDIO_IP>:8000/v1",
-        "envKey": "MACSTUDIO_API_KEY"
-      },
       {
         "id": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S",
         "name": "Qwen3.5-122B-A10B JANG 2S (Compact 122B)",
@@ -50,6 +43,6 @@
     }
   },
   "model": {
-    "name": "JANGQ-AI/Qwen3.5-35B-A3B-JANG_4K"
+    "name": "JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S"
   }
 }

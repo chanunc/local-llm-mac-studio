@@ -8,7 +8,7 @@ Last verified: 2026-05-06
 
 | Field | Value |
 |:--|:--|
-| Server | `mlx-lm server` (`python -m mlx_lm server`, direct) |
+| Server | `mlx_lm.server` (homebrew Cellar libexec binary, direct) |
 | Model | `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX, Apache 2.0) |
 | Port | `8000` |
 | Auth | None |
@@ -21,15 +21,22 @@ Launch shape (after Event-4 hygiene):
 # Model is already on disk at ~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit
 # (downloaded via snapshot_download 2026-05-01)
 
-ssh macstudio "nohup python3 -m mlx_lm server \
+ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
   --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
   --host 0.0.0.0 --port 8000 \
-  --max-tokens 8192 --prompt-cache-size 5 \
+  --max-tokens 8192 \
   > /tmp/mlx-lm-server.log 2>&1 &"
 ```
 
 Notes:
-- Gemma 4 31B-it MLX 6-bit deployed 2026-05-06 on mlx-lm server (direct `python -m mlx_lm server`). Using the simpler mlx-lm server path (not mlx-openai-server) because: (1) `python -m mlx_lm server` supports `--draft-model` for future MTP speculative decoding; (2) mlx-openai-server YAML config doesn't expose the same flag. The MTP drafter (`mlx-community/gemma-4-31B-it-assistant-bf16`, 839 MB) is already cached at `~/.cache/huggingface/hub/models--mlx-community--gemma-4-31B-it-assistant-bf16/snapshots/28e92270316e89288579ec59c17939541d9ca433` — add `--draft-model <snap-path> --num-draft-tokens 3` once mlx-lm adds `gemma4_assistant` arch support.
+- Gemma 4 31B-it MLX 6-bit deployed 2026-05-06 on mlx-lm server (direct `mlx_lm.server`). Using the simpler mlx-lm server path (not mlx-openai-server) because: (1) `mlx_lm.server` supports `--draft-model` for future MTP speculative decoding; (2) mlx-openai-server YAML config doesn't expose the same flag.
+- **Production-ready binary path**: `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Python 3.14 venv inside the homebrew formula). The system `python3 -m mlx_lm` and `/opt/homebrew/bin/mlx_lm.server` (which links to python3.11/oMLX's older `mlx_lm`) both fail — the python3.11 install lacks Gemma 4 support. Always launch via the Cellar libexec binary.
+- **MTP drafter experiment (2026-05-06) — failed agent-incompatible.** Tried `mlx-community/gemma-4-31B-it-assistant-bf16` (`gemma4_assistant` MTP drafter) paired with the bf16 base via `mlx-vlm 0.5.0` from main (PyPI 0.4.4 lacks the `speculative` submodule). Install includes [PR #1112](https://github.com/Blaizzy/mlx-vlm/pull/1112) (drafter), [#1115](https://github.com/Blaizzy/mlx-vlm/pull/1115) (server dispatch), [#1117](https://github.com/Blaizzy/mlx-vlm/pull/1117) (batching follow-up + `MLX_VLM_SPEC_BATCH_WAIT_MS`). Two passes done — *with* and *without* the coalesce env var — both yielded **8/8 opencode timeouts**. The drafter itself works at upstream-expected efficiency (12.3 tok/s @ 8K, 3.07–4.29 acc/round, matches maintainer's PR #1115 B=1 reference). Two blockers diagnosed, both independent of the drafter PRs:
+   1. **mlx-vlm streaming hangs on long-reasoning prompts.** Trivial prompts stream cleanly (`"Reply ok"` → 35 chunks in 2.69 s, `finish_reason: stop`). Agent-style prompts (`"Browse www.example.com"`) flush 0 SSE chunks for 360 s. Server returns 200 eventually but no chunks during generation. Reproducible. `chat_template.jinja` verified byte-identical to 6-bit's working template (16,448 bytes, no diff) — issue [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Likely an upstream bug in mlx-vlm's speculative streaming flush path on long-reasoning generations; worth filing.
+   2. **Even with streaming fixed, decode is too slow for agent loops.** Server logs show `[MTP] batch=1 tokens=8192 accept=4.29 rounds=1549` per opencode turn — the model burns through its full `max_tokens=8192` reasoning budget before any content. At 12.3 tok/s = 666 s/turn, exceeds opencode's 300 s wall. `MLX_VLM_SPEC_BATCH_WAIT_MS=10` doesn't help (it coalesces concurrent requests into MTP batches, but agent loops are sequential).
+   3. **bf16 OOMs at 32 K+ context** (~118 GB allocation vs 62 GB Metal cap). Independent of the streaming issue.
+
+   Reverted to 6-bit on mlx-lm. mlx-vlm-from-main install kept at `~/mlx-vlm-env/`; bf16 base + drafter weights kept at `~/.cache/huggingface/hub/`. Detail: [`docs/models/per-model/model-summary-gemma.md`](models/per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) and [bench JSONs](models/benchmarks/gemma-4-31b-bf16-mtp/).
 - **Thinking mode ON** — mlx-lm serves Gemma 4 with thinking active by default (via `enable_thinking: true` in chat template). Outputs 3–4× more tokens per turn than the prior llmster run (thinking OFF). This explains the higher agent-loop latency.
 - Current benchmarks: API tool harness 5/5 single-call (20.73 s multi-turn loop); throughput **20.4 tok/s @ 512**, 14.7 tok/s @ 65K; **OpenCode browse 12.33 s / search 35.55 s** (thinking ON). Raw data: [`docs/models/benchmarks/gemma-4-31b-it-mlx-6bit/`](models/benchmarks/gemma-4-31b-it-mlx-6bit/).
 - Prior run on llmster (2026-05-01, thinking OFF): browse **5.11 s / search 6.37 s** — fastest agent-loop in this doc. Restart via `lms load` if low-latency thinking-off is needed (see Fallbacks below).

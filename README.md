@@ -125,15 +125,22 @@ nohup ~/dflash-mlx-env/bin/dflash-serve \
   --temp 0.0 --max-tokens 512 \
   > /tmp/dflash-mlx.log 2>&1 &
 
-# mlx-lm server — CURRENT PRODUCTION MAIN (2026-05-06). Direct python -m mlx_lm server.
+# mlx-lm server — CURRENT PRODUCTION MAIN (2026-05-06). Direct mlx_lm.server binary.
 # Gemma 4 31B-it MLX 6-bit (thinking mode ON, 20.4 tok/s, browse 12.33 s).
-# Model is already on disk at ~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit
-# MTP drafter cached; add --draft-model <path> --num-draft-tokens 3 once mlx-lm
-# adds gemma4_assistant arch support.
-ssh macstudio "nohup python3 -m mlx_lm server \
+# Model is already on disk at ~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit.
+# IMPORTANT — launch via the Cellar libexec binary, NOT /opt/homebrew/bin/mlx_lm.server.
+# /opt/homebrew/bin/mlx_lm.server symlinks to a python3.11 install whose mlx_lm lacks
+# Gemma 4 (raises 'Model type gemma4 not supported'); the Cellar libexec uses python3.14
+# which has full Gemma 4 support.
+# MTP drafter (gemma4_assistant) attempted via mlx-vlm 0.5.0 (PRs #1112/#1115/#1117) on
+# 2026-05-06. Drafter ran at upstream-expected efficiency (matches PR #1115's B=1 reference)
+# but streaming SSE flushed nothing — most likely missing chat_template.jinja per #941.
+# Re-test pending with MLX_VLM_SPEC_BATCH_WAIT_MS=10 + chat-template verification.
+# See docs/models/per-model/model-summary-gemma.md for the writeup.
+ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
   --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
   --host 0.0.0.0 --port 8000 \
-  --max-tokens 8192 --prompt-cache-size 5 \
+  --max-tokens 8192 \
   > /tmp/mlx-lm-server.log 2>&1 &"
 
 # llmster — LM Studio headless on port 1234 (stopped 2026-05-06; prior main: Granite 4.1 30B Q8_0).
@@ -202,7 +209,7 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | Server | Speed | Models | API | Best For |
 |:-------|:-----:|:------:|:----|:---------|
 | **[vllm-mlx](docs/servers/vllm-mlx/summary.md)** | ⚡ Fastest | Single | OpenAI + Anthropic | Daily use — lowest overhead on Apple Silicon |
-| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | **Current production main (2026-05-06):** Gemma 4 31B-it MLX 6-bit on `python -m mlx_lm server` — 20.4 tok/s, browse 12.33 s (thinking ON). Also: mlx-openai-server YAML multi-model mode with prompt caching + speculative decoding. |
+| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | **Current production main (2026-05-06):** Gemma 4 31B-it MLX 6-bit on `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`) — 20.4 tok/s, browse 12.33 s (thinking ON). Also: mlx-openai-server YAML multi-model mode with prompt caching + speculative decoding. |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant JANGTQ models — 64.9 tok/s on Qwen3.6-35B-A3B JANGTQ4 |
 | **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop (thinking OFF) | Standard MLX / GGUF | OpenAI | **Stopped 2026-05-06.** Prior main: `unsloth/granite-4.1-30b-GGUF` Q8_0 (IBM Granite 4.1 30B instruct, 24.8 tok/s, browse 6.24 s). Also on disk: Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**). No JANG/JANGTQ/bailing_hybrid. |
@@ -216,7 +223,7 @@ All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) 
 
 Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) (`llmster` and `dflash-mlx` keep install / runtime / limitations in their single `summary.md`)
 
-Current production main: **mlx-lm server** serving `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX) on port **8000** (deployed 2026-05-06). 5/5 API tool-call smoke + 3-turn loop in **20.73 s** (thinking ON). Dense 31B: **20.4 tok/s gen** @ 512, 14.7 tok/s @ 65K. **OpenCode browse 12.33 s / search 35.55 s** (thinking ON; prior llmster run thinking OFF: 5.11 s / 6.37 s). MTP drafter cached pending mlx-lm `gemma4_assistant` arch support. Prior main: IBM Granite 4.1 30B Q8_0 on llmster (2026-05-05, browse 6.24 s / search 10.51 s) — documented in [`docs/current.md`](docs/current.md) for restart.
+Current production main: **mlx-lm server** serving `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX) on port **8000** (deployed 2026-05-06). 5/5 API tool-call smoke + 3-turn loop in **20.73 s** (thinking ON). Dense 31B: **20.4 tok/s gen** @ 512, 14.7 tok/s @ 65K. **OpenCode browse 12.33 s / search 35.55 s** (thinking ON; prior llmster run thinking OFF: 5.11 s / 6.37 s). MTP drafter end-to-end attempt 2026-05-06 (`mlx-community/gemma-4-31B-it-bf16` + `gemma4_assistant` drafter via mlx-vlm 0.5.0 incl. PRs [#1112](https://github.com/Blaizzy/mlx-vlm/pull/1112)/[#1115](https://github.com/Blaizzy/mlx-vlm/pull/1115)/[#1117](https://github.com/Blaizzy/mlx-vlm/pull/1117)) — drafter at upstream-expected efficiency (3.07–4.29 acc/round, matches PR #1115's B=1 reference) but **two passes both timed out 8/8 in opencode**, with and without `MLX_VLM_SPEC_BATCH_WAIT_MS=10`. Two distinct blockers: (1) mlx-vlm streaming hangs on long-reasoning prompts (trivial prompts stream OK; reproducible bug worth filing upstream), (2) bf16 decode at 12.3 tok/s × 8192-token reasoning budget = 666 s/turn, exceeds opencode's 300 s wall regardless. `chat_template.jinja` byte-identical to working 6-bit's — [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Reverted to 6-bit. Failure analysis: [`docs/models/per-model/model-summary-gemma.md`](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment). Prior main: IBM Granite 4.1 30B Q8_0 on llmster (2026-05-05, browse 6.24 s / search 10.51 s) — documented in [`docs/current.md`](docs/current.md) for restart.
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 

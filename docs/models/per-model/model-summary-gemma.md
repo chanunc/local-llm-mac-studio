@@ -6,6 +6,8 @@ Google's Gemma 4 generation. Four variants currently catalogued in this stack: t
 
 - [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` · 15 GB · 50–62 tok/s
 - [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · **mlx-lm server (current main 2026-05-06)** · 29 GB · 20.4 tok/s @ 512, browse 12.33 s (thinking ON) / browse 5.11 s (thinking OFF on llmster)
+- [Codex GPT-5.5 finding: best next Gemma 4 MTP target for Mac Studio](#codex-gpt-55-finding-best-next-gemma-4-mtp-target-for-mac-studio-2026-05-06) — source-backed recommendation: try `gemma-4-e4b-it-bf16` + E4B assistant before retrying 31B or 26B-A4B MTP
+- [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). **Real blocker: mlx-vlm's streaming SSE emits `delta.tool_calls` only as a final post-loop chunk** (mlx-lm streams them per-token), so opencode hits 300 s wall before the chunk fires. Independent of bf16 vs 6-bit, chat_template, or coalesce env var.
 - [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `llmster` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
 - [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](#trevorjs-gemma-4-26b-a4b-uncensored-q8) — MoE 26B/4B active · 65K loaded · `llmster` · 25.02 GiB · **87.6 tok/s** · 8/10 mlabonne · **browse 2.93 s 🥇** · [bench writeup](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
 
@@ -90,11 +92,18 @@ Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/au
 **Launch shape (mlx-lm server — current production):**
 
 ```bash
-ssh macstudio "nohup python3 -m mlx_lm server \
+ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
   --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
   --host 0.0.0.0 --port 8000 \
-  --max-tokens 8192 --prompt-cache-size 5 \
+  --max-tokens 8192 \
   > /tmp/mlx-lm-server.log 2>&1 &"
+
+# IMPORTANT — use the Cellar libexec binary above, NOT /opt/homebrew/bin/mlx_lm.server.
+# /opt/homebrew/bin/mlx_lm.server is shebanged to /opt/homebrew/opt/python@3.11/bin/python3.11
+# whose mlx_lm install lacks Gemma 4 support and raises "Model type gemma4 not supported".
+# The Cellar libexec wraps python3.14 with the correct mlx-lm 0.31.3 install.
+# Note: --prompt-cache-size is not supported by the Cellar libexec binary; mlx-lm
+# enables an automatic prompt cache by default.
 ```
 
 **Reload on llmster (thinking OFF — for lower-latency agent loops):**
@@ -173,9 +182,208 @@ Raw JSON: [`gemma-4-31b-it-6bit/agent-bench-llmster.json`](../benchmarks/gemma-4
 ### Caveats
 
 - **Thinking mode is server-dependent:** llmster (LM Studio) serves with thinking OFF (model doesn't invoke `<think>` blocks on short tool-calling prompts). mlx-lm server enables thinking by default — output tokens per turn are 3–4× higher and latency is 2.4–5.6× higher as a result. Use llmster if you want lowest-latency thinking-off agent loops; use mlx-lm for future MTP drafter support.
-- **MTP drafter pending mlx-lm arch support:** `mlx-community/gemma-4-31B-it-assistant-bf16` is downloaded (839 MB, `gemma4_assistant` arch) but mlx-lm 0.31.3 raises `ModuleNotFoundError: No module named 'mlx_lm.models.gemma4_assistant'`. Add `--draft-model <snap-path> --num-draft-tokens 3` to the launch shape once upstream merges the arch.
+- **MTP drafter cannot be served via mlx-lm — only via mlx-vlm 0.5.0+ (from main):** `mlx-community/gemma-4-31B-it-assistant-bf16` (839 MB, `gemma4_assistant` arch) is supported in `mlx_vlm/speculative/drafters/gemma4_assistant/`, **not** in mlx-lm. mlx-lm 0.31.3 raises `Model type gemma4_assistant not supported`. PyPI `mlx-vlm 0.4.4` lacks the `mlx_vlm.speculative` submodule entirely; install from main (`pip install 'git+https://github.com/Blaizzy/mlx-vlm.git@main'` → 0.5.0). **The drafter is NOT bf16-locked** — the HF model card only documents bf16 pairings, but source-code review (no dtype assertion in `gemma4_assistant.py`/`config.py`/`parity_check.py`) plus community evidence ([NVIDIA forum's `serapis` ran `Intel/gemma-4-31B-it-int4-AutoRound` + drafter on vLLM for ~2× speedup](https://forums.developer.nvidia.com/t/gemma4-draft-models-are-now-available/369114)) plus our local verification (5/5 API tool-call harness on 6-bit + bf16 drafter, multi-turn loop 16.54 s) confirm any quantization works. **Documented failure mode for opencode-style streaming agent clients (regardless of quantization)** — see "[Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm)](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment)" below for the streaming tool-call emission bug.
 - **`lms get` unreliable for >20 GB models** — use `huggingface_hub.snapshot_download` (see Loader gotcha above).
 - **No vision input** — `Gemma4ForConditionalGeneration` in config.json, but loaded text-only; for multimodal see the 26B-A4B variant above.
+
+---
+
+## Codex GPT-5.5 finding: best next Gemma 4 MTP target for Mac Studio (2026-05-06)
+
+Codex GPT-5.5 web review (2026-05-06) found that Google's MTP release materially changes the search space, but it does **not** overturn the local failure conclusion for the 31B bf16 + MTP pair. The best next experiment on this 96 GB Mac Studio is the **dense E4B bf16 target with its matching E4B assistant drafter**:
+
+| Role | Model |
+|:-----|:------|
+| Target | [`mlx-community/gemma-4-e4b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-e4b-it-bf16) |
+| Drafter | [`mlx-community/gemma-4-E4B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-E4B-it-assistant-bf16) |
+| Runtime | `mlx-vlm 0.5.0+` from main, `--draft-kind mtp`, `--draft-block-size 6` |
+
+Rationale:
+
+- **E4B is the cleanest Mac Studio MTP test.** It is dense, small enough to fit comfortably in bf16 (~16 GB target, ~159 MB drafter), and avoids both the 31B bf16 memory-bandwidth wall and the 26B-A4B MoE routing penalty at batch size 1.
+- **Google explicitly calls out the 26B-A4B Apple Silicon caveat.** The official MTP blog says the 26B MoE has unique routing challenges at B=1 on Apple Silicon, while batch sizes 4-8 can unlock up to ~2.2x speedup locally. That makes 26B-A4B interesting for concurrent server throughput, not the first choice for sequential opencode-style agent loops.
+- **E2B/E4B assistants have an extra drafter-side optimization.** Google's MTP docs and the vLLM Gemma 4 recipe note that E2B/E4B assistants use centroid / ordered-embedding masking to reduce the expensive vocabulary projection; 26B-A4B and 31B assistants do not.
+- **31B bf16 + MTP remains a "do not retry yet" path for this workload.** Local benching already showed 12.3 tok/s @ 8K, 32K+ OOM, very slow prefill, and streaming agent hangs. Upstream and community reports confirm that the 31B MTP path can speed up bf16 vs bf16-no-drafter, but on Apple Silicon it still lands around 10-12 tok/s in early reports, which is below the current 6-bit production path for single sequential agent turns.
+
+Suggested test launch shape:
+
+```bash
+ssh macstudio "nohup ~/mlx-vlm-env/bin/python -m mlx_vlm.server \
+  --host 0.0.0.0 --port 8000 \
+  --model mlx-community/gemma-4-e4b-it-bf16 \
+  --draft-model mlx-community/gemma-4-E4B-it-assistant-bf16 \
+  --draft-kind mtp \
+  --draft-block-size 6 \
+  --max-tokens 2048 \
+  > /tmp/mlx-vlm-gemma4-e4b-mtp.log 2>&1 &"
+```
+
+Recommended priority order:
+
+1. **Next MTP experiment:** `mlx-community/gemma-4-e4b-it-bf16` + `mlx-community/gemma-4-E4B-it-assistant-bf16`.
+2. **Current best production Gemma:** keep `lmstudio-community/gemma-4-31B-it-MLX-6bit` on `mlx_lm.server` until E4B MTP is benchmarked end-to-end.
+3. **Batch/concurrency experiment only:** `mlx-community/gemma-4-26b-a4b-it-bf16` + `mlx-community/gemma-4-26B-A4B-it-assistant-bf16`.
+4. **Avoid for now:** `mlx-community/gemma-4-31b-it-bf16` + `mlx-community/gemma-4-31B-it-assistant-bf16` for opencode-style streaming agent loops.
+
+Sources checked:
+
+- Google Keyword: [Accelerating Gemma 4: faster inference with multi-token prediction drafters](https://blog.google/innovation-and-ai/technology/developers-tools/multi-token-prediction-gemma-4/) — MTP release, up-to-3x claim, KV/activation sharing, 26B-A4B Apple Silicon B=1 caveat.
+- Google AI docs: [Speed-up Gemma 4 with Multi-Token Prediction](https://ai.google.dev/gemma/docs/mtp/overview) — architecture description, dense vs MoE verification behavior, E2B/E4B efficient embedder.
+- Hugging Face / Google: [`google/gemma-4-31B-it-assistant`](https://huggingface.co/google/gemma-4-31B-it-assistant) — assistant-model card with Gemma 4 family specs, benchmark table, thinking controls, and usage examples.
+- Hugging Face / mlx-community: [Gemma-4 Assistant (MTP) collection](https://huggingface.co/collections/mlx-community/gemma-4-assistant-mtp) — MLX assistant roster for E2B, E4B, 26B-A4B, and 31B.
+- Hugging Face / mlx-community: [`gemma-4-e4b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-e4b-it-bf16), [`gemma-4-E4B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-E4B-it-assistant-bf16), [`gemma-4-26b-a4b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-26b-a4b-it-bf16), [`gemma-4-26B-A4B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-26B-A4B-it-assistant-bf16), [`gemma-4-31b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-31b-it-bf16), [`gemma-4-31B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-31B-it-assistant-bf16) — model sizes, pairings, MLX launch examples.
+- vLLM recipes: [Gemma 4 Usage Guide](https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html) — available assistant models, recommended speculative-token settings, E2B/E4B centroid masking note, hardware caveat.
+- Community signal: [LocalLLaMA Gemma 4 MTP release thread](https://www.reddit.com/r/LocalLLaMA/comments/1t4jq6h/gemma_4_mtp_released/) and [MacBook M5 128 GB 31B MTP report](https://www.reddit.com/r/LocalLLaMA/comments/1t4un0t/gemma431bcodingmtpbf16_slow_on_macbook_m5_128gb/) — early MLX/Mac reports support the conclusion that 31B bf16 MTP improves over bf16 baseline but is still not the best single-user Mac agent path.
+
+---
+
+## Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — 2026-05-06 failed experiment
+
+A documented attempt at the upstream-recommended speculative-decoding pair: `mlx-community/gemma-4-31B-it-bf16` target (~58 GB on disk) plus `mlx-community/gemma-4-31B-it-assistant-bf16` MTP drafter (839 MB, 4-layer assistant model trained by Google for Gemma 4). The drafter itself ran cleanly (**3.07–4.29 tokens accepted per round** — matches upstream's own numbers in [PR #1115](https://github.com/Blaizzy/mlx-vlm/pull/1115) where the maintainer measured "**B=1: 11.7 tok/s, 4.64 acceptances/round, ≈6.2× speedup vs. baseline**" on the same target/drafter pair). My 12.3 tok/s @ 8K context **matches** that 11.7 tok/s reference. The drafter PRs are not the blocker.
+
+The actual blocker — identified by source-code review on 2026-05-06 after multiple bench passes ruled out chat_template, coalesce env var, bf16 vs 6-bit target, and decode speed — is a **streaming tool-call emission asymmetry between `mlx_vlm.server` and `mlx_lm.server`**. The drafter and the speculative path both work as upstream documents; the 6-bit + bf16 drafter pairing also works (proven via API harness 5/5). What breaks opencode is how mlx-vlm emits `delta.tool_calls` during SSE streaming.
+
+| Spec | Value |
+|:-----|:------|
+| Target | [`mlx-community/gemma-4-31B-it-bf16`](https://huggingface.co/mlx-community/gemma-4-31B-it-bf16) (58 GB on disk, 21 files) |
+| Drafter | [`mlx-community/gemma-4-31B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-31B-it-assistant-bf16) (839 MB, `gemma4_assistant` arch) |
+| Server | `python -m mlx_vlm.server` (mlx-vlm 0.5.0 from main; PyPI 0.4.4 lacks `mlx_vlm.speculative`) |
+| Venv | `~/mlx-vlm-env/` (kept; install via `pip install 'git+https://github.com/Blaizzy/mlx-vlm.git@main'`) |
+| Drafter kind | `mtp` — Google's [Multi-Token Prediction](https://ai.google.dev/gemma/docs/mtp/mtp) drafter |
+| Pairing constraint | **Drafter is NOT bf16-locked.** HF card only documents bf16 pairings, but source has no dtype assertion (verified) and we ran 6-bit + drafter successfully (API harness 5/5, 16.54 s multi-turn). vLLM community ran `Intel/gemma-4-31B-it-int4-AutoRound` + drafter for ~2× speedup. |
+| Useful context cap | **≤16 K tokens** on M3 Ultra 96 GB for bf16 target (32 K+ OOMs on the speculative path); 6-bit target should not OOM but not benched at 32 K |
+
+### Launch shape (for reference, not currently running)
+
+```bash
+ssh macstudio "nohup ~/mlx-vlm-env/bin/python -m mlx_vlm.server \
+  --host 0.0.0.0 --port 8000 \
+  --model mlx-community/gemma-4-31B-it-bf16 \
+  --draft-model mlx-community/gemma-4-31B-it-assistant-bf16 \
+  --draft-kind mtp \
+  --draft-block-size 6 \
+  --max-tokens 8192 \
+  > /tmp/mlx-vlm-server.log 2>&1 &"
+```
+
+### Benchmarks (M3 Ultra 96 GB, May 6 2026)
+
+#### API server (raw streaming, no tools)
+
+| Context | bf16 + MTP (mlx-vlm) | 6-bit (mlx-lm, ref) | Δ vs 6-bit |
+|:--------|---------------------:|--------------------:|:-----------|
+| 512 | 17.0 tok/s · TTFT 3.02 s · prefill 180 | 20.5 · 0.41 · 1,337 | −17 % decode, **7×** TTFT, **−86 %** prefill |
+| 4 K | 13.8 tok/s · TTFT 18.14 s · prefill 228 | 20.2 · 0.41 · 9,965 | −32 %, **44×** TTFT, **−98 %** prefill |
+| 8 K | 12.3 tok/s · TTFT 41.04 s · prefill 200 | 19.8 · 0.43 · 19,331 | −38 %, **95×** TTFT, **−99 %** prefill |
+| 16 K | 10.7 tok/s · TTFT 134.4 s · prefill 122 | (not benched) | — |
+| 32 K | OOM | 17.2 · 0.52 · 63,306 | OOM (118 GB attempted vs 62 GB Metal cap) |
+
+Raw JSON: [`gemma-4-31b-bf16-mtp/api-server-mlx-vlm.json`](../benchmarks/gemma-4-31b-bf16-mtp/api-server-mlx-vlm.json).
+
+#### API tool-call (non-streaming, 5-tool harness)
+
+| Scenario | Time | Tools Called | Result |
+|:---------|----:|:-------------|:-------|
+| Single tool (file read) | 5.29 s | `read_file` | ✅ |
+| Single tool (command) | 4.24 s | `run_command` | ✅ |
+| Multi-tool (search + read) | 6.54 s | `search_web`, `read_file` | ✅ both |
+| Multi-tool (list + read + write) | 8.61 s | `list_directory` | ⚠ same single-tool deviation as 6-bit |
+| Agentic reasoning | 15.68 s | `run_command` | ✅ |
+| **Single-call pass rate** | — | **5/5** | |
+| 3-turn loop (read → write → summary) | **22.06 s** | — | ✅ |
+
+Raw JSON: [`gemma-4-31b-bf16-mtp/api-tool-test.json`](../benchmarks/gemma-4-31b-bf16-mtp/api-tool-test.json). Non-streaming responses parse correctly; the failure is streaming-only.
+
+#### Agent loop (opencode against streaming SSE) — ⛔ **broken across all three passes**
+
+| Scenario | Pass 1: bf16 + drafter | Pass 2: bf16 + drafter + `MLX_VLM_SPEC_BATCH_WAIT_MS=10` | Pass 3: **6-bit + drafter** |
+|:---------|:-----------------------|:--------------------------------------------------------|:----------------------------|
+| Browse www.example.com | 300.02 s × 3, 0 turns | 300.04 s × 3, 0 turns | 300.03 s × 1, 0 turns |
+| Browse Hackernews latest topic | 300.04 s × 3, 0 turns | 300.04 s × 3, 0 turns | (not benched) |
+
+Raw JSON: [pass 1](../benchmarks/gemma-4-31b-bf16-mtp/agent-bench-mlx-vlm.json), [pass 2](../benchmarks/gemma-4-31b-bf16-mtp/agent-bench-mlx-vlm-coalesce.json), [pass 3 (6-bit target)](../benchmarks/gemma-4-31b-bf16-mtp/agent-bench-6bit-target-mtp-hfid.json).
+
+**Pass 3 is the decisive one** — same 6-bit weights that complete browse in 12.33 s on `mlx_lm.server` time out at 300 s on `mlx_vlm.server` + drafter. The model is fast enough; the streaming tool-call emission asymmetry is the bug. Server-side logs confirm: `[MTP] batch=1 tokens=8192 accept=4.56 rounds=1473` for the 6-bit run — the model generates 8192 tokens of reasoning on the opencode prompt because mlx-vlm doesn't surface the tool_calls until *after* generation completes. mlx-lm's per-token state machine catches the tool_call block close at ~80 tokens in and emits the chunk immediately.
+
+**API tool harness on 6-bit + drafter (non-streaming) — works fine:** 5/5 single-call pass rate, multi-turn loop **16.54 s**, MTP accept 2.11–4.56 tok/round. Raw JSON: [`api-tool-test-6bit-mtp.json`](../benchmarks/gemma-4-31b-bf16-mtp/api-tool-test-6bit-mtp.json). This isolates the failure to the streaming SSE path.
+
+### MTP drafter behaviour (the part that *did* work — and matches upstream)
+
+Server log lines like `[MTP] batch=1 tokens=125 accept=3.06 rounds=31` show the drafter is highly effective and consistent with the maintainer's own measurements in PR #1115:
+
+- Single-request acceptance: **2.34 – 4.29 tokens accepted per verification round** (8 representative samples logged during the bench). Maintainer's reference: **4.64 acc/round** at `--draft-block-size 6` for the same pair.
+- Highest sample: `[MTP] batch=1 tokens=8192 accept=4.29 rounds=1549` — over a full 8K-token generation, 4.29 tokens land per round on average.
+- Decode rate at 8K context: **12.3 tok/s** (mine) vs **11.7 tok/s** (PR #1115 maintainer reference, B=1) — within measurement noise. The drafter is operating at upstream-expected efficiency.
+- Output content was correct (byte-identical at temp=0) in every non-streaming probe — `accept` rate matches the "byte-identical at temp=0" claim from the [drafter card](https://huggingface.co/mlx-community/gemma-4-31B-it-assistant-bf16).
+
+The drafter is not the regression. The B=1 single-request decode rate (12.3 tok/s) is *expected* — bf16 weights' bandwidth tax means even a 6.2× speculative speedup over the bf16-no-drafter baseline still loses to 6-bit-no-drafter (20.4 tok/s). PR #1117's `MLX_VLM_SPEC_BATCH_WAIT_MS` is the upstream-suggested bridge for any workload with concurrent requests.
+
+### Root cause (verified by source-code review, 2026-05-06)
+
+After ruling out chat_template (verified byte-identical to 6-bit's working template, 16,448 bytes), the `MLX_VLM_SPEC_BATCH_WAIT_MS` coalesce env var (PR #1117 — same 8/8 timeouts with and without), and the bf16-vs-6-bit hypothesis (6-bit + drafter pairing also fails opencode the same way despite running fast), the actual blocker is a **streaming tool-call emission asymmetry between `mlx_vlm.server` and `mlx_lm.server`**:
+
+**`mlx_lm/server.py` (lines 1435–1490) — incremental tool-call streaming (works for opencode):**
+
+```python
+# Per-token state machine: gen.state ∈ {"reasoning", "tool", "normal"}
+for gen in response:
+    if gen.state == "reasoning": reasoning_text += gen.text
+    elif gen.state == "tool": tool_text += gen.text
+    elif gen.state == "normal":
+        if prev_state == "tool":
+            tool_calls.append(tool_text); ...    # finalize tool call on state transition
+
+    if self.stream and gen.state != "tool" and (text or tool_calls or reasoning_text):
+        # ↓↓ Emits delta.tool_calls AS SOON AS one finalizes ↓↓
+        resp = self.generate_response(text, None,
+            tool_calls=tool_formatter(tool_calls), reasoning_text=reasoning_text)
+        self.wfile.write(f"data: {json.dumps(resp)}\n\n".encode())
+        self.wfile.flush()
+```
+
+**`mlx_vlm/server.py` (lines 2320–2440) — post-loop tool-call extraction (breaks opencode):**
+
+```python
+while True:
+    token = await asyncio.to_thread(_next_token)
+    # Routes tokens to delta.reasoning / delta.content
+    # suppress_tool_call_content() hides raw <|tool_call> markup from delta.content
+    yield f"data: {chunk_data.model_dump_json()}\n\n"
+
+# After loop exits (post-generation):
+if tool_module is not None:
+    tc = process_tool_calls(full_output, tool_module, tools)   # ← NOW parses
+    if tc["calls"]:
+        yield ChatStreamChunk(... tool_calls=tc["calls"] ...)  # ← single final chunk
+```
+
+**Why opencode times out:** opencode's agent loop expects `delta.tool_calls` chunks *during* streaming so it can dispatch the tool and advance to the next turn. mlx-lm's path emits them per-token as the state machine transitions out of `"tool"`. mlx-vlm's path streams only `delta.reasoning` and (suppressed) `delta.content` until the entire generation completes, then emits a single final `delta.tool_calls` chunk.
+
+For Gemma 4's thinking-mode prompts opencode often sees thousands of `delta.reasoning` tokens before the model emits the tool-call markers. mlx-vlm holds the parsed tool_calls until *after* the model finishes (which can be 8192 tokens / 666 s on bf16 at 12.3 tok/s, or even on 6-bit if the model rambles). opencode's 300 s wall fires long before that final chunk. mlx-lm's per-token state machine fires the tool_calls chunk the moment the `<|tool_call>...<tool_call|>` block closes — typically ~2–5 s on the same prompts, well inside the wall.
+
+This is a real upstream bug in mlx-vlm's streaming SSE handler. Worth filing against [Blaizzy/mlx-vlm](https://github.com/Blaizzy/mlx-vlm) with the minimal repro (`mlx_lm.server` + 6-bit + opencode → 12.33 s 2-turn webfetch; `mlx_vlm.server` + same 6-bit + same opencode → 300 s timeout 0 turns).
+
+### Other findings from the experiment (independent of the streaming bug)
+
+- **The drafter itself works at upstream-expected efficiency.** 12.3 tok/s @ 8K matches PR #1115's B=1 reference (11.7 tok/s, 4.64 acc/round, ≈6.2× over bf16-no-drafter baseline). Acceptance rate 3.07–4.29 tok/round on bf16, 2.11–4.56 on 6-bit (lower because quantized target's logits diverge from the bf16-trained drafter — expected). This isn't the regression.
+- **B=1 single-request decode being slower than 6-bit no-drafter is expected** for bf16 targets, per upstream's own framing ("MTP works best for B>1"). Independent of the streaming bug.
+- **6-bit + bf16 drafter pairing works mechanically.** Loaded cleanly, no dtype assertion fired, API tool harness 5/5, multi-turn loop 16.54 s (1.25× speedup over 6-bit no-drafter). Streaming probe `"Browse www.example.com"` completed in 20.2 s with 796 SSE lines. The "drafter requires bf16" claim from the HF card is documentation, not a hard constraint — verified in source code (no dtype gate) and via the vLLM community's `Intel/gemma-4-31B-it-int4-AutoRound` + drafter test.
+- **`MLX_VLM_SPEC_BATCH_WAIT_MS=10` (PR #1117 coalesce env var) doesn't help opencode.** It coalesces *concurrent* requests into MTP batches; opencode runs sequential turns. Right knob for server-side concurrent load, not for sequential agent loops.
+- **Metal OOM at 32 K+ context for bf16 target.** Speculative decoding allocates extra KV/compute buffers; at ~24,576 in-flight tokens MLX attempts a 118 GB allocation against the 62 GB Metal buffer cap. 16 K is the safe ceiling for bf16. 6-bit target presumably has more headroom but not benched at 32 K.
+- **Prefill is ~50–80× slower than `mlx_lm.server`** at the same context (228 vs 9,965 tok/s @ 4 K) for bf16. `mlx_vlm.server` doesn't expose prompt-cache reuse the way `mlx_lm.server` does. 6-bit target's prefill should be closer to mlx-lm's but not benched.
+
+### What would unblock this
+
+- **Fix mlx-vlm's streaming tool-call emission** to mirror mlx-lm's per-token state machine. File upstream against [Blaizzy/mlx-vlm](https://github.com/Blaizzy/mlx-vlm). Until then `mlx_vlm.server` is unsuitable for opencode-style streaming agent loops on any Gemma 4 model regardless of quantization.
+- **mlx-lm gaining `gemma4_assistant` arch support** (no PR open as of 2026-05-06; PR #1226 added MTP only for Qwen3.5/3.6). With mlx-lm hosting the drafter, the proven-working incremental tool-call streaming + prompt-cache reuse from the current 6-bit run would carry over, *and* mlx-lm could quantize the target so 6-bit + drafter avoids the bf16 bandwidth tax entirely. **This is the cleanest path forward.**
+- **Until either of the above lands**, keep the 6-bit production main on `mlx_lm.server` and treat the mlx-vlm install as documentation-only.
+
+### Cleanup state
+
+- bf16 base weights kept at `~/.cache/huggingface/hub/models--mlx-community--gemma-4-31B-it-bf16/` (~58 GB) — delete via `huggingface-cli delete-cache` if disk is needed for other experiments. The chat-template + tool-injection are fine on this base; only the streaming SSE handler in `mlx_vlm.server` is broken, and that bug also reproduces on 6-bit, so deleting the bf16 weights doesn't lose any debugging signal.
+- `~/mlx-vlm-env/` venv kept (mlx-vlm 0.5.0 from main + mlx-lm 0.31.3 + ~80 deps) — useful for any future Blaizzy/mlx-vlm experiments; remove with `rm -rf ~/mlx-vlm-env` to reclaim ~5 GB.
+- The drafter weights (`models--mlx-community--gemma-4-31B-it-assistant-bf16`, 839 MB) cost almost nothing — keep.
+- Server stopped 2026-05-06 ~15:28; 6-bit on `mlx_lm.server` (Cellar libexec) restored as live main.
 
 ---
 

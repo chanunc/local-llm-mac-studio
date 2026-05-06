@@ -584,7 +584,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context (512, 4K, 8K, 32K, 65K). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-mlx-lm.json](gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json).
 
-**Server:** `python -m mlx_lm server` (mlx-lm 0.31.3, direct server), started via `python3 -m mlx_lm server --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit --host 0.0.0.0 --port 8000 --max-tokens 8192 --prompt-cache-size 5`. Model served by full filesystem path (not a short HF ID). **Thinking mode ON** — mlx-lm enables Gemma 4 thinking by default.
+**Server:** `mlx_lm.server` (mlx-lm 0.31.3 from the Cellar libexec binary at `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`), started via `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit --host 0.0.0.0 --port 8000 --max-tokens 8192`. Model served by full filesystem path (not a short HF ID). **Thinking mode ON** — mlx-lm enables Gemma 4 thinking by default. Initial bench used `/opt/homebrew/bin/mlx_lm.server` which silently linked to a python3.11 mlx_lm install lacking Gemma 4 — discovered 2026-05-06 during the bf16+MTP experiment cleanup; the Cellar libexec is the canonical entry point.
 
 ### Generation Speed (tok/s)
 
@@ -621,6 +621,54 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 - **Prefill is dramatically faster on mlx-lm** — 2.5× at 4K (9,965 vs 6,028 tok/s) and 1.7× at 32K (63,306 vs 36,297 tok/s). LM Studio's MLX runtime appears to use a less-optimized prefill kernel. At 65K context, prefill reaches 101K tok/s — the model can ingest long contexts very quickly.
 - **TTFT stays sub-0.65 s through 65K** — TTFT is only weakly dependent on context length since prefill is so fast. A 65K-token prompt adds only 0.24 s to TTFT vs 512 tokens.
 - **Thinking mode ON:** the model generates thinking context on some prompts (affecting per-turn agent latency), but these throughput numbers measure a simple 50-token completion and thus reflect pure decode bandwidth.
+
+---
+
+## Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm, 2026-05-06 failed experiment)
+
+Model: `mlx-community/gemma-4-31B-it-bf16` (~58 GB) target paired with `mlx-community/gemma-4-31B-it-assistant-bf16` MTP drafter (839 MB). The first end-to-end attempt at Google's [MTP speculative-decoding](https://ai.google.dev/gemma/docs/mtp/mtp) drafter on this stack. The drafter ran cleanly (3.07–4.29 tokens accepted per verification round) but the deployment is **incompatible with streaming agent clients** (opencode hits 300 s timeouts on every run; full failure analysis lives in [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment)).
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context (512, 4K, 8K, 16K). 32K+ OOMs (Metal ~118 GB attempted vs 62 GB cap). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-mlx-vlm.json`](gemma-4-31b-bf16-mtp/api-server-mlx-vlm.json).
+
+**Server:** `python -m mlx_vlm.server` (mlx-vlm 0.5.0 from main; PyPI 0.4.4 lacks `mlx_vlm.speculative`). Launched with `--draft-model mlx-community/gemma-4-31B-it-assistant-bf16 --draft-kind mtp --draft-block-size 6 --max-tokens 8192`.
+
+### Generation Speed (tok/s)
+
+| Context | bf16 + MTP (mlx-vlm) | 6-bit (mlx-lm, ref) |
+|:--------|:--------------------:|:-------------------:|
+| 512 | **17.0** | 20.5 |
+| 4K | **13.8** | 20.2 |
+| 8K | **12.3** | 19.8 |
+| 16K | **10.7** | (not benched) |
+| 32K | OOM | 17.2 |
+
+### Prefill Speed (tok/s)
+
+| Context | bf16 + MTP (mlx-vlm) | 6-bit (mlx-lm, ref) |
+|:--------|:--------------------:|:-------------------:|
+| 512 | 180 | 1,337 |
+| 4K | 228 | 9,965 |
+| 8K | 200 | 19,331 |
+| 16K | 122 | (not benched) |
+
+### Time to First Token (seconds)
+
+| Context | bf16 + MTP (mlx-vlm) | 6-bit (mlx-lm, ref) |
+|:--------|:--------------------:|:-------------------:|
+| 512 | 3.02 | **0.41** |
+| 4K | 18.14 | **0.41** |
+| 8K | 41.04 | **0.43** |
+| 16K | 134.4 | (not benched) |
+
+**Notes:**
+- **The drafter matches upstream's own B=1 numbers.** Server logs (`[MTP] batch=1 ... accept=3.07–4.29 rounds=...`) and 12.3 tok/s @ 8K align with the maintainer's reference in [PR #1115](https://github.com/Blaizzy/mlx-vlm/pull/1115): "B=1: 11.7 tok/s, 4.64 acc/round, ≈6.2× over baseline". My install includes #1112 (drafter), #1115 (server dispatch), #1117 (batching follow-up). The drafter is operating at upstream-expected efficiency.
+- **B=1 decode being 17 % slower than 6-bit is *expected*.** Upstream documents "MTP works best for B>1"; bf16 weights' bandwidth tax outpaces the speculative speedup at single-request decode. PR #1117's `MLX_VLM_SPEC_BATCH_WAIT_MS` env var (unset in this run) is the upstream-recommended bridge for any concurrent agent workload.
+- **TTFT regression** *is* a real distinct issue: 7–95× slower than 6-bit (3.02 s vs 0.41 s @ 512; 41 s vs 0.43 s @ 8K) because `mlx_vlm.server` doesn't expose a prompt cache the way `mlx_lm.server` does.
+- **32K and beyond OOM** — drafter-tree allocations push the speculative path past the 62 GB max Metal buffer cap. 16K is the safe ceiling.
+- **Streaming SSE flushes for trivial prompts but hangs for long-reasoning prompts.** Confirmed via direct curl probes: `"Reply ok"` produces 35 chunks in 2.69 s with `finish_reason: stop`; `"Browse www.example.com"` produces zero chunks in 360 s. Reproducible. `chat_template.jinja` verified byte-identical to 6-bit's working template — issue [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Likely an upstream bug in mlx-vlm's speculative streaming flush path; worth filing against [Blaizzy/mlx-vlm](https://github.com/Blaizzy/mlx-vlm).
+- **Even when streaming works, the agent loop fails.** Server logs show 8192 reasoning tokens per opencode turn at 12.3 tok/s ≈ 666 s — 2× opencode's 300 s wall. `MLX_VLM_SPEC_BATCH_WAIT_MS=10` (PR #1117) doesn't help; it coalesces concurrent requests into batches, but agent loops are sequential.
+- **Reverted to 6-bit on mlx-lm** the same session. mlx-vlm-from-main install (`~/mlx-vlm-env/`) and bf16 weights kept on disk for any future upstream-fix re-test.
 
 ---
 

@@ -11,7 +11,7 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | Server | Port | Role | Model(s) | API Key |
 |--------|------|------|----------|---------|
 | **vllm-mlx** | 8000 | Previous primary / fallback -- fastest inference, single model; currently stopped | Ling-2.6-flash mlx-6bit (~80GB) | Not needed |
-| **mlx-openai-server / mlx-lm server** | 8000 | **Current main (2026-05-06)** -- mlx-lm server (direct `python -m mlx_lm server`) running Gemma 4 31B-it; also available as multi-model mlx-openai-server with prompt cache + speculative decoding | Gemma 4 31B-it MLX 6-bit (20.4 tok/s, browse 12.33 s, thinking ON) | Not needed |
+| **mlx-openai-server / mlx-lm server** | 8000 | **Current main (2026-05-06)** -- mlx-lm server via Cellar libexec (`/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`, **not** `/opt/homebrew/bin/mlx_lm.server`) running Gemma 4 31B-it; also available as multi-model mlx-openai-server with prompt cache + speculative decoding | Gemma 4 31B-it MLX 6-bit (20.4 tok/s, browse 12.33 s, thinking ON) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard; currently stopped | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python; **currently stopped** (was last main 2026-05-01 with Osaurus JANGTQ4) | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
 | **llmster** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for initial load; **stopped 2026-05-06** | Prior: IBM Granite 4.1 30B Q8_0 (28.57 GiB, Apache 2.0, 24.8 tok/s, browse 6.24 s) | Not needed |

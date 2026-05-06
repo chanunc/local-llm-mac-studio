@@ -1,0 +1,107 @@
+{
+  "model": "mlx-community/gemma-4-31B-it-bf16",
+  "base_url": "http://192.168.31.4:8000/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 5.29,
+      "output_tokens": 53,
+      "rate_tps": 10.0,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\": \"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 4.24,
+      "output_tokens": 45,
+      "rate_tps": 10.6,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\": \"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 6.54,
+      "output_tokens": 97,
+      "rate_tps": 14.8,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web",
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"query\": \"openai api docs\"}",
+        "{\"path\": \"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 8.61,
+      "output_tokens": 121,
+      "rate_tps": 14.1,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\": \"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 15.68,
+      "output_tokens": 203,
+      "rate_tps": 12.9,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\": \"find /tmp -type f -exec du -h {} + | sort -rh | head -n 1\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 8.2,
+      "output_tokens": 130,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 8.98,
+      "output_tokens": 139,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 4.88,
+      "output_tokens": 37,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 22.06
+}

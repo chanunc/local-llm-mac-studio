@@ -7,7 +7,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
 - [IBM Granite 4.1 Family](#ibm-granite-41-family) — 1 variant: **30B Q8_0 GGUF (unsloth, Apache 2.0, 24.8 tok/s, browse 6.24 s — active llmster main 2026-05-05)**. Detail at [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md)
-- [Gemma 4 Family](#gemma-4-family) — 4 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, llmster), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇 — prior llmster main 2026-05-03). Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
+- [Gemma 4 Family](#gemma-4-family) — 5 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, **mlx-lm server current main 2026-05-06**), 31B-it bf16 + MTP drafter (mlx-vlm — **failed experiment 2026-05-06**, agent-incompatible streaming), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇 — prior llmster main 2026-05-03). Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
 - [Qwen3-Coder Family (MLX 6-bit + 4-bit)](#qwen3-coder-family-mlx-6-bit--4-bit) — 2 variants: Coder-Next 6-bit (daily driver), Coder-30B-A3B 4-bit. Detail at [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md)
 - [Qwen3.5 Family (MoE + dense distilled + JANG)](#qwen35-family-moe--dense-distilled--jang) — 4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K. Detail at [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
@@ -319,6 +319,7 @@ Three Google Gemma 4 variants currently catalogued in this stack — the **26B-A
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
 | **Gemma 4 31B-it (6-bit)** | Dense 31B text-only | 29 GB | 6-bit MLX | **mlx-lm server (current main 2026-05-06)** | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
+| Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — *failed experiment 2026-05-06* | Dense 31B + MTP `gemma4_assistant` drafter | 58 GB + 839 MB | bf16 | mlx-vlm 0.5.0 (from main) | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
 | **DavidAU Gemma 4 31B Heretic Q6_k** | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | llmster | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
 
 ---

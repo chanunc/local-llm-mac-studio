@@ -1,0 +1,10 @@
+{
+  "benchmark": "api-tool-call",
+  "version": "1.0",
+  "timestamp": "2026-05-05T19:15:00+00:00",
+  "model": "midnight-miqu-70b-v1.5",
+  "server": "llmster (LM Studio :1234)",
+  "result": "FAILED - model does not support tool calling",
+  "error": "HTTP Error 400: Bad Request - Error rendering prompt with jinja template: Only user and assistant roles are supported!",
+  "notes": "Midnight-Miqu-70B-v1.5 is a Mixtral-derived model without tool-calling chat template support. Tool use definitions require a system role which this model's prompt template rejects. Model works for normal chat but cannot be used for agentic tool-call benchmarks."
+}

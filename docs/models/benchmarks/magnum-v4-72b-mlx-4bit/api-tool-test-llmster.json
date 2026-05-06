@@ -1,0 +1,85 @@
+{
+  "model": "magnum-v4-72b_mlx",
+  "base_url": "http://192.168.31.4:1234/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 5.59,
+      "output_tokens": 25,
+      "rate_tps": 4.5,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 1.84,
+      "output_tokens": 22,
+      "rate_tps": 12.0,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 3.65,
+      "output_tokens": 50,
+      "rate_tps": 13.7,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 1.88,
+      "output_tokens": 22,
+      "rate_tps": 11.7,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 1.87,
+      "output_tokens": 22,
+      "rate_tps": 11.8,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 5.1,
+      "output_tokens": 23,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 4.1,
+      "output_tokens": 53,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 3.24,
+      "output_tokens": 43,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 12.44
+}

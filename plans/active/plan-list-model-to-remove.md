@@ -2,13 +2,13 @@ Status: active
 Created: 2026-05-04
 Canonical: no
 
-# Plan: `/list-rm-model-macstu` skill
+# Plan: `/list-model-to-remove` skill
 
 ## Context
 
 The Mac Studio M3 Ultra (96 GB) keeps experimental LLMs in **four** model-keeping folders that together total ~720 GiB. Models accumulate across `deploy-run-benchmark-uncen-model` runs — there is no cleanup automation. Without a triage tool the user has to SSH in and manually `du -sh` each directory before deciding what to delete, and hard-linked GGUFs (e.g. `~/.cache/hauhau-gguf` ↔ `~/.lmstudio/models`) make double-counting easy.
 
-This skill gives a single command — `/list-rm-model-macstu` — that enumerates every model on disk with **name, size, path(s), server-side state**, then walks the user through a safe interactive removal.
+This skill gives a single command — `/list-model-to-remove` — that enumerates every model on disk with **name, size, path(s), server-side state**, then walks the user through a safe interactive removal.
 
 The skill must:
 1. Cover all four storage roots, dedupe hard links by inode.
@@ -20,8 +20,8 @@ The skill must:
 
 | Path | Purpose |
 |:--|:--|
-| `~/.claude/skills/list-rm-model-macstu/SKILL.md` | Skill body — YAML frontmatter + phased markdown. Mirrors the structure of `~/.claude/skills/deploy-run-benchmark-uncen-model/SKILL.md`. |
-| `~/.claude/skills/list-rm-model-macstu/inventory.sh` | Single SSH'd-bash payload that emits a TSV manifest (`inode\tsize_bytes\tpath\troot\tloaded_flag`) for all four roots. Stored as a separate file because it's ~80 lines of bash and embedding it inline in SKILL.md hurts readability. |
+| `~/.claude/skills/list-model-to-remove/SKILL.md` | Skill body — YAML frontmatter + phased markdown. Mirrors the structure of `~/.claude/skills/deploy-run-benchmark-uncen-model/SKILL.md`. |
+| `~/.claude/skills/list-model-to-remove/inventory.sh` | Single SSH'd-bash payload that emits a TSV manifest (`inode\tsize_bytes\tpath\troot\tloaded_flag`) for all four roots. Stored as a separate file because it's ~80 lines of bash and embedding it inline in SKILL.md hurts readability. |
 
 No parent-repo edits; no submodule edits. The skill lives entirely in `~/.claude/skills/` (user-scope, not committed to setup-llm-macstu).
 
@@ -29,7 +29,7 @@ No parent-repo edits; no submodule edits. The skill lives entirely in `~/.claude
 
 ```yaml
 ---
-name: list-rm-model-macstu
+name: list-model-to-remove
 description: List every model on the Mac Studio across HF cache / LM Studio / oMLX / hauhau-gguf and interactively remove selections. Dedupes hard links, flags loaded models, prefers per-server cleanup CLIs over rm -rf.
 argument-hint: [--filter <pattern>] [--min-size <GiB>] [--root hf|lmstudio|omlx|hauhau|all]
 allowed-tools: Bash Read Write AskUserQuestion
@@ -56,7 +56,7 @@ Capture the output verbatim into `LIVE_PROCESSES`. Used in Phase 4 to mark loade
 ### Phase 3 — Inventory enumeration
 Run `inventory.sh` over SSH (heredoc'd, no file copy needed):
 ```bash
-ssh macstudio 'bash -s' < ~/.claude/skills/list-rm-model-macstu/inventory.sh
+ssh macstudio 'bash -s' < ~/.claude/skills/list-model-to-remove/inventory.sh
 ```
 
 `inventory.sh` emits one TSV line per **logical model** (top-level directory under each root, or a single GGUF for hauhau-gguf):
@@ -130,9 +130,9 @@ Re-run `du -sh` on the four roots and report **before / after / freed** to the u
 
 ## Verification (manual, after the skill is written)
 
-1. `ls ~/.claude/skills/list-rm-model-macstu/` → should show `SKILL.md` + `inventory.sh`.
-2. Dry-run by typing `/list-rm-model-macstu --root hf` and answering `none` at the selection prompt → should print the HF table only and exit cleanly with zero deletions.
-3. With nothing currently loaded on Mac Studio, run `/list-rm-model-macstu --filter nonexistent-string-xyz` → should print "0 models match" and exit.
+1. `ls ~/.claude/skills/list-model-to-remove/` → should show `SKILL.md` + `inventory.sh`.
+2. Dry-run by typing `/list-model-to-remove --root hf` and answering `none` at the selection prompt → should print the HF table only and exit cleanly with zero deletions.
+3. With nothing currently loaded on Mac Studio, run `/list-model-to-remove --filter nonexistent-string-xyz` → should print "0 models match" and exit.
 4. Test the loaded-model refusal: load a small model on llmster, run the skill, try to select that model → should be blocked with the explicit "loaded — skip?" prompt.
 5. Real removal: pick a known-stale entry (e.g. an old benchmark snapshot in HF cache), confirm through Phase 6, watch Phase 7 succeed and Phase 8 report freed bytes matching the entry's size.
 6. Hard-link case: confirm a GGUF that exists as both `~/.cache/hauhau-gguf/X.gguf` and `~/.lmstudio/models/.../X.gguf` shows as **one** row with two paths in the table, and removing it deletes both paths so `du` reflects the full reclaim.

@@ -4,7 +4,7 @@ Canonical: no
 
 # Plan: `chk_llm_macstu.py` — Mac Studio LLM server + model status probe
 
-> **Naming convention note:** Mirrors the user's `list-rm-model-macstu` skill shape (`<verb>_<noun>_macstu`), adapted to repo script convention (snake_case, `.py`). Establishes `<verb>_llm_macstu.py` as a future namespace for related ops scripts (e.g. potential siblings `bench_llm_macstu.py`, `clean_llm_macstu.py`).
+> **Naming convention note:** Mirrors the original `list-model-to-remove` (since renamed to `list-model-to-remove`) skill shape (`<verb>_<noun>_macstu`), adapted to repo script convention (snake_case, `.py`). Establishes `<verb>_llm_macstu.py` as a future namespace for related ops scripts (e.g. potential siblings `bench_llm_macstu.py`, `clean_llm_macstu.py`).
 
 ## Context
 
@@ -19,7 +19,7 @@ ssh macstudio "/Users/chanunc/.lmstudio/bin/lms ps"
 
 Four SSH round-trips, three different output formats, and the LM Studio gotcha that `/v1/models` lists *available* models (not loaded — `lms ps` is the only way to see what's actually in RAM).
 
-This is also the **Event 4 pre-benchmark hygiene** check (CLAUDE.md:185-203): before a "deploy and benchmark" run we have to confirm no other server is hogging port 8000 / unified memory. A scripted probe makes that check one command instead of four, and gives `/deploy-run-benchmark-uncen-model` and `/list-rm-model-macstu` a clean primitive to call.
+This is also the **Event 4 pre-benchmark hygiene** check (CLAUDE.md:185-203): before a "deploy and benchmark" run we have to confirm no other server is hogging port 8000 / unified memory. A scripted probe makes that check one command instead of four, and gives `/deploy-run-benchmark-uncen-model` and `/list-model-to-remove` a clean primitive to call.
 
 The intended outcome: `python3 scripts/chk_llm_macstu.py` prints (or JSON-emits) the live state in under ~2 s, identifying the active server by process pattern, the loaded model via the right per-server API, and any LLM-related stragglers.
 
@@ -220,7 +220,7 @@ No other docs touched. No CLAUDE.md / AGENTS.md / README.md edits — Event 5 is
 
 - `README.md`, `CLAUDE.md`, `AGENTS.md` — Event 5 doesn't require it; the script is operator-facing tooling, not a workflow change. (If future skills come to depend on it as a primitive — e.g., `/deploy-run-benchmark-uncen-model` calling it for hygiene — *that* change would update CLAUDE.md's Event 4 snippet to reference it.)
 - `configs/`, `docs/servers/`, `docs/current.md` — no live state changes.
-- `~/.claude/skills/list-rm-model-macstu/` — the skill's `inventory.sh` covers a different question (what models are *on disk*, not what's *running*); they're complementary, not overlapping. No edit.
+- `~/.claude/skills/list-model-to-remove/` — the skill's `inventory.sh` covers a different question (what models are *on disk*, not what's *running*); they're complementary, not overlapping. No edit.
 
 ## Verification
 
@@ -317,6 +317,6 @@ End-to-end test sequence (the script should reproduce the manual answer I gave a
 | `scripts/README.md` | Event-5-mandated index update |
 | `scripts/switch_opencode_config.py` | Stylistic template — argparse, SSH subprocess, API-key extraction |
 | `scripts/bench/bench_api_server.py` | Stylistic template — `urllib.request` `/v1/models` probe with timeout |
-| `~/.claude/skills/list-rm-model-macstu/inventory.sh` | Sibling probe (disk inventory) — confirms scope-non-overlap; no shared code |
+| `~/.claude/skills/list-model-to-remove/inventory.sh` | Sibling probe (disk inventory) — confirms scope-non-overlap; no shared code |
 | `CLAUDE.md:227-234` (Event 5) | Sync-policy rule that confines doc updates to `scripts/README.md` |
 | `CLAUDE.md:185-203` (Event 4) | Future caller — pre-benchmark hygiene may grow a `chk_llm_macstu.py` reference once the script exists |

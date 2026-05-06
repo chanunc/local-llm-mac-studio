@@ -18,14 +18,14 @@ The first real-world validation run is the same Granite 4.1 30B Q8_0 deploy that
 
 - Censored vs. uncensored branches differ on five concrete points (refusal bench, submodule edits, default-flip rules, configs/clients destination, commit count). Inlining all five conditionals into the existing skill would double its length and bury the canonical uncensored recipe.
 - The user invocation `/deploy-run-benchmark-model <hf-repo-id>` reads correctly for both classes. Renaming the existing skill would break muscle memory.
-- A separate skill lets us add the new Phase 0 (disk-space guard with `/list-rm-model-macstu` handoff) without re-validating the proven uncensored phases.
+- A separate skill lets us add the new Phase 0 (disk-space guard with `/list-model-to-remove` handoff) without re-validating the proven uncensored phases.
 
 ## New behaviour vs. the existing skill
 
 | Concern | uncen-model (existing) | deploy-run-benchmark-model (new) |
 |:--|:--|:--|
 | Censored input | abort | take censored branch |
-| Phase 0 disk guard | none | check `df -Pk ~`; abort + suggest `/list-rm-model-macstu` if free < (model size × 1.2) |
+| Phase 0 disk guard | none | check `df -Pk ~`; abort + suggest `/list-model-to-remove` if free < (model size × 1.2) |
 | Phase 4.2 refusal bench | always | only if branch=uncensored |
 | Phase 5 submodule edits | always (`docs/models/uncen-model/`) | only if branch=uncensored |
 | Phase 5 censored docs | never (split rule) | full Event 3 catalog edits + per-model file under `docs/models/per-model/model-summary-<family>.md` + `configs/clients/<server>/*.json` |
@@ -67,13 +67,13 @@ Insufficient disk space on Mac Studio.
   Free:   ${FREE_GB} GiB
   Needed: ${NEED_GB} GiB (${SIZE_GB} GiB model + 20% headroom + 5 GB slack)
 
-Run /list-rm-model-macstu to pick models to remove, then re-run this skill.
+Run /list-model-to-remove to pick models to remove, then re-run this skill.
 EOF
   exit 1
 fi
 ```
 
-`/list-rm-model-macstu` is interactive (free-form selection + AskUserQuestion confirmation) and cannot be invoked inline from another skill. Hand off to the user instead.
+`/list-model-to-remove` is interactive (free-form selection + AskUserQuestion confirmation) and cannot be invoked inline from another skill. Hand off to the user instead.
 
 ### Phase 1 — Validate + classify (MODIFIED)
 
@@ -171,7 +171,7 @@ Output dir is `docs/models/benchmarks/<slug>/` either way. Refusal JSON simply i
 The first invocation of the new skill is the Granite 4.1 30B Q8_0 deploy that triggered this plan. Acceptance:
 
 1. `/deploy-run-benchmark-model unsloth/granite-4.1-30b-GGUF 8 131072` runs end-to-end:
-   - Phase 0: disk check passes (Mac Studio has ≥ 37 GiB free) or aborts cleanly with `/list-rm-model-macstu` instruction
+   - Phase 0: disk check passes (Mac Studio has ≥ 37 GiB free) or aborts cleanly with `/list-model-to-remove` instruction
    - Phase 1: classifier returns `censored` (no uncen markers in `unsloth/granite-4.1-30b-GGUF` or model card)
    - Phase 2: hygiene leaves the Mac Studio at `clean`
    - Phase 3: llmster loads `granite-4.1-30b-q8` with 131072 context, `lms ls` shows the identifier
@@ -186,7 +186,7 @@ The first invocation of the new skill is the Granite 4.1 30B Q8_0 deploy that tr
 ## Out of scope
 
 - Deprecating or removing the existing `/deploy-run-benchmark-uncen-model` skill — keep it for backward compatibility; deprecation is a separate decision
-- Auto-invoking `/list-rm-model-macstu` from inside this skill — that skill is interactive and cannot be driven programmatically
+- Auto-invoking `/list-model-to-remove` from inside this skill — that skill is interactive and cannot be driven programmatically
 - MMLU-Pro / TruthfulQA-gen local eval (separate `plans/active/plan-bench-eval-local.md`)
 - Vision-modality smoke tests (deferred from existing skill v1)
 - Updating other client config files (claude-code, pi, openclaw, qwen-code) for llmster while it remains "provisional" per CLAUDE.md

@@ -20,7 +20,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-chk-llm-macstu.md`](active/plan-chk-llm-macstu.md) | `scripts/chk_llm_macstu.py` — Mac Studio LLM server + model status probe with `--client` / `--logs` / `--all` emit modes |
 | [`active/plan-deploy-run-benchmark-model-skill.md`](active/plan-deploy-run-benchmark-model-skill.md) | `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner with disk guard and censored / uncensored branching |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |
-| [`active/plan-list-rm-model-macstu.md`](active/plan-list-rm-model-macstu.md) | `/list-rm-model-macstu` skill — interactive model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf |
+| [`active/plan-list-model-to-remove.md`](active/plan-list-model-to-remove.md) | `/list-model-to-remove` skill — interactive model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf |
 | [`active/plan-llmster-uncen-benchmark.md`](active/plan-llmster-uncen-benchmark.md) | llmster uncensored-model benchmark slate |
 | [`active/plan-lobehub-macstudio-setup.md`](active/plan-lobehub-macstudio-setup.md) | LobeHub config against Mac Studio servers |
 | [`active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Deploy Osaurus Qwen3.6-35B-A3B JANGTQ4 as main vmlx server and run OpenCode agent benchmark |

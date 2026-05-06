@@ -1,0 +1,99 @@
+{
+  "macstudio": {
+    "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+    "apiKey": "not-needed",
+    "api": "openai-completions",
+    "models": [
+      {
+        "id": "granite-4.1-30b-q8",
+        "name": "IBM Granite 4.1 30B Q8_0 (Current Main, Apache 2.0)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 65536,
+        "maxTokens": 4096
+      },
+      {
+        "id": "gemma-4-31b-it-mlx",
+        "name": "Gemma 4 31B-it MLX 6-bit (Agent-Loop Speed Leader, thinking-off)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 65536,
+        "maxTokens": 4096
+      },
+      {
+        "id": "gemma-4-26b-a4b-it-uncensored",
+        "name": "TrevorJS Gemma 4 26B A4B Uncensored Q8 (Browse Leader 🥇)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 65536,
+        "maxTokens": 4096
+      },
+      {
+        "id": "qwen3.6-35b-a3b-uncensored-aggressive",
+        "name": "prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (Sparse MoE, Uncensored)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 65536,
+        "maxTokens": 4096
+      },
+      {
+        "id": "qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive",
+        "name": "HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P (Sparse MoE + VL, Uncensored)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 131072,
+        "maxTokens": 4096
+      },
+      {
+        "id": "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max",
+        "name": "DavidAU Qwen3.6-40B Heretic Uncensored Thinking (Dense 40B)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 131072,
+        "maxTokens": 4096
+      },
+      {
+        "id": "gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct",
+        "name": "DavidAU Gemma 4 31B Heretic Thinking Q6_K (Uncensored, Thinking)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 131072,
+        "maxTokens": 4096
+      },
+      {
+        "id": "huihui-qwen3.5-35b-a3b-abliterated-mlx",
+        "name": "Huihui Qwen3.5-35B-A3B Abliterated 4-bit MLX (Sparse MoE, no-think)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 65536,
+        "maxTokens": 4096
+      },
+      {
+        "id": "qwen3.6-27b-uncensored-hauhaucs-balanced",
+        "name": "HauhauCS Qwen3.6-27B Balanced Q8_K_P (Dense 27B, thinking-on)",
+        "reasoning": true,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 65536,
+        "maxTokens": 4096
+      },
+      {
+        "id": "qwen3.6-27b",
+        "name": "Qwen3.6-27B 6-bit MLX (Dense, standard mlx-community)",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+        "contextWindow": 32768,
+        "maxTokens": 4096
+      }
+    ]
+  }
+}

@@ -8,40 +8,34 @@ Last verified: 2026-05-06
 
 | Field | Value |
 |:--|:--|
-| Server | `mlx_lm.server` (homebrew Cellar libexec binary, direct) |
-| Model | `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX, Apache 2.0) |
-| Port | `8000` |
+| Server | `lm-studio` (LM Studio headless, port 1234) |
+| Model | `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0 GGUF, dense instruct, Apache 2.0, 28.57 GiB on disk) |
+| Port | `1234` |
 | Auth | None |
-| Client template set | [`configs/clients/mlx-openai-server/`](../configs/clients/mlx-openai-server/) |
-| Runbook | [`docs/servers/`](servers/) — no dedicated mlx-lm server runbook yet; see mlx-openai-server for the underlying mlx-lm ecosystem |
+| Client template set | [`configs/clients/lm-studio/`](../configs/clients/lm-studio/) (OpenCode + OpenClaw) |
+| Runbook | [`docs/servers/lm-studio/summary.md`](servers/lm-studio/summary.md) |
 
 Launch shape (after Event-4 hygiene):
 
 ```bash
-# Model is already on disk at ~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit
-# (downloaded via snapshot_download 2026-05-01)
+# Granite 4.1 30B GGUF is on disk in LM Studio's model registry as `granite-4.1-30b`.
+# Guardrail must be temporarily set to "off" in ~/.lmstudio/settings.json before initial load,
+# then restored to "high" once IDLE.
 
-ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
-  --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
-  --host 0.0.0.0 --port 8000 \
-  --max-tokens 8192 \
-  > /tmp/mlx-lm-server.log 2>&1 &"
+ssh macstudio "python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='off'; p.write_text(json.dumps(d, indent=2))\"; \
+  ~/.lmstudio/bin/lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y; \
+  python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='high'; p.write_text(json.dumps(d, indent=2))\"; \
+  ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 ```
 
 Notes:
-- Gemma 4 31B-it MLX 6-bit deployed 2026-05-06 on mlx-lm server (direct `mlx_lm.server`). Using the simpler mlx-lm server path (not mlx-openai-server) because: (1) `mlx_lm.server` supports `--draft-model` for future MTP speculative decoding; (2) mlx-openai-server YAML config doesn't expose the same flag.
-- **Production-ready binary path**: `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Python 3.14 venv inside the homebrew formula). The system `python3 -m mlx_lm` and `/opt/homebrew/bin/mlx_lm.server` (which links to python3.11/oMLX's older `mlx_lm`) both fail — the python3.11 install lacks Gemma 4 support. Always launch via the Cellar libexec binary.
-- **MTP drafter experiment (2026-05-06) — failed agent-incompatible.** Tried `mlx-community/gemma-4-31B-it-assistant-bf16` (`gemma4_assistant` MTP drafter) paired with the bf16 base via `mlx-vlm 0.5.0` from main (PyPI 0.4.4 lacks the `speculative` submodule). Install includes [PR #1112](https://github.com/Blaizzy/mlx-vlm/pull/1112) (drafter), [#1115](https://github.com/Blaizzy/mlx-vlm/pull/1115) (server dispatch), [#1117](https://github.com/Blaizzy/mlx-vlm/pull/1117) (batching follow-up + `MLX_VLM_SPEC_BATCH_WAIT_MS`). Two passes done — *with* and *without* the coalesce env var — both yielded **8/8 opencode timeouts**. The drafter itself works at upstream-expected efficiency (12.3 tok/s @ 8K, 3.07–4.29 acc/round, matches maintainer's PR #1115 B=1 reference). Two blockers diagnosed, both independent of the drafter PRs:
-   1. **mlx-vlm streaming hangs on long-reasoning prompts.** Trivial prompts stream cleanly (`"Reply ok"` → 35 chunks in 2.69 s, `finish_reason: stop`). Agent-style prompts (`"Browse www.example.com"`) flush 0 SSE chunks for 360 s. Server returns 200 eventually but no chunks during generation. Reproducible. `chat_template.jinja` verified byte-identical to 6-bit's working template (16,448 bytes, no diff) — issue [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Likely an upstream bug in mlx-vlm's speculative streaming flush path on long-reasoning generations; worth filing.
-   2. **Even with streaming fixed, decode is too slow for agent loops.** Server logs show `[MTP] batch=1 tokens=8192 accept=4.29 rounds=1549` per opencode turn — the model burns through its full `max_tokens=8192` reasoning budget before any content. At 12.3 tok/s = 666 s/turn, exceeds opencode's 300 s wall. `MLX_VLM_SPEC_BATCH_WAIT_MS=10` doesn't help (it coalesces concurrent requests into MTP batches, but agent loops are sequential).
-   3. **bf16 OOMs at 32 K+ context** (~118 GB allocation vs 62 GB Metal cap). Independent of the streaming issue.
-
-   Reverted to 6-bit on mlx-lm. mlx-vlm-from-main install kept at `~/mlx-vlm-env/`; bf16 base + drafter weights kept at `~/.cache/huggingface/hub/`. Detail: [`docs/models/per-model/model-summary-gemma.md`](models/per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) and [bench JSONs](models/benchmarks/gemma-4-31b-bf16-mtp/).
-- **Thinking mode ON** — mlx-lm serves Gemma 4 with thinking active by default (via `enable_thinking: true` in chat template). Outputs 3–4× more tokens per turn than the prior lm-studio run (thinking OFF). This explains the higher agent-loop latency.
-- Current benchmarks: API tool harness 5/5 single-call (20.73 s multi-turn loop); throughput **20.4 tok/s @ 512**, 14.7 tok/s @ 65K; **OpenCode browse 12.33 s / search 35.55 s** (thinking ON). Raw data: [`docs/models/benchmarks/gemma-4-31b-it-mlx-6bit/`](models/benchmarks/gemma-4-31b-it-mlx-6bit/).
-- Prior run on lm-studio (2026-05-01, thinking OFF): browse **5.11 s / search 6.37 s** — fastest agent-loop in this doc. Restart via `lms load` if low-latency thinking-off is needed (see Fallbacks below).
-- Log: `ssh macstudio "tail -f /tmp/mlx-lm-server.log"`
-- lm-studio (port 1234) and dflash-mlx (port 8098) remain stopped per Event-4 hygiene.
+- Switched 2026-05-06 from mlx-lm + Gemma 4 31B-it MLX 6-bit to lm-studio + Granite 4.1 30B Q8_0 after Event-4 hygiene (`pkill -f mlx_lm.server`). Granite was previously the lm-studio main on 2026-05-05; the model file remained on disk so the swap was a `lms load` away.
+- **Performance** (from prior 2026-05-05 deploy on lm-studio): 24.8 tok/s gen, **OpenCode browse 6.24 s / search 10.51 s**, 2/2 turns, non-thinking. Raw data: [`docs/models/benchmarks/granite-4.1-30b-it-q8-gguf/`](models/benchmarks/granite-4.1-30b-it-q8-gguf/).
+- **Apache 2.0 license** — fully permissive for derivative work and hosted re-deployment, unlike Gemma's Google-specific terms.
+- Tool-calling and reasoning parsing are **built into the LM Studio runtime** for Granite — no `--tool-call-parser` / `--reasoning-parser` flags needed.
+- **Guardrail dance**: LM Studio's resource-guardrail (default `mode: "high"`) blocks loading a 28 GB model on a 96 GB box. The launch snippet above flips it `off` for the load and restores `high` immediately after; safer than leaving guardrails disabled.
+- Log: `ssh macstudio "~/.lmstudio/bin/lms log show 2>&1 | tail -40"` (LM Studio doesn't write the standard `/tmp/*.log`).
+- mlx-lm (port 8000) and dflash-mlx (port 8098) are now stopped. The previous main (Gemma 4 31B-it MLX 6-bit on mlx-lm) remains on disk and is restartable from the Fallbacks table below.
 
 ## Stopped / Documented Fallbacks
 
@@ -49,8 +43,8 @@ These were live before the 2026-05-05 deploy-and-benchmark run and remain **off*
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
-| Prior production main (2026-05-06, Gemma 4 31B-it thinking OFF, browse **5.11 s 🥇** / search **6.37 s 🏆**) | `lm-studio` | `gemma-4-31b-it-mlx` from `lmstudio-community/gemma-4-31B-it-MLX-6bit` | On disk — reload via `lms load 'gemma-4-31b-it-mlx' --gpu max --context-length 65536 -y`; then `lms server start --bind 0.0.0.0 --cors`. Guardrail may block — set `modelLoadingGuardrails.mode = "off"` before load, restore after. Verify context with `lms ps` (first load sometimes ignores `--context-length`). |
-| Prior production main (2026-05-05, IBM Granite 4.1 30B Q8_0, 24.8 tok/s, browse 6.24 s) | `lm-studio` | `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF` | On disk — reload via `lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y` (guardrail off first; set `modelLoadingGuardrails.mode = "off"` in `~/.lmstudio/settings.json`, then restore to `"high"` after load) |
+| Prior production main (2026-05-06, Gemma 4 31B-it MLX 6-bit on mlx-lm, thinking ON, browse 12.33 s / search 35.55 s) | `mlx-lm` (port 8000) | `lmstudio-community/gemma-4-31B-it-MLX-6bit` | On disk at `~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit`. Restart via the launch shape preserved in this file's git history (commit `1584c46` had the Cellar libexec `mlx_lm.server` invocation as the active Production block). |
+| Prior lm-studio main (Gemma 4 31B-it MLX 6-bit, thinking OFF, browse **5.11 s 🥇** / search **6.37 s 🏆**) | `lm-studio` | `gemma-4-31b-it-mlx` from `lmstudio-community/gemma-4-31B-it-MLX-6bit` | On disk — reload via `lms load 'gemma-4-31b-it-mlx' --gpu max --context-length 65536 -y`; then `lms server start --bind 0.0.0.0 --cors`. Guardrail may block — set `modelLoadingGuardrails.mode = "off"` before load, restore after. Verify context with `lms ps` (first load sometimes ignores `--context-length`). |
 | Prior lm-studio main (TrevorJS Gemma 4 26B A4B Uncensored, EGA abliteration, 8/10, browse 2.93 s 🥇) | `lm-studio` | `gemma4-26b-a4b-trevorjs-uncen-q8` from `TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF` | On disk — reload via `lms load 'gemma-4-26b-a4b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-26b-a4b-trevorjs-uncen-q8 -y` (guardrail off first) |
 | Prior lm-studio main (DavidAU 40B Heretic, thinking + content channel, 9/10) | `lm-studio` | `qwen36-40b-davidau-heretic-q6k` from `DavidAU/Qwen3.6-40B-...IMatrix-MAX-GGUF` | On disk — reload via `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier qwen36-40b-davidau-heretic-q6k -y` (guardrail off first) |
 | Gemma 4 31B Heretic (benchmarked 2026-05-03, 7/10 compliance, Thinking variant) | `lm-studio` | `gemma4-31b-davidau-heretic-q6k` from `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` | On disk — reload via `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier gemma4-31b-davidau-heretic-q6k -y` |
@@ -83,7 +77,7 @@ To restart dflash-mlx (port 8098): see [`docs/servers/dflash-mlx/summary.md`](se
 | Full multi-model roster | `oMLX` | See [`configs/clients/omlx/`](../configs/clients/omlx/) and `/v1/models` when live | Brew service; restart with `brew services start omlx`. |
 | JANGTQ reference | `vmlx` | `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` | On disk — see restart command above. MiniMax-M2.7-JANGTQ-CRACK and Qwen3.6-35B-A3B-JANGTQ4-CRACK removed from disk 2026-05-05. |
 | mlx-openai-server experiments | `mlx-openai-server` | Check live `/v1/models` when running | YAML-config multi-model server. |
-| RotorQuant / TurboQuant / PlanarQuant KV-cache experiments (port 8099) | `llama-cpp-turboquant` | `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` + KV-cache compression — see runbook | Provisional sidecar. **Two forks installed:** (a) `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` at `~/llama-cpp-turboquant/` — supports `iso3/4`, `turbo2/3/4`, `planar3/4`; iso3 is slow on 32 K cold prefill (>600 s timeout). (b) `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` at `~/llama-cpp-thetom/` — supports `turbo2/3/4` only with auto-asymmetric `q8_0` K dispatch + 4-magnitude LUT for pre-M5 + sparse V dequant. **TheTom turbo3 currently running and is the new agent-loop speed leader (2026-05-06): browse 6.47 s / search 15.64 s — 2× / 2.27× faster than Gemma 4 baseline.** See [`docs/servers/llama-cpp-turboquant/summary.md`](servers/llama-cpp-turboquant/summary.md) and [`docs/models/techniques/model-technique-rotorquant.md`](models/techniques/model-technique-rotorquant.md). |
+| RotorQuant / TurboQuant / PlanarQuant KV-cache experiments (port 8099) | `llama-cpp-turboquant` | `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` + KV-cache compression — see runbook | Provisional sidecar, currently stopped. **Two forks installed:** (a) `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` at `~/llama-cpp-turboquant/` — supports `iso3/4`, `turbo2/3/4`, `planar3/4`; iso3 is slow on 32 K cold prefill (>600 s timeout). (b) `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` at `~/llama-cpp-thetom/` — supports `turbo2/3/4` only with auto-asymmetric `q8_0` K dispatch + 4-magnitude LUT for pre-M5 + sparse V dequant. **TheTom turbo3 was the agent-loop speed leader on 2026-05-06: browse 6.47 s / search 15.64 s — 2× / 2.27× faster than Gemma 4 baseline.** See [`docs/servers/llama-cpp-turboquant/summary.md`](servers/llama-cpp-turboquant/summary.md) and [`docs/models/techniques/model-technique-rotorquant.md`](models/techniques/model-technique-rotorquant.md). |
 
 ## Before Changing Live State
 

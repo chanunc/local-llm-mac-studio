@@ -1,24 +1,22 @@
 # Client Configs
 
-**Last updated: 2026-05-06 (mlx-lm server Gemma 4 31B-it MLX 6-bit — new active main, browse 12.33 s, thinking ON)**
-
 Client config files for connecting to the Mac Studio M3 Ultra. Templates live under [`configs/clients/`](clients/), organized by server type — see [`clients/README.md`](clients/README.md) for the per-server layout. Copy each file to its destination path and replace `<MAC_STUDIO_IP>` with the real IP.
 
 **Censored vs uncensored:** templates in this folder pin **censored / standard / instruction-tuned** models per server (Ling, Gemma, Osaurus JANGTQ4, Qwen3-Coder, etc.). The matching **uncensored** roster (HauhauCS abliterations, dealignai CRACK variants, NousResearch Hermes, Dolphin, magnum, Huihui, etc.) lives in [`docs/models/uncen-model/client-configs/`](../docs/models/uncen-model/client-configs/). Pick the folder that matches the model class you want to talk to. The **live Mac Studio state** is independent of which template you use — see [`../docs/current.md`](../docs/current.md) for what's actually running right now.
 
 ## 🖥️ Server Roles
 
-| Server | Port | Role | Model(s) | API Key |
+| Server | Port | Role | Representative model(s) | API Key |
 |--------|------|------|----------|---------|
-| **vllm-mlx** | 8000 | Previous primary / fallback -- fastest inference, single model; currently stopped | Ling-2.6-flash mlx-6bit (~80GB) | Not needed |
-| **mlx-openai-server / mlx-lm server** | 8000 | **Current main (2026-05-06)** -- mlx-lm server via Cellar libexec (`/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`, **not** `/opt/homebrew/bin/mlx_lm.server`) running Gemma 4 31B-it; also available as multi-model mlx-openai-server with prompt cache + speculative decoding | Gemma 4 31B-it MLX 6-bit (20.4 tok/s, browse 12.33 s, thinking ON) | Not needed |
-| **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard; currently stopped | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
-| **vmlx** | 8000 | JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python; **currently stopped** (was last main 2026-05-01 with Osaurus JANGTQ4) | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
-| **lm-studio** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for initial load; **stopped 2026-05-06** | Prior: IBM Granite 4.1 30B Q8_0 (28.57 GiB, Apache 2.0, 24.8 tok/s, browse 6.24 s) | Not needed |
-| **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance; **currently stopped** | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
-| **llama-cpp-turboquant** | **8099** | **TurboQuant / RotorQuant / PlanarQuant KV cache** -- two forks installed. **Currently running (2026-05-06):** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` + Qwen3.6-35B-A3B Q6_K + `--cache-type-k turbo3 --cache-type-v turbo3` (auto-asymm K=q8_0). Smoke 4/5, decode 68 tok/s @ 512 / 44 tok/s @ 32 K, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 (2.07×/2.27× faster than Gemma 4 baseline)**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` documented for RotorQuant `iso3` comparison (cold prefill regression at 32 K+). | unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf (~27 GB) | Not needed |
+| **vllm-mlx** | 8000 | Fastest single-model inference; most capable for sparse-MoE / `bailing_hybrid` | Ling-2.6-flash mlx-6bit (~80GB) | Not needed |
+| **mlx-openai-server / mlx-lm server** | 8000 | mlx-lm direct (single-model with `--draft-model` for MTP/spec-decode) or mlx-openai-server YAML multi-model (trie prompt cache, JANG via `.pth` patch). Launch via Cellar libexec `mlx_lm.server` only | Gemma 4 31B-it MLX 6-bit | Not needed |
+| **oMLX** | 8000 | Multi-model — SSD cache, hot-swap, admin dashboard | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
+| **vmlx** | 8000 | JANGTQ — only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
+| **lm-studio** | **1234** | LM Studio headless — standard MLX/GGUF only; built-in tool-call + reasoning parsing; guardrail flip required for large loads (`mode:"high"` → `"off"` → `"high"`) | IBM Granite 4.1 30B Q8_0 (28.57 GiB, Apache 2.0); also Gemma 4 31B-it MLX 6-bit, TrevorJS Gemma 4 26B A4B, prithivMLmods/HauhauCS Aggressive variants | Not needed |
+| **dflash-mlx** | **8098** | DFlash speculative-decoding sidecar — target+drafter pair, wraps `mlx_lm.server` in 0.1.4.1+, requires 3 local patches | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
+| **llama-cpp-turboquant** | **8099** | TurboQuant / RotorQuant / PlanarQuant KV-cache sidecar — two forks installed: `TheTom/llama-cpp-turboquant` (`turbo2/3/4`, auto-asymm `q8_0` K, sparse V dequant, 4-mag LUT) and `johndpope/llama-cpp-turboquant` (`iso3/4`, `planar3/4`). See [`docs/servers/llama-cpp-turboquant/summary.md`](../docs/servers/llama-cpp-turboquant/summary.md) | unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf (~27 GB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **mlx-lm server + Gemma 4 31B-it MLX 6-bit** (deployed 2026-05-06 after Event-4 hygiene); restart lm-studio + IBM Granite 4.1 30B Q8_0, TrevorJS Gemma 4 26B A4B, DavidAU 40B Heretic, prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio (1234), dflash-mlx (8098), and llama-cpp-turboquant (8099) each bind their own port** and can coexist with whichever port-8000 server is up — though the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time to avoid cross-contaminated benchmarks. For what's actually live right now see [`docs/current.md`](../docs/current.md).
 
 ### Why vllm-mlx is Primary
 
@@ -110,7 +108,7 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). vmlx was stopped 2026-05-02 per Event-4 hygiene before deploying prithivMLmods Aggressive Q6_K on lm-studio; restart command in [`docs/current.md`](../docs/current.md).
+**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). Restart command lives in [`docs/current.md`](../docs/current.md).
 
 For uncensored vmlx JANGTQ-CRACK variants use the matching templates under [`docs/models/uncen-model/client-configs/vmlx/`](../docs/models/uncen-model/client-configs/vmlx/). Note: `dealignai/MiniMax-M2.7-JANGTQ-CRACK` and `dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK` were removed from disk 2026-05-05; `dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK` remains on disk.
 
@@ -124,7 +122,7 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 |------|---------|---------|
 | `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 
-**Templates pin censored / standard models on lm-studio (stopped 2026-05-06).** Prior default: `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, 2026-05-05, browse 6.24 s). Also lists `gemma-4-31b-it-mlx` (browse 5.11 s thinking-OFF on lm-studio; 12.33 s thinking-ON on mlx-lm) and `qwen3.6-27b`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files remain deferred because lm-studio's role is provisional.
+**Templates pin censored / standard models on lm-studio.** Default: `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, dense instruct, Apache 2.0). Also lists `gemma-4-31b-it-mlx` and `qwen3.6-27b`. Ships `opencode.json` and `openclaw-provider.json`; Claude Code, Pi, qwen-code config files remain deferred.
 
 For uncensored lm-studio GGUFs (TrevorJS Gemma 4 26B A4B Q8_0 — prior main; prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/lm-studio/`](../docs/models/uncen-model/client-configs/lm-studio/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`.
 
@@ -154,7 +152,7 @@ nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
 pkill -f mlx-openai-server; pkill -f vllm-mlx; pkill -f vmlx_engine; sleep 2
 /opt/homebrew/bin/brew services start omlx
 
-# Switch to vllm-mlx (current production primary: Ling-2.6-flash mlx-6bit)
+# Switch to vllm-mlx (example shape — Ling-2.6-flash mlx-6bit, the most-recently-exercised model)
 pkill -f mlx-openai-server; pkill -f vmlx_engine; pkill -f lm-studio; /opt/homebrew/bin/brew services stop omlx; sleep 2
 nohup ~/vllm-mlx-env/bin/vllm-mlx serve \
   ~/.cache/huggingface/hub/models--mlx-community--Ling-2.6-flash-mlx-6bit/snapshots/df79bba4bc9d3ea919afd7e017d8d262b0bbc995 \
@@ -163,7 +161,7 @@ nohup ~/vllm-mlx-env/bin/vllm-mlx serve \
   --enable-auto-tool-choice --tool-call-parser hermes \
   > /tmp/vllm-mlx.log 2>&1 &
 
-# Switch to vmlx (current main: Osaurus Qwen3.6-35B-A3B JANGTQ4 — bundled-Python headless)
+# Switch to vmlx (example shape — Osaurus Qwen3.6-35B-A3B JANGTQ4, bundled-Python headless)
 pkill -f vllm-mlx; pkill -f mlx-openai-server; /opt/homebrew/bin/brew services stop omlx; sleep 2
 BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python
 SNAP=~/.cache/huggingface/hub/models--OsaurusAI--Qwen3.6-35B-A3B-JANGTQ4/snapshots/40c1de58e06a9737427e5d64938e56aa339a6204
@@ -173,15 +171,17 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   > /tmp/vmlx-osaurus-qwen36-jangtq4.log 2>&1 &
 
 # Switch to lm-studio (LM Studio headless, port 1234 — separate from port 8000)
-# Active main: prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (26.56 GiB at 65K context)
+# Example shape: load IBM Granite 4.1 30B Q8_0 (already on disk in LM Studio's model registry).
 # NOTE: if guardrail blocks load ("insufficient system resources"), temporarily set
-#   modelLoadingGuardrails.mode to "off" in ~/.lmstudio/settings.json, load, then restore.
-pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2
-~/.lmstudio/bin/lms unload --all
-python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF', filename='Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf', local_dir='/Users/chanunc/.cache/prithiv-gguf')"
-~/.lmstudio/bin/lms import -L --user-repo mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF -y ~/.cache/prithiv-gguf/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf
-~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y
+#   modelLoadingGuardrails.mode to "off" in ~/.lmstudio/settings.json, load, then restore to "high".
+~/.lmstudio/bin/lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
+
+# To swap to a HauhauCS / prithivMLmods GGUF that LM Studio doesn't auto-resolve via `lms get`,
+# download via huggingface_hub then import:
+#   python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF', filename='Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf', local_dir='/Users/chanunc/.cache/prithiv-gguf')"
+#   ~/.lmstudio/bin/lms import -L --user-repo mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF -y ~/.cache/prithiv-gguf/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf
+#   ~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y
 
 # Switch to dflash-mlx (port 8098 — does not displace port 8000 but eats ~25 GB unified memory)
 # First-time: pip install 'git+https://github.com/bstnxbt/dflash-mlx.git' in ~/dflash-mlx-env/,

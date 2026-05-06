@@ -8,6 +8,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 - [Qwen3.6-35B-A3B (4-bit)](#qwen36-35b-a3b-4-bit) — Same hybrid arch · 4-bit MLX (~22 GB) · dflash-mlx target paired with `z-lab/Qwen3.6-35B-A3B-DFlash`
 - [Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV (llama-cpp-turboquant)](#qwen36-35b-a3b-q6_k--rotorquant-iso3-kv-llama-cpp-turboquant) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} iso3` via `johndpope/llama-cpp-turboquant` fork · provisional sidecar on port 8099 · decode 2.27× Gemma 4 baseline · cold-prefill regression at 32 K+
 - [Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V on TheTom's fork](#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} turbo3` (auto-asymmetric q8_0 K + turbo3 V) via `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` · provisional sidecar on port 8099 · **2.27× Gemma 4 on search**, browse leader candidate · 32 K cold prefill works (29.88 s)
+- [majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit](#majentik-qwen36-35b-a3b-rotorquant-mlx-6bit) — Same 35B/3B base · MLX 6-bit (~26 GB) text-only despite `image-text-to-text` HF tag · **no RotorQuant runtime** (stock mlx-lm) · benchmarked once on mlx-openai-server (browse 101.45 s 🐢, search 21.25 s) · keeps as documented data point, not deployed
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
@@ -213,6 +214,62 @@ Build time: ~30 s. Startup logs confirm `turbo3 using 4-mag LUT (pre-M5 hardware
 - Same fork-distribution caveats as iso3 entry — no PyPI / Homebrew, track via `git pull` + rebuild.
 
 Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/). Full technique reference: [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
+
+---
+
+## majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit
+
+The HF page [`majentik/Qwen3.6-35B-A3B-RotorQuant-MLX-6bit`](https://huggingface.co/majentik/Qwen3.6-35B-A3B-RotorQuant-MLX-6bit) ships pre-quantised MLX 6-bit safetensors of Qwen/Qwen3.6-35B-A3B with a recipe pointing at stock `mlx_lm.server` / `mlx_vlm.server` and a Pi setup snippet — **no `IsoQuantCache` is wired in this recipe**, so loading these weights gives plain stock 6-bit MLX inference, not RotorQuant runtime savings. Benchmarked once on mlx-openai-server 2026-05-06 to capture a data point; not flipped to production.
+
+| Spec | Value |
+|:-----|:------|
+| HF repo | [`majentik/Qwen3.6-35B-A3B-RotorQuant-MLX-6bit`](https://huggingface.co/majentik/Qwen3.6-35B-A3B-RotorQuant-MLX-6bit) |
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| Quant | 6-bit affine MLX (8-bit gates), 6 safetensors shards, 1757 tensors |
+| Format | **Text-only weights** despite the `pipeline_tag: image-text-to-text` HF tag — the safetensors **omit all 393 `vision_tower.*` tensors** that the multimodal architecture expects. Loading as `model_type: multimodal` in mlx-openai-server fails with `Missing 393 parameters`; must load as `model_type: lm`. |
+| On-disk size | ~26 GB |
+| Server (one-time) | `mlx-openai-server` on port 8000 with `model_type: lm`, `tool_call_parser: qwen3_coder`, `reasoning_parser: qwen3` |
+| Context Size | 65 536 tokens (HF card claims 262 K native; not stress-tested) |
+| License | Apache 2.0 |
+
+**Deployment recipe (one-time bench, not for production):**
+
+```bash
+ssh macstudio 'python3 -c "
+from huggingface_hub import snapshot_download
+print(snapshot_download(repo_id=\"majentik/Qwen3.6-35B-A3B-RotorQuant-MLX-6bit\"))
+"'
+
+# Append (text-only) to ~/mlx-openai-server-multimodel.yaml:
+#   - model_path: majentik/Qwen3.6-35B-A3B-RotorQuant-MLX-6bit
+#     model_type: lm
+#     tool_call_parser: qwen3_coder
+#     reasoning_parser: qwen3
+#     context_length: 65536
+ssh macstudio "JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
+  --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
+  > /tmp/mlx-openai-server.log 2>&1 &"
+```
+
+**Performance (2026-05-06, M3 Ultra, single bench pass):**
+
+| Test | majentik on mlx-openai-server | TheTom turbo3 (same base) | Gemma 4 baseline |
+|:--|:--|:--|:--|
+| Smoke single-call | 4/5 ⚠ (one length-cap fail on agentic-reasoning) | 4/5 | 5/5 |
+| Multi-turn API loop | **5.13 s** | 5.57 s | 20.73 s |
+| OpenCode browse | **101.45 s 🐢** (Turn 1: 98.87 s for 68 out tokens) | 6.47 s 🥇 | 12.33 s |
+| OpenCode search | 21.25 s | 15.64 s | 35.55 s |
+| Single-call latency range | 1.16 – 12.27 s | 1.35 – 15.73 s | 1.28 – 3.77 s |
+
+**Why browse is so slow:** Turn 1 of "Browse www.example.com" prints 68 visible output tokens but spends ~99 s of LLM time. The most likely root cause is that `mlx-openai-server`'s `qwen3` reasoning parser is not stripping `<think>…</think>` blocks for this model — the model emits a long thinking budget before the tool call, and the bench timer counts that whole budget. The same model architecture on TheTom's `llama-server` (which uses the GGUF's embedded Jinja template via `--jinja`) emits the tool call in 7.33 s. Search is faster because Turn 2's webpage-content prefill (4.6 K tokens) absorbs the thinking overhead and completes in 3.91 s.
+
+**Caveats:**
+- HF page is **misleading**: tagged `image-text-to-text`, lists `mlx_vlm` code samples, but ships text-only safetensors. mlx-vlm `load(...)` would also fail with the same missing-vision-tower error.
+- "RotorQuant" in the repo name is **branding only** in this variant — no `IsoQuantCache` or KV-cache compression class fires. The weights are bit-equivalent to stock `mlx-community/Qwen3.6-35B-A3B-6bit` for any practical purpose.
+- The 4/5 smoke is the same agentic-reasoning length-cap failure pattern seen on TheTom turbo3 — likely intrinsic to Qwen3.6-35B-A3B at 6-bit when emitting long chains-of-thought before a tool call.
+- **No production flip.** Browse 101 s rules this out. Restored Gemma 4 to port 8000 after bench.
+
+Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-mlx-6bit/`](../benchmarks/qwen36-35b-a3b-rotorquant-mlx-6bit/). Cross-fork landscape (why this configuration lacks RotorQuant runtime even though the repo name advertises it): [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
 
 ---
 

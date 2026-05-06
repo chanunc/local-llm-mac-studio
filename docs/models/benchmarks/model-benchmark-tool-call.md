@@ -70,6 +70,7 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
 | HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.43 - 1.60 s | 1.59 - 1.90 s | 5.37 s |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
+| majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit | mlx-openai-server | ⚠ 4/5 | 1.16 - 12.27 s | 1.37 - 4.28 s | **5.13 s** (text-only despite VL tag; no RotorQuant runtime; OpenCode browse 101.45 s 🐢) |
 | Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V | `llama-cpp-turboquant` :8099 (TheTom) | ⚠ 4/5 | 1.35 - 15.73 s | 1.62 - 4.67 s | **5.57 s** (auto-asymm K=q8_0; agent-loop speed leader 6.47s/15.64s) |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥉 | **1.51 - 1.53 s** 🥉 | 5.64 s |
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
@@ -134,6 +135,7 @@ Rows ordered by browse wall time (ascending).
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking. |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2 / 2 turns; `webfetch`. Standard 6-bit MLX, no JANG speedup.<br>Thinking-on dense path is the slowest browse. |
+| majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit | **mlx-openai-server** | **101.45 s 🐢** / 100.26 s | 21.25 s / 20.05 s | 2 / 3 turns; `webfetch`. **Text-only despite VL HF tag** (vision_tower weights absent). Turn 1 spends 98.87 s emitting only 68 tokens — likely qwen3 reasoning parser not stripping `<think>` blocks.<br>See [per-model](../per-model/model-summary-qwen-3-6.md#majentik-qwen36-35b-a3b-rotorquant-mlx-6bit). |
 
 **2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
 

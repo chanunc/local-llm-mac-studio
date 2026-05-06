@@ -26,6 +26,7 @@ Filenames carry the category prefix so the type of doc is obvious:
 | [`model-quantization-jang.md`](model-quantization-jang.md) | Quantisation | JANG adaptive mixed-precision weight format — format properties, three per-server integration approaches, cross-server perf, Nemotron-H caveat. |
 | [`model-quantization-turboquant.md`](model-quantization-turboquant.md) | Quantisation | TurboQuant KV cache compression (Google ICLR 2026) + JANGTQ weight format — algorithm, MLX implementations (PR #858 + flovflo), JANGTQ-only vmlx requirement. |
 | [`model-architecture-bailing-hybrid.md`](model-architecture-bailing-hybrid.md) | Architecture | InclusionAI's `bailing_hybrid` MoE — 4 MLA + 28 Lightning recurrence layers, the canonical 3-patch deploy recipe, server compatibility matrix. |
+| [`model-technique-rotorquant.md`](model-technique-rotorquant.md) | Technique | RotorQuant / IsoQuant / PlanarQuant KV-cache compression — Clifford-rotor reimagining of TurboQuant; cross-fork landscape; M3 Ultra empirical findings (decode 2.27× Gemma 4, cold prefill regression). |
 
 Server-specific technique docs (not in this folder, but cross-listed for discovery):
 

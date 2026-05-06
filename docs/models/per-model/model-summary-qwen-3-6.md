@@ -6,6 +6,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision · 3 B active · 262 K native (1 M YaRN)
 - [Qwen3.6-35B-A3B (4-bit)](#qwen36-35b-a3b-4-bit) — Same hybrid arch · 4-bit MLX (~22 GB) · dflash-mlx target paired with `z-lab/Qwen3.6-35B-A3B-DFlash`
+- [Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV (llama-cpp-turboquant)](#qwen36-35b-a3b-q6_k--rotorquant-iso3-kv-llama-cpp-turboquant) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} iso3` via `johndpope/llama-cpp-turboquant` fork · provisional sidecar on port 8099 · decode 2.27× Gemma 4 baseline · cold-prefill regression at 32 K+
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
@@ -103,6 +104,49 @@ Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../benchmarks/q
 - PyPI 0.1.0 has no tool-calling — install dflash-mlx from `git+https://github.com/bstnxbt/dflash-mlx.git` (which currently resolves to 0.1.4.1).
 - Decode-bound win only; prefill-bound long-context multi-turn workloads lose to lm-studio.
 - **DFlash is workload-gated on M3 Ultra.** The essay-style local benchmark still regresses vs baseline at 1k-4k horizons (best-case 0.78×, worst-case 0.62×) and reaches only 1.05× at 8k with `--quantize-draft`, but the same host reproduces strong wins on high-agreement prompts: `1.61x` on the upstream math/reasoning prompt at 8192 tokens and `1.46x` on constrained JSON at 4096 tokens. See [`model-benchmark-standalone.md` § DFlash](../benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
+
+---
+
+## Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV (llama-cpp-turboquant)
+
+Same 35 B / 3 B-active Qwen3.6 MoE+VL hybrid Gated DeltaNet stack as the 6-bit MLX entry, served as a **GGUF Q6_K** through the [`johndpope/llama-cpp-turboquant`](https://github.com/johndpope/llama-cpp-turboquant) fork's `llama-server` with `--cache-type-k iso3 --cache-type-v iso3` — the **first Apple-Silicon path** for the RotorQuant / IsoQuant KV-cache compression family ([scrya-com/rotorquant](https://github.com/scrya-com/rotorquant), Clifford-rotor reimagining of TurboQuant). Provisional sidecar on port 8099, deployed 2026-05-06.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| GGUF | [unsloth/Qwen3.6-35B-A3B-GGUF](https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF) — `Qwen3.6-35B-A3B-UD-Q6_K.gguf` |
+| KV cache compression | `iso3` (RotorQuant 3-bit, both K and V) — runtime-applied via the fork's Metal kernels |
+| Format | GGUF Q6_K weights, ~27 GB on disk |
+| Server | `llama-cpp-turboquant` on port 8099 (sidecar — does not displace production main on 8000) |
+| Context Size | 65 536 tokens (loaded with `-c 65536`); native trains to 262 144 |
+| License | Apache 2.0 |
+
+**Deployment recipe:** see [`docs/servers/llama-cpp-turboquant/summary.md`](../../servers/llama-cpp-turboquant/summary.md). The fork builds in ~30 s on M3 Ultra; the GGUF downloads in 5–10 min.
+
+**Performance (2026-05-06, M3 Ultra 96 GB):**
+
+| Test | Result | Reference baseline (Gemma 4 31B-it MLX 6-bit) |
+|:--|:--|:--|
+| Smoke (single-call) | **5/5** ✅ | 5/5 |
+| Smoke (multi-turn) | **8.48 s** (3 turns) | 20.73 s (3 turns) — **iso3 2.4× faster** |
+| Decode @ 512 ctx | **46.3 tok/s** | 20.4 tok/s — **iso3 2.27× faster** |
+| Decode @ 4 K | 32.0 tok/s | n/a (Gemma 4 measured at 65 K only) |
+| Decode @ 8 K | 23.2 tok/s | 14.7 tok/s @ 65 K |
+| Cold prefill @ 32 K | **>600 s (timeout)** ❌ | scales linearly |
+| Warm TTFT (cache hit) | 0.05–0.11 s @ 512 / 4 K / 8 K | comparable |
+| OpenCode browse | **20.5 s median** | 12.33 s 🥇 — iso3 1.66× slower |
+| OpenCode search | **151.18 s median** | 35.55 s 🥇 — iso3 4.25× slower |
+
+**Workload-fit conclusion:** `iso3` wins on **short-context decode and warm-cache multi-turn loops** but **loses on agent loops with tool-result injection**, because every fresh tool result triggers a slow cold prefill. Kept as documented sidecar, not flipped to production main.
+
+**Caveats:**
+- The fork's `llama-server` rejects bare `-fa`; must pass `-fa on` (or `off` / `auto`).
+- Cold prefill at 32 K+ exceeds 600 s. Standard `bench_api_server.py` probe times out — split runs into ≤ 8 K cold + warm-cache reuse.
+- Speculative decoding incompatible (fork's `iso3` cache lacks partial-sequence-removal support).
+- No upstream PyPI / Homebrew distribution — track via `git pull` + rebuild.
+- **No MLX implementation of RotorQuant exists as of 2026-05-06.** This llama.cpp fork is the only Apple-Silicon path. See [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md) for the cross-platform landscape (PyTorch+CUDA, Triton, llama.cpp, MLX TurboQuant variants without RotorQuant).
+
+Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
 
 ---
 

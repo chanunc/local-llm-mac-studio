@@ -22,7 +22,7 @@ from pathlib import Path
 LIVE_CONFIG = Path.home() / ".config" / "opencode" / "opencode.json"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIGS_DIR = REPO_ROOT / "configs" / "clients"
-SERVERS = ["vllm-mlx", "omlx", "mlx-openai-server", "vmlx", "lm-studio"]
+SERVERS = ["vllm-mlx", "omlx", "mlx-openai-server", "vmlx", "lm-studio", "llama-cpp-turboquant"]
 
 
 def read_live_config():

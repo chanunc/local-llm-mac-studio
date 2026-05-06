@@ -1,0 +1,105 @@
+{
+  "model": "qwen3.6-35b-a3b-rotorquant-iso3",
+  "base_url": "http://192.168.31.4:8099/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 2.97,
+      "output_tokens": 97,
+      "rate_tps": 32.7,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 2.0,
+      "output_tokens": 65,
+      "rate_tps": 32.5,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 4.93,
+      "output_tokens": 197,
+      "rate_tps": 39.9,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web"
+      ],
+      "tool_args": [
+        "{\"query\":\"openai api docs\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 2.48,
+      "output_tokens": 83,
+      "rate_tps": 33.4,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 16.91,
+      "output_tokens": 721,
+      "rate_tps": 42.6,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"ls -lhS /tmp\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 2.77,
+      "output_tokens": 93,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 3.87,
+      "output_tokens": 164,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 1.83,
+      "output_tokens": 75,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 8.48
+}

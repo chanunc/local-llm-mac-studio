@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-llama-cpp-turboquant": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:8099/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "qwen3.6-35b-a3b-rotorquant-iso3": {
+          "name": "Qwen3.6-35B-A3B Q6_K + RotorQuant iso3 KV cache (provisional)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-rotorquant-iso3",
+  "small_model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-rotorquant-iso3"
+}

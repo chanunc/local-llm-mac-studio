@@ -1,0 +1,166 @@
+# llama-cpp-turboquant Server Summary
+
+## Index
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Starting the server](#starting-the-server)
+- [Tool use and reasoning](#tool-use-and-reasoning)
+- [Health check](#health-check)
+- [Performance](#performance-mac-studio-m3-ultra-96-gb)
+- [Known limitations](#known-limitations)
+- [See also](#see-also)
+
+---
+
+## Overview
+
+`llama-cpp-turboquant` is a research-grade KV-cache-compression server built from the [`johndpope/llama-cpp-turboquant`](https://github.com/johndpope/llama-cpp-turboquant) fork (`feature/planarquant-kv-cache` branch) of upstream llama.cpp. It adds the **TurboQuant**, **PlanarQuant**, and **RotorQuant (IsoQuant)** family of KV-cache quantization types that are not yet in upstream — concretely, the `--cache-type-k` and `--cache-type-v` flags accept `turbo2/3/4`, `planar3/4`, **`iso3`**, **`iso4`** in addition to the standard `f16/q8_0/q4_0/...`.
+
+> **Technique reference:** for what RotorQuant / IsoQuant / TurboQuant actually do at the algorithm level (Clifford rotors, quaternion rotation, Lloyd-Max codebooks, the cross-fork landscape across MLX vs llama.cpp), see [`docs/models/techniques/model-technique-rotorquant.md`](../../models/techniques/model-technique-rotorquant.md). This runbook covers operational steps only.
+
+**Status: provisional sidecar.** Used for KV-cache-compression experiments on Qwen3.6-class models. Exposes the full OpenAI semantics — `tools[]`, streaming, `reasoning_content` channel — via the standard `llama-server` binary, no patches required.
+
+## Architecture
+
+```
+MacBook                       Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
+┌────────────────┐            ┌─────────────────────────────────────────────┐
+│ Claude Code    │            │ llama-server (port 8099, sidecar)           │
+│ OpenCode       │─── LAN ───>│   ~/llama-cpp-turboquant/build/bin/         │
+│ OpenClaw       │            │     llama-server                            │
+│ Pi             │            │   model: Qwen3.6-35B-A3B Q6_K (~27 GB)      │
+└────────────────┘            │   --cache-type-k iso3 --cache-type-v iso3   │
+                              │   -ngl 99 -fa on                            │
+                              │   OpenAI API only (no Anthropic)            │
+                              └─────────────────────────────────────────────┘
+```
+
+Sidecar pattern — runs on port **8099**, alongside the production main on 8000. Does not displace `vllm-mlx` / `mlx-openai-server` / `vmlx` / `mlx_lm.server`. dflash-mlx (8098) and lm-studio (1234) can also coexist.
+
+GGUF weights live in `~/.cache/huggingface/hub/`. The fork's binary is fully self-contained — no Python venv, no upstream-package patches, no PyPI dependency.
+
+## Installation
+
+**One-time on Mac Studio:**
+
+```bash
+ssh macstudio "/opt/homebrew/bin/brew install cmake"   # if missing
+
+ssh macstudio "cd ~ && git clone -b feature/planarquant-kv-cache --depth 1 \
+  https://github.com/johndpope/llama-cpp-turboquant.git && \
+  cd llama-cpp-turboquant && \
+  cmake -B build \
+    -DGGML_METAL=ON \
+    -DGGML_METAL_EMBED_LIBRARY=ON \
+    -DLLAMA_BUILD_TESTS=OFF \
+    -DLLAMA_BUILD_EXAMPLES=ON \
+    -DLLAMA_BUILD_SERVER=ON && \
+  cmake --build build --config Release -j 8"
+```
+
+Build time on M3 Ultra: ~30 sec. Outputs `~/llama-cpp-turboquant/build/bin/{llama-server,llama-cli}`.
+
+**Pre-download a GGUF** (any quant works — KV cache is weight-format-agnostic):
+
+```bash
+ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
+  print(hf_hub_download(repo_id='unsloth/Qwen3.6-35B-A3B-GGUF', \
+    filename='Qwen3.6-35B-A3B-UD-Q6_K.gguf'))\""
+```
+
+`unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` is ~27 GB and downloads in 5–10 min on a fast HF link. Other supported quants on the same repo: `UD-Q4_K_M` (~21 GB), `UD-Q5_K_M` (~24 GB), `UD-Q6_K_XL` (~30 GB), `Q8_0` (~37 GB).
+
+## Starting the server
+
+```bash
+ssh macstudio "GGUF=\$(ls ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf); \
+  nohup ~/llama-cpp-turboquant/build/bin/llama-server \
+    -m \"\$GGUF\" \
+    --cache-type-k iso3 --cache-type-v iso3 \
+    -ngl 99 -fa on \
+    --host 0.0.0.0 --port 8099 \
+    --alias qwen3.6-35b-a3b-rotorquant-iso3 \
+    -c 65536 \
+    --jinja \
+    > /tmp/llama-cpp-turboquant.log 2>&1 &"
+```
+
+Key flags:
+- `--cache-type-k iso3 --cache-type-v iso3` — RotorQuant / IsoQuant 3-bit KV cache (the entire reason this server exists)
+- `-ngl 99` — offload all 40 layers + embeddings to Metal
+- `-fa on` — flash attention (default `auto` works too; explicit `on` documents intent). Note: `-fa` without a value errors on this build — must specify `on/off/auto`
+- `-c 65536` — context limit. Higher is feasible on 96 GB Mac Studio but cold prefill cost rises super-linearly with iso3 K compression (see Performance)
+- `--alias` — what `/v1/models` returns. Pick a stable identifier; clients reference it
+- `--jinja` — apply the model's Jinja chat template, including `<think>` tag handling. Without it the server will not split the reasoning channel
+
+Stop with: `ssh macstudio "pkill -f llama-cpp-turboquant"`.
+
+## Tool use and reasoning
+
+Both work out of the box on the fork:
+- **Tool calls** — Qwen3.6's native `<tool_call>` XML parsed by `llama-server` into OpenAI-style `tool_calls[]`. Verified 5/5 on the API smoke harness.
+- **Reasoning channel** — Qwen3.6's `<think>` blocks land in `choices[].message.reasoning_content` (separate from `content`). OpenCode renders this as the assistant's hidden thought bubble.
+
+No parser flags needed — the chat template embedded in the GGUF (and applied via `--jinja`) handles the dispatch.
+
+## Health check
+
+```bash
+curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool
+```
+
+Expect a `data[0].id` of `qwen3.6-35b-a3b-rotorquant-iso3` (or whatever you passed to `--alias`).
+
+Smoke a real generation:
+
+```bash
+curl -s http://<MAC_STUDIO_IP>:8099/v1/chat/completions \
+  -H "Content-Type: application/json" -d '{
+    "model": "qwen3.6-35b-a3b-rotorquant-iso3",
+    "messages": [{"role":"user","content":"Reply with exactly: ok"}],
+    "max_tokens": 200,
+    "temperature": 0
+  }' | python3 -m json.tool
+```
+
+Look for non-empty `choices[0].message.content` (or `reasoning_content` if the model is mid-thought) and `usage.completion_tokens > 0`.
+
+## Performance (Mac Studio M3 Ultra, 96 GB)
+
+Numbers for `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` + `--cache-type-k iso3 --cache-type-v iso3`, captured 2026-05-06.
+
+| Context | Cold prefill TTFT | Warm TTFT | Decode tok/s | Prefill tok/s |
+|:--:|:--:|:--:|:--:|:--:|
+| 512 | 0.63 s | 0.05 s | **46.3** | ~11,800 |
+| 4 K | 15.5 s | 0.08 s | 32.0 | ~53,700 |
+| 8 K | 56.6 s | 0.11 s | 23.2 | ~73,000 |
+| 32 K | **>600 s (timeout)** | n/a | n/a | n/a |
+| 65 K | not measured cold | n/a | n/a | n/a |
+
+Smoke (`bench_api_tool_call.py`): **5/5 single-call**, multi-turn loop **8.48 s** (vs Gemma 4 31B 20.73 s — **2.4× faster** on multi-turn).
+
+Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
+
+Key shape:
+- **Decode is fast** — 46.3 tok/s @ 512 is **2.27× the Gemma 4 baseline (20.4 tok/s)**.
+- **Cold prefill is slow** — iso3 K compression has heavy compute overhead vs `f16` (~145 tok/s prefill at 8 K, vs ~1,000+ tok/s for plain `f16` K cache). Above 16 K cold prefill, the 600 s probe timeout in `bench_api_server.py` fires.
+- **Warm prefill is very fast** — once the prompt cache holds a prefix, TTFT drops to ~0.1 s for any repeat under 32 K. This is the regime that **agent loops live in** (long static system prompt, repeated across turns), and where iso3's claimed advantage actually lands.
+
+Practical implication: this server is well-suited to **agent / multi-turn workloads where the prompt prefix repeats**, and poorly suited to single-shot **long fresh prompts** (e.g. summarising a freshly pasted 50 K document).
+
+## Known limitations
+
+- **iso3 cold prefill is slow at long contexts.** 32 K cold prefill exceeds 600 s on M3 Ultra. The fork's iso3 K dequant kernel is not yet as optimised as the `f16` baseline. Workaround: keep contexts ≤ 16 K cold, or warm the prompt cache before measuring.
+- **Fork is a community port, not upstream.** Author `johndpope` actively maintains the branch (last commit 2026-04-15, with `Merge pull request #1 from alex-musick`). Re-pull + rebuild after upstream llama.cpp lands new features. There is no PyPI / Homebrew pin — track via `git log`.
+- **No `--draft-model` speculative decoding tested with iso3.** The server *does* expose `--cache-type-{k,v}-draft`, but speculative decoding requires "the target context to support partial sequence removal" — and the iso3 cache currently does not. Server logs print `speculative decoding not supported by this context`.
+- **No Anthropic API.** OpenAI-compatible only. For Claude Code, route via OpenAI provider.
+- **GGUF only.** No MLX safetensors, no JANG, no JANGTQ.
+
+## See also
+
+- Technique reference: [`docs/models/techniques/model-technique-rotorquant.md`](../../models/techniques/model-technique-rotorquant.md)
+- Upstream fork: [`johndpope/llama-cpp-turboquant`](https://github.com/johndpope/llama-cpp-turboquant)
+- Original RotorQuant project: [`scrya-com/rotorquant`](https://github.com/scrya-com/rotorquant)
+- TurboQuant paper: [arXiv 2504.19874](https://arxiv.org/abs/2504.19874) (ICLR 2026)
+- Bench data: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/)

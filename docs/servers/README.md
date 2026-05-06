@@ -11,6 +11,7 @@ Operational runbooks for inference servers on the Mac Studio. Use [`docs/current
 | `oMLX` | [`omlx/summary.md`](omlx/summary.md) | Homebrew-managed multi-model server with dashboard |
 | `vmlx` | [`vmlx/summary.md`](vmlx/summary.md) | JANGTQ / TurboQuant path via MLX Studio bundled Python |
 | `mlx-lm` | [`mlx-lm/summary.md`](mlx-lm/summary.md) | Lightweight single-model development server |
+| `llama-cpp-turboquant` | [`llama-cpp-turboquant/summary.md`](llama-cpp-turboquant/summary.md) | Provisional RotorQuant / TurboQuant / PlanarQuant KV-cache sidecar on port 8099 |
 
 ## Maintenance And Patches
 

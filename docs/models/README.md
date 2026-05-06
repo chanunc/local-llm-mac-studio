@@ -11,6 +11,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`techniques/`](techniques/) | Inference-side technique notes (speculative decoding, caching, quantisation profiles) — what they are, when they help, hardware sensitivity. |
 | [`benchmarks/`](benchmarks/) | Cross-model benchmark write-ups + raw JSON/log outputs grouped by model slug. |
 | [`how-to/`](how-to/) | One-off conversion / template / debugging guides. |
+| [`known-issues/`](known-issues/) | Cross-cutting model failure modes (doom looping, etc.) — what they are, how to detect, mitigation. |
 | [`uncen-model/`](uncen-model/) | Private submodule for uncensored-model research. |
 
 ## Per-model deep dives
@@ -44,6 +45,12 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`how-to/model-conversion-gguf-mlx.md`](how-to/model-conversion-gguf-mlx.md) | GGUF → MLX safetensors conversion. |
 | [`how-to/model-qwen-null-think-template-test.md`](how-to/model-qwen-null-think-template-test.md) | Qwen null-think chat template test. |
 | [`how-to/eval-benchmark-local-runners.md`](how-to/eval-benchmark-local-runners.md) | Run MMLU / MMLU-Pro / TruthfulQA / HarmBench / refusal-rate locally against llmster / vmlx / vllm-mlx OpenAI endpoints. |
+
+## Known issues
+
+| File | Topic |
+|:--|:--|
+| [`known-issues/doom-loop-edge-model.md`](known-issues/doom-loop-edge-model.md) | Doom looping in small reasoning models — Maxime Labonne's framing, Qwen3.5/3.6 evidence, detection methods, bench-rig recipe. |
 
 ## Conventions
 

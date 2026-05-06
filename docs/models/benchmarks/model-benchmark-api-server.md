@@ -577,6 +577,53 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 
 ---
 
+## Gemma 4 31B-it (6-bit, dense, on mlx-lm server)
+
+Model: `lmstudio-community/gemma-4-31B-it-MLX-6bit` — same weights as the llmster run above.
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context (512, 4K, 8K, 32K, 65K). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-mlx-lm.json](gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json).
+
+**Server:** `python -m mlx_lm server` (mlx-lm 0.31.3, direct server), started via `python3 -m mlx_lm server --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit --host 0.0.0.0 --port 8000 --max-tokens 8192 --prompt-cache-size 5`. Model served by full filesystem path (not a short HF ID). **Thinking mode ON** — mlx-lm enables Gemma 4 thinking by default.
+
+### Generation Speed (tok/s)
+
+| Context | mlx-lm server | llmster (2026-05-01, for ref) |
+|:--------|:-------------:|:-----------------------------:|
+| 512 | **20.5** | 21.8 |
+| 4K | **20.2** | 21.5 |
+| 8K | **19.8** | 21.1 |
+| 32K | **17.2** | 18.3 |
+| 65K | **14.7** | — (not tested) |
+
+### Prefill Speed (tok/s)
+
+| Context | mlx-lm server | llmster (for ref) |
+|:--------|:-------------:|:-----------------:|
+| 512 | 1,337 | 1,232 |
+| 4K | **9,965** | 6,028 |
+| 8K | **19,331** | 11,584 |
+| 32K | **63,306** | 36,297 |
+| 65K | **101,361** | — |
+
+### Time to First Token (seconds)
+
+| Context | mlx-lm server | llmster (for ref) |
+|:--------|:-------------:|:-----------------:|
+| 512 | **0.41** | 0.44 |
+| 4K | **0.41** | 0.68 |
+| 8K | **0.43** | 0.71 |
+| 32K | **0.52** | 0.90 |
+| 65K | **0.65** | — |
+
+**Notes:**
+- **Gen speed nearly identical to llmster** — within 6% across all contexts. The model load path (mlx-lm direct vs. LM Studio MLX runtime) has negligible impact on decode speed.
+- **Prefill is dramatically faster on mlx-lm** — 2.5× at 4K (9,965 vs 6,028 tok/s) and 1.7× at 32K (63,306 vs 36,297 tok/s). LM Studio's MLX runtime appears to use a less-optimized prefill kernel. At 65K context, prefill reaches 101K tok/s — the model can ingest long contexts very quickly.
+- **TTFT stays sub-0.65 s through 65K** — TTFT is only weakly dependent on context length since prefill is so fast. A 65K-token prompt adds only 0.24 s to TTFT vs 512 tokens.
+- **Thinking mode ON:** the model generates thinking context on some prompts (affecting per-turn agent latency), but these throughput numbers measure a simple 50-token completion and thus reflect pure decode bandwidth.
+
+---
+
 ## prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (GGUF, on llmster)
 
 Model: `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` (`Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf`) — prithivMLmods abliteration, mradermacher quantization. 28.51 GB on disk, 26.56 GiB resident at 65536 context.

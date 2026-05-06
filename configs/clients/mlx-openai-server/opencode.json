@@ -56,10 +56,17 @@
             "context": 262144,
             "output": 8192
           }
+        },
+        "/Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit": {
+          "name": "Gemma 4 31B-it MLX 6-bit (mlx-lm server, thinking)",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         }
       }
     }
   },
-  "model": "macstudio/mlx-community/Qwen3-Coder-Next-6bit",
-  "small_model": "macstudio/mlx-community/Qwen3-Coder-Next-6bit"
+  "model": "macstudio//Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit",
+  "small_model": "macstudio//Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit"
 }

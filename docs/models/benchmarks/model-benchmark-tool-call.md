@@ -106,15 +106,15 @@ Rows ordered by browse wall time (ascending).
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🥈** / 6.15 s | 2 / 2 turns; `webfetch`. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader.** 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2 / 2 turns; `webfetch`. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader. Current search leader** (prior 🏆 was Gemma 4 31B-it 6.37s on llmster, thinking OFF — now historical). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
 | **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
-| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | 5.11 s 🥉 / 3.94 s | **6.37 s 🏆** / 5.18 s | 2 / 2 turns; `webfetch`. **No thinking-prelude.**<br>**Fastest search in doc.** See [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster). |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s / 3.94 s | 12.01 s 🥉 / 10.81 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>Search-speed leader among uncensored GGUFs. See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s / 10.81 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
 | **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2 / 2 turns; `webfetch`. MoE 35B/3B active, thinking-off in practice.<br>See [results section](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive). |
 | IBM Granite 4.1 30B Q8_0 | **llmster** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2 / 2 turns; `webfetch`. Dense 30B, non-thinking, 24.8 tok/s gen.<br>Apache 2.0. See [per-model](../per-model/model-summary-granite-4.1.md). |
 | **Dolphin Venice 24B MLX-8bit** | **llmster** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2 / 2 turns; `webfetch`. Dense Mistral 24B, no thinking.<br>See [results section](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit). |
 | **Dolphin 3.0 R1 Mistral 24B MLX-8bit** | **llmster** | **7.5 s** / 6.28 s | 34.52 s / 4.42 s | 2.5 / 7 turns; `webfetch`+`bash`. High search variance (10–59 s). Loops bash excessively on search.<br>See [results section](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits). |
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **llmster** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2 / 2.5 turns; `webfetch`. Dense Qwen3.6 27B, Q8_K_P, thinking-on.<br>See [results section](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced). |
+| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **mlx-lm** | 12.33 s / 11.12 s | 35.55 s / 34.38 s | 2 / 2 turns; `webfetch`. **Thinking ON** (mlx-lm server, 121/124 output tokens). Prior llmster run (thinking OFF): *5.11 s browse / 6.37 s search*. See [results section](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit). |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE. |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Search splits into top-stories + item fetches. |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2 / 2 turns; `webfetch`. JANGTQ4 / `mxtq` MoE 35B/3B + VL.<br>Search dominated by 8K-token turn-2 reply on long-context decode. |
@@ -144,6 +144,7 @@ Rows ordered alphabetically by model name.
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | llmster | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
+| Gemma 4 31B-it (lmstudio-community 6-bit) | mlx-lm server (direct) | N/A (native Gemma 4 format) | N/A (thinking emitted as part of content in streaming) | none — `python -m mlx_lm server --model <path> --host 0.0.0.0 --port 8000 --max-tokens 8192 --prompt-cache-size 5`; thinking mode ON by default |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | llmster | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
@@ -781,6 +782,46 @@ Cross-model comparison (current best-of-doc on the new 2026-04-30 prompt set):
 5. **`lms get` is unreliable for >20 GB models.** First two `lms get` attempts hung at 88 % with no resume capability (only shards 4–6 of 6 reached disk). Working path: kill the hung process, complete the download with `huggingface_hub.snapshot_download(repo_id=…, local_dir=~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit)`. LM Studio recognises the on-disk layout afterward. See [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) "Loader gotcha" callout.
 
 6. **First load ignored `--context-length`** — model came up at 4K despite `--context-length 65536`, hit `HTTP 400: tokens exceed context length` on the 4K bench. Re-`lms unload` + re-`lms load --context-length 65536 -y` correctly seats 64K. Verify with `lms ps` after every load.
+
+### Re-bench: mlx-lm server (2026-05-06, thinking ON)
+
+**Date:** 2026-05-06
+**Server:** `mlx-lm server` (direct `python -m mlx_lm server`), port 8000. No parser flags — mlx-lm 0.31.3 native Gemma 4 support. **Thinking mode ON by default** (model emits thinking context before tool calls).
+
+#### API-Level Tool Calling (5-tool harness, 2026-05-06)
+
+Raw JSON: [`gemma-4-31b-it-mlx-6bit/api-tool-test.json`](gemma-4-31b-it-mlx-6bit/api-tool-test.json).
+
+| Scenario | Time | Tools Called | Result |
+|:---------|:-----|:-------------|:-------|
+| Single tool (file read) | 4.56 s | `read_file` | ✅ PASS |
+| Single tool (command) | 2.96 s | `run_command` | ✅ PASS |
+| Multi-tool (search + read) | 5.64 s | `search_web`, `read_file` | ✅ PASS — both tools in one call |
+| Multi-tool (list + read + write) | 5.64 s | `list_directory` (1 of 3 expected) | ⚠ partial — same single-tool deviation as llmster run |
+| Agentic reasoning | 11.28 s | `run_command` | ✅ PASS — 207 output tokens (thinking) |
+
+**Multi-turn loop total:** 20.73 s (3 turns: read 8.51 s + write 9.26 s + summary 2.96 s). Notably slower than llmster's 9.8 s — model generates 134+156 output tokens vs 20+15 on llmster. Multi-tool (search + read) now calls BOTH tools in a single response (vs llmster which only called `search_web`).
+
+#### OpenCode End-to-End Agent Benchmark (2026-05-06, thinking ON)
+
+Raw JSON: [`gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json`](gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json).
+
+| Scenario | Wall (median) | LLM (median) | p5 – p95 wall | Turns | Tools used | Output tokens (median) |
+|:---------|:------:|:------:|:------:|:-----:|:-----------|:----------------------:|
+| Browse www.example.com | **12.33 s** | 11.12 s | 12.33 – 12.35 s | 2 | `webfetch` | 121 |
+| Browse Hackernews latest topic | **35.55 s** | 34.38 s | 35.28 – 35.85 s | 2 | `webfetch` | 124 |
+
+Per-turn breakdown (browse): turn 1 → 4.83 s / 53 tokens; turn 2 → 6.30 s / 68 tokens. Search: turn 1 → 7.59 s / 83 tokens; turn 2 → 26.79 s / 41 tokens (long HN page prefill at 5K tokens dominates). Total output tokens per run: ~121 browse / ~124 search — **3–4× higher than the llmster thinking-OFF run (35 / 45 tokens)**.
+
+**Thinking-ON vs Thinking-OFF impact:**
+
+| Run | Server | Browse | Search | Output tokens/turn (browse) |
+|:----|:-------|:------:|:------:|:---------------------------:|
+| 2026-05-01 (thinking OFF) | llmster | **5.11 s** | **6.37 s** | ~17 |
+| 2026-05-06 (thinking ON) | mlx-lm | 12.33 s | 35.55 s | ~60 |
+| Overhead factor | | **2.4×** | **5.6×** | **3.5×** |
+
+**Why thinking mode hurts agent latency more for search than browse:** The HN page response is ~5K tokens of prefill on turn 2. With thinking ON, the model also generates a long reasoning trace before the final summary answer — at ~15 tok/s effective decode, each extra 60 reasoning tokens costs ~4 s. Browse has a smaller turn-2 prefill (~10K) and the summary is shorter, so the overhead is less pronounced.
 
 ---
 

@@ -313,12 +313,12 @@ IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. O
 
 ## Gemma 4 Family
 
-Three Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context), the dense **31B-it** instruction-tuned text-only release (64K context, llmster-deployed), and the **DavidAU HERETIC 31B** uncensored fine-tune (Q6_k GGUF, llmster). Per-variant deployment details, server configs, benchmarks, and caveats for the censored variants live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**. Uncensored benchmark data lives in the submodule: [`uncen-model/gemma4-31b-davidau-heretic-benchmark.md`](uncen-model/gemma4-31b-davidau-heretic-benchmark.md).
+Three Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context), the dense **31B-it** instruction-tuned text-only release (**current production main 2026-05-06 on mlx-lm server**, 64K context, thinking mode ON), and the **DavidAU HERETIC 31B** uncensored fine-tune (Q6_k GGUF, llmster). Per-variant deployment details, server configs, benchmarks, and caveats for the censored variants live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**. Uncensored benchmark data lives in the submodule: [`uncen-model/gemma4-31b-davidau-heretic-benchmark.md`](uncen-model/gemma4-31b-davidau-heretic-benchmark.md).
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
-| Gemma 4 31B-it (6-bit) | Dense 31B text-only | 29 GB | 6-bit MLX | llmster | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
+| **Gemma 4 31B-it (6-bit)** | Dense 31B text-only | 29 GB | 6-bit MLX | **mlx-lm server (current main 2026-05-06)** | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
 | **DavidAU Gemma 4 31B Heretic Q6_k** | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | llmster | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
 
 ---

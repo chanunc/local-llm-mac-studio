@@ -2,62 +2,39 @@
 
 Short source of truth for the Mac Studio stack's live operating state. Detailed runbooks live under [`docs/servers/`](servers/), model details under [`docs/models/`](models/), and client templates under [`configs/clients/`](../configs/clients/).
 
-Last verified: 2026-05-05
+Last verified: 2026-05-06
 
 ## Production
 
 | Field | Value |
 |:--|:--|
-| Server | `llmster` / LM Studio headless |
-| Model | `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF` (IBM Granite 4.1 30B instruct, Apache 2.0) |
-| Port | `1234` |
+| Server | `mlx-lm server` (`python -m mlx_lm server`, direct) |
+| Model | `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX, Apache 2.0) |
+| Port | `8000` |
 | Auth | None |
-| Client template set | [`configs/clients/llmster/`](../configs/clients/llmster/) |
-| Runbook | [`docs/servers/llmster/summary.md`](servers/llmster/summary.md) |
+| Client template set | [`configs/clients/mlx-openai-server/`](../configs/clients/mlx-openai-server/) |
+| Runbook | [`docs/servers/`](servers/) — no dedicated mlx-lm server runbook yet; see mlx-openai-server for the underlying mlx-lm ecosystem |
 
 Launch shape (after Event-4 hygiene):
 
 ```bash
-# Unload any previously loaded models first
-ssh macstudio "~/.lmstudio/bin/lms unload --all"
+# Model is already on disk at ~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit
+# (downloaded via snapshot_download 2026-05-01)
 
-# Download (30.7 GB, only needed once — already in ~/.cache/hauhau-gguf after 2026-05-05 deploy)
-ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
-  hf_hub_download(repo_id='unsloth/granite-4.1-30b-GGUF', \
-  filename='granite-4.1-30b-Q8_0.gguf', \
-  local_dir='/Users/chanunc/.cache/hauhau-gguf')\""
-
-# Hard-link import (already imported — lms import is idempotent if the file exists in models/)
-ssh macstudio "~/.lmstudio/bin/lms import -L \
-  --user-repo unsloth/granite-4.1-30b-GGUF -y \
-  ~/.cache/hauhau-gguf/granite-4.1-30b-Q8_0.gguf"
-
-# Disable guardrail before loading
-ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
-  s=json.load(open(f'{h}/.lmstudio/settings.json')); \
-  s['modelLoadingGuardrails']['mode']='off'; \
-  json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
-
-ssh macstudio "~/.lmstudio/bin/lms load 'granite-4.1-30b' \
-  --gpu max --context-length 65536 \
-  --identifier 'granite-4.1-30b-q8' -y"
-
-# Restore guardrail after load
-ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); \
-  s=json.load(open(f'{h}/.lmstudio/settings.json')); \
-  s['modelLoadingGuardrails']['mode']='high'; \
-  json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
-
-ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+ssh macstudio "nohup python3 -m mlx_lm server \
+  --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
+  --host 0.0.0.0 --port 8000 \
+  --max-tokens 8192 --prompt-cache-size 5 \
+  > /tmp/mlx-lm-server.log 2>&1 &"
 ```
 
 Notes:
-- IBM Granite 4.1 30B Q8_0 (28.57 GiB resident) deployed 2026-05-05, replacing TrevorJS Gemma 4 26B A4B Uncensored as the active Mac Studio LLM process. First Granite family entry; censored RLHF-aligned instruct model, Apache 2.0 license.
-- LM Studio handles Granite tool-calls natively — **no parser flags required**. No thinking channel.
-- Current benchmarks: API tool harness 5/5 single-call + 3/3 multi-turn (10.37 s); throughput **24.8 tok/s @ 512**, 18.7 tok/s @ 32K; **OpenCode browse 6.24 s / search 10.51 s**. Raw data: [`docs/models/benchmarks/granite-4.1-30b-q8/`](models/benchmarks/granite-4.1-30b-q8/).
-- Key deployment gotcha: LM Studio guardrail `mode: "high"` blocks this load too — same workaround (disable → load → restore).
-- 65K context probe HTTP 400 — Granite 4.1 sliding window boundary; real queries < 32K are fine.
-- vmlx (port 8000) and dflash-mlx (port 8098) remain stopped per Event-4 hygiene.
+- Gemma 4 31B-it MLX 6-bit deployed 2026-05-06 on mlx-lm server (direct `python -m mlx_lm server`). Using the simpler mlx-lm server path (not mlx-openai-server) because: (1) `python -m mlx_lm server` supports `--draft-model` for future MTP speculative decoding; (2) mlx-openai-server YAML config doesn't expose the same flag. The MTP drafter (`mlx-community/gemma-4-31B-it-assistant-bf16`, 839 MB) is already cached at `~/.cache/huggingface/hub/models--mlx-community--gemma-4-31B-it-assistant-bf16/snapshots/28e92270316e89288579ec59c17939541d9ca433` — add `--draft-model <snap-path> --num-draft-tokens 3` once mlx-lm adds `gemma4_assistant` arch support.
+- **Thinking mode ON** — mlx-lm serves Gemma 4 with thinking active by default (via `enable_thinking: true` in chat template). Outputs 3–4× more tokens per turn than the prior llmster run (thinking OFF). This explains the higher agent-loop latency.
+- Current benchmarks: API tool harness 5/5 single-call (20.73 s multi-turn loop); throughput **20.4 tok/s @ 512**, 14.7 tok/s @ 65K; **OpenCode browse 12.33 s / search 35.55 s** (thinking ON). Raw data: [`docs/models/benchmarks/gemma-4-31b-it-mlx-6bit/`](models/benchmarks/gemma-4-31b-it-mlx-6bit/).
+- Prior run on llmster (2026-05-01, thinking OFF): browse **5.11 s / search 6.37 s** — fastest agent-loop in this doc. Restart via `lms load` if low-latency thinking-off is needed (see Fallbacks below).
+- Log: `ssh macstudio "tail -f /tmp/mlx-lm-server.log"`
+- llmster (port 1234) and dflash-mlx (port 8098) remain stopped per Event-4 hygiene.
 
 ## Stopped / Documented Fallbacks
 
@@ -65,6 +42,8 @@ These were live before the 2026-05-05 deploy-and-benchmark run and remain **off*
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
+| Prior production main (2026-05-06, Gemma 4 31B-it thinking OFF, browse **5.11 s 🥇** / search **6.37 s 🏆**) | `llmster` | `gemma-4-31b-it-mlx` from `lmstudio-community/gemma-4-31B-it-MLX-6bit` | On disk — reload via `lms load 'gemma-4-31b-it-mlx' --gpu max --context-length 65536 -y`; then `lms server start --bind 0.0.0.0 --cors` |
+| Prior production main (2026-05-05, IBM Granite 4.1 30B Q8_0, 24.8 tok/s, browse 6.24 s) | `llmster` | `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF` | On disk — reload via `lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y` (guardrail off first; set `modelLoadingGuardrails.mode = "off"` in `~/.lmstudio/settings.json`, then restore to `"high"` after load) |
 | Prior llmster main (TrevorJS Gemma 4 26B A4B Uncensored, EGA abliteration, 8/10, browse 2.93 s 🥇) | `llmster` | `gemma4-26b-a4b-trevorjs-uncen-q8` from `TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF` | On disk — reload via `lms load 'gemma-4-26b-a4b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-26b-a4b-trevorjs-uncen-q8 -y` (guardrail off first) |
 | Prior llmster main (DavidAU 40B Heretic, thinking + content channel, 9/10) | `llmster` | `qwen36-40b-davidau-heretic-q6k` from `DavidAU/Qwen3.6-40B-...IMatrix-MAX-GGUF` | On disk — reload via `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier qwen36-40b-davidau-heretic-q6k -y` (guardrail off first) |
 | Gemma 4 31B Heretic (benchmarked 2026-05-03, 7/10 compliance, Thinking variant) | `llmster` | `gemma4-31b-davidau-heretic-q6k` from `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` | On disk — reload via `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier gemma4-31b-davidau-heretic-q6k -y` |

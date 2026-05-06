@@ -126,6 +126,44 @@ nohup ~/dflash-mlx-env/bin/dflash-serve \
   --temp 0.0 --max-tokens 512 \
   > /tmp/dflash-mlx.log 2>&1 &
 
+# llama-cpp-turboquant — TurboQuant / RotorQuant KV-cache-compression sidecar on
+# port 8099 (NOT 8000). Two forks installed: ~/llama-cpp-thetom/ (TheTom — turbo2/3/4,
+# auto-asymmetric q8_0 K + sparse V, 4-mag LUT for pre-M5; CURRENT SPEED LEADER)
+# and ~/llama-cpp-turboquant/ (johndpope — also exposes iso3/4 + planar3/4 for
+# RotorQuant / IsoQuant / PlanarQuant Clifford-rotor variants). KV cache compression
+# is weight-format-agnostic — same GGUF blob works on either fork. Provisional,
+# OpenCode-only client template. -fa requires an explicit on|off|auto value
+# (bare -fa errors out). See docs/servers/llama-cpp-turboquant/summary.md and
+# docs/models/techniques/model-technique-rotorquant.md.
+
+# Recommended — TheTom turbo3 (browse 6.47 s / search 15.64 s on Qwen3.6-35B-A3B
+# Q6_K — 2.07x/2.27x faster than Gemma 4 mlx-lm baseline; agent-loop speed leader
+# 2026-05-06). Loader silently auto-asymmetricizes K to q8_0 (log shows "K (q8_0):
+# 340 MiB, V (turbo3): 125 MiB" even when launched with --cache-type-k turbo3).
+GGUF=$(ls ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf)
+nohup ~/llama-cpp-thetom/build/bin/llama-server \
+  -m "$GGUF" \
+  --cache-type-k turbo3 --cache-type-v turbo3 \
+  -ngl 99 -fa on \
+  --host 0.0.0.0 --port 8099 \
+  --alias qwen3.6-35b-a3b-turboquant-turbo3 \
+  -c 65536 --jinja \
+  > /tmp/llama-cpp-thetom.log 2>&1 &
+
+# Alternative — johndpope's fork for RotorQuant iso3 (Clifford-rotor KV cache,
+# the only Apple Silicon path for iso3/4 + planar3/4). Decode wins at small
+# context (46.3 tok/s @ 512) but cold prefill regresses badly (>600 s timeout
+# at 32 K — this fork lacks the auto-asymmetric K dispatch and graph-side WHT
+# optimisation TheTom's branch carries). Same GGUF blob.
+nohup ~/llama-cpp-turboquant/build/bin/llama-server \
+  -m "$GGUF" \
+  --cache-type-k iso3 --cache-type-v iso3 \
+  -ngl 99 -fa on \
+  --host 0.0.0.0 --port 8099 \
+  --alias qwen3.6-35b-a3b-rotorquant-iso3 \
+  -c 65536 --jinja \
+  > /tmp/llama-cpp-turboquant.log 2>&1 &
+
 # mlx-lm server — CURRENT PRODUCTION MAIN (2026-05-06). Direct mlx_lm.server binary.
 # Gemma 4 31B-it MLX 6-bit (thinking mode ON, 20.4 tok/s, browse 12.33 s).
 # Model is already on disk at ~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit.
@@ -161,6 +199,7 @@ pkill -f mlx-openai-server                                                      
 pkill -f vmlx_engine                                                             # stop vmlx
 ~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
 pkill -f dflash-serve                                                            # stop dflash-mlx
+pkill -f 'build/bin/llama-server'                                                # stop llama-cpp-turboquant (matches both forks)
 ```
 
 ### 🩺 Health Check
@@ -171,6 +210,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
 curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # lm-studio (port 1234)
 curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            # dflash-mlx (port 8098)
+curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool            # llama-cpp-turboquant (port 8099)
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
 
@@ -181,6 +221,8 @@ tail -f /tmp/vmlx.log                                                           
 ~/.lmstudio/bin/lms log stream                                                  # lm-studio live request/response stream
 tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # lm-studio daily log file
 tail -f /tmp/dflash-mlx.log                                                     # dflash-mlx logs (per-request DFlash telemetry)
+tail -f /tmp/llama-cpp-thetom.log                                               # llama-cpp-turboquant logs (TheTom fork)
+tail -f /tmp/llama-cpp-turboquant.log                                           # llama-cpp-turboquant logs (johndpope fork)
 ```
 
 ### 💬 Quick Test

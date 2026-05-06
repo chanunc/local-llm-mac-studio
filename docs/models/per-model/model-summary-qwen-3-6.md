@@ -7,6 +7,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision · 3 B active · 262 K native (1 M YaRN)
 - [Qwen3.6-35B-A3B (4-bit)](#qwen36-35b-a3b-4-bit) — Same hybrid arch · 4-bit MLX (~22 GB) · dflash-mlx target paired with `z-lab/Qwen3.6-35B-A3B-DFlash`
 - [Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV (llama-cpp-turboquant)](#qwen36-35b-a3b-q6_k--rotorquant-iso3-kv-llama-cpp-turboquant) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} iso3` via `johndpope/llama-cpp-turboquant` fork · provisional sidecar on port 8099 · decode 2.27× Gemma 4 baseline · cold-prefill regression at 32 K+
+- [Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V on TheTom's fork](#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} turbo3` (auto-asymmetric q8_0 K + turbo3 V) via `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` · provisional sidecar on port 8099 · **2.27× Gemma 4 on search**, browse leader candidate · 32 K cold prefill works (29.88 s)
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
@@ -147,6 +148,71 @@ Same 35 B / 3 B-active Qwen3.6 MoE+VL hybrid Gated DeltaNet stack as the 6-bit M
 - **No MLX implementation of RotorQuant exists as of 2026-05-06.** This llama.cpp fork is the only Apple-Silicon path. See [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md) for the cross-platform landscape (PyTorch+CUDA, Triton, llama.cpp, MLX TurboQuant variants without RotorQuant).
 
 Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
+
+---
+
+## Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V on TheTom's fork
+
+Same 35 B / 3 B-active Qwen3.6 MoE+VL hybrid Gated DeltaNet stack as the iso3 entry above, served as the **same GGUF Q6_K** through [`TheTom/llama-cpp-turboquant`](https://github.com/TheTom/llama-cpp-turboquant)'s `feature/turboquant-kv-cache` branch (HEAD `69d8e4b`) with `--cache-type-k turbo3 --cache-type-v turbo3`. The loader **auto-dispatches K to `q8_0`** (asymmetric pairing is built-in for low-bit models), eliminating the cold-prefill bottleneck that crippled the symmetric `iso3` configuration on johndpope's fork. Provisional sidecar on port 8099, deployed 2026-05-06.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| GGUF | [unsloth/Qwen3.6-35B-A3B-GGUF](https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF) — `Qwen3.6-35B-A3B-UD-Q6_K.gguf` (same blob as iso3 entry) |
+| KV cache compression | `turbo3` (TurboQuant 3-bit V) + auto-asymmetric `q8_0` K |
+| Format | GGUF Q6_K weights, ~27 GB on disk |
+| Server | `llama-cpp-turboquant` (TheTom fork) on port 8099 sidecar |
+| Context Size | 65 536 tokens (loaded with `-c 65536`) |
+| License | Apache 2.0 |
+
+**Build + launch:**
+
+```bash
+ssh macstudio "cd ~ && git clone -b feature/turboquant-kv-cache --depth 1 \
+  https://github.com/TheTom/llama-cpp-turboquant.git llama-cpp-thetom && \
+  cd llama-cpp-thetom && \
+  cmake -B build -DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON \
+    -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_SERVER=ON && \
+  cmake --build build --config Release -j 8"
+
+ssh macstudio "GGUF=\$(ls ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf); \
+  nohup ~/llama-cpp-thetom/build/bin/llama-server \
+    -m \"\$GGUF\" \
+    --cache-type-k turbo3 --cache-type-v turbo3 \
+    -ngl 99 -fa on \
+    --host 0.0.0.0 --port 8099 \
+    --alias qwen3.6-35b-a3b-turboquant-turbo3 \
+    -c 65536 --jinja \
+    > /tmp/llama-cpp-thetom.log 2>&1 &"
+```
+
+Build time: ~30 s. Startup logs confirm `turbo3 using 4-mag LUT (pre-M5 hardware)` and `turbo3 sparse V dequant enabled` — the M3-Ultra-specific code paths fire automatically.
+
+**Performance (2026-05-06, M3 Ultra 96 GB):**
+
+| Test | turbo3 (this) | iso3 (prior) | Gemma 4 baseline | Verdict |
+|:--|:--|:--|:--|:--|
+| Smoke (single-call) | 4/5 ⚠ | 5/5 ✅ | 5/5 | one length-cap fail on agentic-reasoning prose |
+| Smoke (multi-turn) | **5.57 s** | 8.48 s | 20.73 s | turbo3 fastest |
+| Decode @ 512 ctx | **68.4–69.2 tok/s** | 46.3 tok/s | 20.4 tok/s | turbo3 **3.36× Gemma 4** |
+| Decode @ 8 K | **59.8 tok/s** | 23.2 tok/s | n/a | turbo3 2.58× iso3 |
+| Decode @ 32 K | **44.0 tok/s** | n/a (timeout) | n/a | turbo3 unblocks 32 K |
+| Cold prefill @ 8 K | **5.07 s** | 56.64 s | n/a | turbo3 **11.2× faster** |
+| Cold prefill @ 32 K | **29.88 s** | >600 s ❌ | n/a | turbo3 **fixes regression** |
+| Warm TTFT (cache hit) | 0.04 s @ 512, 0.12 s @ 32 K | 0.05–0.11 s | comparable | wash |
+| **OpenCode browse** | **6.47 s 🥇** | 20.5 s | 12.33 s | turbo3 **2.07× faster than Gemma 4** |
+| **OpenCode search** | **15.64 s 🥇** | 151.18 s | 35.55 s | turbo3 **2.27× faster than Gemma 4** |
+| KV memory @ 65 K | 465 MiB | 765 MiB | ~6 GiB | -39% vs iso3 |
+
+**Workload-fit conclusion:** turbo3 wins on **every workload tested** — short-context decode, long-context decode, agent loops, multi-turn API calls. Production-flip candidate.
+
+**Caveats:**
+- 4/5 smoke (vs iso3's 5/5) — agentic-reasoning prompt hits the 1024-token cap before emitting the tool call. May reflect the slight quality difference between PolarQuant (TurboQuant) and Clifford-rotor (RotorQuant) at 3-bit, or stochastic variance. Other 4 single-call scenarios pass cleanly; multi-turn loop passes 3/3.
+- `--cache-type-k turbo3` silently maps to `q8_0` for K — this is intentional but worth knowing when reading the launch log (`K (q8_0): 340 MiB, V (turbo3): 125 MiB`).
+- 65 K context returns HTTP 400 in the throughput probe — likely a slot/parallel-seqs constraint at exactly the `-c` ceiling. Reduce probe contexts to ≤ 32 K, or launch with a higher `-c`.
+- Same fork-distribution caveats as iso3 entry — no PyPI / Homebrew, track via `git pull` + rebuild.
+
+Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/). Full technique reference: [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
 
 ---
 

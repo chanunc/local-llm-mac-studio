@@ -19,7 +19,14 @@
 
 > **Technique reference:** for what RotorQuant / IsoQuant / TurboQuant actually do at the algorithm level (Clifford rotors, quaternion rotation, Lloyd-Max codebooks, the cross-fork landscape across MLX vs llama.cpp), see [`docs/models/techniques/model-technique-rotorquant.md`](../../models/techniques/model-technique-rotorquant.md). This runbook covers operational steps only.
 
-**Status: provisional sidecar.** Used for KV-cache-compression experiments on Qwen3.6-class models. Exposes the full OpenAI semantics — `tools[]`, streaming, `reasoning_content` channel — via the standard `llama-server` binary, no patches required.
+**Status: provisional sidecar — strong production-flip candidate as of 2026-05-06.** Used for KV-cache-compression experiments on Qwen3.6-class models. Exposes the full OpenAI semantics — `tools[]`, streaming, `reasoning_content` channel — via the standard `llama-server` binary, no patches required.
+
+**Two forks installed in parallel** (cohabitate the port 8099 slot — only one can be live at a time):
+
+| Fork | Branch | Path | Cache types | Verdict |
+|:--|:--|:--|:--|:--|
+| [`johndpope/llama-cpp-turboquant`](https://github.com/johndpope/llama-cpp-turboquant) | `feature/planarquant-kv-cache` | `~/llama-cpp-turboquant/` | `iso3/4`, `turbo2/3/4`, `planar3/4` | First Apple-Silicon path for **RotorQuant**. iso3 cold-prefill regression at 32 K+. |
+| [`TheTom/llama-cpp-turboquant`](https://github.com/TheTom/llama-cpp-turboquant) | `feature/turboquant-kv-cache` | `~/llama-cpp-thetom/` | `turbo2/3/4` only | **Auto-asymmetric `q8_0` K + turbo-V**, 4-mag LUT, sparse V dequant. **2× / 2.27× faster than Gemma 4 on browse / search.** |
 
 ## Architecture
 
@@ -72,6 +79,25 @@ ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
 `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` is ~27 GB and downloads in 5–10 min on a fast HF link. Other supported quants on the same repo: `UD-Q4_K_M` (~21 GB), `UD-Q5_K_M` (~24 GB), `UD-Q6_K_XL` (~30 GB), `Q8_0` (~37 GB).
 
 ## Starting the server
+
+### TheTom turbo3 (recommended — current speed leader)
+
+```bash
+ssh macstudio "GGUF=\$(ls ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf); \
+  nohup ~/llama-cpp-thetom/build/bin/llama-server \
+    -m \"\$GGUF\" \
+    --cache-type-k turbo3 --cache-type-v turbo3 \
+    -ngl 99 -fa on \
+    --host 0.0.0.0 --port 8099 \
+    --alias qwen3.6-35b-a3b-turboquant-turbo3 \
+    -c 65536 \
+    --jinja \
+    > /tmp/llama-cpp-thetom.log 2>&1 &"
+```
+
+Loader silently maps K to `q8_0` (asymmetric pairing is the default for low-bit weights — see launch log: `K (q8_0): 340 MiB, V (turbo3): 125 MiB`). Startup logs also confirm `turbo3 using 4-mag LUT (pre-M5 hardware)` + `turbo3 sparse V dequant enabled`.
+
+### johndpope iso3 / planar3 (only path for RotorQuant)
 
 ```bash
 ssh macstudio "GGUF=\$(ls ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf); \
@@ -128,26 +154,40 @@ Look for non-empty `choices[0].message.content` (or `reasoning_content` if the m
 
 ## Performance (Mac Studio M3 Ultra, 96 GB)
 
-Numbers for `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` + `--cache-type-k iso3 --cache-type-v iso3`, captured 2026-05-06.
+Both forks tested on `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` (same GGUF blob), 2026-05-06.
+
+### TheTom turbo3 (current sidecar)
 
 | Context | Cold prefill TTFT | Warm TTFT | Decode tok/s | Prefill tok/s |
 |:--:|:--:|:--:|:--:|:--:|
-| 512 | 0.63 s | 0.05 s | **46.3** | ~11,800 |
+| 512 | 0.37 s | 0.04 s | **68.4–69.2** | ~14,800 |
+| 4 K | 2.41 s | 0.05 s | 64.3–64.4 | ~91,200 |
+| 8 K | **5.07 s** | 0.06 s | 59.8 | ~148,800 |
+| 32 K | **29.88 s** | 0.12 s | 44.0–44.1 | ~272,000 |
+| 65 K | not measured (probe HTTP 400 — slot/parallel-seqs constraint at the `-c` ceiling) | | | |
+
+Smoke (`bench_api_tool_call.py`): **4/5 single-call** (one length-cap fail on agentic-reasoning prose), multi-turn loop **5.57 s**.
+
+OpenCode end-to-end: **browse 6.47 s 🥇 / search 15.64 s 🥇** — **2.07× / 2.27× faster than Gemma 4** (12.33 s / 35.55 s). New agent-loop speed leader.
+
+Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../../models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/).
+
+### johndpope iso3 (prior sidecar — kept for RotorQuant comparison)
+
+| Context | Cold prefill TTFT | Warm TTFT | Decode tok/s | Prefill tok/s |
+|:--:|:--:|:--:|:--:|:--:|
+| 512 | 0.63 s | 0.05 s | 46.3 | ~11,800 |
 | 4 K | 15.5 s | 0.08 s | 32.0 | ~53,700 |
 | 8 K | 56.6 s | 0.11 s | 23.2 | ~73,000 |
 | 32 K | **>600 s (timeout)** | n/a | n/a | n/a |
-| 65 K | not measured cold | n/a | n/a | n/a |
 
-Smoke (`bench_api_tool_call.py`): **5/5 single-call**, multi-turn loop **8.48 s** (vs Gemma 4 31B 20.73 s — **2.4× faster** on multi-turn).
+Smoke: 5/5; multi-turn 8.48 s; OpenCode browse 20.5 s / search 151.18 s.
 
 Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
 
-Key shape:
-- **Decode is fast** — 46.3 tok/s @ 512 is **2.27× the Gemma 4 baseline (20.4 tok/s)**.
-- **Cold prefill is slow** — iso3 K compression has heavy compute overhead vs `f16` (~145 tok/s prefill at 8 K, vs ~1,000+ tok/s for plain `f16` K cache). Above 16 K cold prefill, the 600 s probe timeout in `bench_api_server.py` fires.
-- **Warm prefill is very fast** — once the prompt cache holds a prefix, TTFT drops to ~0.1 s for any repeat under 32 K. This is the regime that **agent loops live in** (long static system prompt, repeated across turns), and where iso3's claimed advantage actually lands.
+### Key takeaway
 
-Practical implication: this server is well-suited to **agent / multi-turn workloads where the prompt prefix repeats**, and poorly suited to single-shot **long fresh prompts** (e.g. summarising a freshly pasted 50 K document).
+The cold-prefill regression on iso3 was the K-side compression compute, **not** the technique itself — TheTom's fork eliminates it by automatically dispatching K to `q8_0` while still compressing V. Net result: TheTom turbo3 wins on every workload tested (decode at every context size, cold prefill at every context size, warm cache, agent loops, multi-turn).
 
 ## Known limitations
 

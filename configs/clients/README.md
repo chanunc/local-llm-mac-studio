@@ -20,7 +20,7 @@ One subdirectory per server. The contents mirror each other so you can swap serv
 | [`mlx-openai-server/`](mlx-openai-server/) | `mlx-openai-server` | YAML-driven multi-model | Stable compatible-superset templates; check `/v1/models` for live roster. |
 | [`omlx/`](omlx/) | `oMLX` | Multi-model roster | All four client configs maintained in lockstep — see Sync Policy. |
 | [`vmlx/`](vmlx/) | `vmlx` | `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` | Standard-fine-tune JANGTQ path via MLX Studio bundled Python. For dealignai JANGTQ-CRACK variants use the uncen-model submodule's vmlx templates. |
-| [`llama-cpp-turboquant/`](llama-cpp-turboquant/) | `llama-cpp-turboquant` (RotorQuant / TurboQuant sidecar) | `qwen3.6-35b-a3b-rotorquant-iso3` (Qwen3.6-35B-A3B Q6_K + iso3 KV) | Provisional sidecar on port 8099. **OpenCode template only.** Built from `johndpope/llama-cpp-turboquant` fork. Full template set deferred unless this server graduates to permanent status. |
+| [`llama-cpp-turboquant/`](llama-cpp-turboquant/) | `llama-cpp-turboquant` (TurboQuant / RotorQuant sidecar) | `qwen3.6-35b-a3b-turboquant-turbo3` (Qwen3.6-35B-A3B Q6_K + turbo3 V on TheTom fork — agent-loop speed leader 2026-05-06) | Provisional sidecar on port 8099. **OpenCode template only.** Two forks installed: `TheTom/llama-cpp-turboquant` (turbo2/3/4) + `johndpope/llama-cpp-turboquant` (iso3/4 + planar3/4 + turbo2/3/4). Full template set deferred unless this server graduates to permanent status. |
 
 ## Files per server
 

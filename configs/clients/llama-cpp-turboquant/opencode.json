@@ -9,7 +9,16 @@
       },
       "models": {
         "qwen3.6-35b-a3b-rotorquant-iso3": {
-          "name": "Qwen3.6-35B-A3B Q6_K + RotorQuant iso3 KV cache (provisional)",
+          "name": "Qwen3.6-35B-A3B Q6_K + RotorQuant iso3 KV cache (johndpope fork, provisional)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        },
+        "qwen3.6-35b-a3b-turboquant-turbo3": {
+          "name": "Qwen3.6-35B-A3B Q6_K + TurboQuant turbo3 V (TheTom fork, agent-loop speed leader 2026-05-06)",
           "tools": true,
           "reasoning": true,
           "limit": {
@@ -20,6 +29,6 @@
       }
     }
   },
-  "model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-rotorquant-iso3",
-  "small_model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-rotorquant-iso3"
+  "model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-turboquant-turbo3",
+  "small_model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-turboquant-turbo3"
 }

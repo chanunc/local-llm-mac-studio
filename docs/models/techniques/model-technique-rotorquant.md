@@ -91,13 +91,31 @@ Benchmarked on `unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf` + `iso3` K + `iso3` V via 
 
 Researching the LM Studio bug-tracker issue [`lmstudio-ai/lmstudio-bug-tracker#1719`](https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/1719) and the canonical llama.cpp discussion [`ggml-org/llama.cpp#20969`](https://github.com/ggml-org/llama.cpp/discussions/20969) surfaces three concrete options that may eliminate the cold-prefill bottleneck. None are wired into this stack today; each is a follow-up experiment.
 
-### Option A — Switch to TheTom's fork on `feature/turboquant-kv-cache` (most likely fix)
+### Option A — TheTom's `feature/turboquant-kv-cache` fork ✅ **validated 2026-05-06**
 
-[`TheTom/llama-cpp-turboquant`](https://github.com/TheTom/llama-cpp-turboquant) on branch `feature/turboquant-kv-cache` has **graph-side WHT (Walsh-Hadamard Transform) rotation already integrated** — [reported](https://github.com/TheTom/turboquant_plus) to bring TurboQuant prefill to **q8_0 parity (2747 vs 2694 tok/s on M5 Max @ 32 K)**, against `iso3`'s ~145 tok/s on this stack. Trade-off: this branch supports `turbo2/3/4` only, **not `iso3`** (Clifford-rotor). PolarQuant (TurboQuant) and Clifford-rotor (RotorQuant) both achieve ~99% attention cosine similarity vs `f16` per the original [TurboQuant paper](https://arxiv.org/abs/2504.19874) and [scrya-com's RotorQuant figures](https://github.com/scrya-com/rotorquant) — so dropping iso3 for turbo3 is essentially a wash on quality and a strict win on prefill speed. Build instructions same as this runbook, change the `git checkout` branch.
+[`TheTom/llama-cpp-turboquant`](https://github.com/TheTom/llama-cpp-turboquant) at `feature/turboquant-kv-cache` (HEAD `69d8e4b`) has **graph-side WHT (Walsh-Hadamard Transform) rotation, 4-magnitude LUT for pre-M5 hardware, and sparse V dequantization** all integrated. Built from source on Mac Studio M3 Ultra (~30 s with `cmake --build build -j 8`), launch logs confirm `turbo3 using 4-mag LUT (pre-M5 hardware)` and `turbo3 sparse V dequant enabled` — the M3-specific code paths fire automatically. Branch supports `turbo2/3/4` only (no `iso3`/`planar3`).
 
-### Option B — Asymmetric `q8_0`-K + `turbo3`-V on TheTom's fork
+**Empirical comparison** (Qwen3.6-35B-A3B Q6_K GGUF, M3 Ultra 96 GB, 2026-05-06):
 
-TheTom's fork explicitly supports asymmetric K/V flags (`--cache-type-k q8_0 --cache-type-v turbo3`) for low-bit weight models. Keeps K cache at fast `q8_0` (eliminating the cold-prefill bottleneck) and only compresses V at 3-bit (still ~half the KV memory savings of full iso3 / turbo3). Tried on johndpope's fork → kernel missing (see Known Issues). Tied to Option A — if you switch forks, you also unlock Option B.
+| Metric | iso3 (johndpope) | **turbo3 (TheTom)** | Gain | Gemma 4 baseline |
+|:--|:--:|:--:|:--:|:--:|
+| Smoke (single-call) | 5/5 | 4/5 (one length-cap fail on agentic-reasoning prose) | wash | 5/5 |
+| Multi-turn API loop (3 turns) | 8.48 s | **5.57 s** | **1.52×** | 20.73 s |
+| Cold prefill TTFT @ 8 K | 56.64 s | **5.07 s** | **11.2×** | n/a |
+| Cold prefill TTFT @ 32 K | **>600 s timeout** ❌ | **29.88 s** ✅ | unblocks 32 K | n/a |
+| Decode tok/s @ 512 (warm) | 46.3 | **68.4–69.2** | **1.49×** | 20.4 |
+| Decode tok/s @ 8 K (warm) | 23.2 | **59.8** | **2.58×** | n/a |
+| Decode tok/s @ 32 K (warm) | n/a | **44.0** | new | n/a |
+| Prefill tok/s @ 32 K (warm) | n/a | **272 K** | new | n/a |
+| OpenCode browse (median wall) | 20.5 s | **6.47 s** 🥇 | **3.17×** | 12.33 s |
+| OpenCode search (median wall) | 151.18 s | **15.64 s** 🥇 | **9.66×** | 35.55 s |
+| KV memory @ 65 K | 765 MiB (iso3+iso3) | **465 MiB (q8_0+turbo3 auto-asymm)** | -39% | ~6 GiB (f16) |
+
+**Result:** TheTom turbo3 is **2× faster than Gemma 4 on browse, 2.27× on search** — new agent-loop speed leader on the stack.
+
+### Option B — Asymmetric `q8_0`-K + `turbo3`-V — **applies automatically** on TheTom's fork
+
+Verified empirically: launching TheTom's `llama-server` with `--cache-type-k turbo3 --cache-type-v turbo3` causes the loader to **auto-dispatch K to `q8_0`** (KV cache log: `K (q8_0): 340 MiB, V (turbo3): 125 MiB`). The asymmetric optimization is the default behavior, not a separate flag. This is what makes the cold-prefill numbers above achievable — K-side compression was indeed the bottleneck, and TheTom's fork avoids it transparently. On johndpope's fork the asymmetric pairing fails with `Function kernel_flash_attn_ext_vec_kq8_0_viso3_dk256_dv256 was not found in the library` (kernel not built for iso3).
 
 ### Option C — `mlx-optiq` PyPI package (drop-in `mlx_lm.server` replacement, MLX-native)
 
@@ -109,9 +127,9 @@ TheTom's fork explicitly supports asymmetric K/V flags (`--cache-type-k q8_0 --c
 - [`atomicmilkshake/llama-cpp-turboquant`](https://github.com/atomicmilkshake/llama-cpp-turboquant) — adds TriAttention KV-cache pruning. **CUDA-only**, no Apple Silicon support for the custom features.
 - [oMLX TurboQuant toggle (rumour)](https://medium.com/@michael.hannecke/turboquant-on-apple-macos-five-integration-paths-for-local-kv-cache-compression-42e83959d414) — the Medium article claims oMLX has an admin-UI toggle, but the [oMLX README](https://github.com/jundot/omlx) confirms only "block-based KV cache management inspired by vLLM" (paged attention, prefix sharing, hot/cold tiering). **No TurboQuant toggle** as of 2026-05-06. Article is misleading.
 
-### Recommended next experiment
+### Recommended next experiment ✅ **completed 2026-05-06**
 
-Re-build on **TheTom's `feature/turboquant-kv-cache`** with `--cache-type-k q8_0 --cache-type-v turbo3` for the asymmetric K/V variant. If cold prefill at 32 K drops below 30 s and OpenCode search drops below Gemma 4's 35.55 s baseline, this becomes a real production candidate.
+Did the rebuild on TheTom's `feature/turboquant-kv-cache`. Cold prefill at 32 K dropped from `>600 s timeout` to **29.88 s**. OpenCode search dropped from `iso3`'s 151.18 s to **15.64 s** (also beating Gemma 4's 35.55 s baseline by 2.27×). turbo3 on TheTom's fork is now a real production-flip candidate. Bench data: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/).
 
 ## See also
 

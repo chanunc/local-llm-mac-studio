@@ -138,7 +138,7 @@ Run:
 Compare against:
 
 - Plain `mlx_lm.server`, if available.
-- `llmster` Qwen/Gemma baselines for agent-loop relevance.
+- `lm-studio` Qwen/Gemma baselines for agent-loop relevance.
 
 ## Phase 6 - Upstream issue package
 

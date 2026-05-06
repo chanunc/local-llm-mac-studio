@@ -8,7 +8,7 @@ Canonical: no
 
 ## Context
 
-The Mac Studio runs **one of four port-8000 servers** at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx) plus optionally **llmster** (LM Studio :1234) and **dflash-mlx** (:8098). Today the only way to answer "what's running right now?" is the manual sequence I just ran by hand for the user:
+The Mac Studio runs **one of four port-8000 servers** at a time (vllm-mlx, mlx-openai-server, oMLX, vmlx) plus optionally **lm-studio** (LM Studio :1234) and **dflash-mlx** (:8098). Today the only way to answer "what's running right now?" is the manual sequence I just ran by hand for the user:
 
 ```bash
 ssh macstudio "ps -axo pid,rss,command | grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|lms |omlx' | grep -v grep"
@@ -46,7 +46,7 @@ Top-level operational helper, peer of `scripts/switch_opencode_config.py`. Pytho
 | 8000 | `mlx-openai-server` | `mlx-openai-server` |
 | 8000 | `vmlx_engine` | `vmlx` |
 | 8000 | `omlx_server` (or owner=omlx via lsof) | `oMLX` |
-| 1234 | `lms server` (or LM Studio app) | `llmster` |
+| 1234 | `lms server` (or LM Studio app) | `lm-studio` |
 | 8098 | `dflash-serve` | `dflash-mlx` |
 
 **Default plain-text output** (mirrors what I just wrote out for the user manually, so the script's first run is a regression-free replacement for the by-hand answer):
@@ -56,7 +56,7 @@ Mac Studio LLM status (via macstudio)
 =====================================
 
 Port 8000 — DOWN
-Port 1234 — llmster (LM Studio)
+Port 1234 — lm-studio (LM Studio)
   Process  : PID 6006, RSS 1.18 GB  (LM Studio app)
   Loaded   : gemma4-26b-a4b-trevorjs-uncen-q8  (IDLE, 26.86 GB, 65536 ctx)
   Available: 10 models via /v1/models  (use --verbose to list)
@@ -99,7 +99,7 @@ Other LLM processes:
 | `oMLX` | `ssh <host> "tail -f ~/.omlx/logs/server.log"` |
 | `vmlx` | `ssh <host> "tail -f /tmp/vmlx.log"` |
 | `dflash-mlx` | `ssh <host> "tail -f /tmp/dflash-mlx.log"` |
-| `llmster` | `ssh <host> "~/.lmstudio/bin/lms log stream --source server"` (no flat log file — LM Studio streams via the `lms` CLI; this matches the persistent `lms log stream` process already alive on the box, PID 84238 in today's snapshot) |
+| `lm-studio` | `ssh <host> "~/.lmstudio/bin/lms log stream --source server"` (no flat log file — LM Studio streams via the `lms` CLI; this matches the persistent `lms log stream` process already alive on the box, PID 84238 in today's snapshot) |
 
 When `--no-ssh` is set, the `ssh <host> "..."` wrapper is dropped — emit the inner command directly.
 
@@ -109,7 +109,7 @@ When `--no-ssh` is set, the `ssh <host> "..."` wrapper is dropped — emit the i
 Mac Studio LLM status (via macstudio)
 =====================================
 
-Server   : llmster (LM Studio)
+Server   : lm-studio (LM Studio)
 Port     : 1234
 Base URL : http://192.168.1.104:1234/v1
 PID      : 6006
@@ -138,7 +138,7 @@ Available models (10)
 Client configs
 --------------
 opencode  →  ~/.config/opencode/opencode.json
-  Apply: python3 scripts/switch_opencode_config.py --server llmster
+  Apply: python3 scripts/switch_opencode_config.py --server lm-studio
   Or paste below into the file:
 
   {
@@ -146,7 +146,7 @@ opencode  →  ~/.config/opencode/opencode.json
     "provider": { … resolved opencode.json … }
   }
 
-(no pi-models.json template for llmster — opencode-only today)
+(no pi-models.json template for lm-studio — opencode-only today)
 ```
 
 Format rules:
@@ -161,7 +161,7 @@ Format rules:
 {
   "ssh_host": "macstudio",
   "port": 1234,
-  "server": "llmster",
+  "server": "lm-studio",
   "processes": [{"pid": 6006, "rss_bytes": 1268000000, "command": "..."}],
   "loaded_model": {
     "id": "gemma4-26b-a4b-trevorjs-uncen-q8",
@@ -182,8 +182,8 @@ Fields are `null` when not applicable (e.g. `loaded_model: null` for a port-8000
 
 **Edge cases for `--client` and `--logs`** (shared — both modes do detection-then-emit):
 - **No server up** — exit 1 with stderr `"no LLM server detected; cannot emit <client config|logs command>"`. Don't fall back to a "default" server.
-- **Detected server has no template for the requested client** (`--client` only) — exit 3 with stderr listing what *is* available (matches the llmster reality today: opencode-only, per CLAUDE.md "currently OpenCode-only — full client config set is deferred unless llmster graduates to permanent server status"). Don't silently emit an empty config.
-- **Multiple servers up** (port 8000 + llmster + dflash-mlx all running) — both `--client` and `--logs` require `--port N` to disambiguate; without it, exit 3 and tell the user which ports are up so they can pick. (In status mode the multi-server case just renders all rows — no ambiguity to resolve.)
+- **Detected server has no template for the requested client** (`--client` only) — exit 3 with stderr listing what *is* available (matches the lm-studio reality today: opencode-only, per CLAUDE.md "currently OpenCode-only — full client config set is deferred unless lm-studio graduates to permanent server status"). Don't silently emit an empty config.
+- **Multiple servers up** (port 8000 + lm-studio + dflash-mlx all running) — both `--client` and `--logs` require `--port N` to disambiguate; without it, exit 3 and tell the user which ports are up so they can pick. (In status mode the multi-server case just renders all rows — no ambiguity to resolve.)
 - **API-key extraction failure** (`--client` only) — same fallback as `switch_opencode_config.py:62-66`: substitute `"not-needed"` for `<YOUR_API_KEY>` and emit a stderr warning.
 - **`--client`, `--logs`, and `--all` mutual exclusion** — argparse `add_mutually_exclusive_group()`; pick one emit-mode at a time. (Status mode is the default when none of the three is set.)
 - **`--all` with no servers up** — emits `[]` (empty array) and exits 1, so callers can `jq 'length > 0'` to gate next steps. Stderr message: `"no LLM servers detected"`.
@@ -226,7 +226,7 @@ No other docs touched. No CLAUDE.md / AGENTS.md / README.md edits — Event 5 is
 
 End-to-end test sequence (the script should reproduce the manual answer I gave above):
 
-1. **Smoke test (current state, llmster up)**:
+1. **Smoke test (current state, lm-studio up)**:
    ```bash
    python3 scripts/chk_llm_macstu.py
    # Expect: Port 1234 row showing TrevorJS Gemma 4 26B A4B uncensored Q8 IDLE,
@@ -242,29 +242,29 @@ End-to-end test sequence (the script should reproduce the manual answer I gave a
 3. **Verbose listing**:
    ```bash
    python3 scripts/chk_llm_macstu.py --verbose
-   # Expect: full list of llmster's ~10 available models below the Loaded line.
+   # Expect: full list of lm-studio's ~10 available models below the Loaded line.
    ```
 4. **`--client` resolution (happy path)**:
    ```bash
    python3 scripts/chk_llm_macstu.py --client opencode | python3 -m json.tool
-   # Expect: configs/clients/llmster/opencode.json with <MAC_STUDIO_IP> + <YOUR_API_KEY>
+   # Expect: configs/clients/lm-studio/opencode.json with <MAC_STUDIO_IP> + <YOUR_API_KEY>
    #         resolved from ~/.config/opencode/opencode.json. Exit 0.
    diff <(python3 scripts/chk_llm_macstu.py --client opencode) \
         <(python3 -c "import json,subprocess; \
-          subprocess.run(['python3','scripts/switch_opencode_config.py','--server','llmster'])")
+          subprocess.run(['python3','scripts/switch_opencode_config.py','--server','lm-studio'])")
    # Expect: emitted config matches what switch_opencode_config.py would have written.
    ```
-5. **`--client` missing-template path** (llmster has only opencode today):
+5. **`--client` missing-template path** (lm-studio has only opencode today):
    ```bash
    python3 scripts/chk_llm_macstu.py --client pi
-   # Expect: stderr "llmster has no pi-models.json template; available: opencode",
+   # Expect: stderr "lm-studio has no pi-models.json template; available: opencode",
    #         exit 3.
    ```
 6. **`--client all`**:
    ```bash
    python3 scripts/chk_llm_macstu.py --client all | python3 -m json.tool
    # Expect: JSON object with one key per client config present for the detected
-   #         server (today: just "opencode" for llmster).
+   #         server (today: just "opencode" for lm-studio).
    ```
 7. **`--logs` emission**:
    ```bash
@@ -287,16 +287,16 @@ End-to-end test sequence (the script should reproduce the manual answer I gave a
 9. **`--all --json` machine-readable**:
    ```bash
    python3 scripts/chk_llm_macstu.py --all --json | python3 -m json.tool
-   # Expect: array with one object for llmster (today's only running server) containing
+   # Expect: array with one object for lm-studio (today's only running server) containing
    #         server, port, base_url, loaded_model, available_models,
    #         clients.opencode (resolved), logs_command. Exit 0.
    python3 scripts/chk_llm_macstu.py --all --json | jq '.[0].logs_command'
    # Expect: "ssh macstudio \"~/.lmstudio/bin/lms log stream --source server\""
    python3 scripts/chk_llm_macstu.py --all --json | jq '.[0].clients | keys'
-   # Expect: ["opencode"]   (only client config llmster ships today)
+   # Expect: ["opencode"]   (only client config lm-studio ships today)
    ```
 10. **Negative path — port-8000 server down (status quo)**: already covered by smoke test.
-11. **Negative path — everything down**: requires temporarily stopping llmster, which kicks the user's main model out of RAM. **Skip in normal verification**; document the expected behavior in the docstring instead. If the user wants a true full-stop test, do it once before they start the next deploy-and-benchmark (the hygiene step kills everything anyway).
+11. **Negative path — everything down**: requires temporarily stopping lm-studio, which kicks the user's main model out of RAM. **Skip in normal verification**; document the expected behavior in the docstring instead. If the user wants a true full-stop test, do it once before they start the next deploy-and-benchmark (the hygiene step kills everything anyway).
 12. **SSH-failure path**:
     ```bash
     python3 scripts/chk_llm_macstu.py --ssh-host nonexistent-host

@@ -162,7 +162,7 @@ The fix is not one patch until the cause is isolated. Use the active plan [`plan
 
 ### Current recommendation
 
-Keep `dflash-mlx` as a workload-gated sidecar rather than a general default. It is now justified for deterministic reasoning-heavy and constrained structured-output tasks that keep acceptance near the mid-to-high 80% range, but it should stay off for open-ended prose and other low-agreement distributions until the broader prompt sweep is complete. For normal agent loops, `llmster` remains the better practical choice; for Ling production, stay on `vllm-mlx`.
+Keep `dflash-mlx` as a workload-gated sidecar rather than a general default. It is now justified for deterministic reasoning-heavy and constrained structured-output tasks that keep acceptance near the mid-to-high 80% range, but it should stay off for open-ended prose and other low-agreement distributions until the broader prompt sweep is complete. For normal agent loops, `lm-studio` remains the better practical choice; for Ling production, stay on `vllm-mlx`.
 
 ## See also
 

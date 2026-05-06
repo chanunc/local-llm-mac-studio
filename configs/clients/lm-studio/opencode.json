@@ -9,7 +9,7 @@
       },
       "models": {
         "granite-4.1-30b-q8": {
-          "name": "IBM Granite 4.1 30B Q8_0 (llmster, current main) — dense instruct, Apache 2.0, 29 GiB",
+          "name": "IBM Granite 4.1 30B Q8_0 (lm-studio, current main) — dense instruct, Apache 2.0, 29 GiB",
           "tools": true,
           "reasoning": false,
           "limit": {
@@ -18,7 +18,7 @@
           }
         },
         "gemma4-26b-a4b-trevorjs-uncen-q8": {
-          "name": "TrevorJS Gemma 4 26B A4B uncensored Q8 (llmster, prior main) — sparse MoE ~4B active, 8/10 mlabonne, browse 2.93 s 🥇 / search 7.35 s",
+          "name": "TrevorJS Gemma 4 26B A4B uncensored Q8 (lm-studio, prior main) — sparse MoE ~4B active, 8/10 mlabonne, browse 2.93 s 🥇 / search 7.35 s",
           "tools": true,
           "reasoning": false,
           "limit": {
@@ -27,7 +27,7 @@
           }
         },
         "gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct": {
-          "name": "DavidAU Gemma 4 31B Heretic Uncensored Thinking (llmster) — 7/10 mlabonne, 24.2 tok/s gen, thinking-instruct",
+          "name": "DavidAU Gemma 4 31B Heretic Uncensored Thinking (lm-studio) — 7/10 mlabonne, 24.2 tok/s gen, thinking-instruct",
           "tools": true,
           "reasoning": true,
           "limit": {
@@ -36,7 +36,7 @@
           }
         },
         "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max": {
-          "name": "DavidAU Qwen3.6-40B Heretic Uncensored Thinking (llmster) — prior main, 9/10 mlabonne, browse 18.73 s",
+          "name": "DavidAU Qwen3.6-40B Heretic Uncensored Thinking (lm-studio) — prior main, 9/10 mlabonne, browse 18.73 s",
           "tools": true,
           "reasoning": true,
           "limit": {
@@ -45,7 +45,7 @@
           }
         },
         "gemma-4-31b-it-mlx": {
-          "name": "Gemma 4 31B-it 6bit (llmster, standard MLX, fallback) — dense agent-loop speed leader (browse 5.11 s, search 6.37 s)",
+          "name": "Gemma 4 31B-it 6bit (lm-studio, standard MLX, fallback) — dense agent-loop speed leader (browse 5.11 s, search 6.37 s)",
           "tools": true,
           "reasoning": false,
           "limit": {
@@ -54,7 +54,7 @@
           }
         },
         "qwen3.6-27b": {
-          "name": "Qwen3.6-27B 6bit (llmster, standard MLX) — dense + ViT, Qwen3 instruction-tuned",
+          "name": "Qwen3.6-27B 6bit (lm-studio, standard MLX) — dense + ViT, Qwen3 instruction-tuned",
           "tools": true,
           "reasoning": false,
           "limit": {

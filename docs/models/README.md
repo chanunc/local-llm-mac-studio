@@ -25,7 +25,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md) | Qwen3.6 family (7 variants: 35B-A3B 6-bit/4-bit, Osaurus JANGTQ4, 27B JANG 4M, 27B 6-bit, HauhauCS Q8_K_P GGUF, 35B Rust LoRA). |
 | [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md) | Nemotron family (Nano 30B, Super 120B, Cascade-2 30B) + cross-cutting server compatibility note. |
 | [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md) | Gemma 4 family (26B-A4B 4-bit MoE multimodal, 31B-it 6-bit dense text-only). |
-| [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md) | IBM Granite 4.1 30B Q8_0 GGUF — active llmster main (2026-05-05), Apache 2.0, 24.8 tok/s. |
+| [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md) | IBM Granite 4.1 30B Q8_0 GGUF — active lm-studio main (2026-05-05), Apache 2.0, 24.8 tok/s. |
 
 ## Benchmarks
 
@@ -44,7 +44,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 |:--|:--|
 | [`how-to/model-conversion-gguf-mlx.md`](how-to/model-conversion-gguf-mlx.md) | GGUF → MLX safetensors conversion. |
 | [`how-to/model-qwen-null-think-template-test.md`](how-to/model-qwen-null-think-template-test.md) | Qwen null-think chat template test. |
-| [`how-to/eval-benchmark-local-runners.md`](how-to/eval-benchmark-local-runners.md) | Run MMLU / MMLU-Pro / TruthfulQA / HarmBench / refusal-rate locally against llmster / vmlx / vllm-mlx OpenAI endpoints. |
+| [`how-to/eval-benchmark-local-runners.md`](how-to/eval-benchmark-local-runners.md) | Run MMLU / MMLU-Pro / TruthfulQA / HarmBench / refusal-rate locally against lm-studio / vmlx / vllm-mlx OpenAI endpoints. |
 
 ## Known issues
 

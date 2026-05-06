@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Probe the Mac Studio over SSH and report the live LLM stack.
 
-Reports which LLM server (vllm-mlx / mlx-openai-server / oMLX / vmlx / llmster /
+Reports which LLM server (vllm-mlx / mlx-openai-server / oMLX / vmlx / lm-studio /
 dflash-mlx) is currently running on ports 8000 / 1234 / 8098, the loaded model,
 and (in --all / --client / --logs modes) the matching client config or log-tail
 command for the detected server.
@@ -45,13 +45,13 @@ SERVER_PATTERNS = [
     ("mlx-openai-server", "mlx-openai-server", "mlx-openai-server", 8000),
     ("vmlx_engine",       "vmlx",              "vmlx",              8000),
     ("dflash-serve",      "dflash-mlx",        "dflash-mlx",        8098),
-    ("lms server",        "llmster",           "llmster",           1234),
+    ("lms server",        "lm-studio",           "lm-studio",           1234),
 ]
 
 # When a port is listening but no SERVER_PATTERNS process matches, fall back here.
 FALLBACK_SERVER_BY_PORT = {
     8000: ("oMLX", "omlx"),  # brew-managed; process name varies
-    1234: ("llmster", "llmster"),  # LM Studio app holds the socket; daemon may not be visible
+    1234: ("lm-studio", "lm-studio"),  # LM Studio app holds the socket; daemon may not be visible
 }
 
 # Server label → log-tail command (gets `ssh <host> "..."`-wrapped unless --no-ssh).
@@ -61,7 +61,7 @@ SERVER_LOGS = {
     "oMLX":              "tail -f ~/.omlx/logs/server.log",
     "vmlx":              "tail -f /tmp/vmlx.log",
     "dflash-mlx":        "tail -f /tmp/dflash-mlx.log",
-    "llmster":           "~/.lmstudio/bin/lms log stream --source server",
+    "lm-studio":           "~/.lmstudio/bin/lms log stream --source server",
 }
 
 # --client name → filename under configs/clients/<server>/
@@ -77,7 +77,7 @@ DEFAULT_PORTS = [8000, 1234, 8098]
 
 # Servers that hold exactly one model in memory at a time → overlay rewrites the default.
 # Multi-model servers (mlx-openai-server, oMLX) only get roster-sync (append missing models).
-SINGLE_MODEL_SERVERS = {"vllm-mlx", "vmlx", "dflash-mlx", "llmster"}
+SINGLE_MODEL_SERVERS = {"vllm-mlx", "vmlx", "dflash-mlx", "lm-studio"}
 
 # Substrings (lowercase) that flip the reasoning flag on overlay stub injection.
 REASONING_KEYWORDS = ("thinking", "reasoning", "heretic-thinking", "-r1", "cot", "deepseek-r1")
@@ -270,9 +270,9 @@ def identify_servers(probe_data, want_ports):
                     port_procs.append(p)
                     if not label:
                         label, server_dir = srv_label, srv_dir
-        # LM Studio app shows up as `LM Studio` in command line — special-case it for llmster.
+        # LM Studio app shows up as `LM Studio` in command line — special-case it for lm-studio.
         if not label and port == 1234 and owner and "LM Studio" in owner.get("command", ""):
-            label, server_dir = "llmster", "llmster"
+            label, server_dir = "lm-studio", "lm-studio"
         if not label and port in FALLBACK_SERVER_BY_PORT:
             label, server_dir = FALLBACK_SERVER_BY_PORT[port]
         out.append({
@@ -299,7 +299,7 @@ def loaded_model_for(entry, probe_data, base_url, api_key):
         return None, []
     avail = fetch_models(base_url, api_key=api_key) or []
     loaded = None
-    if entry["server"] == "llmster" and probe_data["lms_models"]:
+    if entry["server"] == "lm-studio" and probe_data["lms_models"]:
         loaded = probe_data["lms_models"][0]
     elif entry["server"] in ("vllm-mlx", "vmlx", "dflash-mlx") and len(avail) == 1:
         loaded = {"id": avail[0], "model": avail[0]}

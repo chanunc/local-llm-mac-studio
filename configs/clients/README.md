@@ -15,7 +15,7 @@ One subdirectory per server. The contents mirror each other so you can swap serv
 | Subdir | Server | Default model | Notes |
 |:--|:--|:--|:--|
 | [`vllm-mlx/`](vllm-mlx/) | `vllm-mlx` | `mlx-community/Ling-2.6-flash-mlx-6bit` | Single-model server. OpenAI + Anthropic. Currently stopped — restart to use. |
-| [`llmster/`](llmster/) | `llmster` (LM Studio headless) | `gemma-4-31b-it-mlx` (Gemma 4 31B-it 6-bit MLX, dense) | OpenCode template only. Gemma is the dense agent-loop speed leader on llmster (browse 5.11 s, search 6.37 s); also lists `qwen3.6-27b` 6-bit. For HauhauCS abliterated GGUFs use the uncen-model submodule's llmster templates. |
+| [`lm-studio/`](lm-studio/) | `lm-studio` (LM Studio headless) | `gemma-4-31b-it-mlx` (Gemma 4 31B-it 6-bit MLX, dense) | OpenCode template only. Gemma is the dense agent-loop speed leader on lm-studio (browse 5.11 s, search 6.37 s); also lists `qwen3.6-27b` 6-bit. For HauhauCS abliterated GGUFs use the uncen-model submodule's lm-studio templates. |
 | [`dflash-mlx/`](dflash-mlx/) | `dflash-mlx` (DFlash speculative decoding) | `mlx-community/Qwen3.6-35B-A3B-4bit` + DFlash drafter | Provisional sidecar on port 8098. **OpenCode template only.** Requires three local patches. |
 | [`mlx-openai-server/`](mlx-openai-server/) | `mlx-openai-server` | YAML-driven multi-model | Stable compatible-superset templates; check `/v1/models` for live roster. |
 | [`omlx/`](omlx/) | `oMLX` | Multi-model roster | All four client configs maintained in lockstep — see Sync Policy. |

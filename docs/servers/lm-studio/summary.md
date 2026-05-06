@@ -1,4 +1,4 @@
-# llmster (LM Studio Headless) Server Summary
+# lm-studio (LM Studio Headless) Server Summary
 
 ## Index
 - [Overview](#overview)
@@ -8,6 +8,7 @@
 - [Tool use and reasoning](#tool-use-and-reasoning)
 - [Health check](#health-check)
 - [Performance](#performance-mac-studio-m3-ultra-96-gb)
+- [How lm-studio gets its prefill speed](#how-lm-studio-gets-its-prefill-speed)
 - [Known limitations](#known-limitations)
 - [See also](#see-also)
 
@@ -15,9 +16,9 @@
 
 ## Overview
 
-`llmster` is the **headless daemon** of [LM Studio](https://lmstudio.ai) — Electron app installed via Homebrew Cask, but the inference path runs entirely from the bundled `~/.lmstudio/bin/lms` CLI plus a separate MLX runtime extension (`mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`) and bundled CPython (`cpython3.11-mac-arm64@10`). No GUI session needed after first-run bootstrap.
+`lm-studio` is the **headless daemon** of [LM Studio](https://lmstudio.ai) — Electron app installed via Homebrew Cask, but the inference path runs entirely from the bundled `~/.lmstudio/bin/lms` CLI plus a separate MLX runtime extension (`mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`) and bundled CPython (`cpython3.11-mac-arm64@10`). No GUI session needed after first-run bootstrap.
 
-Speaks **OpenAI-compatible** API on port **1234** (note: not 8000 — different from every other server in this stack). Closed-source MLX runtime, but ships excellent prefill performance: **47K tok/s @ 32K context** with TTFT staying flat at ~0.7 s, which makes it **3-5× faster end-to-end than vllm-mlx on the OpenCode agent loop** for standard MLX models.
+Speaks **OpenAI-compatible** API on port **1234** (note: not 8000 — different from every other server in this stack). The MLX runtime is shipped as a closed-distribution Electron-bundled binary, but the underlying inference wrapper ([`lmstudio-ai/mlx-engine`](https://github.com/lmstudio-ai/mlx-engine)) is MIT-licensed — see [`docs/servers/lm-studio/prefill-speed-technique.md`](prefill-speed-technique.md) for the decomposition. Ships excellent prefill performance: **47K tok/s @ 32K context** with TTFT staying flat at ~0.7 s, which makes it **3-5× faster end-to-end than vllm-mlx on the OpenCode agent loop** for standard MLX models.
 
 Best for: standard MLX safetensors and GGUF that don't need JANG/JANGTQ/`bailing_hybrid` patches. Tool-call + reasoning parsing is built into the runtime — no parser flags required.
 
@@ -115,7 +116,7 @@ Smoke-tested on 2026-05-01 with `HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanc
 - First `/v1/chat/completions` turn returned `finish_reason: "tool_calls"` with `get_weather({"location":"Paris"})`
 - Tool-result replay produced a normal final answer and separate `reasoning_content`
 
-Full bench: [`docs/models/benchmarks/model-benchmark-tool-call.md` § Server comparison](../../models/benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30).
+Full bench: [`docs/models/benchmarks/model-benchmark-tool-call.md` § Server comparison](../../models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30).
 
 ## Health check
 
@@ -140,7 +141,7 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 
 ## Performance (Mac Studio M3 Ultra, 96 GB)
 
-`mlx-community/Qwen3.6-27B-6bit` on llmster v0.4.12 + MLX runtime 1.6.0, streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](../../models/benchmarks/qwen36-27b-6bit/api-server-llmster.json).
+`mlx-community/Qwen3.6-27B-6bit` on lm-studio v0.4.12 + MLX runtime 1.6.0, streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-lm-studio.json`](../../models/benchmarks/qwen36-27b-6bit/api-server-lm-studio.json).
 
 | Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
 |:--------|------------:|----------------:|---------:|
@@ -149,7 +150,13 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 | 8K | 28.8 | 15,321 | 0.54 |
 | 32K | 26.3 | **47,143** | 0.70 |
 
-**Headline:** TTFT stays effectively flat from 512 → 32K (0.49 → 0.70 s). Compare to `Qwen3.6-27B JANG 4M` on vllm-mlx where 32K TTFT is **104 s** at 314 tok/s prefill — llmster's prefill kernel is roughly **150× faster** at long context. Decode is ~10-20 % slower than vllm-mlx + JANG 4M (29.9 vs 36.5 tok/s @ 512), but for agent workloads where prefill dominates the 10K-token system prompt + tool catalog, the prefill win compensates ~10× over.
+**Headline:** TTFT stays effectively flat from 512 → 32K (0.49 → 0.70 s). Compare to `Qwen3.6-27B JANG 4M` on vllm-mlx where 32K TTFT is **104 s** at 314 tok/s prefill — lm-studio's prefill kernel is roughly **150× faster** at long context. Decode is ~10-20 % slower than vllm-mlx + JANG 4M (29.9 vs 36.5 tok/s @ 512), but for agent workloads where prefill dominates the 10K-token system prompt + tool catalog, the prefill win compensates ~10× over.
+
+## How lm-studio gets its prefill speed
+
+The 150× prefill ratio in the [Performance](#performance-mac-studio-m3-ultra-96-gb) table above is **not from a closed kernel**. The two levers — chunk size 4096–8192 vs the upstream `mlx-lm` default of 512, and elimination of the per-chunk `mx.eval()` + `mx.clear_cache()` GPU sync barriers — are documented in public LM Studio patches and bug reports, and both are reproducible against stock `mlx-lm`.
+
+Full decomposition with public evidence, server-compatibility matrix, and what the speed-up is **not** from: [`docs/servers/lm-studio/prefill-speed-technique.md`](prefill-speed-technique.md).
 
 ## Known limitations
 
@@ -160,14 +167,15 @@ ssh macstudio "tail -f ~/.lmstudio/server-logs/\$(date +%Y-%m)/\$(date +%Y-%m-%d
 - **Default context is 4096.** `lms load` without `--context-length` ships with a 4 K window, which fails on agent prompts. Always pass `--context-length 65536` (or larger) explicitly. Memory is allocated up front.
 - **Default bind is 127.0.0.1.** `lms server start` without `--bind 0.0.0.0` will not accept LAN connections. There is no persistent server config file that survives across `start` invocations — pass `--bind 0.0.0.0 --cors` every time.
 - **Electron Cask install needs one GUI launch.** First-time `~/.lmstudio/bin/lms` doesn't exist until the Electron app runs once locally. Headless-only macOS hosts will need a screen-share/VNC session for that initial launch (then it stays bootstrapped permanently).
-- **Closed-source runtime.** No way to inspect the prefill kernel, no way to apply repo-managed patches. If a future LM Studio update changes runtime behavior, results may shift without notice.
+- **Closed-distribution runtime, no in-place patching.** The MLX inference wrapper ([`lmstudio-ai/mlx-engine`](https://github.com/lmstudio-ai/mlx-engine)) is MIT-licensed, but the LM Studio app ships it bundled inside an Electron tarball with vendored CPython — there is no way to apply repo-managed patches to the running runtime, and a future LM Studio update can change vendored versions of `mlx-lm` / `mlx-vlm` / `Outlines` without notice. Decomposition of the actual performance levers is in [`docs/servers/lm-studio/prefill-speed-technique.md`](prefill-speed-technique.md).
 - **No Anthropic API.** OpenAI `/v1/chat/completions` and `/v1/embeddings` only. Clients that prefer the Anthropic shape (Claude Code direct mode) need to use one of the other servers.
 - **Single-port-1234 default** clashes with nothing in this stack today, but every other server in the repo is on port 8000 — be careful with client config templates and switching.
 
 ## See also
 
-- [`docs/models/benchmarks/model-benchmark-tool-call.md` § llmster vs vllm-mlx](../../models/benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30) — full agent-bench comparison with raw numbers
-- [`docs/models/benchmarks/model-benchmark-api-server.md` § Qwen3.6-27B 6-bit on llmster](../../models/benchmarks/model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx) — direct prompt benchmark detail
-- [`configs/clients/llmster/opencode.json`](../../../configs/clients/llmster/opencode.json) — OpenCode client template (substitutes `<MAC_STUDIO_IP>` via `scripts/switch_opencode_config.py`)
-- [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py) — handles `--server llmster` to swap OpenCode between vllm-mlx (port 8000) and llmster (port 1234)
-- [LM Studio docs — headless `llmster`](https://lmstudio.ai/docs-md/developer/core/headless_llmster) — upstream reference (Linux/systemd-focused; macOS path documented here is the right one for this stack)
+- [`docs/servers/lm-studio/prefill-speed-technique.md`](prefill-speed-technique.md) — canonical reference for *why* lm-studio is fast (chunk size 4096–8192, no per-chunk eval barriers)
+- [`docs/models/benchmarks/model-benchmark-tool-call.md` § lm-studio vs vllm-mlx](../../models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30) — full agent-bench comparison with raw numbers
+- [`docs/models/benchmarks/model-benchmark-api-server.md` § Qwen3.6-27B 6-bit on lm-studio](../../models/benchmarks/model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-lm-studio-vs-vllm-mlx) — direct prompt benchmark detail
+- [`configs/clients/lm-studio/opencode.json`](../../../configs/clients/lm-studio/opencode.json) — OpenCode client template (substitutes `<MAC_STUDIO_IP>` via `scripts/switch_opencode_config.py`)
+- [`scripts/switch_opencode_config.py`](../../../scripts/switch_opencode_config.py) — handles `--server lm-studio` to swap OpenCode between vllm-mlx (port 8000) and lm-studio (port 1234)
+- [LM Studio docs — headless `lm-studio`](https://lmstudio.ai/docs-md/developer/core/headless_llmster) — upstream reference (Linux/systemd-focused; macOS path documented here is the right one for this stack)

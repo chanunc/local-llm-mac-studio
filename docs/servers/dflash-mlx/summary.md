@@ -86,7 +86,7 @@ ssh macstudio "nohup ~/dflash-mlx-env/bin/dflash-serve \
 
 **`--draft-model` is required** for Qwen3.6 — the built-in `DRAFT_REGISTRY` in dflash-mlx 0.1.4.1 only auto-resolves Qwen3.5 family pairs. Without an explicit `--draft-model`, the server falls back to baseline (autoregressive) generation, defeating the point of running dflash-mlx.
 
-**`--port 8098`** — explicitly avoid port 8000 (production primary on `vllm-mlx`) and port 1234 (`llmster`).
+**`--port 8098`** — explicitly avoid port 8000 (production primary on `vllm-mlx`) and port 1234 (`lm-studio`).
 
 **Stop:** `ssh macstudio "pkill -f dflash-serve"`.
 
@@ -108,7 +108,7 @@ curl -s http://<MAC_STUDIO_IP>:8098/v1/chat/completions \
   }' | python3 -m json.tool
 ```
 
-Returns `finish_reason: "tool_calls"`, `tool_calls[0].function.name: "get_weather"`, `arguments: '{"location": "Paris"}'`. Reasoning blocks (`<think>…</think>`) are routed to `message.reasoning` separately from `message.content` (note: `reasoning`, not `reasoning_content` — mlx-lm naming, differs from llmster). Streaming uses `delta.reasoning` and `delta.content` deltas.
+Returns `finish_reason: "tool_calls"`, `tool_calls[0].function.name: "get_weather"`, `arguments: '{"location": "Paris"}'`. Reasoning blocks (`<think>…</think>`) are routed to `message.reasoning` separately from `message.content` (note: `reasoning`, not `reasoning_content` — mlx-lm naming, differs from lm-studio). Streaming uses `delta.reasoning` and `delta.content` deltas.
 
 **Tool-call detection** is driven by `mlx_lm.generate.match()`. Without the [`patch_mlx_lm_match.py`](../../../scripts/patches/patch_mlx_lm_match.py) fix, multi-call benches crash with `KeyError: None` after the first tool-call match completes — discovered while running Phase 4 of the deploy plan. After the patch, 5/5 single-call scenarios pass and 3-turn multi-turn loops complete cleanly.
 
@@ -151,13 +151,13 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 | 8K   | 87.0 | 1,524 | 5.40 |
 | 32K  | 74.1 | 837 | 39.2 |
 
-**Headline:** sustained decode rate stays above **74 tok/s even at 32K context** at 86.7% draft acceptance. Compare to llmster on `Qwen3.6-27B-6bit` at 32K: 26.3 tok/s decode (3.4× slower decode at the cost of 56× faster prefill). DFlash wins on decode-bound single-turn workloads; llmster wins on prefill-bound long-context multi-turn workloads.
+**Headline:** sustained decode rate stays above **74 tok/s even at 32K context** at 86.7% draft acceptance. Compare to lm-studio on `Qwen3.6-27B-6bit` at 32K: 26.3 tok/s decode (3.4× slower decode at the cost of 56× faster prefill). DFlash wins on decode-bound single-turn workloads; lm-studio wins on prefill-bound long-context multi-turn workloads.
 
 **Workload-gated, not universally faster on M3 Ultra.** Local essay prompts regress (0.62×–0.98× across 1k–8k horizons) while math/reasoning and structured JSON reproduce upstream's wins (1.61× / 1.46×). Treat as a workload-gated throughput tool for deterministic reasoning or structured-output tasks, not a default replacement for plain `mlx_lm.server`. Full analysis + cross-fork comparison: [`docs/models/techniques/model-technique-dflash.md`](../../models/techniques/model-technique-dflash.md).
 
 **Tool-call latency** ([`api-tool-test-dflash-mlx.json`](../../models/benchmarks/qwen36-35b-a3b-4bit/api-tool-test-dflash-mlx.json)): 5/5 single-call scenarios pass at 1.68-6.08 s, 3-turn multi-turn loop completes in 5.9 s.
 
-**Agent-bench** ([`agent-bench-dflash-mlx.json`](../../models/benchmarks/qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json)): browse 27.59 s wall median (13% faster than llmster on the smaller dense Qwen3.6-27B-6bit), search 54.78 s wall median (2.1× slower — 3-turn loop with 10K → 16K growing prefill favors llmster).
+**Agent-bench** ([`agent-bench-dflash-mlx.json`](../../models/benchmarks/qwen36-35b-a3b-4bit/agent-bench-dflash-mlx.json)): browse 27.59 s wall median (13% faster than lm-studio on the smaller dense Qwen3.6-27B-6bit), search 54.78 s wall median (2.1× slower — 3-turn loop with 10K → 16K growing prefill favors lm-studio).
 
 ## Known limitations
 
@@ -180,7 +180,7 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 - [`docs/models/benchmarks/model-benchmark-api-server.md`](../../models/benchmarks/model-benchmark-api-server.md) — cross-server prefill / decode comparison
 - [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — cross-server tool-call latency
 - [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — end-to-end agent loop
-- [`configs/clients/dflash-mlx/opencode.json`](../../../configs/clients/dflash-mlx/opencode.json) — OpenCode template (provisional, mirrors llmster posture)
+- [`configs/clients/dflash-mlx/opencode.json`](../../../configs/clients/dflash-mlx/opencode.json) — OpenCode template (provisional, mirrors lm-studio posture)
 - [`scripts/patches/patch_dflash_mlx_serve.py`](../../../scripts/patches/patch_dflash_mlx_serve.py) — dflash-mlx 0.1.4.1 startup + load fixes
 - [`scripts/patches/patch_mlx_lm_match.py`](../../../scripts/patches/patch_mlx_lm_match.py) — mlx-lm tool-detection trie reset
 - [`scripts/patches/patch_dflash_mlx_host.py`](../../../scripts/patches/patch_dflash_mlx_host.py) — only needed for dflash-mlx 0.1.0; obsoleted by `--host` flag in 0.1.4.1+

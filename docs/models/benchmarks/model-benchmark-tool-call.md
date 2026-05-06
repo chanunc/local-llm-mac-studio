@@ -33,15 +33,15 @@ Two complementary harnesses, both reported per model:
 - [mlx-community/Qwen3.6-27B-6bit](#results-mlx-communityqwen36-27b-6bit) — 27 B dense + ViT, uniform 6-bit MLX (vllm-mlx, no patches) — *2026-04-24, re-bench 2026-04-27*
 - [jedisct1/Qwen3.6-35B-rust.mlx](#results-jedisct1qwen36-35b-rustmlx) — 35 B sparse MoE, 3 B active, uniform 8-bit MLX, Rust LoRA merged (vllm-mlx, no patches) — *2026-04-24, re-bench 2026-04-27*
 - [mlx-community/Ling-2.6-flash-mlx-6bit](#results-mlx-communityling-26-flash-mlx-6bit) — 104 B sparse MoE, 7.4 B active, hybrid MLA + linear-attention SSM, uniform 6-bit MLX (vllm-mlx, requires PR-1227 vendor + 2 thread-local patches) — *2026-04-29*
-- [lmstudio-community/gemma-4-31B-it-MLX-6bit](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) — 31 B dense, text-only, uniform 6-bit MLX (llmster, no patches; LM Studio runtime auto-detects Gemma 4 tool-call + reasoning) — **fastest search in doc** (6.37 s wall 🏆); 🥉 browse (5.11 s wall) — *2026-05-01*
-- [HauhauCS/Qwen3.5-35B-A3B-Uncensored-HauhauCS-Aggressive](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive) — 35 B sparse MoE, 3 B active, Q6_K GGUF, abliterated (llmster, no patches) — **5/5 API pass, browse 5.21 s** — *2026-05-05*
-- [AITRADER/Huihui-Qwen3.5-35B-A3B-abliterated-4bit-MLX](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx) — 35 B sparse MoE, 3 B active, 4-bit MLX safetensors, abliterated (llmster, no patches) — **5/5 API pass, browse 15.72 s** — *2026-05-05*
-- [mlx-community/Dolphin-Mistral-24B-Venice-Edition-mlx-8Bit](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit) — 24 B dense Mistral, 8-bit MLX, uncensored (llmster, no patches) — **5/5 API pass, browse 6.62 s** — *2026-05-05*
-- [moot20/Dolphin3.0-R1-Mistral-24B-MLX-8bits](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits) — 24 B dense Mistral R1, 8-bit MLX, uncensored (llmster, no patches) — **5/5 API pass, browse 7.5 s, search 34.52 s (high variance)** — *2026-05-05*
-- [HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced) — 27 B dense Qwen3.6, Q8_K_P GGUF, balanced uncensored (llmster, no patches) — **5/5 API pass, browse 11.16 s** — *2026-05-05*
-- [lmstudio-community/Hermes-4-70B-MLX-6bit](#results-lmstudio-communityhermes-4-70b-mlx-6bit) — 70 B dense Llama, 6-bit MLX, NousResearch Hermes 4 (llmster, no patches) — **5/5 API pass, browse 15.63 s, search 79.98 s (bash-loop)** — *2026-05-05*
-- [heni86/magnum-v4-72b_mlx-4bit](#results-heni86magnum-v4-72b_mlx-4bit) — 72 B dense Qwen2, 4-bit MLX, magnum roleplay fine-tune (llmster, no patches) — **⛔ 0/5 API pass — does not call tools** — *2026-05-05*
-- [mradermacher/Midnight-Miqu-70B-v1.5-GGUF](#results-mradermachermidnight-miqu-70b-v15-gguf) — 70 B Mixtral-derived, Q4_K_M GGUF (llmster) — **⛔ SKIP — HTTP 400, no system role support** — *2026-05-05*
+- [lmstudio-community/gemma-4-31B-it-MLX-6bit](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) — 31 B dense, text-only, uniform 6-bit MLX (lm-studio, no patches; LM Studio runtime auto-detects Gemma 4 tool-call + reasoning) — **fastest search in doc** (6.37 s wall 🏆); 🥉 browse (5.11 s wall) — *2026-05-01*
+- [HauhauCS/Qwen3.5-35B-A3B-Uncensored-HauhauCS-Aggressive](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive) — 35 B sparse MoE, 3 B active, Q6_K GGUF, abliterated (lm-studio, no patches) — **5/5 API pass, browse 5.21 s** — *2026-05-05*
+- [AITRADER/Huihui-Qwen3.5-35B-A3B-abliterated-4bit-MLX](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx) — 35 B sparse MoE, 3 B active, 4-bit MLX safetensors, abliterated (lm-studio, no patches) — **5/5 API pass, browse 15.72 s** — *2026-05-05*
+- [mlx-community/Dolphin-Mistral-24B-Venice-Edition-mlx-8Bit](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit) — 24 B dense Mistral, 8-bit MLX, uncensored (lm-studio, no patches) — **5/5 API pass, browse 6.62 s** — *2026-05-05*
+- [moot20/Dolphin3.0-R1-Mistral-24B-MLX-8bits](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits) — 24 B dense Mistral R1, 8-bit MLX, uncensored (lm-studio, no patches) — **5/5 API pass, browse 7.5 s, search 34.52 s (high variance)** — *2026-05-05*
+- [HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced) — 27 B dense Qwen3.6, Q8_K_P GGUF, balanced uncensored (lm-studio, no patches) — **5/5 API pass, browse 11.16 s** — *2026-05-05*
+- [lmstudio-community/Hermes-4-70B-MLX-6bit](#results-lmstudio-communityhermes-4-70b-mlx-6bit) — 70 B dense Llama, 6-bit MLX, NousResearch Hermes 4 (lm-studio, no patches) — **5/5 API pass, browse 15.63 s, search 79.98 s (bash-loop)** — *2026-05-05*
+- [heni86/magnum-v4-72b_mlx-4bit](#results-heni86magnum-v4-72b_mlx-4bit) — 72 B dense Qwen2, 4-bit MLX, magnum roleplay fine-tune (lm-studio, no patches) — **⛔ 0/5 API pass — does not call tools** — *2026-05-05*
+- [mradermacher/Midnight-Miqu-70B-v1.5-GGUF](#results-mradermachermidnight-miqu-70b-v15-gguf) — 70 B Mixtral-derived, Q4_K_M GGUF (lm-studio) — **⛔ SKIP — HTTP 400, no system role support** — *2026-05-05*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -64,30 +64,30 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **llmster** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **lm-studio** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
-| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **llmster** | ✅ **5/5** | 1.11 - 1.61 s | 1.29 - 1.72 s | **4.94 s** |
-| Dolphin 3.0 R1 Mistral 24B MLX-8bit | **llmster** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
-| HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | 1.43 - 1.60 s | 1.59 - 1.90 s | 5.37 s |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
+| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | ✅ **5/5** | 1.11 - 1.61 s | 1.29 - 1.72 s | **4.94 s** |
+| Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
+| HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.43 - 1.60 s | 1.59 - 1.90 s | 5.37 s |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥉 | **1.51 - 1.53 s** 🥉 | 5.64 s |
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **llmster** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
-| Dolphin Venice 24B MLX-8bit | **llmster** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
-| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **llmster** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
-| IBM Granite 4.1 30B Q8_0 | **llmster** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
+| Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
+| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **lm-studio** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
+| IBM Granite 4.1 30B Q8_0 | **lm-studio** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
-| Hermes 4 70B MLX-6bit | **llmster** | ✅ **5/5** | 2.26 - 7.86 s | 2.26 - 4.54 s | 13.34 s |
+| Hermes 4 70B MLX-6bit | **lm-studio** | ✅ **5/5** | 2.26 - 7.86 s | 2.26 - 4.54 s | 13.34 s |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | ✅ **5/5** | 1.31 - 6.63 s | 2.50 - 9.80 s | 15.48 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
-| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
-| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
-| HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **llmster** | ✅ **5/5** | 5.86 - 24.52 s | 6.31 - 11.50 s | 25.70 s |
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **lm-studio** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **lm-studio** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
+| HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | ✅ **5/5** | 5.86 - 24.52 s | 6.31 - 11.50 s | 25.70 s |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s | 1.42 - 2.70 s | 6.99 s ⚠ |
-| magnum-v4-72b MLX-4bit | **llmster** | ⛔ **0/5** | N/A (no tool calls emitted) | N/A | N/A (multi-turn loop only passed) |
-| Midnight-Miqu-70B-v1.5 Q4_K_M GGUF | **llmster** | ⛔ **SKIP** | N/A — HTTP 400 (no system role support) | N/A | N/A |
+| magnum-v4-72b MLX-4bit | **lm-studio** | ⛔ **0/5** | N/A (no tool calls emitted) | N/A | N/A (multi-turn loop only passed) |
+| Midnight-Miqu-70B-v1.5 Q4_K_M GGUF | **lm-studio** | ⛔ **SKIP** | N/A — HTTP 400 (no system role support) | N/A | N/A |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
@@ -106,27 +106,27 @@ Rows ordered by browse wall time (ascending).
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **llmster** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2 / 2 turns; `webfetch`. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader. Current search leader** (prior 🏆 was Gemma 4 31B-it 6.37s on llmster, thinking OFF — now historical). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **llmster** | 5.14 s 🥉 / 3.94 s | 12.01 s / 10.81 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
-| **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **llmster** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2 / 2 turns; `webfetch`. MoE 35B/3B active, thinking-off in practice.<br>See [results section](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive). |
-| IBM Granite 4.1 30B Q8_0 | **llmster** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2 / 2 turns; `webfetch`. Dense 30B, non-thinking, 24.8 tok/s gen.<br>Apache 2.0. See [per-model](../per-model/model-summary-granite-4.1.md). |
-| **Dolphin Venice 24B MLX-8bit** | **llmster** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2 / 2 turns; `webfetch`. Dense Mistral 24B, no thinking.<br>See [results section](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit). |
-| **Dolphin 3.0 R1 Mistral 24B MLX-8bit** | **llmster** | **7.5 s** / 6.28 s | 34.52 s / 4.42 s | 2.5 / 7 turns; `webfetch`+`bash`. High search variance (10–59 s). Loops bash excessively on search.<br>See [results section](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits). |
-| HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **llmster** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2 / 2.5 turns; `webfetch`. Dense Qwen3.6 27B, Q8_K_P, thinking-on.<br>See [results section](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced). |
-| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **mlx-lm** | 12.33 s / 11.12 s | 35.55 s / 34.38 s | 2 / 2 turns; `webfetch`. **Thinking ON** (mlx-lm server, 121/124 output tokens). Prior llmster run (thinking OFF): *5.11 s browse / 6.37 s search*. See [results section](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit). |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2 / 2 turns; `webfetch`. Sparse MoE 4B active, non-thinking, 87.6 tok/s gen.<br>**All-time browse leader. Current search leader** (prior 🏆 was Gemma 4 31B-it 6.37s on lm-studio, thinking OFF — now historical). 8/10 mlabonne refusal. See [bench writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md). |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md). |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s 🥉 / 3.94 s | 12.01 s / 10.81 s | 2 / 3 turns; `webfetch`. MoE 35B/3B active + VL, thinking-on.<br>See [bench writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md). |
+| **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2 / 2 turns; `webfetch`. MoE 35B/3B active, thinking-off in practice.<br>See [results section](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive). |
+| IBM Granite 4.1 30B Q8_0 | **lm-studio** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2 / 2 turns; `webfetch`. Dense 30B, non-thinking, 24.8 tok/s gen.<br>Apache 2.0. See [per-model](../per-model/model-summary-granite-4.1.md). |
+| **Dolphin Venice 24B MLX-8bit** | **lm-studio** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2 / 2 turns; `webfetch`. Dense Mistral 24B, no thinking.<br>See [results section](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit). |
+| **Dolphin 3.0 R1 Mistral 24B MLX-8bit** | **lm-studio** | **7.5 s** / 6.28 s | 34.52 s / 4.42 s | 2.5 / 7 turns; `webfetch`+`bash`. High search variance (10–59 s). Loops bash excessively on search.<br>See [results section](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits). |
+| HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2 / 2.5 turns; `webfetch`. Dense Qwen3.6 27B, Q8_K_P, thinking-on.<br>See [results section](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced). |
+| Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **mlx-lm** | 12.33 s / 11.12 s | 35.55 s / 34.38 s | 2 / 2 turns; `webfetch`. **Thinking ON** (mlx-lm server, 121/124 output tokens). Prior lm-studio run (thinking OFF): *5.11 s browse / 6.37 s search*. See [results section](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit). |
 | Gemma 4 31B-it bf16 + MTP drafter | mlx-vlm 0.5.0 (incl. PRs #1112/#1115/#1117) | ⛔ **300 s timeout × 6** (2 passes) | ⛔ **300 s timeout × 6** (2 passes) | 0 / 0 turns; (none). MTP drafter matches upstream B=1 reference (3.07–4.29 acc/round, 12.3 tok/s @ 8K vs PR #1115's 11.7 tok/s). chat_template.jinja verified byte-identical to 6-bit's working template — issue [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Two distinct blockers: (1) mlx-vlm streaming hangs on long-reasoning prompts (trivial prompts stream OK; "Browse www.example.com" hangs 360 s; reproducible) and (2) at 12.3 tok/s decode the 8192-token reasoning budget consumes ~666 s/turn — exceeds opencode's 300 s wall regardless. `MLX_VLM_SPEC_BATCH_WAIT_MS=10` did not help (PR #1117 env var only helps concurrent requests, not sequential agent loops). Non-streaming tool harness still passes 5/5. Full analysis: [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment). |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2 / 2 turns; `webfetch`. Sparse 3B-active MoE. |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2 / 3 turns; `webfetch`. A3B sparsity.<br>Search splits into top-stories + item fetches. |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2 / 2 turns; `webfetch`. JANGTQ4 / `mxtq` MoE 35B/3B + VL.<br>Search dominated by 8K-token turn-2 reply on long-context decode. |
-| Hermes 4 70B MLX-6bit | **llmster** | 15.63 s / 14.39 s | 79.98 s / 78.74 s | 3 / 6 turns; `webfetch`+`bash`. Search dominated by bash-loop loops (8 bash calls on run 1). Dense 70B Llama.<br>See [results section](#results-lmstudio-communityhermes-4-70b-mlx-6bit). |
-| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **llmster** | 15.72 s / 14.49 s | 21.38 s / 20.16 s | 2 / 2 turns; `webfetch`. MoE 35B/3B active, no thinking prelude.<br>See [results section](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx). |
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **llmster** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. Dense 40B all-active, thinking-on (Deckard/PDK).<br>See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
+| Hermes 4 70B MLX-6bit | **lm-studio** | 15.63 s / 14.39 s | 79.98 s / 78.74 s | 3 / 6 turns; `webfetch`+`bash`. Search dominated by bash-loop loops (8 bash calls on run 1). Dense 70B Llama.<br>See [results section](#results-lmstudio-communityhermes-4-70b-mlx-6bit). |
+| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | 15.72 s / 14.49 s | 21.38 s / 20.16 s | 2 / 2 turns; `webfetch`. MoE 35B/3B active, no thinking prelude.<br>See [results section](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx). |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2 / 3 turns; `webfetch`. Dense 40B all-active, thinking-on (Deckard/PDK).<br>See [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md). |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2 / 2 turns; `webfetch` (one search took `skill`).<br>7.4B active dominated by MLA cost. |
-| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2 / 3 turns; `webfetch`. 87% draft accept.<br>**Search 2.1× slower than llmster** — growing context favors prefill. |
-| Qwen3.6-27B 6bit (dense, mlx-community) | **llmster** | 31.96 s / 30.74 s | 25.71 s / 24.51 s | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-llmster-vs-vllm-mlx). |
-| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **llmster** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
-| magnum-v4-72b MLX-4bit | **llmster** | ⛔ N/A (no tools) | ⛔ N/A (no tools) | No tools called — model answers from training memory.<br>See [results section](#results-heni86magnum-v4-72b_mlx-4bit). |
+| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2 / 3 turns; `webfetch`. 87% draft accept.<br>**Search 2.1× slower than lm-studio** — growing context favors prefill. |
+| Qwen3.6-27B 6bit (dense, mlx-community) | **lm-studio** | 31.96 s / 30.74 s | 25.71 s / 24.51 s | 2 / 2 turns; `webfetch`. Prefill 47K tok/s @ 32K.<br>See [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-lm-studio-vs-vllm-mlx). |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **lm-studio** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3 turns; `webfetch`. Dense 31B, **Thinking model** — `<\|channel>thought` budget consumes most of 21 tok/s decode per turn.<br>See [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md). |
+| magnum-v4-72b MLX-4bit | **lm-studio** | ⛔ N/A (no tools) | ⛔ N/A (no tools) | No tools called — model answers from training memory.<br>See [results section](#results-heni86magnum-v4-72b_mlx-4bit). |
 | MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s ⚠ / 54.29 s | ⛔ **fail** | Browse: 1/3 invalid tool call, 2/3 hit 8K cap. Search: 0/3 zero tool calls.<br>API-level w/ single tool *works* — issue is OpenCode's 10-tool catalog + thinking-on. |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2 / 3 turns; `webfetch`.<br>Dense 27 B + thinking-on adds 30+ s/turn. |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2 / 3 turns; `webfetch`, `bash`.<br>A3B but TurboQuant kernels stay slow under deep thinking. |
@@ -140,32 +140,32 @@ Rows ordered alphabetically by model name.
 
 | Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
 |:------|:-------|:---------------------|:---------------------|:--------------|
-| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | llmster | (built-in) | (built-in — `<\|channel>thought` → `reasoning_content`) | none — LM Studio Gemma 4 runtime. Guardrail override **required** before initial load (see [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)) |
-| IBM Granite 4.1 30B Q8_0 | llmster | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
-| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | llmster | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
+| DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | lm-studio | (built-in) | (built-in — `<\|channel>thought` → `reasoning_content`) | none — LM Studio Gemma 4 runtime. Guardrail override **required** before initial load (see [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)) |
+| IBM Granite 4.1 30B Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | lm-studio | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` + `scripts/patches/patch_mlx_lm_match.py` |
-| Gemma 4 31B-it (lmstudio-community 6-bit) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
+| Gemma 4 31B-it (lmstudio-community 6-bit) | lm-studio | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | mlx-lm server (direct) | N/A (native Gemma 4 format) | N/A (thinking emitted as part of content in streaming) | none — launch via Cellar libexec binary (`/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`); the `/opt/homebrew/bin/mlx_lm.server` symlink resolves to a python3.11 mlx_lm install that lacks Gemma 4 support. Thinking mode ON by default |
 | Gemma 4 31B-it bf16 + MTP drafter (gemma4_assistant) | mlx-vlm 0.5.0 (from main; incl. PRs #1112/#1115/#1117) | N/A | N/A | install mlx-vlm from `git+https://github.com/Blaizzy/mlx-vlm.git@main` (PyPI 0.4.4 lacks `mlx_vlm.speculative`). Launch with `--draft-model mlx-community/gemma-4-31B-it-assistant-bf16 --draft-kind mtp --draft-block-size 6` and **set `MLX_VLM_SPEC_BATCH_WAIT_MS=10`** (PR #1117) for concurrent agent workloads. Streaming SSE silence on first attempt likely traces to missing `chat_template.jinja` per [#941](https://github.com/Blaizzy/mlx-vlm/issues/941). Re-test pending. Cap context ≤ 16 K (32 K+ Metal-OOMs at 118 GB vs 62 GB cap) |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | llmster | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | lm-studio | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
 | Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | llmster | (built-in) | (built-in) | none — LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patches/patch_vllm_mlx_streaming_tools.py` |
 | Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as JANG 4K |
-| Qwen3.6-27B 6bit (mlx-community) | llmster | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
+| Qwen3.6-27B 6bit (mlx-community) | lm-studio | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
-| HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K | llmster | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`; default 4K too small for OpenCode system prompt. Download via `hf_hub_download` (Q6_K file) — `lms get` cannot resolve repo. |
-| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | llmster | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Download via `snapshot_download` — `lms get` cannot resolve repo. |
-| Dolphin Venice 24B MLX-8bit | llmster | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
-| Dolphin 3.0 R1 Mistral 24B MLX-8bits | llmster | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
-| HauhauCS Qwen3.6-27B Balanced Q8_K_P | llmster | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`. Download via `hf_hub_download` (Q8_K_P file) — `lms get` cannot resolve custom quant label. |
-| Hermes 4 70B MLX-6bit | llmster | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Large (53 GiB loaded) — may OOM alongside other models. |
-| magnum-v4-72b MLX-4bit | llmster | N/A (does not call tools) | N/A | none — tool calling not functional regardless of flags. Do not use for agentic tasks. |
-| Midnight-Miqu-70B-v1.5 Q4_K_M | llmster | N/A (HTTP 400 on tool requests) | N/A | none — chat-template only supports user/assistant roles; system-role tool definitions rejected. |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
+| HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`; default 4K too small for OpenCode system prompt. Download via `hf_hub_download` (Q6_K file) — `lms get` cannot resolve repo. |
+| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Download via `snapshot_download` — `lms get` cannot resolve repo. |
+| Dolphin Venice 24B MLX-8bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
+| Dolphin 3.0 R1 Mistral 24B MLX-8bits | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
+| HauhauCS Qwen3.6-27B Balanced Q8_K_P | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`. Download via `hf_hub_download` (Q8_K_P file) — `lms get` cannot resolve custom quant label. |
+| Hermes 4 70B MLX-6bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Large (53 GiB loaded) — may OOM alongside other models. |
+| magnum-v4-72b MLX-4bit | lm-studio | N/A (does not call tools) | N/A | none — tool calling not functional regardless of flags. Do not use for agentic tasks. |
+| Midnight-Miqu-70B-v1.5 Q4_K_M | lm-studio | N/A (HTTP 400 on tool requests) | N/A | none — chat-template only supports user/assistant roles; system-role tool definitions rejected. |
 
 ---
 
@@ -250,7 +250,7 @@ Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for 
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥉 | 2 | `webfetch` | ~10.8K in / ~136 out |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
@@ -271,7 +271,7 @@ Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for 
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | llmster | **7.35 s 🏆** | 2 | `webfetch` | ~26K | ~13K/turn |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **7.35 s 🏆** | 2 | `webfetch` | ~26K | ~13K/turn |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 16.28 s 🥈 | 2 | `webfetch` | ~26K | ~13K/turn |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥉 | 3 | `webfetch` | ~43K | ~13K/turn |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
@@ -518,15 +518,15 @@ Cross-model comparison on the same scenarios (all captured 2026-04-24 with the s
 
 4. **Quality upside not measured here** — this bench is latency-only. External reference (LLM infrastructure research memo, 1350): 6-bit uniform retains ~1 ppt more quality vs 4.45-bit JANG mixed on standard benchmarks while adding ~3.5 GB disk / ~5 % wall latency.
 
-### Server comparison: llmster vs vllm-mlx (same model file, 2026-04-30)
+### Server comparison: lm-studio vs vllm-mlx (same model file, 2026-04-30)
 
 Same model, same hardware, same OpenCode bench harness. The only variable is the server.
 
-**Setup for llmster:** LM Studio installed via `brew install --cask lm-studio` (v0.4.12). MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`. Bootstrapped `~/.lmstudio/bin/lms`, ran `lms get https://huggingface.co/mlx-community/Qwen3.6-27B-6bit`, loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`, served via `lms server start --bind 0.0.0.0`. Served identifier: `qwen3.6-27b` (lowercase, org prefix stripped — used as-is in the bench `--model` arg). Raw JSON: [`qwen36-27b-6bit/api-server-llmster.json`](qwen36-27b-6bit/api-server-llmster.json), [`api-tool-test-llmster.json`](qwen36-27b-6bit/api-tool-test-llmster.json), [`agent-bench-llmster.json`](qwen36-27b-6bit/agent-bench-llmster.json).
+**Setup for lm-studio:** LM Studio installed via `brew install --cask lm-studio` (v0.4.12). MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`. Bootstrapped `~/.lmstudio/bin/lms`, ran `lms get https://huggingface.co/mlx-community/Qwen3.6-27B-6bit`, loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`, served via `lms server start --bind 0.0.0.0`. Served identifier: `qwen3.6-27b` (lowercase, org prefix stripped — used as-is in the bench `--model` arg). Raw JSON: [`qwen36-27b-6bit/api-server-lm-studio.json`](qwen36-27b-6bit/api-server-lm-studio.json), [`api-tool-test-lm-studio.json`](qwen36-27b-6bit/api-tool-test-lm-studio.json), [`agent-bench-lm-studio.json`](qwen36-27b-6bit/agent-bench-lm-studio.json).
 
 **API-level tool calling (5-tool harness, 2026-04-30 prompts):**
 
-| Scenario | vllm-mlx | llmster | Δ |
+| Scenario | vllm-mlx | lm-studio | Δ |
 |:---------|:--------:|:-------:|:---:|
 | Single tool (file read) | 5.75 s | 6.58 s | +14 % |
 | Single tool (command) | 4.73 s | 4.22 s | −11 % |
@@ -539,27 +539,27 @@ API-level latency is roughly a wash (within ±20 % per scenario, +5 % on the 3-t
 
 **OpenCode end-to-end (`opencode run`, browse + search, 1 warmup + 3 measured):**
 
-| Scenario | vllm-mlx wall / llm | llmster wall / llm | llmster speedup |
+| Scenario | vllm-mlx wall / llm | lm-studio wall / llm | lm-studio speedup |
 |:---------|:-------------------:|:------------------:|:----------------:|
 | Browse www.example.com | 97.93 s / 96.75 s | **31.96 s / 30.74 s** | **3.1× faster** |
 | Browse Hackernews latest topic | 127.28 s / 126.05 s | **25.71 s / 24.51 s** | **4.9× faster** |
 
-This is the headline finding. Same MLX file, same hardware, same client harness, same prompts. **llmster is 3–5× faster end-to-end on the OpenCode agent loop**.
+This is the headline finding. Same MLX file, same hardware, same client harness, same prompts. **lm-studio is 3–5× faster end-to-end on the OpenCode agent loop**.
 
-**Why llmster wins on agent workloads:**
+**Why lm-studio wins on agent workloads:**
 
-1. **Prefill kernel is dramatically faster.** llmster's `mlx-llm` runtime sustains 47K tok/s prefill at 32K context (TTFT 0.70 s). The closest comparison from vllm-mlx + this model family is the JANG_4M variant at ~314 tok/s prefill (TTFT 104 s @ 32K). The 10-K-token OpenCode system prompt and tool catalog is mostly prefill cost — every turn shaves tens of seconds.
-2. **Reasoning content is exposed correctly.** llmster captured 70–79 reasoning tokens per scenario (visible in agent-bench JSON `reasoning_tokens`). vllm-mlx with this exact model + `--reasoning-parser qwen3` reported 0 reasoning tokens — the parser detected no `<think>` blocks. Either llmster's chat-template handling preserves Qwen3.6 thinking output where vllm-mlx swallows it, or the LM Studio MLX runtime emits thinking content even when the chat template suppresses it. Net effect: llmster is letting the model think briefly (~75 tok), reach the tool call faster, and the user sees a concise final answer.
+1. **Prefill kernel is dramatically faster.** lm-studio's `mlx-llm` runtime sustains 47K tok/s prefill at 32K context (TTFT 0.70 s). The closest comparison from vllm-mlx + this model family is the JANG_4M variant at ~314 tok/s prefill (TTFT 104 s @ 32K). The 10-K-token OpenCode system prompt and tool catalog is mostly prefill cost — every turn shaves tens of seconds.
+2. **Reasoning content is exposed correctly.** lm-studio captured 70–79 reasoning tokens per scenario (visible in agent-bench JSON `reasoning_tokens`). vllm-mlx with this exact model + `--reasoning-parser qwen3` reported 0 reasoning tokens — the parser detected no `<think>` blocks. Either lm-studio's chat-template handling preserves Qwen3.6 thinking output where vllm-mlx swallows it, or the LM Studio MLX runtime emits thinking content even when the chat template suppresses it. Net effect: lm-studio is letting the model think briefly (~75 tok), reach the tool call faster, and the user sees a concise final answer.
 3. **OpenCode-side overhead is identical.** LLM time tracks wall time within ~1.2 s on both servers — the gap is purely model-side, not client/streaming overhead.
 
-**Decode (gen tok/s) is slightly slower on llmster** (29.9 vs vllm-mlx + JANG_4M at 36.5 @ 512). The 5-tool API harness shows this trade — single-call latency is similar, agentic reasoning (which decodes more tokens) is +32 %. But for agent loops where prefill dominates, the prefill win compensates ~10× over.
+**Decode (gen tok/s) is slightly slower on lm-studio** (29.9 vs vllm-mlx + JANG_4M at 36.5 @ 512). The 5-tool API harness shows this trade — single-call latency is similar, agentic reasoning (which decodes more tokens) is +32 %. But for agent loops where prefill dominates, the prefill win compensates ~10× over.
 
 **Caveats:**
 - Comparison is against vllm-mlx + JANG 4M for prefill numbers (the standard 6-bit model on vllm-mlx never had an api-server benchmark run). For agent-bench, the comparison is direct (same model file).
-- llmster ships closed-source MLX runtime — exact prefill kernel implementation isn't auditable. If LM Studio rewrites the runtime in a future update, results may shift.
-- llmster's `lms get` doesn't reuse the HF cache — re-downloaded the same 22 GB into `~/.lmstudio/models/`. Disk-cost duplication for any HF-cached model.
+- lm-studio ships closed-source MLX runtime — exact prefill kernel implementation isn't auditable. If LM Studio rewrites the runtime in a future update, results may shift.
+- lm-studio's `lms get` doesn't reuse the HF cache — re-downloaded the same 22 GB into `~/.lmstudio/models/`. Disk-cost duplication for any HF-cached model.
 
-**Recommendation:** For standard MLX models that don't need JANG/JANGTQ patches, **llmster is the better server for agent workloads** on this hardware. The vllm-mlx stack remains the right choice for JANG-quantized weights, custom parsers (`hermes` for Ling, `nemotron`), and the patches required for `bailing_hybrid` / Mistral Small 4. For Qwen3.6-27B-6bit specifically, this changes the production calculus — if quality at the 6-bit weight class is acceptable, llmster makes this a viable agent default at ~30 s end-to-end browse latency.
+**Recommendation:** For standard MLX models that don't need JANG/JANGTQ patches, **lm-studio is the better server for agent workloads** on this hardware. The vllm-mlx stack remains the right choice for JANG-quantized weights, custom parsers (`hermes` for Ling, `nemotron`), and the patches required for `bailing_hybrid` / Mistral Small 4. For Qwen3.6-27B-6bit specifically, this changes the production calculus — if quality at the 6-bit weight class is acceptable, lm-studio makes this a viable agent default at ~30 s end-to-end browse latency.
 
 ---
 
@@ -720,7 +720,7 @@ Cross-model comparison on the same scenarios (best-of-doc runs):
 ## 🤖 Results: lmstudio-community/gemma-4-31B-it-MLX-6bit
 
 **Date:** 2026-05-01
-**Server:** llmster (LM Studio headless), `lms server start --bind 0.0.0.0 --cors --port 1234`. Model loaded via `lms load gemma-4-31b-it-mlx --gpu max --context-length 65536 -y`. **No parser flags** — LM Studio's MLX runtime auto-detects Gemma 4 tool-call and routes `<think>` to `reasoning_content`.
+**Server:** lm-studio (LM Studio headless), `lms server start --bind 0.0.0.0 --cors --port 1234`. Model loaded via `lms load gemma-4-31b-it-mlx --gpu max --context-length 65536 -y`. **No parser flags** — LM Studio's MLX runtime auto-detects Gemma 4 tool-call and routes `<think>` to `reasoning_content`.
 **Architecture:** Google Gemma 4 dense **31 B** instruction-tuned, text-only (no vision, no MoE), uniform 6-bit MLX, 29 GB on disk. Per-model deep dive: [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit).
 
 ### API-Level Tool Calling (5-tool harness, 2026-05-01)
@@ -733,7 +733,7 @@ Cross-model comparison on the same scenarios (best-of-doc runs):
 | Multi-tool (list + read + write) | 1.41 s | `list_directory` (1 of 3 expected) | ⚠ partial — only one tool emitted, but well-formed and `finish_reason: tool_calls` |
 | Agentic reasoning | 2.40 s | `run_command` | ✅ PASS |
 
-**Pass rate: 5/5** — all single-call scenarios produce valid OpenAI `tool_calls[]`. The "multi-tool list+read+write" scenario emits a single `list_directory` call rather than the three expected; client would re-prompt after the tool result. Counted as PASS because the call is well-formed; logging it here as the only deviation. Raw JSON: [`gemma-4-31b-it-6bit/api-tool-test-llmster.json`](gemma-4-31b-it-6bit/api-tool-test-llmster.json).
+**Pass rate: 5/5** — all single-call scenarios produce valid OpenAI `tool_calls[]`. The "multi-tool list+read+write" scenario emits a single `list_directory` call rather than the three expected; client would re-prompt after the tool result. Counted as PASS because the call is well-formed; logging it here as the only deviation. Raw JSON: [`gemma-4-31b-it-6bit/api-tool-test-lm-studio.json`](gemma-4-31b-it-6bit/api-tool-test-lm-studio.json).
 
 ### Multi-Turn Agentic Loop (simulated tool results)
 
@@ -746,11 +746,11 @@ Task: "Read /tmp/app/config.json, change port to 8080, write back"
 | 3 | Natural language summary (stop) | 2.92 s |
 | **Total** | **3 turns, complete task** | **9.8 s** |
 
-About 2× faster than the same loop on Qwen3.6-27B 6-bit on llmster (20.28 s) — Gemma 4 31B-it skips the thinking preamble entirely.
+About 2× faster than the same loop on Qwen3.6-27B 6-bit on lm-studio (20.28 s) — Gemma 4 31B-it skips the thinking preamble entirely.
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-01)
 
-Captured via `scripts/bench/bench_agent_tool_call.py --scenario both --warmup 1 --runs 3` against `macstudio/gemma-4-31b-it-mlx`. Raw JSON: [`gemma-4-31b-it-6bit/agent-bench-llmster.json`](gemma-4-31b-it-6bit/agent-bench-llmster.json).
+Captured via `scripts/bench/bench_agent_tool_call.py --scenario both --warmup 1 --runs 3` against `macstudio/gemma-4-31b-it-mlx`. Raw JSON: [`gemma-4-31b-it-6bit/agent-bench-lm-studio.json`](gemma-4-31b-it-6bit/agent-bench-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5 – p95 wall | Turns | Tools used | Tokens (total, median) |
 |:---------|:------:|:------:|:------:|:-----:|:-----------|:----------------------:|
@@ -761,23 +761,23 @@ Per-turn breakdown (browse, sample): turn 1 prefill 10,062 tokens → 2.48 s, tu
 
 Cross-model comparison (current best-of-doc on the new 2026-04-30 prompt set):
 
-| Model | Server | Browse | Search | vs. Gemma 4 31B-it on llmster |
+| Model | Server | Browse | Search | vs. Gemma 4 31B-it on lm-studio |
 |:------|:-------|:------:|:------:|:------------------------------|
-| **Gemma 4 31B-it (this model)** | **llmster** | **5.11 s** 🏆 | **6.37 s** 🏆 | baseline |
+| **Gemma 4 31B-it (this model)** | **lm-studio** | **5.11 s** 🏆 | **6.37 s** 🏆 | baseline |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 16.28 s 🥈 | this is **2.5× faster** browse, **2.6× faster** search |
 | Qwen3.6-35B Rust LoRA | vllm-mlx | 13.94 s | 26.31 s | this is **2.7× faster** browse, **4.1× faster** search |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | 27.59 s | 54.78 s | this is **5.4× faster** browse, **8.6× faster** search |
 | Ling-2.6-flash mlx-6bit | vllm-mlx (patched) | 25.75 s | 29.64 s | this is **5.0× faster** browse, **4.7× faster** search |
-| Qwen3.6-27B 6bit | llmster | 31.96 s | 25.71 s | this is **6.3× faster** browse, **4.0× faster** search |
+| Qwen3.6-27B 6bit | lm-studio | 31.96 s | 25.71 s | this is **6.3× faster** browse, **4.0× faster** search |
 | Qwen3.6-27B JANG 4M | vllm-mlx (patched) | 69.14 s | 108.51 s | this is **13.5× faster** browse, **17.0× faster** search |
 
 ### Key Findings
 
 1. **New end-to-end agent-loop champion in this doc.** 5.11 s browse / 6.37 s search are the fastest wall times across every model + server tested here (prior champion: Qwen3.5-35B-A3B JANG 4K on vllm-mlx at 12.86 s / 16.28 s). The win is structural — Gemma 4 31B-it on this prompt set emits **15–23 output tokens per turn** with no thinking preamble, whereas Qwen3 / Qwen3.6 thinking models emit hundreds of `<think>` tokens before the tool call.
 
-2. **Decode is actually slower than Qwen3.6-27B on the same llmster** (18 vs 26 tok/s @ 32K, see [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-llmster)). The agent-loop win is entirely about **tokens generated per agent turn**, not raw decode speed. Larger models that talk less beat smaller models that think out loud.
+2. **Decode is actually slower than Qwen3.6-27B on the same lm-studio** (18 vs 26 tok/s @ 32K, see [api-server bench](model-benchmark-api-server.md#gemma-4-31b-it-6-bit-dense-on-lm-studio)). The agent-loop win is entirely about **tokens generated per agent turn**, not raw decode speed. Larger models that talk less beat smaller models that think out loud.
 
-3. **Tool-call surface works on llmster without parser flags.** `bench_api_tool_call.py` passes 5/5 single-call scenarios, and the OpenCode end-to-end loop completes in 2 turns on both scenarios with zero `error_count`. LM Studio's MLX runtime auto-detects Gemma 4's tool-call format — no `--tool-call-parser gemma4` flag exists or is needed.
+3. **Tool-call surface works on lm-studio without parser flags.** `bench_api_tool_call.py` passes 5/5 single-call scenarios, and the OpenCode end-to-end loop completes in 2 turns on both scenarios with zero `error_count`. LM Studio's MLX runtime auto-detects Gemma 4's tool-call format — no `--tool-call-parser gemma4` flag exists or is needed.
 
 4. **`reasoning_content` field is present but empty on every bench prompt.** Gemma 4 has built-in thinking mode but did not invoke it on any of the 5 tool-harness scenarios or the 6 OpenCode runs (3 browse + 3 search). The runtime's reasoning routing is wired correctly (verified in smoke); the model simply chose not to think for these short-output tool-calling prompts. Set `chat_template_kwargs.enable_thinking: true` if you need explicit thinking.
 
@@ -799,10 +799,10 @@ Raw JSON: [`gemma-4-31b-it-mlx-6bit/api-tool-test.json`](gemma-4-31b-it-mlx-6bit
 | Single tool (file read) | 4.56 s | `read_file` | ✅ PASS |
 | Single tool (command) | 2.96 s | `run_command` | ✅ PASS |
 | Multi-tool (search + read) | 5.64 s | `search_web`, `read_file` | ✅ PASS — both tools in one call |
-| Multi-tool (list + read + write) | 5.64 s | `list_directory` (1 of 3 expected) | ⚠ partial — same single-tool deviation as llmster run |
+| Multi-tool (list + read + write) | 5.64 s | `list_directory` (1 of 3 expected) | ⚠ partial — same single-tool deviation as lm-studio run |
 | Agentic reasoning | 11.28 s | `run_command` | ✅ PASS — 207 output tokens (thinking) |
 
-**Multi-turn loop total:** 20.73 s (3 turns: read 8.51 s + write 9.26 s + summary 2.96 s). Notably slower than llmster's 9.8 s — model generates 134+156 output tokens vs 20+15 on llmster. Multi-tool (search + read) now calls BOTH tools in a single response (vs llmster which only called `search_web`).
+**Multi-turn loop total:** 20.73 s (3 turns: read 8.51 s + write 9.26 s + summary 2.96 s). Notably slower than lm-studio's 9.8 s — model generates 134+156 output tokens vs 20+15 on lm-studio. Multi-tool (search + read) now calls BOTH tools in a single response (vs lm-studio which only called `search_web`).
 
 #### OpenCode End-to-End Agent Benchmark (2026-05-06, thinking ON)
 
@@ -813,13 +813,13 @@ Raw JSON: [`gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json`](gemma-4-31b-it-mlx
 | Browse www.example.com | **12.33 s** | 11.12 s | 12.33 – 12.35 s | 2 | `webfetch` | 121 |
 | Browse Hackernews latest topic | **35.55 s** | 34.38 s | 35.28 – 35.85 s | 2 | `webfetch` | 124 |
 
-Per-turn breakdown (browse): turn 1 → 4.83 s / 53 tokens; turn 2 → 6.30 s / 68 tokens. Search: turn 1 → 7.59 s / 83 tokens; turn 2 → 26.79 s / 41 tokens (long HN page prefill at 5K tokens dominates). Total output tokens per run: ~121 browse / ~124 search — **3–4× higher than the llmster thinking-OFF run (35 / 45 tokens)**.
+Per-turn breakdown (browse): turn 1 → 4.83 s / 53 tokens; turn 2 → 6.30 s / 68 tokens. Search: turn 1 → 7.59 s / 83 tokens; turn 2 → 26.79 s / 41 tokens (long HN page prefill at 5K tokens dominates). Total output tokens per run: ~121 browse / ~124 search — **3–4× higher than the lm-studio thinking-OFF run (35 / 45 tokens)**.
 
 **Thinking-ON vs Thinking-OFF impact:**
 
 | Run | Server | Browse | Search | Output tokens/turn (browse) |
 |:----|:-------|:------:|:------:|:---------------------------:|
-| 2026-05-01 (thinking OFF) | llmster | **5.11 s** | **6.37 s** | ~17 |
+| 2026-05-01 (thinking OFF) | lm-studio | **5.11 s** | **6.37 s** | ~17 |
 | 2026-05-06 (thinking ON) | mlx-lm | 12.33 s | 35.55 s | ~60 |
 | Overhead factor | | **2.4×** | **5.6×** | **3.5×** |
 
@@ -827,10 +827,10 @@ Per-turn breakdown (browse): turn 1 → 4.83 s / 53 tokens; turn 2 → 6.30 s / 
 
 ---
 
-## 🤖 Results: IBM Granite 4.1 30B Q8_0 on llmster
+## 🤖 Results: IBM Granite 4.1 30B Q8_0 on lm-studio
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, GGUF Q8_0 runtime. Loaded with `--identifier granite-4.1-30b-q8 --context-length 65536`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF Q8_0 runtime. Loaded with `--identifier granite-4.1-30b-q8 --context-length 65536`. No parser flags required.
 **Architecture:** IBM Granite — dense 30B decoder-only, no MoE, no thinking channel.
 
 ### Typical Inference
@@ -865,7 +865,7 @@ Raw JSON: [`granite-4.1-30b-q8/api-tool-test.json`](granite-4.1-30b-q8/api-tool-
 
 ### OpenCode Agent Loop (browse + search)
 
-Raw JSON: [`granite-4.1-30b-q8/agent-bench-llmster.json`](granite-4.1-30b-q8/agent-bench-llmster.json).
+Raw JSON: [`granite-4.1-30b-q8/agent-bench-lm-studio.json`](granite-4.1-30b-q8/agent-bench-lm-studio.json).
 
 | Scenario | Wall time (median) | LLM time | Turns | Tools |
 |:---------|:------------------:|:--------:|:-----:|:------|
@@ -889,7 +889,7 @@ Raw JSON: [`granite-4.1-30b-q8/agent-bench-llmster.json`](granite-4.1-30b-q8/age
 ## 🤖 Results: prithivMLmods/Qwen3.6-35B-A3B Aggressive Q6_K
 
 **Date:** 2026-05-02
-**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Loaded with `--identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --context-length 65536`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Loaded with `--identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --context-length 65536`. No parser flags required.
 **Architecture:** Qwen3.6 MoE — 35B total, ~3B active, Q6_K GGUF.
 **Raw JSON:** [`qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json`](qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json)
 
@@ -957,10 +957,10 @@ The state-machine reset patch (`patch_mlx_lm_match.py`) is what unblocks turn 2 
 
 ---
 
-## 🤖 Results: DavidAU/Qwen3.6-40B-Heretic Q6_K IMatrix on llmster
+## 🤖 Results: DavidAU/Qwen3.6-40B-Heretic Q6_K IMatrix on lm-studio
 
 **Date:** 2026-05-03
-**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Loaded with `--identifier qwen36-40b-davidau-heretic-q6k --context-length 131072`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Loaded with `--identifier qwen36-40b-davidau-heretic-q6k --context-length 131072`. No parser flags required.
 **Architecture:** DavidAU dense **40B** Qwen3.6 derivative, Heretic abliteration, Q6_K IMatrix GGUF.
 **Raw JSON:** [`qwen36-40b-davidau-heretic/api-tool-test.json`](qwen36-40b-davidau-heretic/api-tool-test.json)
 
@@ -995,9 +995,9 @@ The state-machine reset patch (`patch_mlx_lm_match.py`) is what unblocks turn 2 
 ## 🤖 Results: HauhauCS/Qwen3.5-35B-A3B-Uncensored-HauhauCS-Aggressive
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Qwen3.5 MoE — 35B total, ~3B active (A3B), Q6_K GGUF, HauhauCS abliteration. 28.51 GB on disk.
-**Raw JSON:** [`hauhaucs-qwen35-35b-a3b-aggressive/api-tool-test-llmster.json`](hauhaucs-qwen35-35b-a3b-aggressive/api-tool-test-llmster.json)
+**Raw JSON:** [`hauhaucs-qwen35-35b-a3b-aggressive/api-tool-test-lm-studio.json`](hauhaucs-qwen35-35b-a3b-aggressive/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1021,7 +1021,7 @@ The state-machine reset patch (`patch_mlx_lm_match.py`) is what unblocks turn 2 
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`hauhaucs-qwen35-35b-a3b-aggressive/agent-tool-test-llmster.json`](hauhaucs-qwen35-35b-a3b-aggressive/agent-tool-test-llmster.json).
+Raw JSON: [`hauhaucs-qwen35-35b-a3b-aggressive/agent-tool-test-lm-studio.json`](hauhaucs-qwen35-35b-a3b-aggressive/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1045,9 +1045,9 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,294 tokens → 1.92 s (42
 ## 🤖 Results: AITRADER/Huihui-Qwen3.5-35B-A3B-abliterated-4bit-MLX
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Qwen3.5 MoE — 35B total, ~3B active (A3B), 4-bit MLX safetensors, Huihui abliteration. 19 GB on disk / 19.02 GiB loaded.
-**Raw JSON:** [`huihui-qwen35-35b-a3b-4bit/api-tool-test-llmster.json`](huihui-qwen35-35b-a3b-4bit/api-tool-test-llmster.json)
+**Raw JSON:** [`huihui-qwen35-35b-a3b-4bit/api-tool-test-lm-studio.json`](huihui-qwen35-35b-a3b-4bit/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1071,7 +1071,7 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,294 tokens → 1.92 s (42
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`huihui-qwen35-35b-a3b-4bit/agent-tool-test-llmster.json`](huihui-qwen35-35b-a3b-4bit/agent-tool-test-llmster.json).
+Raw JSON: [`huihui-qwen35-35b-a3b-4bit/agent-tool-test-lm-studio.json`](huihui-qwen35-35b-a3b-4bit/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1082,7 +1082,7 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,292 tokens → 12.55 s (4
 
 ### Key Findings
 
-1. **Best API-level agentic loop at 4.94 s** among all models benchmarked on llmster here (narrowly beating HauhauCS Qwen3.5 Q6_K at 5.37 s). The 4-bit MLX format is faster at single-token decode than the GGUF.
+1. **Best API-level agentic loop at 4.94 s** among all models benchmarked on lm-studio here (narrowly beating HauhauCS Qwen3.5 Q6_K at 5.37 s). The 4-bit MLX format is faster at single-token decode than the GGUF.
 
 2. **Agent loop slower than API loop** by 3×. Turn 1 in OpenCode takes 12.55 s for 43 output tokens — roughly 3.4 tok/s for the first turn. The 11K-token system-prompt prefill likely dominates cold-start time on the 4-bit MLX path.
 
@@ -1093,9 +1093,9 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,292 tokens → 12.55 s (4
 ## 🤖 Results: mlx-community/Dolphin-Mistral-24B-Venice-Edition-mlx-8Bit
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Mistral 24B dense decoder, 8-bit MLX, Dolphin Venice uncensored fine-tune. 23 GB on disk / 23.34 GiB loaded.
-**Raw JSON:** [`dolphin-mistral-24b-venice-mlx/api-tool-test-llmster.json`](dolphin-mistral-24b-venice-mlx/api-tool-test-llmster.json)
+**Raw JSON:** [`dolphin-mistral-24b-venice-mlx/api-tool-test-lm-studio.json`](dolphin-mistral-24b-venice-mlx/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1119,7 +1119,7 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,292 tokens → 12.55 s (4
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`dolphin-mistral-24b-venice-mlx/agent-tool-test-llmster.json`](dolphin-mistral-24b-venice-mlx/agent-tool-test-llmster.json).
+Raw JSON: [`dolphin-mistral-24b-venice-mlx/agent-tool-test-lm-studio.json`](dolphin-mistral-24b-venice-mlx/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1141,9 +1141,9 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,966 tokens → 2.47 s (41
 ## 🤖 Results: moot20/Dolphin3.0-R1-Mistral-24B-MLX-8bits
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Mistral 24B dense decoder with DeepSeek R1 distillation, 8-bit MLX, Dolphin 3.0 uncensored fine-tune. 23 GB on disk / 23.34 GiB loaded.
-**Raw JSON:** [`dolphin3-r1-mistral-24b-mlx/api-tool-test-llmster.json`](dolphin3-r1-mistral-24b-mlx/api-tool-test-llmster.json)
+**Raw JSON:** [`dolphin3-r1-mistral-24b-mlx/api-tool-test-lm-studio.json`](dolphin3-r1-mistral-24b-mlx/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1167,7 +1167,7 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,966 tokens → 2.47 s (41
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`dolphin3-r1-mistral-24b-mlx/agent-tool-test-llmster.json`](dolphin3-r1-mistral-24b-mlx/agent-tool-test-llmster.json).
+Raw JSON: [`dolphin3-r1-mistral-24b-mlx/agent-tool-test-lm-studio.json`](dolphin3-r1-mistral-24b-mlx/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1189,9 +1189,9 @@ Raw JSON: [`dolphin3-r1-mistral-24b-mlx/agent-tool-test-llmster.json`](dolphin3-
 ## 🤖 Results: HauhauCS/Qwen3.6-27B-Uncensored-HauhauCS-Balanced
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Qwen3.6 dense 27B, Q8_K_P GGUF, HauhauCS Balanced uncensored. 31.96 GB on disk / 29.77 GiB loaded.
-**Raw JSON:** [`hauhaucs-qwen36-27b-balanced/api-tool-test-llmster.json`](hauhaucs-qwen36-27b-balanced/api-tool-test-llmster.json)
+**Raw JSON:** [`hauhaucs-qwen36-27b-balanced/api-tool-test-lm-studio.json`](hauhaucs-qwen36-27b-balanced/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1215,7 +1215,7 @@ Raw JSON: [`dolphin3-r1-mistral-24b-mlx/agent-tool-test-llmster.json`](dolphin3-
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`hauhaucs-qwen36-27b-balanced/agent-tool-test-llmster.json`](hauhaucs-qwen36-27b-balanced/agent-tool-test-llmster.json).
+Raw JSON: [`hauhaucs-qwen36-27b-balanced/agent-tool-test-lm-studio.json`](hauhaucs-qwen36-27b-balanced/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1237,9 +1237,9 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,288 tokens → 4.57 s (32
 ## 🤖 Results: lmstudio-community/Hermes-4-70B-MLX-6bit
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Llama 70B dense decoder, 6-bit MLX, NousResearch Hermes 4 instruction/tool-use fine-tune. 53 GB on disk / 53.41 GiB loaded.
-**Raw JSON:** [`hermes-4-70b-mlx-6bit/api-tool-test-llmster.json`](hermes-4-70b-mlx-6bit/api-tool-test-llmster.json)
+**Raw JSON:** [`hermes-4-70b-mlx-6bit/api-tool-test-lm-studio.json`](hermes-4-70b-mlx-6bit/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1263,7 +1263,7 @@ Per-turn breakdown (browse, sample): turn 1 prefill 11,288 tokens → 4.57 s (32
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`hermes-4-70b-mlx-6bit/agent-tool-test-llmster.json`](hermes-4-70b-mlx-6bit/agent-tool-test-llmster.json).
+Raw JSON: [`hermes-4-70b-mlx-6bit/agent-tool-test-lm-studio.json`](hermes-4-70b-mlx-6bit/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1287,9 +1287,9 @@ Per-turn breakdown (browse, sample): 3 turns at 3.87 s / 3.24 s / 9.84 s — the
 ## 🤖 Results: heni86/magnum-v4-72b_mlx-4bit
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `--context-length 32768 -y`. No parser flags required.
 **Architecture:** Qwen2 72B dense decoder, 4-bit MLX, Magnum roleplay fine-tune (Anthracite/MoralityIsAMyth). 38 GB on disk / 38.11 GiB loaded.
-**Raw JSON:** [`magnum-v4-72b-mlx-4bit/api-tool-test-llmster.json`](magnum-v4-72b-mlx-4bit/api-tool-test-llmster.json)
+**Raw JSON:** [`magnum-v4-72b-mlx-4bit/api-tool-test-lm-studio.json`](magnum-v4-72b-mlx-4bit/api-tool-test-lm-studio.json)
 
 ### API-Level Tool Calling (5-tool harness)
 
@@ -1309,7 +1309,7 @@ The 3-turn agentic loop harness provides explicit tool call results in the conve
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-05)
 
-Raw JSON: [`magnum-v4-72b-mlx-4bit/agent-tool-test-llmster.json`](magnum-v4-72b-mlx-4bit/agent-tool-test-llmster.json).
+Raw JSON: [`magnum-v4-72b-mlx-4bit/agent-tool-test-lm-studio.json`](magnum-v4-72b-mlx-4bit/agent-tool-test-lm-studio.json).
 
 | Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
 |:---------|:------:|:------:|:------:|:-----:|:------|:------:|
@@ -1331,9 +1331,9 @@ The model responds in 2–4 turns but never calls `webfetch`. It answers "Browse
 ## 🤖 Results: mradermacher/Midnight-Miqu-70B-v1.5-GGUF
 
 **Date:** 2026-05-05
-**Server:** llmster / LM Studio headless on port 1234, GGUF runtime. Model was loaded but immediately failed tool-call requests.
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Model was loaded but immediately failed tool-call requests.
 **Architecture:** Mixtral 8x7B derivative with Mistral tokenizer, Q4_K_M GGUF, Midnight-Miqu roleplay fine-tune.
-**Raw JSON:** [`midnight-miqu-70b-q4km/api-tool-test-llmster.json`](midnight-miqu-70b-q4km/api-tool-test-llmster.json)
+**Raw JSON:** [`midnight-miqu-70b-q4km/api-tool-test-lm-studio.json`](midnight-miqu-70b-q4km/api-tool-test-lm-studio.json)
 
 ### Result
 

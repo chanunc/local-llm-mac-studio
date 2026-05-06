@@ -78,7 +78,7 @@ Format and print:
 
 ```
 #   Server     Model                                          Size      Loaded   Path(s)
-1   llmster    gemma-4-26b-a4b-it-uncensored                  25.0 GiB  ●        ~/.lmstudio/models/...; ~/.cache/hauhau-gguf/...
+1   lm-studio    gemma-4-26b-a4b-it-uncensored                  25.0 GiB  ●        ~/.lmstudio/models/...; ~/.cache/hauhau-gguf/...
 2   hf         mlx-community/Qwen3.6-35B-A3B-4bit             19.5 GiB  -        ~/.cache/huggingface/hub/models--mlx-community--...
 ...
 Total: 47 models, 718 GiB on disk
@@ -133,7 +133,7 @@ Re-run `du -sh` on the four roots and report **before / after / freed** to the u
 1. `ls ~/.claude/skills/list-model-to-remove/` → should show `SKILL.md` + `inventory.sh`.
 2. Dry-run by typing `/list-model-to-remove --root hf` and answering `none` at the selection prompt → should print the HF table only and exit cleanly with zero deletions.
 3. With nothing currently loaded on Mac Studio, run `/list-model-to-remove --filter nonexistent-string-xyz` → should print "0 models match" and exit.
-4. Test the loaded-model refusal: load a small model on llmster, run the skill, try to select that model → should be blocked with the explicit "loaded — skip?" prompt.
+4. Test the loaded-model refusal: load a small model on lm-studio, run the skill, try to select that model → should be blocked with the explicit "loaded — skip?" prompt.
 5. Real removal: pick a known-stale entry (e.g. an old benchmark snapshot in HF cache), confirm through Phase 6, watch Phase 7 succeed and Phase 8 report freed bytes matching the entry's size.
 6. Hard-link case: confirm a GGUF that exists as both `~/.cache/hauhau-gguf/X.gguf` and `~/.lmstudio/models/.../X.gguf` shows as **one** row with two paths in the table, and removing it deletes both paths so `du` reflects the full reclaim.
 

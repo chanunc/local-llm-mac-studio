@@ -12,7 +12,7 @@ That abort path was hit when the user invoked the uncensored skill on `unsloth/g
 
 This plan builds `/deploy-run-benchmark-model` — a strict superset of the uncensored skill that handles **both** censored and uncensored models with one branching pipeline. The uncensored skill stays in place as a thin alias for backward compatibility (or is deprecated in a follow-up — out of scope here).
 
-The first real-world validation run is the same Granite 4.1 30B Q8_0 deploy that triggered the pivot — see `~/.claude/plans/build-script-to-check-snappy-gosling.md` for the per-model parameters (slug `granite-4.1-30b-q8`, context 131072, llmster server, flip-to-main per user choice).
+The first real-world validation run is the same Granite 4.1 30B Q8_0 deploy that triggered the pivot — see `~/.claude/plans/build-script-to-check-snappy-gosling.md` for the per-model parameters (slug `granite-4.1-30b-q8`, context 131072, lm-studio server, flip-to-main per user choice).
 
 ## Why a new skill instead of patching the existing one
 
@@ -35,7 +35,7 @@ The first real-world validation run is the same Granite 4.1 30B Q8_0 deploy that
 ## Skill arguments
 
 ```
-/deploy-run-benchmark-model <hf-repo-id> [quant] [context-len] [--server llmster|vmlx|vllm-mlx] [--no-commit] [--push] [--no-flip] [--censored auto|yes|no]
+/deploy-run-benchmark-model <hf-repo-id> [quant] [context-len] [--server lm-studio|vmlx|vllm-mlx] [--no-commit] [--push] [--no-flip] [--censored auto|yes|no]
 ```
 
 | Arg | Default | Notes |
@@ -43,7 +43,7 @@ The first real-world validation run is the same Granite 4.1 30B Q8_0 deploy that
 | `<hf-repo-id>` | required | e.g. `unsloth/granite-4.1-30b-GGUF` |
 | `[quant]` | inferred | Heuristic per existing skill (K_P-family → Q6_K_P, plain GGUF → Q4_K_M). Q8_0 if user passes `8` or `q8`. |
 | `[context-len]` | inferred | 131072 if HF card mentions "≥128 K to preserve thinking", else 65536 |
-| `--server` | inferred | `llmster` for GGUF, `vmlx` for `*JANGTQ*` MLX, `vllm-mlx` for plain MLX |
+| `--server` | inferred | `lm-studio` for GGUF, `vmlx` for `*JANGTQ*` MLX, `vllm-mlx` for plain MLX |
 | `--no-commit` | unset | Run benchmarks + write docs but skip staging |
 | `--push` | unset | Auto-push at the end (default: print `git push` commands) |
 | `--no-flip` | unset | Do not flip the new model to live main (Event 2 skipped, prior main stays in docs); use when running benchmarks for cross-model comparison without a production switch |
@@ -106,7 +106,7 @@ Same as existing skill.
 
 ### Phase 3 — Deploy (UNCHANGED structurally)
 
-Same llmster / vmlx / vllm-mlx code paths. The deploy commands are identical regardless of branch.
+Same lm-studio / vmlx / vllm-mlx code paths. The deploy commands are identical regardless of branch.
 
 ### Phase 4 — Benchmarks (CONDITIONAL)
 
@@ -129,7 +129,7 @@ Output dir is `docs/models/benchmarks/<slug>/` either way. Refusal JSON simply i
 - `README.md` — Quick Start launch snippet, Models table row, Servers table sidecar/main note
 - `configs/README.md` — Server Roles row + per-server section description
 - `configs/clients/<server>/opencode.json` — flip top-level `model`/`small_model` (unless `--no-flip`); add new model entry to `models` map
-  - `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json`, `claude-code-settings.json` — only if these files already exist for the server (per CLAUDE.md llmster-deferred policy)
+  - `pi-models.json`, `openclaw-provider.json`, `qwen-code-settings.json`, `claude-code-settings.json` — only if these files already exist for the server (per CLAUDE.md lm-studio-deferred policy)
 - `docs/models/model-summary.md` — Index entry + per-family section
 - `docs/models/per-model/model-summary-<base-family>.md` — new section after the prior sibling (specs · current-server · deployment recipe · smoke · perf · agent · caveats)
 - `docs/models/README.md` — Per-model deep dives row if the per-model file is created
@@ -174,9 +174,9 @@ The first invocation of the new skill is the Granite 4.1 30B Q8_0 deploy that tr
    - Phase 0: disk check passes (Mac Studio has ≥ 37 GiB free) or aborts cleanly with `/list-model-to-remove` instruction
    - Phase 1: classifier returns `censored` (no uncen markers in `unsloth/granite-4.1-30b-GGUF` or model card)
    - Phase 2: hygiene leaves the Mac Studio at `clean`
-   - Phase 3: llmster loads `granite-4.1-30b-q8` with 131072 context, `lms ls` shows the identifier
+   - Phase 3: lm-studio loads `granite-4.1-30b-q8` with 131072 context, `lms ls` shows the identifier
    - Phase 4: 3 JSONs land in `docs/models/benchmarks/granite-4.1-30b-q8/` (api-server, api-tool-test, agent-bench), no refusal JSON
-   - Phase 5: parent docs flip to Granite as new llmster main; submodule untouched
+   - Phase 5: parent docs flip to Granite as new lm-studio main; submodule untouched
    - Phase 6: one parent commit staged, `git push` printed, no auto-push
 2. `/deploy-run-benchmark-model HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` reproduces the existing uncensored skill's 2026-05-02 run end-to-end (regression check)
 3. `/deploy-run-benchmark-model unsloth/granite-4.1-30b-GGUF --no-flip` runs benchmarks but does NOT change `docs/current.md` Production row or `opencode.json` defaults
@@ -189,4 +189,4 @@ The first invocation of the new skill is the Granite 4.1 30B Q8_0 deploy that tr
 - Auto-invoking `/list-model-to-remove` from inside this skill — that skill is interactive and cannot be driven programmatically
 - MMLU-Pro / TruthfulQA-gen local eval (separate `plans/active/plan-bench-eval-local.md`)
 - Vision-modality smoke tests (deferred from existing skill v1)
-- Updating other client config files (claude-code, pi, openclaw, qwen-code) for llmster while it remains "provisional" per CLAUDE.md
+- Updating other client config files (claude-code, pi, openclaw, qwen-code) for lm-studio while it remains "provisional" per CLAUDE.md

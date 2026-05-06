@@ -82,7 +82,7 @@ Without this: `RuntimeError: There is no Stream(gpu, 0) in current thread` even 
 | `mlx-openai-server` | ❌ | Prompt-cache prefill (`mx.eval([c.state for c in model_cache])` in `app/models/mlx_lm.py`) runs on a dedicated inference-worker thread that is more deeply thread-coupled than vllm-mlx's `asyncio.to_thread`. Patch 3 doesn't apply directly. Crashes with the same `Stream(gpu, 1)` error. |
 | `oMLX` | ❌ | Same kind of worker-thread isolation as mlx-openai-server. Not validated. |
 | `dflash-mlx` | ❌ | Wraps `mlx_lm.server`, MLX safetensors only — no `bailing_hybrid` model module path. No DFlash drafter exists for the architecture either. |
-| `llmster` (LM Studio) | ❓ | Closed-source MLX runtime. Not tested. |
+| `lm-studio` (LM Studio) | ❓ | Closed-source MLX runtime. Not tested. |
 | `vmlx` | ❌ | JANGTQ-only effectively; no `bailing_hybrid` adapter. |
 
 ## Server flags for the Ling family

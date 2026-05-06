@@ -1,15 +1,14 @@
 # Model Summary: Gemma 4 Family
 
-Google's Gemma 4 generation. Four variants currently catalogued in this stack: the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context, thinking mode), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode), the **DavidAU HERETIC uncensored 31B** GGUF fine-tune (128K context, Thinking variant, llmster), and the **TrevorJS EGA uncensored 26B A4B** GGUF (65K context loaded, non-thinking, active llmster main). They share the `Gemma4ForCausalLM` / `Gemma4ForConditionalGeneration` family but use different sub-architectures.
+Google's Gemma 4 generation. Four variants currently catalogued in this stack: the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context, thinking mode), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode), the **DavidAU HERETIC uncensored 31B** GGUF fine-tune (128K context, Thinking variant, lm-studio), and the **TrevorJS EGA uncensored 26B A4B** GGUF (65K context loaded, non-thinking, active lm-studio main). They share the `Gemma4ForCausalLM` / `Gemma4ForConditionalGeneration` family but use different sub-architectures.
 
 ## Index
 
 - [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` · 15 GB · 50–62 tok/s
-- [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · **mlx-lm server (current main 2026-05-06)** · 29 GB · 20.4 tok/s @ 512, browse 12.33 s (thinking ON) / browse 5.11 s (thinking OFF on llmster)
-- [Codex GPT-5.5 finding: best next Gemma 4 MTP target for Mac Studio](#codex-gpt-55-finding-best-next-gemma-4-mtp-target-for-mac-studio-2026-05-06) — source-backed recommendation: try `gemma-4-e4b-it-bf16` + E4B assistant before retrying 31B or 26B-A4B MTP
+- [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · **mlx-lm server (current main 2026-05-06)** · 29 GB · 20.4 tok/s @ 512, browse 12.33 s (thinking ON) / browse 5.11 s (thinking OFF on lm-studio)
 - [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). **Real blocker: mlx-vlm's streaming SSE emits `delta.tool_calls` only as a final post-loop chunk** (mlx-lm streams them per-token), so opencode hits 300 s wall before the chunk fires. Independent of bf16 vs 6-bit, chat_template, or coalesce env var.
-- [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `llmster` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
-- [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](#trevorjs-gemma-4-26b-a4b-uncensored-q8) — MoE 26B/4B active · 65K loaded · `llmster` · 25.02 GiB · **87.6 tok/s** · 8/10 mlabonne · **browse 2.93 s 🥇** · [bench writeup](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
+- [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `lm-studio` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
+- [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](#trevorjs-gemma-4-26b-a4b-uncensored-q8) — MoE 26B/4B active · 65K loaded · `lm-studio` · 25.02 GiB · **87.6 tok/s** · 8/10 mlabonne · **browse 2.93 s 🥇** · [bench writeup](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
 
 ---
 
@@ -68,7 +67,7 @@ Prefill peaks at 8K (~3,154 tok/s) — typical for sliding-window models where G
 
 ## Gemma 4 31B-it (6-bit)
 
-Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/audio — single-modality model. Built-in thinking mode (ON by default on mlx-lm server; OFF on LM Studio). Deployed via the **lmstudio-community** MLX 6-bit conversion. **Current production main (2026-05-06)** on mlx-lm server (port 8000). Verified on Mac Studio M3 Ultra (96 GB) on May 1, 2026 (llmster) and May 6, 2026 (mlx-lm server).
+Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/audio — single-modality model. Built-in thinking mode (ON by default on mlx-lm server; OFF on LM Studio). Deployed via the **lmstudio-community** MLX 6-bit conversion. **Current production main (2026-05-06)** on mlx-lm server (port 8000). Verified on Mac Studio M3 Ultra (96 GB) on May 1, 2026 (lm-studio) and May 6, 2026 (mlx-lm server).
 
 | Spec | Value |
 |:-----|:------|
@@ -81,7 +80,7 @@ Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/au
 | Quantization | 6-bit MLX |
 | Specialties | Thinking mode (ON on mlx-lm), tool calling, long context, fast prefill on mlx-lm |
 | Tokens/sec (mlx-lm) | **20.4 @ 512** → 20.2 @ 4K → 19.8 @ 8K → 17.2 @ 32K → 14.7 @ 65K ([bench](../benchmarks/gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json)) |
-| Tokens/sec (llmster) | 21.8 @ 512 → 21.1 @ 8K → 18.3 @ 32K ([bench](../benchmarks/gemma-4-31b-it-6bit/api-server-llmster.json)) |
+| Tokens/sec (lm-studio) | 21.8 @ 512 → 21.1 @ 8K → 18.3 @ 32K ([bench](../benchmarks/gemma-4-31b-it-6bit/api-server-lm-studio.json)) |
 | On-disk size | 29 GB (model files); 31.32 GB total weights |
 | Context Size | 65,536 loaded (both servers); native ≥ 256K |
 | License | Gemma Terms of Use |
@@ -106,7 +105,7 @@ ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.serve
 # enables an automatic prompt cache by default.
 ```
 
-**Reload on llmster (thinking OFF — for lower-latency agent loops):**
+**Reload on lm-studio (thinking OFF — for lower-latency agent loops):**
 
 ```bash
 ssh macstudio "~/.lmstudio/bin/lms load 'gemma-4-31b-it-mlx' \
@@ -116,7 +115,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 
 > **Loader gotcha:** `lms get` failed to download cleanly twice (timed out at 88% with a hung "Finalizing download…" state and only shards 4–6 of 6 on disk). Recovery path: kill the hung `lms get`, then complete the download via `huggingface_hub.snapshot_download(repo_id=…, local_dir=~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit)` from any venv with `huggingface_hub` installed. LM Studio recognises the on-disk layout and `lms ls` then surfaces the model normally.
 >
-> **Context gotcha (llmster only):** despite passing `--context-length 65536`, the first `lms load` resolved to context 4096. Re-`lms unload` + re-`lms load --context-length 65536 -y` correctly seats 64K.
+> **Context gotcha (lm-studio only):** despite passing `--context-length 65536`, the first `lms load` resolved to context 4096. Re-`lms unload` + re-`lms load --context-length 65536 -y` correctly seats 64K.
 
 ### Benchmarks — mlx-lm server (M3 Ultra 96 GB, May 6 2026, thinking ON)
 
@@ -132,7 +131,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 
 Raw JSON: [`gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json`](../benchmarks/gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json).
 
-Prefill is 2.5–2.8× faster than llmster across 4K–32K. TTFT sub-0.65 s at 65K.
+Prefill is 2.5–2.8× faster than lm-studio across 4K–32K. TTFT sub-0.65 s at 65K.
 
 #### API tool-call (5-tool harness, 2026-05-06)
 
@@ -155,9 +154,9 @@ Raw JSON: [`gemma-4-31b-it-mlx-6bit/api-tool-test.json`](../benchmarks/gemma-4-3
 | Browse www.example.com | **12.33 s** | 11.12 s | 2 | 121 |
 | Browse Hackernews latest topic | **35.55 s** | 34.38 s | 2 | 124 |
 
-Thinking mode adds 3–4× more output tokens vs. llmster run (35–45 tokens per session). Browse overhead factor 2.4×, search overhead factor 5.6× compared to llmster (thinking OFF). Raw JSON: [`gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json`](../benchmarks/gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json).
+Thinking mode adds 3–4× more output tokens vs. lm-studio run (35–45 tokens per session). Browse overhead factor 2.4×, search overhead factor 5.6× compared to lm-studio (thinking OFF). Raw JSON: [`gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json`](../benchmarks/gemma-4-31b-it-mlx-6bit/agent-bench-mlx-lm.json).
 
-### Benchmarks — llmster (M3 Ultra 96 GB, May 1 2026, thinking OFF)
+### Benchmarks — lm-studio (M3 Ultra 96 GB, May 1 2026, thinking OFF)
 
 #### API server
 
@@ -168,74 +167,25 @@ Thinking mode adds 3–4× more output tokens vs. llmster run (35–45 tokens pe
 | 8K | 21.1 | 11,584 | 0.71 |
 | 32K | 18.3 | 36,297 | 0.90 |
 
-Raw JSON: [`gemma-4-31b-it-6bit/api-server-llmster.json`](../benchmarks/gemma-4-31b-it-6bit/api-server-llmster.json).
+Raw JSON: [`gemma-4-31b-it-6bit/api-server-lm-studio.json`](../benchmarks/gemma-4-31b-it-6bit/api-server-lm-studio.json).
 
-#### Agent loop (llmster, thinking OFF)
+#### Agent loop (lm-studio, thinking OFF)
 
 | Scenario | Wall time (median) | LLM time (median) | Turns | Output tokens |
 |:---------|-------------------:|------------------:|------:|:------|
 | Browse www.example.com | **5.11 s** | 3.94 s | 2 | ~35 |
 | Browse Hackernews latest topic | **6.37 s** | 5.18 s | 2 | ~45 |
 
-Raw JSON: [`gemma-4-31b-it-6bit/agent-bench-llmster.json`](../benchmarks/gemma-4-31b-it-6bit/agent-bench-llmster.json).
+Raw JSON: [`gemma-4-31b-it-6bit/agent-bench-lm-studio.json`](../benchmarks/gemma-4-31b-it-6bit/agent-bench-lm-studio.json).
+
+The lm-studio row is 3–5× faster end-to-end than the mlx-lm row above on identical 6-bit weights. The decomposition (chunk-size + sync-barrier elimination, neither of which is actually closed-source) is documented in [`docs/servers/lm-studio/prefill-speed-technique.md`](../../servers/lm-studio/prefill-speed-technique.md).
 
 ### Caveats
 
-- **Thinking mode is server-dependent:** llmster (LM Studio) serves with thinking OFF (model doesn't invoke `<think>` blocks on short tool-calling prompts). mlx-lm server enables thinking by default — output tokens per turn are 3–4× higher and latency is 2.4–5.6× higher as a result. Use llmster if you want lowest-latency thinking-off agent loops; use mlx-lm for future MTP drafter support.
+- **Thinking mode is server-dependent:** lm-studio (LM Studio) serves with thinking OFF (model doesn't invoke `<think>` blocks on short tool-calling prompts). mlx-lm server enables thinking by default — output tokens per turn are 3–4× higher and latency is 2.4–5.6× higher as a result. Use lm-studio if you want lowest-latency thinking-off agent loops; use mlx-lm for future MTP drafter support.
 - **MTP drafter cannot be served via mlx-lm — only via mlx-vlm 0.5.0+ (from main):** `mlx-community/gemma-4-31B-it-assistant-bf16` (839 MB, `gemma4_assistant` arch) is supported in `mlx_vlm/speculative/drafters/gemma4_assistant/`, **not** in mlx-lm. mlx-lm 0.31.3 raises `Model type gemma4_assistant not supported`. PyPI `mlx-vlm 0.4.4` lacks the `mlx_vlm.speculative` submodule entirely; install from main (`pip install 'git+https://github.com/Blaizzy/mlx-vlm.git@main'` → 0.5.0). **The drafter is NOT bf16-locked** — the HF model card only documents bf16 pairings, but source-code review (no dtype assertion in `gemma4_assistant.py`/`config.py`/`parity_check.py`) plus community evidence ([NVIDIA forum's `serapis` ran `Intel/gemma-4-31B-it-int4-AutoRound` + drafter on vLLM for ~2× speedup](https://forums.developer.nvidia.com/t/gemma4-draft-models-are-now-available/369114)) plus our local verification (5/5 API tool-call harness on 6-bit + bf16 drafter, multi-turn loop 16.54 s) confirm any quantization works. **Documented failure mode for opencode-style streaming agent clients (regardless of quantization)** — see "[Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm)](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment)" below for the streaming tool-call emission bug.
 - **`lms get` unreliable for >20 GB models** — use `huggingface_hub.snapshot_download` (see Loader gotcha above).
 - **No vision input** — `Gemma4ForConditionalGeneration` in config.json, but loaded text-only; for multimodal see the 26B-A4B variant above.
-
----
-
-## Codex GPT-5.5 finding: best next Gemma 4 MTP target for Mac Studio (2026-05-06)
-
-Codex GPT-5.5 web review (2026-05-06) found that Google's MTP release materially changes the search space, but it does **not** overturn the local failure conclusion for the 31B bf16 + MTP pair. The best next experiment on this 96 GB Mac Studio is the **dense E4B bf16 target with its matching E4B assistant drafter**:
-
-| Role | Model |
-|:-----|:------|
-| Target | [`mlx-community/gemma-4-e4b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-e4b-it-bf16) |
-| Drafter | [`mlx-community/gemma-4-E4B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-E4B-it-assistant-bf16) |
-| Runtime | `mlx-vlm 0.5.0+` from main, `--draft-kind mtp`, `--draft-block-size 6` |
-
-Rationale:
-
-- **E4B is the cleanest Mac Studio MTP test.** It is dense, small enough to fit comfortably in bf16 (~16 GB target, ~159 MB drafter), and avoids both the 31B bf16 memory-bandwidth wall and the 26B-A4B MoE routing penalty at batch size 1.
-- **Google explicitly calls out the 26B-A4B Apple Silicon caveat.** The official MTP blog says the 26B MoE has unique routing challenges at B=1 on Apple Silicon, while batch sizes 4-8 can unlock up to ~2.2x speedup locally. That makes 26B-A4B interesting for concurrent server throughput, not the first choice for sequential opencode-style agent loops.
-- **E2B/E4B assistants have an extra drafter-side optimization.** Google's MTP docs and the vLLM Gemma 4 recipe note that E2B/E4B assistants use centroid / ordered-embedding masking to reduce the expensive vocabulary projection; 26B-A4B and 31B assistants do not.
-- **31B bf16 + MTP remains a "do not retry yet" path for this workload.** Local benching already showed 12.3 tok/s @ 8K, 32K+ OOM, very slow prefill, and streaming agent hangs. Upstream and community reports confirm that the 31B MTP path can speed up bf16 vs bf16-no-drafter, but on Apple Silicon it still lands around 10-12 tok/s in early reports, which is below the current 6-bit production path for single sequential agent turns.
-
-Suggested test launch shape:
-
-```bash
-ssh macstudio "nohup ~/mlx-vlm-env/bin/python -m mlx_vlm.server \
-  --host 0.0.0.0 --port 8000 \
-  --model mlx-community/gemma-4-e4b-it-bf16 \
-  --draft-model mlx-community/gemma-4-E4B-it-assistant-bf16 \
-  --draft-kind mtp \
-  --draft-block-size 6 \
-  --max-tokens 2048 \
-  > /tmp/mlx-vlm-gemma4-e4b-mtp.log 2>&1 &"
-```
-
-Recommended priority order:
-
-1. **Next MTP experiment:** `mlx-community/gemma-4-e4b-it-bf16` + `mlx-community/gemma-4-E4B-it-assistant-bf16`.
-2. **Current best production Gemma:** keep `lmstudio-community/gemma-4-31B-it-MLX-6bit` on `mlx_lm.server` until E4B MTP is benchmarked end-to-end.
-3. **Batch/concurrency experiment only:** `mlx-community/gemma-4-26b-a4b-it-bf16` + `mlx-community/gemma-4-26B-A4B-it-assistant-bf16`.
-4. **Avoid for now:** `mlx-community/gemma-4-31b-it-bf16` + `mlx-community/gemma-4-31B-it-assistant-bf16` for opencode-style streaming agent loops.
-
-Sources checked:
-
-- Google Keyword: [Accelerating Gemma 4: faster inference with multi-token prediction drafters](https://blog.google/innovation-and-ai/technology/developers-tools/multi-token-prediction-gemma-4/) — MTP release, up-to-3x claim, KV/activation sharing, 26B-A4B Apple Silicon B=1 caveat.
-- Google AI docs: [Speed-up Gemma 4 with Multi-Token Prediction](https://ai.google.dev/gemma/docs/mtp/overview) — architecture description, dense vs MoE verification behavior, E2B/E4B efficient embedder.
-- Hugging Face / Google: [`google/gemma-4-31B-it-assistant`](https://huggingface.co/google/gemma-4-31B-it-assistant) — assistant-model card with Gemma 4 family specs, benchmark table, thinking controls, and usage examples.
-- Hugging Face / mlx-community: [Gemma-4 Assistant (MTP) collection](https://huggingface.co/collections/mlx-community/gemma-4-assistant-mtp) — MLX assistant roster for E2B, E4B, 26B-A4B, and 31B.
-- Hugging Face / mlx-community: [`gemma-4-e4b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-e4b-it-bf16), [`gemma-4-E4B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-E4B-it-assistant-bf16), [`gemma-4-26b-a4b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-26b-a4b-it-bf16), [`gemma-4-26B-A4B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-26B-A4B-it-assistant-bf16), [`gemma-4-31b-it-bf16`](https://huggingface.co/mlx-community/gemma-4-31b-it-bf16), [`gemma-4-31B-it-assistant-bf16`](https://huggingface.co/mlx-community/gemma-4-31B-it-assistant-bf16) — model sizes, pairings, MLX launch examples.
-- vLLM recipes: [Gemma 4 Usage Guide](https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html) — available assistant models, recommended speculative-token settings, E2B/E4B centroid masking note, hardware caveat.
-- Community signal: [LocalLLaMA Gemma 4 MTP release thread](https://www.reddit.com/r/LocalLLaMA/comments/1t4jq6h/gemma_4_mtp_released/) and [MacBook M5 128 GB 31B MTP report](https://www.reddit.com/r/LocalLLaMA/comments/1t4un0t/gemma431bcodingmtpbf16_slow_on_macbook_m5_128gb/) — early MLX/Mac reports support the conclusion that 31B bf16 MTP improves over bf16 baseline but is still not the best single-user Mac agent path.
-
----
 
 ## Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — 2026-05-06 failed experiment
 
@@ -397,6 +347,26 @@ Where the `gemma4_assistant` MTP drafter actually runs today, across the runtime
 - `ggml-org/llama.cpp` — [discussion #22735](https://github.com/ggml-org/llama.cpp/discussions/22735) and [issue #22337](https://github.com/ggml-org/llama.cpp/issues/22337) ("draft issue Gemma E2B") for any conversion-script PR.
 - `Blaizzy/mlx-vlm` — streaming SSE tool-call structural rewrite (per-token `delta.tool_calls` emission). [PR #773](https://github.com/Blaizzy/mlx-vlm/pull/773), [#1037](https://github.com/Blaizzy/mlx-vlm/pull/1037), [#1012](https://github.com/Blaizzy/mlx-vlm/pull/1012) all explicitly preserved the post-loop pattern; no open PR proposes the change.
 
+### Client compatibility on `mlx_vlm.server` (inferred from public reports + structural reasoning, 2026-05-06)
+
+The streaming-tool-call emission bug is server-side, so any client that consumes `/v1/chat/completions` SSE expecting incremental `delta.tool_calls` will hit the same starvation. Verified for opencode; **pi-mono (`pi-coding-agent` / `@mariozechner/pi-coding-agent`) is structurally subject to the same failure mode.**
+
+| Client | `mlx_lm.server` (current production) | `mlx_vlm.server` + drafter |
+|:-------|:-------------------------------------|:---------------------------|
+| **opencode** (anomalyco) | ✅ 12.33 s browse, 2 turns, `webfetch` (verified) | ❌ 300 s timeout × 9 runs (verified) |
+| **pi-coding-agent** (badlogic/pi-mono) | ✅ Expected to work — same protocol path as opencode; not yet smoke-tested directly | ❌ Same hang expected — see structural reasoning below |
+| **Claude Code / OpenClaw** (Anthropic format) | n/a (uses `/v1/messages` via different proxy path) | Untested; same SSE structure on the OpenAI side |
+
+Three reasons pi-mono will hit the same bug as opencode on `mlx_vlm.server`:
+
+1. **Pi-mono is built on per-tool eager streaming.** Pi's own docs: *"Partial JSON parsing during tool call streaming is essential for good UX. As the LLM streams tool call arguments, pi-ai progressively parses them so you can show partial results in the UI before the call completes."* Its [CHANGELOG](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md) hardens Anthropic streaming via per-tool `eager_input_streaming`. Pi expects per-token `delta.tool_calls` chunks — exactly the contract mlx-vlm violates by emitting only a final post-loop chunk.
+2. **The parser-inference path is shared between `mlx_lm.server` and `mlx_vlm.server`.** [`ml-explore/mlx-lm` issue #1096](https://github.com/ml-explore/mlx-lm/issues/1096) ("Gemma 4 native tool calls are not parsed, so the OpenAI-compatible tool_calls field stays empty") explicitly states: *"This affects both `mlx_lm.server` and `mlx_vlm.server`, because `mlx-vlm` relies on `mlx-lm` parser inference at runtime before deciding whether to call `process_tool_calls()`."* Whatever parser regression hits one side hits the other.
+3. **Pi's default 4-tool set independently triggers a Gemma 4 parse error.** [`ml-explore/mlx-lm` issue #1125](https://github.com/ml-explore/mlx-lm/issues/1125) (open, [PR #1142](https://github.com/ml-explore/mlx-lm/pull/1142) is the bandaid that returns `[]` instead of raising) reports `mlx_lm.server` + `mlx-community/gemma-4-26b-a4b-it-4bit` failing with `"No function provided."` from `gemma4.py:49` when the request defines **`read, bash, edit, write`** — exactly pi's defaults (*"By default, pi gives the model four tools: read, write, edit, and bash"*). The 26B-A4B 4-bit variant compounds: streaming bug ON top of parse error. The 31B 6-bit variant is unaffected by #1125 (verified locally — API harness 5/5).
+
+**No public report shows pi-mono working on `mlx_vlm.server` specifically.** Every documented pi + Gemma 4 walkthrough — [Patrick Loeber](https://patloeber.com/gemma-4-pi-agent/), [Parallel.ai](https://parallel.ai/blog/free-CLI-agent), Mario Zechner's own posts — uses LM Studio, Ollama, or llama-server, not mlx-vlm. The mlx-vlm + pi combination is untested in the wild because the streaming bug effectively prevents it.
+
+**Operational implication:** any future agent client added to this lab (pi, openclaw, custom MCP host) that uses OpenAI streaming `delta.tool_calls` will repeat the same failure on `mlx_vlm.server`. The fix is upstream-only; client switching does not help.
+
 ### Workaround attempted: vllm-mlx 0.2.9 with `--tool-call-parser gemma4` (2026-05-06)
 
 `vllm-mlx 0.2.9` (PyPI canonical, not a fork — homepage `github.com/vllm-mlx/vllm-mlx`) ships **explicit `gemma4` tool-call and reasoning parsers**, which makes it the strongest off-the-shelf candidate for hosting Gemma 4 with opencode-compatible tool calling without depending on a Blaizzy/mlx-vlm fix. **Does not solve our problem in practice.** Two hard blockers verified on `lmstudio-community/gemma-4-31B-it-MLX-6bit`:
@@ -418,7 +388,7 @@ vllm-mlx 0.2.9 was reverted to 0.2.6 (the lab's documented version) afterwards t
 
 ## DavidAU Gemma 4 31B Heretic Q6_k
 
-DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base with a Mystery Fine Tune overlay. GGUF Q6_k format (25.20 GB on disk), Thinking variant. Served via llmster (LM Studio headless, port 1234). Benchmarked 2026-05-03.
+DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base with a Mystery Fine Tune overlay. GGUF Q6_k format (25.20 GB on disk), Thinking variant. Served via lm-studio (LM Studio headless, port 1234). Benchmarked 2026-05-03.
 
 | Spec | Value |
 |:-----|:------|
@@ -434,7 +404,7 @@ DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base wi
 | License | Apache 2.0 |
 | Uncensoring method | DavidAU HERETIC — full abliteration + Mystery Fine Tune post-training |
 
-**llmster identifier:** `gemma4-31b-davidau-heretic-q6k` (via `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier 'gemma4-31b-davidau-heretic-q6k' -y`)
+**lm-studio identifier:** `gemma4-31b-davidau-heretic-q6k` (via `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier 'gemma4-31b-davidau-heretic-q6k' -y`)
 
 ### Benchmark results (2026-05-03)
 
@@ -460,7 +430,7 @@ DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base wi
 
 ### Caveats
 
-- **7/10 compliance is the lowest llmster score in this stack** — HERETIC appears less effective on Gemma 4 than on Qwen3.6. Refused: vulnerability exploitation script (P1), detailed bomb instructions (P4), identity theft step-by-step (P5).
+- **7/10 compliance is the lowest lm-studio score in this stack** — HERETIC appears less effective on Gemma 4 than on Qwen3.6. Refused: vulnerability exploitation script (P1), detailed bomb instructions (P4), identity theft step-by-step (P5).
 - **Thinking channel not exposed as `reasoning_content`** — LM Studio's Gemma 4 runtime does not extract `<|channel>thought` blocks into `reasoning_content`; they count against the visible token budget.
 - **Not the active production main** — superseded by TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (2026-05-03). See below.
 - **INSTRUCT variant not benchmarked** — `gemma-4-31B-Mystery-Fine-Tune-HERETIC-UNCENSORED-INSTRUCT-Q6_k.gguf` would likely be significantly faster on agent tasks (no thinking overhead). Worth benchmarking separately.
@@ -469,13 +439,13 @@ DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base wi
 
 ## TrevorJS Gemma 4 26B A4B Uncensored Q8_0
 
-TrevorJS's norm-preserving biprojected abliteration + Expert-Granular Abliteration (EGA) applied to the official `google/gemma-4-26B-A4B-it` sparse MoE base. Non-thinking instruct variant — no `<|channel>thought` overhead. Active llmster main as of 2026-05-03.
+TrevorJS's norm-preserving biprojected abliteration + Expert-Granular Abliteration (EGA) applied to the official `google/gemma-4-26B-A4B-it` sparse MoE base. Non-thinking instruct variant — no `<|channel>thought` overhead. Active lm-studio main as of 2026-05-03.
 
 | Spec | Value |
 |:-----|:------|
 | HuggingFace | [`TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF`](https://huggingface.co/TrevorJS/gemma-4-26B-A4B-it-uncensored-GGUF) |
 | GGUF file | `gemma-4-26B-A4B-it-uncensored-Q8_0.gguf` |
-| Format | GGUF Q8_0, llmster (LM Studio headless) |
+| Format | GGUF Q8_0, lm-studio (LM Studio headless) |
 | Architecture | `Gemma4ForCausalLM` — sparse MoE, 128 experts, ~4B active per token |
 | Parameters | 26B total, ~4B active |
 | Quantization | Q8_0 (~8 BPW) |
@@ -488,7 +458,7 @@ TrevorJS's norm-preserving biprojected abliteration + Expert-Granular Abliterati
 | LM Studio identifier | `gemma-4-26b-a4b-it-uncensored` |
 | API identifier | `gemma4-26b-a4b-trevorjs-uncen-q8` |
 
-### Performance (llmster, M3 Ultra 96 GB, 2026-05-03)
+### Performance (lm-studio, M3 Ultra 96 GB, 2026-05-03)
 
 | Metric | Value |
 |:-------|:------|
@@ -504,7 +474,7 @@ TrevorJS's norm-preserving biprojected abliteration + Expert-Granular Abliterati
 
 ### Key differences vs other Gemma 4 variants
 
-- **Fastest agent loop** in the uncensored + standard llmster roster — 2.93 s browse vs 5.11 s for standard Gemma 4 31B-it and 5.05 s for prior uncensored leader (prithivMLmods)
+- **Fastest agent loop** in the uncensored + standard lm-studio roster — 2.93 s browse vs 5.11 s for standard Gemma 4 31B-it and 5.05 s for prior uncensored leader (prithivMLmods)
 - **No thinking overhead** — non-thinking instruct; all generation is visible `content`
 - **MoE architecture** at Q8_0 gives ~87.6 tok/s (vs 21.8 tok/s for dense 31B-it and 24.2 tok/s for DavidAU 31B Heretic)
 - **8/10 compliance** — EGA abliteration more effective than DavidAU HERETIC on Gemma 4 (7/10), less effective than Qwen3.6 abliterations (10/10)

@@ -4,7 +4,7 @@ IBM's Granite 4.1 generation. One variant currently catalogued in this stack: th
 
 ## Index
 
-- [Granite 4.1 30B Q8_0 (unsloth GGUF)](#granite-41-30b-q8_0-unsloth-gguf) — Dense 30B instruct · 65K loaded · `llmster` · 28.57 GiB · 24.8 tok/s · **active llmster main 2026-05-05**
+- [Granite 4.1 30B Q8_0 (unsloth GGUF)](#granite-41-30b-q8_0-unsloth-gguf) — Dense 30B instruct · 65K loaded · `lm-studio` · 28.57 GiB · 24.8 tok/s · **active lm-studio main 2026-05-05**
 
 ---
 
@@ -31,7 +31,7 @@ IBM's Granite 4.1 30B instruction-tuned model. Dense decoder-only architecture (
 
 **API identifier:** `granite-4.1-30b-q8`
 
-**Server:** `llmster` / LM Studio headless on port 1234
+**Server:** `lm-studio` / LM Studio headless on port 1234
 
 ### Deployment Recipe
 
@@ -66,7 +66,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 
 Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-05.
 
-**Server:** llmster / LM Studio headless on port 1234. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/api-tool-test.json`](../benchmarks/granite-4.1-30b-q8/api-tool-test.json).
+**Server:** lm-studio / LM Studio headless on port 1234. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/api-tool-test.json`](../benchmarks/granite-4.1-30b-q8/api-tool-test.json).
 
 | # | Scenario | Latency (s) | finish_reason | tools called |
 |:--|:---------|------------:|:--------------|:-------------|
@@ -86,9 +86,9 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-05.
 | 2 | (with prior tool result) | 3.14 | `tool_calls` | `write_file` |
 | 3 | (with prior tool result) | 4.50 | `stop` | — final answer |
 
-### Throughput (llmster, 2026-05-05)
+### Throughput (lm-studio, 2026-05-05)
 
-Method: streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 2 runs + 1 warmup. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/api-server-llmster.json`](../benchmarks/granite-4.1-30b-q8/api-server-llmster.json).
+Method: streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 2 runs + 1 warmup. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/api-server-lm-studio.json`](../benchmarks/granite-4.1-30b-q8/api-server-lm-studio.json).
 
 | Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
 |:--------|------------:|----------------:|---------:|
@@ -101,7 +101,7 @@ Gen speed is 3–3.5× slower than TrevorJS Gemma 4 26B A4B (sparse MoE ~4B acti
 
 ### Agent Benchmark (OpenCode, 2026-05-05)
 
-Method: `bench_agent_tool_call.py`, `opencode run --format json`, 3 measured runs + 1 warmup. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/agent-bench-llmster.json`](../benchmarks/granite-4.1-30b-q8/agent-bench-llmster.json).
+Method: `bench_agent_tool_call.py`, `opencode run --format json`, 3 measured runs + 1 warmup. Raw JSON: [`../benchmarks/granite-4.1-30b-q8/agent-bench-lm-studio.json`](../benchmarks/granite-4.1-30b-q8/agent-bench-lm-studio.json).
 
 | Scenario | Wall time (median) | LLM time | Turns | Tools |
 |:---------|:------------------:|:--------:|:-----:|:------|
@@ -129,7 +129,7 @@ Model load: **3.84 s** (one-time). Steady gen rate per scenario: **21.0–21.4 t
 
 ### Caveats
 
-- **65K context probe HTTP 400** — Granite 4.1 sliding window boundary; real queries < 32K work fine. Same pattern as Gemma 4 on llmster.
+- **65K context probe HTTP 400** — Granite 4.1 sliding window boundary; real queries < 32K work fine. Same pattern as Gemma 4 on lm-studio.
 - **Dense 30B decode speed** — all 30B params active per token; 24.8 tok/s is expected (vs 87.6 tok/s for Gemma 4 26B-A4B MoE at ~4B active). For higher throughput use the Gemma 4 26B A4B or a sparse MoE model.
 - **Censored/aligned** — standard IBM RLHF safety training. For uncensored content workflows, reload TrevorJS Gemma 4 26B A4B Uncensored Q8_0 from `docs/current.md` fallbacks.
 - **Guardrail required** — LM Studio guardrail `mode: "high"` blocks this load; must toggle `"off"` before `lms load`, then restore.

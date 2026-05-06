@@ -10,7 +10,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
   OpenCode                               mlx-openai-server :8000
   OpenClaw                               oMLX (multi-model) :8000
   Pi                                     vmlx (JANGTQ) :8000
-                                         llmster (LM Studio) :1234
+                                         lm-studio (LM Studio) :1234
                                          dflash-mlx (sidecar) :8098
                                          OpenAI + Anthropic API (+ Ollama for vmlx)
 ```
@@ -143,13 +143,13 @@ ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.serve
   --max-tokens 8192 \
   > /tmp/mlx-lm-server.log 2>&1 &"
 
-# llmster — LM Studio headless on port 1234 (stopped 2026-05-06; prior main: Granite 4.1 30B Q8_0).
+# lm-studio — LM Studio headless on port 1234 (stopped 2026-05-06; prior main: Granite 4.1 30B Q8_0).
 # Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid support. Tool-call + reasoning
 # parsing built into the MLX runtime — no parser flags needed.
 # Guardrail mode:"high" blocks large GGUF loads — must set "off" before load, restore after.
 ssh macstudio "~/.lmstudio/bin/lms unload --all"
 ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); s=json.load(open(f'{h}/.lmstudio/settings.json')); s['modelLoadingGuardrails']['mode']='off'; json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
-# Reload prior llmster main (Granite 4.1 30B Q8_0, 65K context):
+# Reload prior lm-studio main (Granite 4.1 30B Q8_0, 65K context):
 ssh macstudio "~/.lmstudio/bin/lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier 'granite-4.1-30b-q8' -y"
 ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); s=json.load(open(f'{h}/.lmstudio/settings.json')); s['modelLoadingGuardrails']['mode']='high'; json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
 ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors                          # default port 1234
@@ -158,7 +158,7 @@ pkill -f vllm-mlx                                                               
 pkill -f mlx-openai-server                                                       # stop mlx-openai-server
 /opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
 pkill -f vmlx_engine                                                             # stop vmlx
-~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop llmster
+~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
 pkill -f dflash-serve                                                            # stop dflash-mlx
 ```
 
@@ -168,7 +168,7 @@ pkill -f dflash-serve                                                           
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool            # vllm-mlx / mlx-openai-server
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
-curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # llmster (port 1234)
+curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # lm-studio (port 1234)
 curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            # dflash-mlx (port 8098)
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
@@ -177,8 +177,8 @@ tail -f /tmp/vllm-mlx.log                                                       
 tail -f /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
 tail -f ~/.omlx/logs/server.log                                                 # oMLX logs
 tail -f /tmp/vmlx.log                                                           # vmlx logs
-~/.lmstudio/bin/lms log stream                                                  # llmster live request/response stream
-tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # llmster daily log file
+~/.lmstudio/bin/lms log stream                                                  # lm-studio live request/response stream
+tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # lm-studio daily log file
 tail -f /tmp/dflash-mlx.log                                                     # dflash-mlx logs (per-request DFlash telemetry)
 ```
 
@@ -212,18 +212,18 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | **Current production main (2026-05-06):** Gemma 4 31B-it MLX 6-bit on `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`) — 20.4 tok/s, browse 12.33 s (thinking ON). Also: mlx-openai-server YAML multi-model mode with prompt caching + speculative decoding. |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant JANGTQ models — 64.9 tok/s on Qwen3.6-35B-A3B JANGTQ4 |
-| **[llmster](docs/servers/llmster/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop (thinking OFF) | Standard MLX / GGUF | OpenAI | **Stopped 2026-05-06.** Prior main: `unsloth/granite-4.1-30b-GGUF` Q8_0 (IBM Granite 4.1 30B instruct, 24.8 tok/s, browse 6.24 s). Also on disk: Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**). No JANG/JANGTQ/bailing_hybrid. |
-| **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to llmster. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
+| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop (thinking OFF) | Standard MLX / GGUF | OpenAI | **Stopped 2026-05-06.** Prior main: `unsloth/granite-4.1-30b-GGUF` Q8_0 (IBM Granite 4.1 30B instruct, 24.8 tok/s, browse 6.24 s). Also on disk: Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**). No JANG/JANGTQ/bailing_hybrid. |
+| **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 
-All servers except `llmster` and `dflash-mlx` support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio` and `dflash-mlx` support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
 [mlx-lm](docs/servers/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [llmster](docs/servers/llmster/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) (`llmster` and `dflash-mlx` keep install / runtime / limitations in their single `summary.md`)
+Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) (`lm-studio` and `dflash-mlx` keep install / runtime / limitations in their single `summary.md`)
 
-Current production main: **mlx-lm server** serving `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX) on port **8000** (deployed 2026-05-06). 5/5 API tool-call smoke + 3-turn loop in **20.73 s** (thinking ON). Dense 31B: **20.4 tok/s gen** @ 512, 14.7 tok/s @ 65K. **OpenCode browse 12.33 s / search 35.55 s** (thinking ON; prior llmster run thinking OFF: 5.11 s / 6.37 s). MTP drafter end-to-end attempt 2026-05-06 (`mlx-community/gemma-4-31B-it-bf16` + `gemma4_assistant` drafter via mlx-vlm 0.5.0 incl. PRs [#1112](https://github.com/Blaizzy/mlx-vlm/pull/1112)/[#1115](https://github.com/Blaizzy/mlx-vlm/pull/1115)/[#1117](https://github.com/Blaizzy/mlx-vlm/pull/1117)) — drafter at upstream-expected efficiency (3.07–4.29 acc/round, matches PR #1115's B=1 reference) but **two passes both timed out 8/8 in opencode**, with and without `MLX_VLM_SPEC_BATCH_WAIT_MS=10`. Two distinct blockers: (1) mlx-vlm streaming hangs on long-reasoning prompts (trivial prompts stream OK; reproducible bug worth filing upstream), (2) bf16 decode at 12.3 tok/s × 8192-token reasoning budget = 666 s/turn, exceeds opencode's 300 s wall regardless. `chat_template.jinja` byte-identical to working 6-bit's — [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Reverted to 6-bit. Failure analysis: [`docs/models/per-model/model-summary-gemma.md`](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment). Prior main: IBM Granite 4.1 30B Q8_0 on llmster (2026-05-05, browse 6.24 s / search 10.51 s) — documented in [`docs/current.md`](docs/current.md) for restart.
+Current production main: **mlx-lm server** serving `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 31B-it, 6-bit MLX) on port **8000** (deployed 2026-05-06). 5/5 API tool-call smoke + 3-turn loop in **20.73 s** (thinking ON). Dense 31B: **20.4 tok/s gen** @ 512, 14.7 tok/s @ 65K. **OpenCode browse 12.33 s / search 35.55 s** (thinking ON; prior lm-studio run thinking OFF: 5.11 s / 6.37 s). MTP drafter end-to-end attempt 2026-05-06 (`mlx-community/gemma-4-31B-it-bf16` + `gemma4_assistant` drafter via mlx-vlm 0.5.0 incl. PRs [#1112](https://github.com/Blaizzy/mlx-vlm/pull/1112)/[#1115](https://github.com/Blaizzy/mlx-vlm/pull/1115)/[#1117](https://github.com/Blaizzy/mlx-vlm/pull/1117)) — drafter at upstream-expected efficiency (3.07–4.29 acc/round, matches PR #1115's B=1 reference) but **two passes both timed out 8/8 in opencode**, with and without `MLX_VLM_SPEC_BATCH_WAIT_MS=10`. Two distinct blockers: (1) mlx-vlm streaming hangs on long-reasoning prompts (trivial prompts stream OK; reproducible bug worth filing upstream), (2) bf16 decode at 12.3 tok/s × 8192-token reasoning budget = 666 s/turn, exceeds opencode's 300 s wall regardless. `chat_template.jinja` byte-identical to working 6-bit's — [#941](https://github.com/Blaizzy/mlx-vlm/issues/941) ruled out. Reverted to 6-bit. Failure analysis: [`docs/models/per-model/model-summary-gemma.md`](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment). Prior main: IBM Granite 4.1 30B Q8_0 on lm-studio (2026-05-05, browse 6.24 s / search 10.51 s) — documented in [`docs/current.md`](docs/current.md) for restart.
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
@@ -236,10 +236,10 @@ All models fit in **96GB unified memory**.
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--------------------------------------|:------------|----------:|--------:|:---------|
-| [IBM Granite 4.1 30B Q8_0](docs/models/per-model/model-summary-granite-4.1.md) | Dense 30B | 29 | 65K | **Active llmster main (2026-05-05)** — Apache 2.0, 24.8 tok/s, browse 6.24 s |
-| [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior llmster main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥇, 8/10 compliance |
+| [IBM Granite 4.1 30B Q8_0](docs/models/per-model/model-summary-granite-4.1.md) | Dense 30B | 29 | 65K | **Active lm-studio main (2026-05-05)** — Apache 2.0, 24.8 tok/s, browse 6.24 s |
+| [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥇, 8/10 compliance |
 | [Gemma 4 26B-A4B (4-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
-| [Gemma 4 31B-it (6-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) | Dense 31B | 29 | 64K | Fastest standard agent-loop model on llmster (5–6 s browse) |
+| [Gemma 4 31B-it (6-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) | Dense 31B | 29 | 64K | Fastest standard agent-loop model on lm-studio (5–6 s browse) |
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3-Coder-Next 6-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
 | [Qwen3-Coder-30B-A3B Instruct 4-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-30b-a3b-instruct-4-bit) | MoE 30.5B/3.3B | 17.2 | 262K | Compact coding model |
@@ -250,10 +250,10 @@ All models fit in **96GB unified memory**.
 | [Qwen3.6-35B-A3B 6-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
 | [Qwen3.6-35B-A3B 4-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
 | [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
-| [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) | Dense 27B + VL | 32 | 262K (1M YaRN) | Prior llmster GGUF sidecar (superseded 2026-05-02) *(removed from disk 2026-05-05)* |
-| [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) | Hybrid MoE 35B/3B + VL | 31 | 262K (1M YaRN) | Prior llmster main (superseded 2026-05-02) — uncensored search-speed leader (12.01 s) |
-| [DavidAU Qwen3.6-40B Heretic Q6_K IMatrix](docs/models/per-model/model-summary-qwen-3-6.md#davidau-qwen36-40b-heretic-uncensored-thinking-q6_k-imatrix) | Dense 40B | 30.2 | 131K | Prior llmster main (2026-05-03) — Heretic recipe, 9/10 compliance, visible content, browse 18.73 s |
-| [prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) | Hybrid MoE 35B/3B + VL | 28.5 | 65K | Prior llmster main (2026-05-02) — uncensored GGUF browse leader (browse 5.05 s, search 13.56 s) |
+| [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) | Dense 27B + VL | 32 | 262K (1M YaRN) | Prior lm-studio GGUF sidecar (superseded 2026-05-02) *(removed from disk 2026-05-05)* |
+| [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) | Hybrid MoE 35B/3B + VL | 31 | 262K (1M YaRN) | Prior lm-studio main (superseded 2026-05-02) — uncensored search-speed leader (12.01 s) |
+| [DavidAU Qwen3.6-40B Heretic Q6_K IMatrix](docs/models/per-model/model-summary-qwen-3-6.md#davidau-qwen36-40b-heretic-uncensored-thinking-q6_k-imatrix) | Dense 40B | 30.2 | 131K | Prior lm-studio main (2026-05-03) — Heretic recipe, 9/10 compliance, visible content, browse 18.73 s |
+| [prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) | Hybrid MoE 35B/3B + VL | 28.5 | 65K | Prior lm-studio main (2026-05-02) — uncensored GGUF browse leader (browse 5.05 s, search 13.56 s) |
 | [Nemotron 3 Super 120B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
 | [Nemotron 3 Nano 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
 | [Nemotron Cascade 2 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
@@ -349,7 +349,7 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/servers/vllm-mlx/maintenance.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 --continuous-batching` (the last flag is mandatory on vmlx 1.5.20+ — without it MLLM/VLM models crash with `Qwen2Tokenizer.stopping_criteria` and `bailing_hybrid` text models crash with `Stream(gpu, 1) not in thread`). [Maintenance](docs/servers/vmlx/maintenance.md)
 - **dflash-mlx** — Standard MLX safetensors only (no JANG/JANGTQ/`bailing_hybrid`/GGUF). PyPI 0.1.0 has no tool-calling — install 0.1.4.1+ from `git+https://github.com/bstnxbt/dflash-mlx.git`. Three local patches required after install: [`patch_dflash_mlx_serve.py`](scripts/patches/patch_dflash_mlx_serve.py) (two upstream bugs), [`patch_mlx_lm_match.py`](scripts/patches/patch_mlx_lm_match.py) (tool-detection trie reset). Built-in `DRAFT_REGISTRY` does not include Qwen3.6 pairs — always pass `--draft-model` explicitly. OpenAI API only. [Runbook](docs/servers/dflash-mlx/summary.md)
-- **llmster** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-llmster-vs-vllm-mlx-same-model-file-2026-04-30)
+- **lm-studio** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/per-model/model-summary-nemotron.md#nemotron-server-compatibility)

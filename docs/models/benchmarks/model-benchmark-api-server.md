@@ -485,20 +485,20 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 23, 2026.
 
 ---
 
-## Qwen3.6-27B 6-bit (Standard MLX, on llmster vs vllm-mlx)
+## Qwen3.6-27B 6-bit (Standard MLX, on lm-studio vs vllm-mlx)
 
 Model: `mlx-community/Qwen3.6-27B-6bit` (same dense 27.3B Qwen3.6 hybrid + ViT base as JANG 4M, but uniform 6-bit MLX quantization at 22 GB on disk — no JANG mixed-precision)
 Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 
-**Why this matters:** This is the only model in the repo that runs on both vllm-mlx and llmster (LM Studio headless `lms server`) without architecture patches — standard MLX safetensors. It's the cleanest server-overhead comparison available.
+**Why this matters:** This is the only model in the repo that runs on both vllm-mlx and lm-studio (LM Studio headless `lms server`) without architecture patches — standard MLX safetensors. It's the cleanest server-overhead comparison available.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](qwen36-27b-6bit/api-server-llmster.json).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 cold + 2 warm runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-lm-studio.json](qwen36-27b-6bit/api-server-lm-studio.json).
 
-**Server:** llmster v0.4.12 (Homebrew cask `lm-studio`), MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`, `lms server start --bind 0.0.0.0`. Model loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`. Served identifier: `qwen3.6-27b` (LM Studio strips the org prefix and lowercases it).
+**Server:** lm-studio v0.4.12 (Homebrew cask `lm-studio`), MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`, `lms server start --bind 0.0.0.0`. Model loaded via `lms load qwen3.6-27b --gpu max --context-length 65536`. Served identifier: `qwen3.6-27b` (LM Studio strips the org prefix and lowercases it).
 
 ### Generation Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **29.9** |
 | 4K | 29.3 |
@@ -507,7 +507,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 
 ### Prefill Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 1,086 |
 | 4K | 8,031 |
@@ -516,7 +516,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 
 ### Time to First Token (seconds)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **0.49** |
 | 4K | 0.51 |
@@ -524,26 +524,26 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 30, 2026.
 | 32K | 0.70 |
 
 **Notes:**
-- **Headline finding: TTFT is essentially flat from 512 → 32K (0.49 → 0.70 s)**. llmster's MLX runtime appears to use a much more aggressive prefill kernel than vllm-mlx — prefill speed scales linearly into the tens-of-thousands of tok/s range (47K tok/s at 32K context). Compare to `Qwen3.6-27B JANG 4M` on vllm-mlx where 32K TTFT is **104.45 s** at 314 tok/s prefill.
+- **Headline finding: TTFT is essentially flat from 512 → 32K (0.49 → 0.70 s)**. lm-studio's MLX runtime appears to use a much more aggressive prefill kernel than vllm-mlx — prefill speed scales linearly into the tens-of-thousands of tok/s range (47K tok/s at 32K context). Compare to `Qwen3.6-27B JANG 4M` on vllm-mlx where 32K TTFT is **104.45 s** at 314 tok/s prefill.
 - **Generation speed is ~10–20 % slower than vllm-mlx + JANG 4M** at equal contexts (e.g. 512: 29.9 vs 36.5 tok/s; 32K: 26.3 vs 30.9 tok/s). Expected: 6-bit uniform > 4.45-bit mixed on memory bandwidth. The big win is prefill, not decode.
-- 64K not tested on llmster — context-length limit was set to 65,536 at load time but the bench's 64K filler probe pushed past the model's hard ceiling (resolved: ran 4 contexts instead of 5).
+- 64K not tested on lm-studio — context-length limit was set to 65,536 at load time but the bench's 64K filler probe pushed past the model's hard ceiling (resolved: ran 4 contexts instead of 5).
 - vllm-mlx baseline for this exact model file (`mlx-community/Qwen3.6-27B-6bit`) was never run for the api-server benchmark — only agent-bench. Direct vs JANG-variant comparison is the closest available.
-- Tool calling works out of the box on llmster's MLX runtime — see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#results-mlx-communityqwen36-27b-6bit-on-llmster) for the agent-loop comparison (llmster is **3–5× faster than vllm-mlx end-to-end** on the same model file).
+- Tool calling works out of the box on lm-studio's MLX runtime — see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#results-mlx-communityqwen36-27b-6bit-on-lm-studio) for the agent-loop comparison (lm-studio is **3–5× faster than vllm-mlx end-to-end** on the same model file).
 
 ---
 
-## Gemma 4 31B-it (6-bit, dense, on llmster)
+## Gemma 4 31B-it (6-bit, dense, on lm-studio)
 
 Model: `lmstudio-community/gemma-4-31B-it-MLX-6bit` (Google Gemma 4 dense **31B** instruction-tuned, 6-bit MLX, no MoE, no vision — 29 GB on disk, 31.32 GB total weights as reported by `lms get`)
 Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 3 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](gemma-4-31b-it-6bit/api-server-llmster.json).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 3 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-lm-studio.json](gemma-4-31b-it-6bit/api-server-lm-studio.json).
 
-**Server:** llmster, MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`, `lms server start --bind 0.0.0.0 --cors`. Model loaded via `lms load gemma-4-31b-it-mlx --gpu max --context-length 65536` (the served identifier from `/v1/models` is `gemma-4-31b-it-mlx` — note LM Studio retains the `-mlx` suffix from the `-MLX-` segment of the HF id, unlike Qwen3.6 where it strips `-6bit`).
+**Server:** lm-studio, MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0`, `lms server start --bind 0.0.0.0 --cors`. Model loaded via `lms load gemma-4-31b-it-mlx --gpu max --context-length 65536` (the served identifier from `/v1/models` is `gemma-4-31b-it-mlx` — note LM Studio retains the `-mlx` suffix from the `-MLX-` segment of the HF id, unlike Qwen3.6 where it strips `-6bit`).
 
 ### Generation Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **21.8** |
 | 4K | 21.5 |
@@ -552,7 +552,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 
 ### Prefill Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 1,232 |
 | 4K | 6,028 |
@@ -561,7 +561,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 
 ### Time to First Token (seconds)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **0.44** |
 | 4K | 0.68 |
@@ -569,9 +569,9 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 | 32K | 0.90 |
 
 **Notes:**
-- **Decode tax for the larger dense model:** Gemma 4 31B-it (dense) is ~30–40 % slower in decode than Qwen3.6-27B-6bit on the same llmster (21.8 vs 29.9 tok/s @ 512; 18.3 vs 26.3 tok/s @ 32K). Expected — 31B dense vs 27B dense at the same 6-bit quant pays a roughly proportional bandwidth tax.
+- **Decode tax for the larger dense model:** Gemma 4 31B-it (dense) is ~30–40 % slower in decode than Qwen3.6-27B-6bit on the same lm-studio (21.8 vs 29.9 tok/s @ 512; 18.3 vs 26.3 tok/s @ 32K). Expected — 31B dense vs 27B dense at the same 6-bit quant pays a roughly proportional bandwidth tax.
 - **Prefill is also lower** at 32K (36K vs 47K tok/s) — same reason, more parameters to stream through the prefill kernel per token.
-- **TTFT stays sub-1 s through 32K** — the headline llmster property holds.
+- **TTFT stays sub-1 s through 32K** — the headline lm-studio property holds.
 - **`lms get` failed twice** on this model (timed out at 88 % with hung "Finalizing download…" state, only shards 4–6 of 6 on disk). Working path: kill the hung process, finish the download with `huggingface_hub.snapshot_download`, then `lms ls` recognises it. Detail in [`per-model/model-summary-gemma.md`](../per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) "Loader gotcha" callout.
 - **First load ignored `--context-length`** — model came up at 4K context despite the explicit flag, hit `HTTP 400: tokens exceed context length` on the 4K bench. Re-`lms unload` + re-`lms load --context-length 65536` correctly seats 64K.
 
@@ -579,7 +579,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 1, 2026.
 
 ## Gemma 4 31B-it (6-bit, dense, on mlx-lm server)
 
-Model: `lmstudio-community/gemma-4-31B-it-MLX-6bit` — same weights as the llmster run above.
+Model: `lmstudio-community/gemma-4-31B-it-MLX-6bit` — same weights as the lm-studio run above.
 Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context (512, 4K, 8K, 32K, 65K). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-mlx-lm.json](gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json).
@@ -588,7 +588,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 
 ### Generation Speed (tok/s)
 
-| Context | mlx-lm server | llmster (2026-05-01, for ref) |
+| Context | mlx-lm server | lm-studio (2026-05-01, for ref) |
 |:--------|:-------------:|:-----------------------------:|
 | 512 | **20.5** | 21.8 |
 | 4K | **20.2** | 21.5 |
@@ -598,7 +598,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 
 ### Prefill Speed (tok/s)
 
-| Context | mlx-lm server | llmster (for ref) |
+| Context | mlx-lm server | lm-studio (for ref) |
 |:--------|:-------------:|:-----------------:|
 | 512 | 1,337 | 1,232 |
 | 4K | **9,965** | 6,028 |
@@ -608,7 +608,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 
 ### Time to First Token (seconds)
 
-| Context | mlx-lm server | llmster (for ref) |
+| Context | mlx-lm server | lm-studio (for ref) |
 |:--------|:-------------:|:-----------------:|
 | 512 | **0.41** | 0.44 |
 | 4K | **0.41** | 0.68 |
@@ -617,7 +617,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 | 65K | **0.65** | — |
 
 **Notes:**
-- **Gen speed nearly identical to llmster** — within 6% across all contexts. The model load path (mlx-lm direct vs. LM Studio MLX runtime) has negligible impact on decode speed.
+- **Gen speed nearly identical to lm-studio** — within 6% across all contexts. The model load path (mlx-lm direct vs. LM Studio MLX runtime) has negligible impact on decode speed.
 - **Prefill is dramatically faster on mlx-lm** — 2.5× at 4K (9,965 vs 6,028 tok/s) and 1.7× at 32K (63,306 vs 36,297 tok/s). LM Studio's MLX runtime appears to use a less-optimized prefill kernel. At 65K context, prefill reaches 101K tok/s — the model can ingest long contexts very quickly.
 - **TTFT stays sub-0.65 s through 65K** — TTFT is only weakly dependent on context length since prefill is so fast. A 65K-token prompt adds only 0.24 s to TTFT vs 512 tokens.
 - **Thinking mode ON:** the model generates thinking context on some prompts (affecting per-turn agent latency), but these throughput numbers measure a simple 50-token completion and thus reflect pure decode bandwidth.
@@ -672,20 +672,20 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 6, 2026.
 
 ---
 
-## prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (GGUF, on llmster)
+## prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (GGUF, on lm-studio)
 
 Model: `mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF` (`Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf`) — prithivMLmods abliteration, mradermacher quantization. 28.51 GB on disk, 26.56 GiB resident at 65536 context.
 Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](qwen36-35b-a3b-prithiv-aggressive/api-server-llmster.json).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-lm-studio.json](qwen36-35b-a3b-prithiv-aggressive/api-server-lm-studio.json).
 
-**Server:** llmster v0.4.12, GGUF runtime (not MLX — note this is `.Q6_K.gguf`, not a safetensors MLX repo). Loaded with `lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y`. Parser flags not required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively for this model.
+**Server:** lm-studio v0.4.12, GGUF runtime (not MLX — note this is `.Q6_K.gguf`, not a safetensors MLX repo). Loaded with `lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y`. Parser flags not required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively for this model.
 
 **Deployment gotcha:** LM Studio memory guardrail (`modelLoadingGuardrails.mode: "high"`) counts only ~24 GB free pages, ignoring ~62 GB inactive/reclaimable — blocks load with "insufficient system resources." Workaround: temporarily set `mode` to `"off"` via `~/.lmstudio/settings.json`, load, restore to `"high"`. See [`qwen36-35b-a3b-prithiv-aggressive-benchmark.md`](../../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) for the full recipe.
 
 ### Generation Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **83.6** |
 | 4K | 80.8 |
@@ -694,7 +694,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 
 ### Prefill Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 5,350 |
 | 4K | 35,118 |
@@ -703,7 +703,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 
 ### Time to First Token (seconds)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **0.10** |
 | 4K | 0.12 |
@@ -711,28 +711,28 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 | 32K | 0.29 |
 
 **Notes:**
-- **TTFT is flat and sub-300 ms through 32K** — same headline llmster GGUF property seen on the 27B-6bit and HauhauCS variants. At 32K the TTFT is 0.29s vs 0.70s on the 27B-6bit run.
-- **Generation is ~2.3–2.8× faster than Qwen3.6-27B-6bit** on the same llmster (83.6 vs 29.9 tok/s @ 512; 70.6 vs 26.3 tok/s @ 32K). The MoE 3B-active GGUF wins decisively over dense 27B on bandwidth-bound decode.
-- **Prefill scales unusually fast:** 5K → 35K → 57K → 114K tok/s across 512 → 32K context. Compare to llmster 27B-6bit (MLX): 1K → 8K → 15K → 47K tok/s at the same contexts. The GGUF prefill kernel in LM Studio's GGUF runtime benefits from MoE sparsity more aggressively than the MLX uniform-quant kernel.
+- **TTFT is flat and sub-300 ms through 32K** — same headline lm-studio GGUF property seen on the 27B-6bit and HauhauCS variants. At 32K the TTFT is 0.29s vs 0.70s on the 27B-6bit run.
+- **Generation is ~2.3–2.8× faster than Qwen3.6-27B-6bit** on the same lm-studio (83.6 vs 29.9 tok/s @ 512; 70.6 vs 26.3 tok/s @ 32K). The MoE 3B-active GGUF wins decisively over dense 27B on bandwidth-bound decode.
+- **Prefill scales unusually fast:** 5K → 35K → 57K → 114K tok/s across 512 → 32K context. Compare to lm-studio 27B-6bit (MLX): 1K → 8K → 15K → 47K tok/s at the same contexts. The GGUF prefill kernel in LM Studio's GGUF runtime benefits from MoE sparsity more aggressively than the MLX uniform-quant kernel.
 - **65K probe not run** — model loaded at exactly `--context-length 65536`; the bench's 65K filler probe fills the context exactly, leaving no headroom for `max_tokens=50`. Would require reloading at 70K context to probe accurately.
 - **GGUF vs MLX runtime distinction:** unlike the MLX-safetensors models in the rest of this doc, this model runs through LM Studio's GGUF engine. Prefill rates are not directly comparable to the MLX-based servers — the LM Studio GGUF engine uses its own quantization-kernel path.
 
 ---
 
-## DavidAU Qwen3.6-40B Heretic Q6_K IMatrix (GGUF, on llmster)
+## DavidAU Qwen3.6-40B Heretic Q6_K IMatrix (GGUF, on lm-studio)
 
 Model: `DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF` (`Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf`) — DavidAU Heretic recipe (full abliteration + Deckard/PDK), IMatrix-weighted Q6_K. 30.17 GiB on disk, ~30 GiB resident at 131072 context.
 Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](qwen36-40b-davidau-heretic/api-server-llmster.json).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-lm-studio.json`](qwen36-40b-davidau-heretic/api-server-lm-studio.json).
 
-**Server:** llmster, GGUF runtime. Loaded with `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier 'qwen36-40b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively.
+**Server:** lm-studio, GGUF runtime. Loaded with `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier 'qwen36-40b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively.
 
 **Deployment gotcha:** LM Studio memory guardrail (`modelLoadingGuardrails.mode: "high"`) counts only ~24 GB free pages, ignoring 60+ GB inactive/reclaimable — consistently blocks dense 40B + 131K load. Must temporarily set `mode` to `"off"`, load, then restore to `"high"`. See [`docs/current.md`](../../current.md) for the full toggle recipe.
 
 ### Generation Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **9.7** |
 | 4K | 9.6 |
@@ -741,7 +741,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ### Prefill Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 678 |
 | 4K | 5,210 |
@@ -750,7 +750,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ### Time to First Token (seconds)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 0.79 |
 | 4K | 0.80 |
@@ -766,18 +766,18 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ---
 
-## DavidAU Gemma 4 31B Heretic Q6_k (GGUF, on llmster)
+## DavidAU Gemma 4 31B Heretic Q6_k (GGUF, on lm-studio)
 
 Model: `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` (`gemma-4-31B-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Q6_k.gguf`) — Thinking variant, DavidAU HERETIC + Mystery Fine Tune on Gemma 4 31B dense base. 25.20 GB on disk, 23.47 GiB resident at 131072 context.
 Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
-**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-llmster.json`](gemma4-31b-davidau-heretic/api-server-llmster.json).
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [`api-server-lm-studio.json`](gemma4-31b-davidau-heretic/api-server-lm-studio.json).
 
-**Server:** llmster, GGUF runtime. Loaded with `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier 'gemma4-31b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Gemma 4 tool-calls natively.
+**Server:** lm-studio, GGUF runtime. Loaded with `lms load 'gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct' --gpu max --context-length 131072 --identifier 'gemma4-31b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Gemma 4 tool-calls natively.
 
 ### Generation Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | **24.2** |
 | 4K | 23.0 |
@@ -787,7 +787,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ### Prefill Speed (tok/s)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 1,132 |
 | 4K | 12,658 |
@@ -797,7 +797,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ### Time to First Token (seconds)
 
-| Context | llmster |
+| Context | lm-studio |
 |:--------|:-------:|
 | 512 | 0.48 |
 | 4K | 0.33 |
@@ -870,13 +870,13 @@ Prompt-token counts reported by the server are 0 (vllm-mlx field-fill bug, same 
 
 ---
 
-## 🤖 IBM Granite 4.1 30B Q8_0 (Dense, GGUF) on llmster
+## 🤖 IBM Granite 4.1 30B Q8_0 (Dense, GGUF) on lm-studio
 
 Model: `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF`
 
 Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-05.
 
-**Server:** llmster / LM Studio headless on port 1234. Raw JSON: [`granite-4.1-30b-q8/api-server-llmster.json`](granite-4.1-30b-q8/api-server-llmster.json).
+**Server:** lm-studio / LM Studio headless on port 1234. Raw JSON: [`granite-4.1-30b-q8/api-server-lm-studio.json`](granite-4.1-30b-q8/api-server-lm-studio.json).
 
 ### Generation Speed (tok/s)
 
@@ -892,7 +892,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-05.
 **Notes:**
 - Dense 30B: all parameters active every token → 24–26 tok/s gen is expected for this class. Prefill scales well (2.5K → 92K tok/s from 512 → 32K) due to well-behaved dense attention.
 - 3–3.5× slower than TrevorJS Gemma 4 26B A4B MoE (87.6 tok/s) due to MoE sparsity advantage.
-- Comparable to Gemma 4 31B-it on llmster (18–22 tok/s).
+- Comparable to Gemma 4 31B-it on lm-studio (18–22 tok/s).
 
 ---
 

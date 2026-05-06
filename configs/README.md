@@ -14,10 +14,10 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | **mlx-openai-server / mlx-lm server** | 8000 | **Current main (2026-05-06)** -- mlx-lm server via Cellar libexec (`/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`, **not** `/opt/homebrew/bin/mlx_lm.server`) running Gemma 4 31B-it; also available as multi-model mlx-openai-server with prompt cache + speculative decoding | Gemma 4 31B-it MLX 6-bit (20.4 tok/s, browse 12.33 s, thinking ON) | Not needed |
 | **oMLX** | 8000 | **Multi-model** -- SSD cache, hot-swap, admin dashboard; currently stopped | 9 models (see below) | Required (`<YOUR_API_KEY>`) |
 | **vmlx** | 8000 | JANGTQ -- only route for TurboQuant-weight (JANGTQ) models; runs out of MLX Studio bundled Python; **currently stopped** (was last main 2026-05-01 with Osaurus JANGTQ4) | OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4 (~19.7GB) | Not needed |
-| **llmster** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for initial load; **stopped 2026-05-06** | Prior: IBM Granite 4.1 30B Q8_0 (28.57 GiB, Apache 2.0, 24.8 tok/s, browse 6.24 s) | Not needed |
+| **lm-studio** | **1234** | **LM Studio headless** -- standard MLX/GGUF only; closed-source runtime; guardrail override required for initial load; **stopped 2026-05-06** | Prior: IBM Granite 4.1 30B Q8_0 (28.57 GiB, Apache 2.0, 24.8 tok/s, browse 6.24 s) | Not needed |
 | **dflash-mlx** | **8098** | **DFlash speculative decoding** -- target+drafter pair, wraps mlx_lm.server in 0.1.4.1+, requires 3 local patches; sustains 74-89 tok/s decode at 86.7% draft acceptance; **currently stopped** | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **llmster runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **mlx-lm server + Gemma 4 31B-it MLX 6-bit** (deployed 2026-05-06 after Event-4 hygiene); restart llmster + IBM Granite 4.1 30B Q8_0, TrevorJS Gemma 4 26B A4B, DavidAU 40B Heretic, prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio runs on a separate port (1234)** so it can technically run alongside one of the others, but the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time. Current main is **mlx-lm server + Gemma 4 31B-it MLX 6-bit** (deployed 2026-05-06 after Event-4 hygiene); restart lm-studio + IBM Granite 4.1 30B Q8_0, TrevorJS Gemma 4 26B A4B, DavidAU 40B Heretic, prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, or vmlx + Osaurus JANGTQ4 from [`docs/current.md`](../docs/current.md) when you need the comparison slots again.
 
 ### Why vllm-mlx is Primary
 
@@ -109,7 +109,7 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). vmlx was stopped 2026-05-02 per Event-4 hygiene before deploying prithivMLmods Aggressive Q6_K on llmster; restart command in [`docs/current.md`](../docs/current.md).
+**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). vmlx was stopped 2026-05-02 per Event-4 hygiene before deploying prithivMLmods Aggressive Q6_K on lm-studio; restart command in [`docs/current.md`](../docs/current.md).
 
 For uncensored vmlx JANGTQ-CRACK variants use the matching templates under [`docs/models/uncen-model/client-configs/vmlx/`](../docs/models/uncen-model/client-configs/vmlx/). Note: `dealignai/MiniMax-M2.7-JANGTQ-CRACK` and `dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK` were removed from disk 2026-05-05; `dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK` remains on disk.
 
@@ -117,17 +117,17 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 
 **Not compatible with**: `--smelt` or `--flash-moe` flags ([`vmlx#81`](https://github.com/jjang-ai/vmlx/issues/81) -- both raise `ValueError` on `weight_format=mxtq`). Use the bundled `python3 -m vmlx_engine.cli serve` invocation only; the bundled `bin/vmlx` shebang points at the maintainer's build tree.
 
-### `client/llmster/` -- LM Studio Headless (Standard MLX, Port 1234)
+### `client/lm-studio/` -- LM Studio Headless (Standard MLX, Port 1234)
 
 | File | Copy to | Used by |
 |------|---------|---------|
 | `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 
-**Templates pin censored / standard models on llmster (stopped 2026-05-06).** Prior default: `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, 2026-05-05, browse 6.24 s). Also lists `gemma-4-31b-it-mlx` (browse 5.11 s thinking-OFF on llmster; 12.33 s thinking-ON on mlx-lm) and `qwen3.6-27b`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files remain deferred because llmster's role is provisional.
+**Templates pin censored / standard models on lm-studio (stopped 2026-05-06).** Prior default: `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, 2026-05-05, browse 6.24 s). Also lists `gemma-4-31b-it-mlx` (browse 5.11 s thinking-OFF on lm-studio; 12.33 s thinking-ON on mlx-lm) and `qwen3.6-27b`. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files remain deferred because lm-studio's role is provisional.
 
-For uncensored llmster GGUFs (TrevorJS Gemma 4 26B A4B Q8_0 — prior main; prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/llmster/`](../docs/models/uncen-model/client-configs/llmster/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`.
+For uncensored lm-studio GGUFs (TrevorJS Gemma 4 26B A4B Q8_0 — prior main; prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/lm-studio/`](../docs/models/uncen-model/client-configs/lm-studio/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`.
 
-Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/llmster/summary.md`](../docs/servers/llmster/summary.md).
+Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/lm-studio/summary.md`](../docs/servers/lm-studio/summary.md).
 
 ### `clients/dflash-mlx/` -- DFlash Speculative-Decoding Sidecar (Standard MLX, Port 8098)
 
@@ -135,7 +135,7 @@ Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key require
 |------|---------|---------|
 | `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
 
-**Target:** `mlx-community/Qwen3.6-35B-A3B-4bit` (~22 GB, hybrid MoE 35B/3B + VL). **Drafter:** `z-lab/Qwen3.6-35B-A3B-DFlash` (~1 GB, 0.5B BF16). Standard MLX safetensors — no JANG/JANGTQ/`bailing_hybrid`/GGUF. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because dflash-mlx is provisional (decode-bound research server; loses to llmster on prefill-bound long-context multi-turn workloads).
+**Target:** `mlx-community/Qwen3.6-35B-A3B-4bit` (~22 GB, hybrid MoE 35B/3B + VL). **Drafter:** `z-lab/Qwen3.6-35B-A3B-DFlash` (~1 GB, 0.5B BF16). Standard MLX safetensors — no JANG/JANGTQ/`bailing_hybrid`/GGUF. **Currently OpenCode-only** — Claude Code, OpenClaw, Pi, qwen-code config files have not been added because dflash-mlx is provisional (decode-bound research server; loses to lm-studio on prefill-bound long-context multi-turn workloads).
 
 Speaks **OpenAI-compatible** API on port **8098** (NOT 8000). No API key required. Wraps `mlx_lm.server` in 0.1.4.1+ (PyPI 0.1.0 has no tool-calling — install from `git+https://github.com/bstnxbt/dflash-mlx.git`). Three local patches required: `patch_dflash_mlx_serve.py`, `patch_mlx_lm_match.py`, `patch_dflash_mlx_host.py` (the last only for 0.1.0). The `--draft-model` flag is **required** for Qwen3.6 (built-in `DRAFT_REGISTRY` only auto-resolves Qwen3.5 family). Full server runbook: [`docs/servers/dflash-mlx/summary.md`](../docs/servers/dflash-mlx/summary.md).
 
@@ -171,7 +171,7 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 \
   > /tmp/vmlx-osaurus-qwen36-jangtq4.log 2>&1 &
 
-# Switch to llmster (LM Studio headless, port 1234 — separate from port 8000)
+# Switch to lm-studio (LM Studio headless, port 1234 — separate from port 8000)
 # Active main: prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K (26.56 GiB at 65K context)
 # NOTE: if guardrail blocks load ("insufficient system resources"), temporarily set
 #   modelLoadingGuardrails.mode to "off" in ~/.lmstudio/settings.json, load, then restore.

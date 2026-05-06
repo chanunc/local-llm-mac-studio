@@ -8,7 +8,7 @@ Canonical: no
 
 **Why now:** The `MMLU` and `TruthfulQA` columns in `docs/models/uncen-model/uncen-model-comparison.md` are empty for every GGUF uncen model on disk (prithivMLmods Aggressive Q6_K, HauhauCS Aggressive Q6_K_P, HauhauCS Balanced Q8_K_P). We have strong refusal-axis numbers for these models (`mlabonne 10/520` complied) but zero capability/factuality data — every row is **half-validated** (per `docs/models/uncen-model/uncen-model-bench-methods-compare.md`).
 
-**The cheapest gap-closer:** MMLU-Pro `subset=0.05` (~30 min wall on llmster's 35B MoE) gives a regression check on knowledge; TruthfulQA-gen (~15-30 min, ROUGE/BLEU only — no judge) gives a factuality check. Both use scoring methods (regex / ROUGE) that **do not require `/v1/completions` logprobs**, so they work cleanly on llmster despite [lm-eval issue #2934](https://github.com/EleutherAI/lm-evaluation-harness/issues/2934) (LM Studio's logprobs gotcha).
+**The cheapest gap-closer:** MMLU-Pro `subset=0.05` (~30 min wall on lm-studio's 35B MoE) gives a regression check on knowledge; TruthfulQA-gen (~15-30 min, ROUGE/BLEU only — no judge) gives a factuality check. Both use scoring methods (regex / ROUGE) that **do not require `/v1/completions` logprobs**, so they work cleanly on lm-studio despite [lm-eval issue #2934](https://github.com/EleutherAI/lm-evaluation-harness/issues/2934) (LM Studio's logprobs gotcha).
 
 **Outcome:** one Python driver in `scripts/bench/` that wraps both tools, emits one merged JSON in our standard envelope, fills the gap for three models in ~90 min total wall time.
 
@@ -80,7 +80,7 @@ Parse `<tqa_out_dir>/<sanitized-model>/results_<ts>.json` → `results.truthfulq
 
 ### Output JSON shape (merged envelope)
 
-Saved to `args.output` (e.g., `docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/eval-local-llmster.json` — matches `agent-bench-llmster.json` per-server naming). Plus two siblings for forensic deep-dives: `<output>.mmlu-raw.json` and `<output>.tqa-raw.json` (verbatim copies of each tool's native JSON).
+Saved to `args.output` (e.g., `docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/eval-local-lm-studio.json` — matches `agent-bench-lm-studio.json` per-server naming). Plus two siblings for forensic deep-dives: `<output>.mmlu-raw.json` and `<output>.tqa-raw.json` (verbatim copies of each tool's native JSON).
 
 ```json
 {
@@ -90,7 +90,7 @@ Saved to `args.output` (e.g., `docs/models/benchmarks/qwen36-35b-a3b-prithiv-agg
   "config": {
     "base_url": "http://192.168.31.4:1234/v1",
     "model": "qwen3.6-35b-a3b-prithiv-aggressive-q6k",
-    "server_label": "llmster (LM Studio headless)",
+    "server_label": "lm-studio (LM Studio headless)",
     "mmlu_subset": 0.05, "mmlu_max_tokens": 8000,
     "mmlu_categories": null, "mmlu_parallel": 4,
     "tools": {
@@ -103,14 +103,14 @@ Saved to `args.output` (e.g., `docs/models/benchmarks/qwen36-35b-a3b-prithiv-agg
       "score": 0.612,
       "by_category": {"math": 0.58, "physics": 0.64, "...": "..."},
       "n_questions": 602, "wall_time_s": 1742.3,
-      "raw_path": "...eval-local-llmster.json.mmlu-raw.json",
+      "raw_path": "...eval-local-lm-studio.json.mmlu-raw.json",
       "exit_code": 0
     },
     "truthfulqa_gen": {
       "rouge1": 0.41, "rouge2": 0.27, "rougeL": 0.38,
       "bleu_acc": 0.49, "bleu_diff": 0.06,
       "n_questions": 817, "wall_time_s": 1183.6,
-      "raw_path": "...eval-local-llmster.json.tqa-raw.json",
+      "raw_path": "...eval-local-lm-studio.json.tqa-raw.json",
       "exit_code": 0
     }
   }
@@ -137,7 +137,7 @@ Partial-failure shape (one tool errored): replace the failed tool's block with `
 
 ## Verification
 
-End-to-end smoke test on llmster (~30-40 min wall):
+End-to-end smoke test on lm-studio (~30-40 min wall):
 
 ```bash
 # Pre-condition (one-time, NOT auto-installed):
@@ -145,13 +145,13 @@ git clone https://github.com/chigkim/Ollama-MMLU-Pro.git ~/eval-tools/Ollama-MML
 (cd ~/eval-tools/Ollama-MMLU-Pro && pip install -r requirements.txt)
 pip install "lm-eval[api]==0.4.11"
 
-# Smoke against the current llmster main:
+# Smoke against the current lm-studio main:
 python3 /Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/scripts/bench/bench_eval_local.py \
   --base-url http://192.168.31.4:1234/v1 \
   --model qwen3.6-35b-a3b-prithiv-aggressive-q6k \
   --api-key lm-studio \
-  --server-label "llmster (LM Studio headless)" \
-  --output /Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/eval-local-llmster.json \
+  --server-label "lm-studio (LM Studio headless)" \
+  --output /Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/eval-local-lm-studio.json \
   -v
 ```
 

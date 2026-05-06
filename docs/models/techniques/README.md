@@ -27,6 +27,12 @@ Filenames carry the category prefix so the type of doc is obvious:
 | [`model-quantization-turboquant.md`](model-quantization-turboquant.md) | Quantisation | TurboQuant KV cache compression (Google ICLR 2026) + JANGTQ weight format — algorithm, MLX implementations (PR #858 + flovflo), JANGTQ-only vmlx requirement. |
 | [`model-architecture-bailing-hybrid.md`](model-architecture-bailing-hybrid.md) | Architecture | InclusionAI's `bailing_hybrid` MoE — 4 MLA + 28 Lightning recurrence layers, the canonical 3-patch deploy recipe, server compatibility matrix. |
 
+Server-specific technique docs (not in this folder, but cross-listed for discovery):
+
+| File | Server | Topic |
+|:--|:--|:--|
+| [`../../servers/lm-studio/prefill-speed-technique.md`](../../servers/lm-studio/prefill-speed-technique.md) | lm-studio | LM Studio's MLX prefill-speed recipe — chunk size 4096–8192 + no per-chunk `mx.eval()`/`mx.clear_cache()` barriers. Single-server scope, lives under [`docs/servers/lm-studio/`](../../servers/lm-studio/). |
+
 ## Conventions
 
 - One file per technique. Filename leads with `model-<category>-` so listing the folder shows the category at a glance.

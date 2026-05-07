@@ -38,7 +38,7 @@ ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo lmstudio-community/gemm
 
 # Load + serve:
 ssh macstudio "python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='off'; p.write_text(json.dumps(d, indent=2))\"; \
-  ~/.lmstudio/bin/lms load 'gemma-4-26b-a4b-it' --gpu max --context-length 65536 --identifier gemma-4-26b-a4b-q8 -y; \
+  ~/.lmstudio/bin/lms load 'gemma-4-26b-a4b-it' --gpu max --context-length 131072 --identifier gemma-4-26b-a4b-q8 -y; \
   python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='high'; p.write_text(json.dumps(d, indent=2))\"; \
   ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 ```

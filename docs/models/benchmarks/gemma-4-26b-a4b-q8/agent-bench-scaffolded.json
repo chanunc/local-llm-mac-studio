@@ -1,0 +1,80 @@
+{
+  "benchmark": "agent_tool_call_scaffolded",
+  "version": "1.0",
+  "timestamp": "2026-05-07T01:09:30.930946Z",
+  "config": {
+    "tool": "opencode",
+    "agent_command": "opencode run --model macstudio/gemma-4-26b-a4b-q8 --format json <prompt>",
+    "model": "macstudio/gemma-4-26b-a4b-q8",
+    "server": "lm-studio :1234",
+    "base_model": "google/gemma-4-26B-A4B-it",
+    "quantizer": "lmstudio-community",
+    "quant": "Q8_0",
+    "context_length": 65536,
+    "notes": "Scaffolded re-bench after the canonical bench prompts hit 0/3 tool fires. RLHF instruct refuses bare prompts ('I am not permitted to guess or generate URLs') but fires cleanly when prompts include explicit 'using webfetch' hint + literal URL."
+  },
+  "scenarios": {
+    "browse_scaffolded": {
+      "prompt": "Browse www.example.com using tool you have",
+      "runs": 3,
+      "wall_seconds": {
+        "median": 2.94,
+        "values": [
+          3.06,
+          2.94,
+          2.92
+        ]
+      },
+      "tool_calls_per_run": [
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch"
+        ]
+      ],
+      "raw_event_files": [
+        "p1_run1.json",
+        "p1_run2.json",
+        "p1_run3.json"
+      ]
+    },
+    "search_scaffolded_explicit_url": {
+      "prompt": "Use webfetch to browse https://news.ycombinator.com/ and tell me the latest topic",
+      "runs": 3,
+      "wall_seconds": {
+        "median": 7.2,
+        "values": [
+          7.2,
+          7.12,
+          7.22
+        ]
+      },
+      "tool_calls_per_run": [
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch"
+        ],
+        [
+          "webfetch"
+        ]
+      ],
+      "raw_event_files": [
+        "p2c_run1.json",
+        "p2c_run2.json",
+        "p2c_run3.json"
+      ]
+    }
+  },
+  "compared_against_canonical": {
+    "browse_canonical_prompt": "Browse www.example.com",
+    "browse_canonical_result": "0/3 tool fires (RLHF refusal)",
+    "search_canonical_prompt": "Browse Hackernews, get the only one latest topic",
+    "search_canonical_result": "0/3 tool fires (URL inference blocked)"
+  }
+}

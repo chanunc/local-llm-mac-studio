@@ -9,7 +9,7 @@ Last verified: 2026-05-07
 | Field | Value |
 |:--|:--|
 | Server | `lm-studio` (LM Studio headless, port 1234) |
-| Model | `qwen3.6-35b-a3b-ud-q6` (unsloth Qwen3.6-35B-A3B-GGUF UD-Q6_K, sparse MoE 35B/3B-active, unsloth Dynamic 2.0 imatrix, 27.30 GiB loaded / 29.31 GB on disk) |
+| Model | `gemma-4-26b-a4b-q8` (lmstudio-community Gemma 4 26B A4B-it Q8_0 GGUF, sparse MoE 26B / 4B-active, Apache 2.0, 25.02 GiB on disk) |
 | Port | `1234` |
 | Auth | None |
 | Client template set | [`configs/clients/lm-studio/`](../configs/clients/lm-studio/) (OpenCode + OpenClaw) |
@@ -18,36 +18,44 @@ Last verified: 2026-05-07
 Launch shape (after Event-4 hygiene):
 
 ```bash
-# unsloth Qwen3.6-35B-A3B-UD-Q6_K.gguf lives in the HF cache at
-# ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/. To make LM Studio see it,
-# hard-link it into ~/.lmstudio/models/ once with `lms import -L`; the modelKey resolves to
-# `qwen3.6-35b-a3b` (prefix-collides with `qwen3.6-35b-a3b-uncensored-aggressive`, so pin
-# the API id with `--identifier qwen3.6-35b-a3b-ud-q6` at load).
+# lmstudio-community/gemma-4-26B-A4B-it-Q8_0.gguf is downloaded via `hf` CLI into LM Studio's
+# tree and registered under modelKey `gemma-4-26b-a4b-it`. Pin the stable API id with
+# `--identifier gemma-4-26b-a4b-q8` at load (the modelKey prefix-collides with
+# `gemma-4-26b-a4b-it-uncensored` (TrevorJS); first-alphabetical wins).
+#
+# IMPORTANT: do NOT use the unsloth/gemma-4-26B-A4B-it-GGUF variant — its chat template
+# raises `Cannot call something that is not a function: got UndefinedValue` (jinja error)
+# on every request with `tools[]`. lmstudio-community's variant has the fixed template.
 #
 # Guardrail must be temporarily set to "off" in ~/.lmstudio/settings.json before initial load
-# (27.3 GiB > 25 % of 96 GB unified memory), then restored to "high" once IDLE.
+# (25.02 GiB > 25 % of 96 GB unified memory), then restored to "high" once IDLE.
 
-# (Once-only) hard-link the HF blob into LM Studio's model tree:
-ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y \
-  ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf"
+# (Once-only) download + import the GGUF into LM Studio's tree:
+ssh macstudio "~/dflash-mlx-env/bin/hf download lmstudio-community/gemma-4-26B-A4B-it-GGUF \
+  gemma-4-26B-A4B-it-Q8_0.gguf --local-dir /tmp/gemma4-lmstudio-community"
+ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo lmstudio-community/gemma-4-26B-A4B-it-GGUF -y \
+  /tmp/gemma4-lmstudio-community/gemma-4-26B-A4B-it-Q8_0.gguf"
 
 # Load + serve:
 ssh macstudio "python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='off'; p.write_text(json.dumps(d, indent=2))\"; \
-  ~/.lmstudio/bin/lms load 'qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-ud-q6 -y; \
+  ~/.lmstudio/bin/lms load 'gemma-4-26b-a4b-it' --gpu max --context-length 65536 --identifier gemma-4-26b-a4b-q8 -y; \
   python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='high'; p.write_text(json.dumps(d, indent=2))\"; \
   ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 ```
 
 Notes:
-- Switched 2026-05-07 from lm-studio + Granite 4.1 30B Q8_0 to lm-studio + unsloth Qwen3.6-35B-A3B-UD-Q6_K. Granite was unloaded via `lms unload --all`; the GGUF stays in the LM Studio registry as `granite-4.1-30b` for fast restart from the Fallbacks table.
-- **Performance** (2026-05-07 OpenCode end-to-end on lm-studio): **browse 4.92 s 🥈 / search 12.08 s** (2/3 turns, think-on, 54–66 reasoning tokens median). API tool-call 4/5 (length cap on agentic-reasoning at harness's 1024-tok budget) + 3/3 multi-turn loop in 7.65 s. Decode 44–71 tok/s across scenarios. Raw data: [`docs/models/benchmarks/qwen36-35b-a3b-unsloth-ud-q6/`](models/benchmarks/qwen36-35b-a3b-unsloth-ud-q6/).
-- **Browse silver** — only TrevorJS Gemma 4 26B A4B Q8 (2.93 s 🥇) is faster across the lab; beats every prior Qwen3.6 entry on lm-studio (prithivMLmods 5.05, HauhauCS Q36 5.14, Granite 6.24, TheTom turbo3 6.47).
-- **Apache 2.0 base** — Qwen3 weights ship under Apache 2.0; unsloth's UD imatrix is a derivative quant (no additional license restrictions).
-- Tool-calling and reasoning parsing are **built into the LM Studio runtime** — no `--tool-call-parser` / `--reasoning-parser` flags needed. `<think>…</think>` is routed to OpenAI `reasoning_content` automatically.
-- **Discoverability gotcha**: `lms ls` does not surface HF-cached blobs — `lms import -L` is required once before the first load. The `lms` CLI in LM Studio 0.3.x has no `rm`/`uninstall`/`remove` subcommand; cleanup is `rm -rf <model-container-dir>`.
-- **Guardrail dance**: LM Studio's resource-guardrail (default `mode: "high"`) blocks loading a 27.3 GiB model on a 96 GB box. The launch snippet flips it `off` for the load and restores `high` immediately after; safer than leaving guardrails disabled.
+- Switched 2026-05-07 from lm-studio + unsloth Qwen3.6-35B-A3B-UD-Q6_K to lm-studio + lmstudio-community Gemma 4 26B A4B-it Q8_0. Both stay in the LM Studio registry; qwen3.6 is restartable from the Fallbacks table.
+- **Performance** (2026-05-07 on lm-studio): API smoke 5/5, multi-turn loop **2.14 s 🏆 tied with TrevorJS**. Decode 70–86 tok/s, prefill 158 K tok/s @ 32 K. **OpenCode end-to-end under scaffolded prompts: browse 2.94 s 🥈 / search 7.20 s** (3/3 webfetch fires, ~7.20 s search includes fetch + final summary). Raw data: [`docs/models/benchmarks/gemma-4-26b-a4b-q8/`](models/benchmarks/gemma-4-26b-a4b-q8/).
+- **Prompt convention required for OpenCode use** — the model has a self-imposed _"I am not permitted to guess or generate URLs"_ rule (verbatim from a refusal). Bare prompts like `Browse www.example.com` hit 0/3 tool fires; scaffolded prompts hit 3/3:
+  - Browse: `Browse <literal url> using tool you have` (the "using tool" hint is load-bearing)
+  - Search/multi-step: `Use webfetch to browse <literal url> and tell me <X>` (URL must be literal — never `Hackernews`, always `https://news.ycombinator.com/`)
+  - Both rules together fire 3/3; either alone hits 1/3 or 0/3.
+- **Apache 2.0** — Google Gemma 4 weights are Apache 2.0; lmstudio-community's quantization is a derivative (no additional license restrictions). Standardised RLHF instruct (the censored counterpart to TrevorJS's EGA-abliterated variant of the same base model).
+- Tool-calling and reasoning parsing are **built into the LM Studio runtime** — no `--tool-call-parser` / `--reasoning-parser` flags needed. Non-thinking model (no `<think>` block).
+- **Discoverability gotcha**: `lms ls` does not surface HF-cached blobs — `lms import -L` is required once before the first load. The `lms` CLI in LM Studio 0.3.x has no `rm`/`uninstall`/`remove` subcommand; cleanup is `rm -rf <model-container-dir>`. Two `gemma-4-26b-a4b-it`-prefix entries exist in `lms ls` (this one + TrevorJS's `-uncensored` suffix); `lms load 'gemma-4-26b-a4b-it' -y` picks first alphabetically (this one).
+- **Guardrail dance**: LM Studio's resource-guardrail (default `mode: "high"`) blocks loading a 25 GiB model on a 96 GB box. The launch snippet flips it `off` for the load and restores `high` immediately after; safer than leaving guardrails disabled.
 - Log: `ssh macstudio "~/.lmstudio/bin/lms log show 2>&1 | tail -40"` (LM Studio doesn't write the standard `/tmp/*.log`).
-- mlx-lm (port 8000) and dflash-mlx (port 8098) remain stopped. Previously deployed mains (Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, TrevorJS Gemma 4 26B A4B, DavidAU Heretic family, prithivMLmods/HauhauCS Aggressive variants) all stay on disk and are restartable from the Fallbacks table below.
+- mlx-lm (port 8000) and dflash-mlx (port 8098) remain stopped. Previously deployed mains (unsloth Qwen3.6-35B-A3B-UD-Q6_K, Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, TrevorJS Gemma 4 26B A4B, DavidAU Heretic family, prithivMLmods Aggressive) all stay on disk and are restartable from the Fallbacks table below.
 
 ## Stopped / Documented Fallbacks
 
@@ -55,6 +63,7 @@ Models are off (unloaded or stopped) until you restart them. Each row's launch s
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
+| Prior production main (2026-05-07 morning → 2026-05-07 evening, unsloth Qwen3.6-35B-A3B UD-Q6_K, sparse MoE 35B/3B-active think-on, browse 4.92 s / search 12.08 s) | `lm-studio` | `qwen3.6-35b-a3b-ud-q6` from `unsloth/Qwen3.6-35B-A3B-GGUF` | On disk and registered in `lms ls` as `qwen3.6-35b-a3b`. Reload via `lms load 'qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-ud-q6 -y` (guardrail off first). Use this when bare imperative prompts matter — Qwen3.6 fires tools without scaffolding. |
 | Prior production main (2026-05-06 → 2026-05-07, IBM Granite 4.1 30B Q8_0, Apache 2.0, dense, browse 6.24 s / search 10.51 s) | `lm-studio` | `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF` | On disk and registered in `lms ls` as `granite-4.1-30b`. Reload via `lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y` (guardrail off first). Stays as the Apache-2.0 fallback when the production main is unloaded for an experiment. |
 | Prior production main (2026-05-06, Gemma 4 31B-it MLX 6-bit on mlx-lm, thinking ON, browse 12.33 s / search 35.55 s) | `mlx-lm` (port 8000) | `lmstudio-community/gemma-4-31B-it-MLX-6bit` | On disk at `~/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit`. Restart via the launch shape preserved in this file's git history (commit `1584c46` had the Cellar libexec `mlx_lm.server` invocation as the active Production block). |
 | Prior lm-studio main (Gemma 4 31B-it MLX 6-bit, thinking OFF, browse **5.11 s 🥇** / search **6.37 s 🏆**) | `lm-studio` | `gemma-4-31b-it-mlx` from `lmstudio-community/gemma-4-31B-it-MLX-6bit` | On disk — reload via `lms load 'gemma-4-31b-it-mlx' --gpu max --context-length 65536 -y`; then `lms server start --bind 0.0.0.0 --cors`. Guardrail may block — set `modelLoadingGuardrails.mode = "off"` before load, restore after. Verify context with `lms ps` (first load sometimes ignores `--context-length`). |

@@ -165,22 +165,28 @@ nohup ~/llama-cpp-turboquant/build/bin/llama-server \
   > /tmp/llama-cpp-turboquant.log 2>&1 &
 
 # lm-studio — CURRENT PRODUCTION MAIN (2026-05-07). LM Studio headless on port 1234.
-# unsloth Qwen3.6-35B-A3B-UD-Q6_K GGUF (sparse MoE 35B/3B-active, Dynamic 2.0 imatrix, 27.30 GiB
-# loaded, browse 4.92 s 🥈 / search 12.08 s, decode 44–71 tok/s, think-on).
-# Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid support. Tool-call + reasoning
-# parsing built into the LM Studio runtime — no parser flags needed.
-# (Once-only) hard-link the HF blob into LM Studio's tree so `lms load` can see it:
-ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y \
-  ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/*/Qwen3.6-35B-A3B-UD-Q6_K.gguf"
-# Guardrail mode:"high" blocks the 27.3 GiB load — set "off" before load, restore after.
-# Pin API id with `--identifier` to avoid prefix collision with other Qwen3.6-35B-A3B variants.
+# lmstudio-community Gemma 4 26B A4B-it Q8_0 GGUF (Apache 2.0, sparse MoE 4B-active, 25 GiB,
+# decode 70–86 tok/s, **API smoke 5/5 multi-turn 2.14 s 🏆 tied with TrevorJS**, OpenCode
+# scaffolded browse 2.94 s 🥈 / search 7.20 s — bare prompts hit 0/3 RLHF refusal, see
+# docs/current.md for the prompt convention).
+# Use lmstudio-community's variant — unsloth/gemma-4-26B-A4B-it-GGUF's chat template fails
+# LM Studio's jinja with "Cannot call something that is not a function: got UndefinedValue".
+# Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid. Tool-call + reasoning parsing
+# built into the LM Studio runtime — no parser flags needed.
+# (Once-only) download + hard-link import:
+ssh macstudio "~/dflash-mlx-env/bin/hf download lmstudio-community/gemma-4-26B-A4B-it-GGUF \
+  gemma-4-26B-A4B-it-Q8_0.gguf --local-dir /tmp/gemma4-lmstudio-community"
+ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo lmstudio-community/gemma-4-26B-A4B-it-GGUF -y \
+  /tmp/gemma4-lmstudio-community/gemma-4-26B-A4B-it-Q8_0.gguf"
+# Guardrail mode:"high" blocks the 25 GiB load — set "off" before load, restore after.
+# Pin API id with `--identifier` to avoid prefix collision with `gemma-4-26b-a4b-it-uncensored`.
 ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); s=json.load(open(f'{h}/.lmstudio/settings.json')); s['modelLoadingGuardrails']['mode']='off'; json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
-ssh macstudio "~/.lmstudio/bin/lms load 'qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier 'qwen3.6-35b-a3b-ud-q6' -y"
+ssh macstudio "~/.lmstudio/bin/lms load 'gemma-4-26b-a4b-it' --gpu max --context-length 65536 --identifier 'gemma-4-26b-a4b-q8' -y"
 ssh macstudio "python3 -c \"import json, os; h=os.path.expanduser('~'); s=json.load(open(f'{h}/.lmstudio/settings.json')); s['modelLoadingGuardrails']['mode']='high'; json.dump(s, open(f'{h}/.lmstudio/settings.json','w'), indent=2)\""
 ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"          # default port 1234
 
-# Prior main (Granite 4.1 30B Q8_0) — fallback, still in lms ls registry.
-# Reload via: lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y
+# Prior main (unsloth Qwen3.6-35B-A3B UD-Q6_K) — fallback, still in lms ls registry.
+# Reload via: lms load 'qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-ud-q6 -y
 
 # mlx-lm server — STOPPED 2026-05-06 (was previous main with Gemma 4 31B-it MLX 6-bit).
 # Restart shape kept here for reference. Direct mlx_lm.server binary, port 8000.
@@ -256,7 +262,7 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | **Stopped 2026-05-06.** Prior main: Gemma 4 31B-it MLX 6-bit on `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`) — 20.4 tok/s, browse 12.33 s (thinking ON). Also: mlx-openai-server YAML multi-model mode with prompt caching + speculative decoding. |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant JANGTQ models — 64.9 tok/s on Qwen3.6-35B-A3B JANGTQ4 |
-| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **Current production main (2026-05-07):** `unsloth/Qwen3.6-35B-A3B-GGUF` UD-Q6_K (sparse MoE 35B/3B-active, Dynamic 2.0 imatrix, 27.30 GiB loaded, decode 44–71 tok/s, **browse 4.92 s 🥈 / search 12.08 s**, think-on). Also on disk: Granite 4.1 30B Q8_0 (Apache 2.0 fallback), Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**), TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods/HauhauCS Aggressive variants. No JANG/JANGTQ/bailing_hybrid. |
+| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **Current production main (2026-05-07):** `lmstudio-community/gemma-4-26B-A4B-it-GGUF` Q8_0 (Apache 2.0, sparse MoE 4B-active, 25.02 GiB, decode 70–86 tok/s, **API multi-turn 2.14 s 🏆 tied with TrevorJS**, OpenCode scaffolded **browse 2.94 s 🥈 / search 7.20 s**; bare prompts fail — needs "use webfetch" hint + literal URL). Also on disk: unsloth Qwen3.6-35B-A3B UD-Q6 (think-on fallback), Granite 4.1 30B Q8 (Apache fallback), Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**), TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 | **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** (provisional, :8099) | ⚡ Fastest agent loop (2026-05-06) | Single GGUF + TurboQuant / RotorQuant / PlanarQuant KV cache | OpenAI | **Two forks installed.** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` (`turbo3` + auto-asymm `q8_0` K + 4-mag LUT + sparse V) is the runaway winner: smoke 4/5, **decode 68 tok/s @ 512 / 44 tok/s @ 32 K**, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 — 2.07× / 2.27× faster than Gemma 4**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` (`iso3` for RotorQuant) is documented but slower (cold prefill regression at 32 K+). See [bench](docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/) |
 
@@ -268,7 +274,7 @@ All servers except `lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` support
 
 Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) (`lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` keep install / runtime / limitations in their single `summary.md`)
 
-Current production main: **lm-studio** serving `qwen3.6-35b-a3b-ud-q6` (unsloth Qwen3.6-35B-A3B-UD-Q6_K GGUF, sparse MoE 35B/3B-active, Dynamic 2.0 imatrix, 27.30 GiB loaded) on port **1234** (deployed 2026-05-07). Built-in tool-call + reasoning parsing (no parser flags); `<think>…</think>` is routed to OpenAI `reasoning_content` automatically. Decode 44–71 tok/s across scenarios; **OpenCode browse 4.92 s 🥈 / search 12.08 s** (2/3 turns, think-on, 54–66 reasoning tokens median). Browse silver — only TrevorJS Gemma 4 26B A4B Q8 (2.93 s 🥇) is faster across the lab. API tool-call 4/5 (length cap on agentic-reasoning at the harness's 1024-tok budget; multi-turn loop is 3/3 in 7.65 s). Loaded via `lms load 'qwen3.6-35b-a3b' --identifier qwen3.6-35b-a3b-ud-q6 --gpu max --context-length 65536` after `lms import -L` to hard-link the HF blob into LM Studio's tree, plus a `modelLoadingGuardrails.mode = "off"` flip during load (27.3 GiB > 25 % of 96 GB). Prior main: IBM Granite 4.1 30B Q8_0 on lm-studio (2026-05-06, browse 6.24 s / search 10.51 s, dense instruct, Apache 2.0) — kept as the Apache-2.0-clean fallback in `lms ls`. All prior mains documented in [`docs/current.md`](docs/current.md) for restart.
+Current production main: **lm-studio** serving `gemma-4-26b-a4b-q8` (lmstudio-community Gemma 4 26B A4B-it Q8_0 GGUF, Apache 2.0, sparse MoE 4B-active, 25.02 GiB on disk) on port **1234** (deployed 2026-05-07). Built-in tool-call + reasoning parsing (no parser flags), non-thinking model. Decode 70–86 tok/s, prefill 158 K tok/s @ 32 K. **API tool-call 5/5 + multi-turn loop 2.14 s 🏆 tied with TrevorJS**; OpenCode end-to-end **browse 2.94 s 🥈 / search 7.20 s** under scaffolded prompts (3/3 webfetch fires). **Bare imperative prompts fail** — the model has a self-imposed _"I am not permitted to guess or generate URLs"_ rule. Use `Browse <literal-url> using tool you have` for browse, `Use webfetch to browse <literal-url> and tell me <X>` for search; both rules together (explicit "use webfetch" hint AND literal URL with no inference) hit 3/3 reliably. Standardised RLHF counterpart to TrevorJS's EGA-abliterated variant of the same `google/gemma-4-26B-A4B-it` base. **Avoid `unsloth/gemma-4-26B-A4B-it-GGUF`** — its chat template fails LM Studio's jinja with `Cannot call something that is not a function`. Loaded via `lms load 'gemma-4-26b-a4b-it' --identifier gemma-4-26b-a4b-q8 --gpu max --context-length 65536` after `lms import -L` + the `modelLoadingGuardrails.mode = "off"` flip (25 GiB > 25 % of 96 GB). Prior main: unsloth Qwen3.6-35B-A3B UD-Q6_K (2026-05-07, browse 4.92 s / search 12.08 s, think-on, MoE 35B/3B-active) — kept as fallback in `lms ls`. All prior mains documented in [`docs/current.md`](docs/current.md) for restart.
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
@@ -281,9 +287,10 @@ All models fit in **96GB unified memory**.
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--------------------------------------|:------------|----------:|--------:|:---------|
-| [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | **Current production main (deployed 2026-05-07)** — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s 🥈, search 12.08 s, think-on |
+| [lmstudio-community Gemma 4 26B A4B-it Q8_0](docs/models/benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) | MoE 26B/4B active | 25 | 65K | **Current production main (deployed 2026-05-07)** — Apache 2.0, 70–86 tok/s, **API multi-turn 2.14 s 🏆**, OpenCode scaffolded browse 2.94 s 🥈 / search 7.20 s; bare prompts fail (needs "use webfetch" + literal URL) |
+| [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
 | [IBM Granite 4.1 30B Q8_0](docs/models/per-model/model-summary-granite-4.1.md) | Dense 30B | 29 | 65K | Prior production main (2026-05-06) — Apache 2.0 fallback, dense instruct, 24.8 tok/s, browse 6.24 s, search 10.51 s |
-| [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥇, 8/10 compliance |
+| [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥇 (no scaffolding needed), 8/10 compliance — uncensored counterpart to current main |
 | [Gemma 4 26B-A4B (4-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
 | [Gemma 4 31B-it (6-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) | Dense 31B | 29 | 64K | Fastest standard agent-loop model on lm-studio (5–6 s browse) |
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |

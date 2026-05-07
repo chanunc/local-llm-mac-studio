@@ -42,7 +42,8 @@ Two complementary harnesses, both reported per model:
 - [lmstudio-community/Hermes-4-70B-MLX-6bit](#results-lmstudio-communityhermes-4-70b-mlx-6bit) — 70 B dense Llama, 6-bit MLX, NousResearch Hermes 4 (lm-studio, no patches) — **5/5 API pass, browse 15.63 s, search 79.98 s (bash-loop)** — *2026-05-05*
 - [heni86/magnum-v4-72b_mlx-4bit](#results-heni86magnum-v4-72b_mlx-4bit) — 72 B dense Qwen2, 4-bit MLX, magnum roleplay fine-tune (lm-studio, no patches) — **⛔ 0/5 API pass — does not call tools** — *2026-05-05*
 - [mradermacher/Midnight-Miqu-70B-v1.5-GGUF](#results-mradermachermidnight-miqu-70b-v15-gguf) — 70 B Mixtral-derived, Q4_K_M GGUF (lm-studio) — **⛔ SKIP — HTTP 400, no system role support** — *2026-05-05*
-- [unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K)](#results-unsloth-qwen36-35b-a3b-ud-q6) — 35 B sparse MoE, 3 B active, Q6_K GGUF with unsloth Dynamic 2.0 imatrix (lm-studio, no patches) — **4/5 API pass (length cap), browse 4.92 s 🥈, search 12.08 s** — *2026-05-07*
+- [unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K)](#results-unsloth-qwen36-35b-a3b-ud-q6) — 35 B sparse MoE, 3 B active, Q6_K GGUF with unsloth Dynamic 2.0 imatrix (lm-studio, no patches) — **4/5 API pass (length cap), browse 4.92 s, search 12.08 s** — *2026-05-07*
+- [lmstudio-community/gemma-4-26B-A4B-it-GGUF (Q8_0)](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — 26 B sparse MoE, 4 B active, standard Q8_0 GGUF, Google Apache 2.0 base (lm-studio, no patches) — **5/5 API pass (multi-turn 2.14 s tied 🏆 with TrevorJS); OpenCode 3/3 under scaffolded prompts: browse 2.94 s 🥈 / search 7.20 s** — *2026-05-07*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -66,6 +67,7 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **lm-studio** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
+| **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | ✅ **5/5** | **0.29 - 0.68 s** | **0.34 s** | **2.14 s** 🏆 (tied with TrevorJS at API layer; OpenCode 3/3 with scaffolded prompts only — see end-to-end table) |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | ✅ **5/5** | 1.11 - 1.61 s | 1.29 - 1.72 s | **4.94 s** |
 | Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
@@ -112,9 +114,10 @@ Rows ordered by browse wall time (ascending).
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **browse + search leader** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
-| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥈** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.05 s 🥉** / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **bare-prompt leader (no scaffolding needed)** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
+| **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | **2.94 s 🥈*** / ~1 s | 7.20 s* / ~5 s | 1/2t · `webfetch` · MoE 4B-act, no-think · *requires scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to browse <literal url> …`); **bare prompts hit 0/3** (RLHF refuses to guess URLs) · same speed-class as TrevorJS under scaffolding · [results](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) |
+| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥉** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
 | **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2/2t · `webfetch` · MoE 35B/3B, think-off · [results](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive) |
 | IBM Granite 4.1 30B Q8_0 | **lm-studio** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2/2t · `webfetch` · dense 30B, no-think, 24.8 tok/s · Apache 2.0 · [per-model](../per-model/model-summary-granite-4.1.md) |
@@ -168,6 +171,7 @@ Rows ordered alphabetically by model name.
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF) | lm-studio | (built-in) | (built-in — `<think>` → `reasoning_content`) | none — LM Studio Qwen3 chat template + reasoning parser handle the unsloth Dynamic 2.0 imatrix natively. Discoverability: `lms ls` does not see HF-cached blobs — use `lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y <path-to-Qwen3.6-35B-A3B-UD-Q6_K.gguf>` to hard-link from `~/.cache/huggingface/hub/` into `~/.lmstudio/models/`. Guardrail override **required** before initial load (27.3 GiB Q6_K GGUF > 25 % of 96 GB unified memory). |
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
+| lmstudio-community Gemma 4 26B A4B-it Q8_0 (standardised) | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio runtime. **Source matters:** `unsloth/gemma-4-26B-A4B-it-GGUF`'s chat template fails LM Studio's jinja with `Cannot call something that is not a function: got UndefinedValue` (HTTP 400 on every request with `tools[]`); use `lmstudio-community/gemma-4-26B-A4B-it-GGUF` instead — same Google base, Apache 2.0, fixed template. Guardrail override required (25 GiB > 25 % of 96 GB). Two `gemma-4-26b-a4b-it`-prefix entries in `lms ls` (vs. TrevorJS's `-uncensored` suffix) — load via prefix relies on alphabetical ordering, or pass full path: `unsloth/gemma-4-26B-A4B-it-GGUF/...gguf` is rejected by `lms load` so prefix is the only route. |
 | HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`; default 4K too small for OpenCode system prompt. Download via `hf_hub_download` (Q6_K file) — `lms get` cannot resolve repo. |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Download via `snapshot_download` — `lms get` cannot resolve repo. |
 | Dolphin Venice 24B MLX-8bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
@@ -1423,4 +1427,99 @@ Per-turn breakdown:
 5. **Reasoning routing is correct.** LM Studio's Qwen3 chat template splits `<think>…</think>` into `reasoning_content` and emits the answer in `content` — confirmed via curl smoke (Q: "What is 2+2?" → 601 chars in `reasoning_content` + `content: "Four"`). OpenCode's `webfetch` tool fires from `content`, not the reasoning block, so the agent loop is unblocked.
 
 6. **API scenario-5 length cap is harness-side.** `bench_api_tool_call.py` hardcodes `max_tokens=1024` for the agentic-reasoning scenario; reasoning-on Qwen3.6 routinely needs 2–4 K. Bumping the cap (or running with `enable_thinking=false`) would convert the API row to 5/5; the multi-turn loop and OpenCode end-to-end already demonstrate clean agentic behaviour with no length truncation under realistic agent budgets.
+
+---
+
+## 🤖 Results: lmstudio-community/gemma-4-26B-A4B-it-GGUF (Q8_0) {#results-lmstudio-community-gemma-4-26b-a4b-it-q8}
+
+**Date:** 2026-05-07
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Loaded with `--gpu max --context-length 65536 --identifier gemma-4-26b-a4b-q8 -y`. No parser flags required (LM Studio Gemma 4 runtime handles tool-call + reasoning natively).
+**Architecture:** Google Gemma 4 sparse MoE — 26 B total, ~4 B active (A4B), Q8_0 GGUF, Apache 2.0 base (`google/gemma-4-26B-A4B-it`). 25.02 GiB loaded.
+**Provenance — read this before re-running**: the user invoked the skill with `unsloth/gemma-4-26B-A4B-it-GGUF`, but **unsloth's GGUF chat template is broken in LM Studio** (jinja error `Cannot call something that is not a function: got UndefinedValue` — HTTP 400 on every request with `tools[]`). Pivoted to `lmstudio-community/gemma-4-26B-A4B-it-GGUF` per the LM Studio error message's own recommendation: same Google base, same Apache 2.0, same Q8_0 quant level (25.02 GiB), but fixed jinja template. Unsloth's Q8_0 file was deleted from disk after the bug was confirmed.
+**Raw JSON:** [`gemma-4-26b-a4b-q8/api-tool-test.json`](gemma-4-26b-a4b-q8/api-tool-test.json), [`gemma-4-26b-a4b-q8/api-server-llmster.json`](gemma-4-26b-a4b-q8/api-server-llmster.json), [`gemma-4-26b-a4b-q8/agent-bench.json`](gemma-4-26b-a4b-q8/agent-bench.json) (canonical bare-prompt run), [`gemma-4-26b-a4b-q8/agent-bench-scaffolded.json`](gemma-4-26b-a4b-q8/agent-bench-scaffolded.json) (re-bench with explicit-tool prompts; 6 raw `opencode run` event-stream files preserved alongside as `p1_run{1,2,3}.json` + `p2c_run{1,2,3}.json`), [`gemma-4-26b-a4b-q8/agent-tool-call-failure-triage.md`](gemma-4-26b-a4b-q8/agent-tool-call-failure-triage.md)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 0.68 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 0.29 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 0.34 | `tool_calls` | `search_web` |
+| 4 | Multi-tool (list + read + write) | 0.34 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 0.43 | `tool_calls` | `run_command` |
+
+**Pass rate: 5/5** at API level. Tool calls are well-formed across every scenario; the multi-turn 3-turn loop completes in **2.14 s total**, **tied with TrevorJS Gemma 4 26B A4B Uncensored Q8_0 for fastest API agentic loop in this doc**. This is exactly the speed parity the user was looking for when they asked for "TrevorJS but standardised".
+
+#### Multi-turn agentic loop (3 turns, total 2.14 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 0.52 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 0.85 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 0.77 | `stop` | — final answer |
+
+### Throughput (`bench_api_server.py`, 1 warmup + 2 runs)
+
+| Context (probe) | TTFT (s) | gen tok/s | prefill tok/s |
+|:--|--:|--:|--:|
+| 540 | 0.18 | 86.1 | 3,041 |
+| 4,125 | 0.09 | 80.0 | 48,015 |
+| 8,220 | 0.10 | 78.5 | 81,259 |
+| 32,796 | 0.21 | 70.6 | 159,060 |
+
+64 K probe deliberately omitted: bench harness sends a prompt at the full context length, leaving zero budget for output → HTTP 400. 32 K is the deepest meaningful measurement. Decode at 86 t/s @ 512 and 70 t/s @ 32 K matches TrevorJS's reported ~87.6 t/s — same architecture, same speed-class.
+
+### OpenCode End-to-End Agent Benchmark (2026-05-07)
+
+Raw JSON: [`gemma-4-26b-a4b-q8/agent-bench.json`](gemma-4-26b-a4b-q8/agent-bench.json) (canonical bare-prompt run), [`gemma-4-26b-a4b-q8/agent-bench-scaffolded.json`](gemma-4-26b-a4b-q8/agent-bench-scaffolded.json) (re-bench with explicit-tool prompts; 6 raw `opencode run` event-stream files preserved alongside).
+
+#### Canonical bench prompts (`bench_agent_tool_call.py` defaults) — 0/3
+
+| Scenario | Wall (median) | LLM (median) | Turns | Tools fired | Output tokens (median) |
+|:---------|:------:|:------:|:-----:|:------|:------:|
+| `Browse www.example.com` | 2.33 s | 1.12 s | **1** | ⛔ `[]` (none) | 41 |
+| `Browse Hackernews, get the only one latest topic` | 2.29 s | 1.0 s | **1** | ⛔ `[]` (none) | 36 |
+
+Verbatim model output for `Browse www.example.com`:
+
+> _"I cannot browse websites directly. However, if you provide a URL, I can use the `webfetch` tool to retriev…"_
+
+…and on a "browse Hackernews" variant the model produced (verbatim):
+
+> _"I cannot use `webfetch` as it requires a specific URL, and I am not permitted to guess or generate URLs unless they are for programming purposes."_
+
+The model **knows** it has `webfetch` (names the tool by string) but **has a self-imposed rule against guessing or generating URLs**. Google's RLHF instruct treats "Browse <url>" as a clarification request rather than an imperative.
+
+#### Scaffolded prompts — 3/3 ✅
+
+Re-running with prompts that respect the model's URL-literal rule + add explicit "use the tool" hint:
+
+| Scenario | Prompt | Wall (median) | Tools fired |
+|:---------|:------|:------:|:------|
+| Browse | `Browse www.example.com using tool you have` | **2.94 s** | 3/3 `webfetch` ✅ |
+| Search | `Use webfetch to browse https://news.ycombinator.com/ and tell me the latest topic` | **7.20 s** | 3/3 `webfetch` ✅ |
+
+Wall variance is tight (browse 2.92–3.06 s p5–p95, search 7.12–7.22 s p5–p95). Final-turn answer for the search scenario was real and current (e.g. _"The latest top topic on Hacker News is 'Valve releases Steam Controller CAD files under Creative Commons license'."_). End-to-end behaviour matches TrevorJS speed-class exactly: same architecture, same quant, same agent-loop wall.
+
+#### Variance pocket: under-specified prompts
+
+`Use webfetch to browse Hackernews and tell me the latest topic` (no explicit URL) fired the tool only **1/3** times — when it didn't fire, the refusal text was again _"I am not permitted to guess or generate URLs"_. So **two scaffolding rules together are necessary, not just one**: explicit "use webfetch" hint AND a literal URL the model doesn't have to infer. Either alone is insufficient.
+
+Full layer-attribution, cross-fork landscape, and the unsloth-vs-lmstudio-community jinja split: [`gemma-4-26b-a4b-q8/agent-tool-call-failure-triage.md`](gemma-4-26b-a4b-q8/agent-tool-call-failure-triage.md).
+
+### Key Findings
+
+1. **API speed-class matches TrevorJS exactly** — 2.14 s multi-turn loop (tied 🏆), 86 t/s decode at 512 ctx, 70 t/s @ 32 K. Architecture and quant determine the ceiling; abliteration doesn't change inference speed.
+
+2. **OpenCode agent loop works under prompt scaffolding** — 3/3 `webfetch` fires at **2.94 s browse / 7.20 s search** when prompts include both an explicit "use webfetch" hint AND a literal URL. **Browse 2.94 s puts this in TrevorJS-speed-class** (TrevorJS bare-prompt: 2.93 s). The earlier "0/3 tools" verdict was prompt-specific, not model-incapable.
+
+3. **Two scaffolding rules required, not one** — bare prompts with no hint hit 0/3. Adding only "use webfetch" but leaving URL inferred (`Hackernews` instead of `https://news.ycombinator.com/`) hits 1/3. Both rules together hit 3/3. The verbatim refusal — _"I am not permitted to guess or generate URLs unless they are for programming purposes"_ — is the model's own self-constraint, not an agent-framework limit.
+
+4. **Abliteration in TrevorJS removes both safety AND "ask-before-acting" priors** — same base model, same Q8 quant, same architecture. The prior that blocks autonomous tool-firing on bare prompts is exactly the prior EGA abliteration removes. This makes abliteration a load-bearing piece of agent-loop ergonomics, not just a refusal-rate intervention.
+
+5. **Provenance: unsloth GGUF is broken in LM Studio** — `unsloth/gemma-4-26B-A4B-it-GGUF`'s chat template raises `Cannot call something that is not a function: got UndefinedValue` (jinja error) on every request with `tools[]`. The error message itself recommends `lmstudio-community`, which is what's benchmarked here. Re-bench unsloth's variant only after they fix the template.
+
+6. **Throughput's 64 K probe failure is harness-side** — `bench_api_server.py` doesn't reserve output budget at the requested context length, so a prompt at exactly `--context-length` returns HTTP 400. Measure 32 K and below; or extend the harness to subtract `max_tokens` from the probe size.
+
+7. **Promoted to lm-studio production main (Event 2)** — given 3/3 reliability + TrevorJS-class wall under scaffolded prompts + Apache 2.0 + standardised RLHF, this is the new lm-studio production primary as of 2026-05-07. OpenCode users should use the scaffolding convention (`Browse <url> using webfetch` / `Use webfetch to fetch <literal url> and …`); bare imperative prompts will fail. See `docs/current.md` for the live launch shape.
 

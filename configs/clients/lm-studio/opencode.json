@@ -8,8 +8,17 @@
         "apiKey": "not-needed"
       },
       "models": {
+        "gemma-4-26b-a4b-q8": {
+          "name": "lmstudio-community Gemma 4 26B A4B-it Q8_0 (lm-studio, current main) — Apache 2.0, MoE 4B-active, 25 GiB, think-off; API multi-turn 2.14 s 🏆 tied with TrevorJS; OpenCode scaffolded browse 2.94 s 🥈 / search 7.20 s — needs `using webfetch` hint + literal URL, bare prompts hit 0/3",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 65536,
+            "output": 4096
+          }
+        },
         "qwen3.6-35b-a3b-ud-q6": {
-          "name": "unsloth Qwen3.6-35B-A3B UD-Q6_K (lm-studio, current main) — sparse MoE 35B/3B-active GGUF with Dynamic 2.0 imatrix, think-on, browse 4.92 s 🥈 / search 12.08 s, 27.30 GiB loaded",
+          "name": "unsloth Qwen3.6-35B-A3B UD-Q6_K (lm-studio, fallback) — sparse MoE 35B/3B-active GGUF with Dynamic 2.0 imatrix, think-on, browse 4.92 s / search 12.08 s, 27.30 GiB loaded; fires tools without scaffolding",
           "tools": true,
           "reasoning": true,
           "limit": {
@@ -74,6 +83,6 @@
       }
     }
   },
-  "model": "macstudio/qwen3.6-35b-a3b-ud-q6",
-  "small_model": "macstudio/qwen3.6-35b-a3b-ud-q6"
+  "model": "macstudio/gemma-4-26b-a4b-q8",
+  "small_model": "macstudio/gemma-4-26b-a4b-q8"
 }

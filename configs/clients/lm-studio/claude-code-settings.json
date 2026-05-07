@@ -1,0 +1,9 @@
+{
+  "_comment": "Claude Code settings for LM Studio headless on Mac Studio (port 1234). LM Studio is OpenAI-compat only — does NOT speak the Anthropic API. Use Claude Code's OpenAI-compat env-var path (CLAUDE_CODE_USE_OPENAI=1), or run claude-code-router for Anthropic-to-OpenAI translation. Default model is gemma-4-26b-a4b-q8 (current production main).",
+  "env": {
+    "OPENAI_BASE_URL": "http://<MAC_STUDIO_IP>:1234/v1",
+    "OPENAI_API_KEY": "not-needed",
+    "CLAUDE_CODE_USE_OPENAI": "1",
+    "CLAUDE_CODE_OPENAI_MODEL": "gemma-4-26b-a4b-q8"
+  }
+}

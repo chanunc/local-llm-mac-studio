@@ -1,0 +1,106 @@
+{
+  "providers": {
+    "macstudio": {
+      "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+      "api": "openai-completions",
+      "apiKey": "not-needed",
+      "compat": {
+        "supportsUsageInStreaming": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "gemma-4-26b-a4b-q8",
+          "name": "Gemma 4 26B A4B Q8 (Main, Apache, fast)",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "qwen3.6-35b-a3b-ud-q6",
+          "name": "Qwen3.6-35B-A3B UD-Q6 (Fallback, think)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "granite-4.1-30b-q8",
+          "name": "Granite 4.1 30B Q8 (Apache fallback)",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "gemma-4-31b-it-mlx",
+          "name": "Gemma 4 31B-it MLX-6bit",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "gemma-4-26b-a4b-it-uncensored",
+          "name": "TrevorJS Gemma 4 26B A4B Q8 (uncen)",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "qwen3.6-35b-a3b-uncensored-aggressive",
+          "name": "prithivMLmods Qwen3.6-35B-A3B Q6_K",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max",
+          "name": "DavidAU Qwen3.6-40B Heretic (think)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "gemma-4-31b-it-mystery-fine-tune-heretic-uncensored-thinking-instruct",
+          "name": "DavidAU Gemma 4 31B Heretic Q6_K",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "huihui-qwen3.5-35b-a3b-abliterated-mlx",
+          "name": "Huihui Qwen3.5-35B-A3B abliterated",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "qwen3.6-27b",
+          "name": "Qwen3.6-27B 6bit MLX",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 32768,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    }
+  }
+}

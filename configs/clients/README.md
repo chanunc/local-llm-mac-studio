@@ -15,7 +15,7 @@ One subdirectory per server. The contents mirror each other so you can swap serv
 | Subdir | Server | Default model | Notes |
 |:--|:--|:--|:--|
 | [`vllm-mlx/`](vllm-mlx/) | `vllm-mlx` | `mlx-community/Ling-2.6-flash-mlx-6bit` | Single-model server. OpenAI + Anthropic. Currently stopped — restart to use. |
-| [`lm-studio/`](lm-studio/) | `lm-studio` (LM Studio headless) | `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, dense, Apache 2.0) | OpenCode + OpenClaw templates. Roster also includes Gemma 4 31B-it 6-bit MLX, TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods/HauhauCS Aggressive variants, Huihui abliterated, Qwen3.6-27B 6-bit. For HauhauCS abliterated GGUFs use the uncen-model submodule's lm-studio templates. |
+| [`lm-studio/`](lm-studio/) | `lm-studio` (LM Studio headless) | `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, dense, Apache 2.0) | Full client template set (OpenCode, OpenClaw, Claude Code via OpenAI-compat, Pi, qwen-code). Roster also includes Gemma 4 31B-it 6-bit MLX, TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods/HauhauCS Aggressive variants, Huihui abliterated, Qwen3.6-27B 6-bit. For HauhauCS abliterated GGUFs use the uncen-model submodule's lm-studio templates. |
 | [`dflash-mlx/`](dflash-mlx/) | `dflash-mlx` (DFlash speculative decoding) | `mlx-community/Qwen3.6-35B-A3B-4bit` + DFlash drafter | Provisional sidecar on port 8098. **OpenCode template only.** Requires three local patches. |
 | [`mlx-openai-server/`](mlx-openai-server/) | `mlx-openai-server` | YAML-driven multi-model | Stable compatible-superset templates; check `/v1/models` for live roster. |
 | [`omlx/`](omlx/) | `oMLX` | Multi-model roster | All four client configs maintained in lockstep — see Sync Policy. |

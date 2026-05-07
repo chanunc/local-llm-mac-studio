@@ -1,0 +1,48 @@
+{
+  "_comment": "qwen-code settings for LM Studio headless on Mac Studio (port 1234, OpenAI-compat only). LM Studio does not enforce auth, but qwen-code expects an envKey — set MACSTUDIO_API_KEY=not-needed. Default model is gemma-4-26b-a4b-q8 (current production main). Install target: ~/.qwen/settings.json.",
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "gemma-4-26b-a4b-q8",
+        "name": "Gemma 4 26B A4B Q8 (Main, Apache, fast)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "qwen3.6-35b-a3b-ud-q6",
+        "name": "Qwen3.6-35B-A3B UD-Q6 (Fallback, think)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "granite-4.1-30b-q8",
+        "name": "Granite 4.1 30B Q8 (Apache fallback)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "gemma-4-31b-it-mlx",
+        "name": "Gemma 4 31B-it MLX-6bit (dense, agent-loop fast)",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "qwen3.6-27b",
+        "name": "Qwen3.6-27B 6bit MLX",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      }
+    ]
+  },
+  "env": {
+    "MACSTUDIO_API_KEY": "not-needed"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "openai"
+    }
+  },
+  "model": {
+    "name": "gemma-4-26b-a4b-q8"
+  }
+}

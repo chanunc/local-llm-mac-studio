@@ -8,8 +8,17 @@
         "apiKey": "not-needed"
       },
       "models": {
+        "qwen3.6-35b-a3b-ud-q6": {
+          "name": "unsloth Qwen3.6-35B-A3B UD-Q6_K (lm-studio, current main) — sparse MoE 35B/3B-active GGUF with Dynamic 2.0 imatrix, think-on, browse 4.92 s 🥈 / search 12.08 s, 27.30 GiB loaded",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 4096
+          }
+        },
         "granite-4.1-30b-q8": {
-          "name": "IBM Granite 4.1 30B Q8_0 (lm-studio, current main) — dense instruct, Apache 2.0, 29 GiB",
+          "name": "IBM Granite 4.1 30B Q8_0 (lm-studio, fallback) — dense instruct, Apache 2.0, 29 GiB, browse 6.24 s / search 10.51 s",
           "tools": true,
           "reasoning": false,
           "limit": {
@@ -65,6 +74,6 @@
       }
     }
   },
-  "model": "macstudio/granite-4.1-30b-q8",
-  "small_model": "macstudio/granite-4.1-30b-q8"
+  "model": "macstudio/qwen3.6-35b-a3b-ud-q6",
+  "small_model": "macstudio/qwen3.6-35b-a3b-ud-q6"
 }

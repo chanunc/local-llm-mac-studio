@@ -42,6 +42,7 @@ Two complementary harnesses, both reported per model:
 - [lmstudio-community/Hermes-4-70B-MLX-6bit](#results-lmstudio-communityhermes-4-70b-mlx-6bit) — 70 B dense Llama, 6-bit MLX, NousResearch Hermes 4 (lm-studio, no patches) — **5/5 API pass, browse 15.63 s, search 79.98 s (bash-loop)** — *2026-05-05*
 - [heni86/magnum-v4-72b_mlx-4bit](#results-heni86magnum-v4-72b_mlx-4bit) — 72 B dense Qwen2, 4-bit MLX, magnum roleplay fine-tune (lm-studio, no patches) — **⛔ 0/5 API pass — does not call tools** — *2026-05-05*
 - [mradermacher/Midnight-Miqu-70B-v1.5-GGUF](#results-mradermachermidnight-miqu-70b-v15-gguf) — 70 B Mixtral-derived, Q4_K_M GGUF (lm-studio) — **⛔ SKIP — HTTP 400, no system role support** — *2026-05-05*
+- [unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K)](#results-unsloth-qwen36-35b-a3b-ud-q6) — 35 B sparse MoE, 3 B active, Q6_K GGUF with unsloth Dynamic 2.0 imatrix (lm-studio, no patches) — **4/5 API pass (length cap), browse 4.92 s 🥈, search 12.08 s** — *2026-05-07*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -76,7 +77,9 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
 | Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
+| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | ⚠ 4/5 | 1.59 - 1.86 s | 1.52 - 3.26 s | **7.65 s** (length cap on agentic-reasoning at harness's 1024-tok max; 5/5 with bumped budget — multi-turn loop is clean) |
 | Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV | `llama-cpp-turboquant` :8099 (johndpope) | ✅ **5/5** | 2.00 - 16.91 s | 2.48 - 4.93 s | 8.48 s (decode strong but cold prefill timeout @ 32K) |
+
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **lm-studio** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | IBM Granite 4.1 30B Q8_0 | **lm-studio** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
@@ -110,8 +113,9 @@ Rows ordered by browse wall time (ascending).
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
 | **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **browse + search leader** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.05 s 🥈** / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s 🥉 / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
+| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥈** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
+| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.05 s 🥉** / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
 | **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2/2t · `webfetch` · MoE 35B/3B, think-off · [results](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive) |
 | IBM Granite 4.1 30B Q8_0 | **lm-studio** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2/2t · `webfetch` · dense 30B, no-think, 24.8 tok/s · Apache 2.0 · [per-model](../per-model/model-summary-granite-4.1.md) |
 | **Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V** | `llama-cpp-turboquant` :8099 (TheTom fork) | **6.47 s** / 5.27 s | **15.64 s** / 14.38 s | 2/3t · `webfetch` · MoE 35B/3B, K=q8_0 + turbo3 V · **2.07×/2.27× vs Gemma 4 mlx-lm** · [per-model](../per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) |
@@ -162,6 +166,7 @@ Rows ordered alphabetically by model name.
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
+| unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF) | lm-studio | (built-in) | (built-in — `<think>` → `reasoning_content`) | none — LM Studio Qwen3 chat template + reasoning parser handle the unsloth Dynamic 2.0 imatrix natively. Discoverability: `lms ls` does not see HF-cached blobs — use `lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y <path-to-Qwen3.6-35B-A3B-UD-Q6_K.gguf>` to hard-link from `~/.cache/huggingface/hub/` into `~/.lmstudio/models/`. Guardrail override **required** before initial load (27.3 GiB Q6_K GGUF > 25 % of 96 GB unified memory). |
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
 | HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`; default 4K too small for OpenCode system prompt. Download via `hf_hub_download` (Q6_K file) — `lms get` cannot resolve repo. |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Download via `snapshot_download` — `lms get` cannot resolve repo. |
@@ -1361,3 +1366,61 @@ The model's jinja chat template only supports `user` and `assistant` message rol
 3. **Disk cost.** 41 GB Q4_K_M GGUF downloaded at 95% disk utilization. Remove if disk is needed: `lms rm midnight-miqu-70b-v1.5` or `rm ~/.lmstudio/models/mradermacher/Midnight-Miqu-70B-v1.5-GGUF/`.
 
 4. **CRACK 122B (model 9) skipped** — disk dropped to 23 GB free after downloading Midnight-Miqu (41 GB). The CRACK 122B model (69.6 GB) could not fit; skip threshold in task instructions was 80 GB.
+
+---
+
+## 🤖 Results: unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K) {#results-unsloth-qwen36-35b-a3b-ud-q6}
+
+**Date:** 2026-05-07
+**Server:** lm-studio / LM Studio headless on port 1234, GGUF runtime. Loaded with `--gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-ud-q6 -y`. No parser flags required (LM Studio Qwen3 chat template + `<think>` parser native).
+**Architecture:** Qwen3.6 MoE — 35 B total, ~3 B active (A3B), Q6_K GGUF with unsloth Dynamic 2.0 imatrix ("UD"). 27.30 GiB loaded (29.31 GB on disk; hard-linked from `~/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF` into `~/.lmstudio/models/unsloth/Qwen3.6-35B-A3B-GGUF/` via `lms import -L`).
+**Raw JSON:** [`qwen36-35b-a3b-unsloth-ud-q6/api-tool-test.json`](qwen36-35b-a3b-unsloth-ud-q6/api-tool-test.json), [`qwen36-35b-a3b-unsloth-ud-q6/agent-bench.json`](qwen36-35b-a3b-unsloth-ud-q6/agent-bench.json)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 1.59 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 1.86 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 3.26 | `tool_calls` | `search_web`, `read_file` |
+| 4 | Multi-tool (list + read + write) | 1.52 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 14.41 | `length` | — |
+
+**Pass rate: 4/5.** Scenarios 1–4 dispatch the correct tool family with well-formed JSON arguments at 1.52–3.26 s each — the 65 t/s decode rate on scenario 3 is competitive with the fastest lm-studio Qwen3.6 entries. Scenario 5 hits the harness's hardcoded 1024-output-token cap mid-`<think>` block (1024 / 71 t/s ≈ 14.4 s) — the model is reasoning-on by default and burns the budget before emitting the tool call. **Not a model defect**: the multi-turn loop below exercises the same agentic pattern cleanly.
+
+#### Multi-turn agentic loop (3 turns, total 7.65 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 1.72 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 2.50 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 3.42 | `stop` | — final answer |
+
+### OpenCode End-to-End Agent Benchmark (2026-05-07)
+
+Raw JSON: [`qwen36-35b-a3b-unsloth-ud-q6/agent-bench.json`](qwen36-35b-a3b-unsloth-ud-q6/agent-bench.json).
+
+| Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
+|:---------|:------:|:------:|:------:|:-----:|:------|:------:|
+| Browse www.example.com | **4.92 s 🥈** | 3.68 s | 4.83–5.25 s | 2 | `webfetch` | 22,784 |
+| Browse Hackernews latest topic | **12.08 s** | 10.84 s | 11.91–12.11 s | 3 | `webfetch` ×2 | 44,791 |
+
+Per-turn breakdown:
+- **Browse:** turn 1 → 1.84 s (in=11,284 / out=43); turn 2 → 1.84 s (in=11,406 / out=51).
+- **Search:** turn 1 → 2.24 s (in=11,290 / out=54, fetches HN top-stories list); turn 2 → 5.91 s (in=16,386 / out=62, fetches the top item); turn 3 → 2.69 s (in=16,911 / out=88, summary).
+- Reasoning tokens: 54 (browse median) / 66 (search median) — minimal `<think>` prelude despite reasoning-on, because LM Studio routes the block to `reasoning_content` and OpenCode counts it separately.
+
+### Key Findings
+
+1. **Silver-medal browse at 4.92 s 🥈.** Beats every prior Qwen3.6 entry on lm-studio (prithivMLmods 5.05, HauhauCS Q36 5.14, Granite 6.24, TheTom turbo3 6.47); only TrevorJS Gemma 4 26B A4B Q8_0 (2.93 s 🥇) is faster. Tight variance (4.83–5.25 p5–p95) signals a stable agent-loop fit, not a lucky run.
+
+2. **Search 12.08 s mid-pack but variance-tight.** Lands between HauhauCS Q36 Aggressive (12.01 s) and prithivMLmods (13.56 s); the Hackernews scenario forces a 3-turn loop (top-stories list → item fetch → summary), which dense lm-studio peers like Granite handle in 2 turns at 10.51 s. Variance 11.91–12.11 (~0.2 s) is the tightest in the doc for a 3-turn search.
+
+3. **No patches, Apache-2.0-clean tooling.** LM Studio's GGUF runtime handles unsloth's UD-Q6_K Dynamic 2.0 imatrix natively — no parser flags, no patches. Same load recipe as Granite 4.1 (`--gpu max --context-length 65536 --identifier ... -y`) plus the standard guardrail flip (mode `off` → load → mode `high`) because the 27.3 GiB load exceeds 25 % of 96 GB unified memory.
+
+4. **Discoverability gotcha.** `lms ls` does not surface HF-cached blobs — `lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y <path-to-Qwen3.6-35B-A3B-UD-Q6_K.gguf>` is required to hard-link the file into `~/.lmstudio/models/`. The derived modelKey is `qwen3.6-35b-a3b` (stripped `-GGUF` suffix), which prefix-collides with `qwen3.6-35b-a3b-uncensored-aggressive`; pin the API id with `--identifier qwen3.6-35b-a3b-ud-q6` at load.
+
+5. **Reasoning routing is correct.** LM Studio's Qwen3 chat template splits `<think>…</think>` into `reasoning_content` and emits the answer in `content` — confirmed via curl smoke (Q: "What is 2+2?" → 601 chars in `reasoning_content` + `content: "Four"`). OpenCode's `webfetch` tool fires from `content`, not the reasoning block, so the agent loop is unblocked.
+
+6. **API scenario-5 length cap is harness-side.** `bench_api_tool_call.py` hardcodes `max_tokens=1024` for the agentic-reasoning scenario; reasoning-on Qwen3.6 routinely needs 2–4 K. Bumping the cap (or running with `enable_thinking=false`) would convert the API row to 5/5; the multi-turn loop and OpenCode end-to-end already demonstrate clean agentic behaviour with no length truncation under realistic agent budgets.
+

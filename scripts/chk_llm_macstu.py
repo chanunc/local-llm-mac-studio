@@ -9,7 +9,7 @@ command for the detected server.
 Usage:
     python3 scripts/chk_llm_macstu.py                              # status report
     python3 scripts/chk_llm_macstu.py --json                       # JSON status
-    python3 scripts/chk_llm_macstu.py --verbose                    # + full model lists
+    python3 scripts/chk_llm_macstu.py --models                     # + full model lists
     python3 scripts/chk_llm_macstu.py --client opencode            # emit resolved opencode.json
     python3 scripts/chk_llm_macstu.py --client all                 # all client configs (JSON)
     python3 scripts/chk_llm_macstu.py --logs                       # emit log-tail command
@@ -294,15 +294,20 @@ def stragglers(probe_data, identified):
 # ---------- Loaded model resolution ----------
 
 def loaded_model_for(entry, probe_data, base_url, api_key):
-    """Return (loaded_model_dict_or_None, available_models_list)."""
+    """Return (loaded_models_list, available_models_list).
+
+    LM Studio can hold multiple models simultaneously — return all of them.
+    Single-shot servers (vllm-mlx, vmlx, dflash-mlx) hold exactly one model
+    in memory; we infer it from /v1/models when the roster has length 1.
+    """
     if not entry["up"]:
-        return None, []
+        return [], []
     avail = fetch_models(base_url, api_key=api_key) or []
-    loaded = None
-    if entry["server"] == "lm-studio" and probe_data["lms_models"]:
-        loaded = probe_data["lms_models"][0]
+    loaded = []
+    if entry["server"] == "lm-studio":
+        loaded = list(probe_data["lms_models"])
     elif entry["server"] in ("vllm-mlx", "vmlx", "dflash-mlx") and len(avail) == 1:
-        loaded = {"id": avail[0], "model": avail[0]}
+        loaded = [{"id": avail[0], "model": avail[0]}]
     return loaded, avail
 
 
@@ -435,21 +440,34 @@ CLIENT_OVERLAY = {
 }
 
 
-def apply_overlay(client_name, resolved_cfg, server_label, loaded_id, loaded_info, available_models):
-    """Apply per-client overlay; for multi-model servers, roster-sync /v1/models too."""
+def apply_overlay(client_name, resolved_cfg, server_label, loaded_models, available_models):
+    """Apply per-client overlay; for multi-model servers, roster-sync /v1/models too.
+
+    `loaded_models` is a list — lm-studio can hold multiple in memory at once.
+    The default-model field only flips when exactly one model is loaded on a
+    single-model-server template; with two or more, every loaded model gets a
+    stub injection but the template's default is preserved.
+    """
     notes = []
     single = server_label in SINGLE_MODEL_SERVERS
     overlay = CLIENT_OVERLAY.get(client_name)
     if not overlay:
         return resolved_cfg, notes
-    if loaded_id:
+    loaded_models = loaded_models or []
+    flip_default = single and len(loaded_models) == 1
+    loaded_ids = set()
+    for loaded_info in loaded_models:
+        loaded_id = loaded_info.get("id")
+        if not loaded_id:
+            continue
+        loaded_ids.add(loaded_id)
         heur = model_stub_heuristics(loaded_id, loaded_info)
-        resolved_cfg, n = overlay(resolved_cfg, loaded_id, heur, single, server_label)
+        resolved_cfg, n = overlay(resolved_cfg, loaded_id, heur, flip_default, server_label)
         notes.extend(n)
     if not single:
         # Multi-model server roster sync: every /v1/models entry that's not in the template
         for mid in available_models or []:
-            if mid == loaded_id:
+            if mid in loaded_ids:
                 continue
             heur = model_stub_heuristics(mid, None)
             resolved_cfg, n = overlay(resolved_cfg, mid, heur, False, server_label)
@@ -476,7 +494,7 @@ def base_url_for(entry, real_ip):
 
 # ---------- Status mode (default) ----------
 
-def render_status_text(host, identified, probe_data, real_ip, verbose):
+def render_status_text(host, identified, probe_data, real_ip, show_models):
     lines = [f"Mac Studio LLM status (via {host})", "=" * 36, ""]
     for entry in identified:
         if not entry["up"]:
@@ -486,20 +504,28 @@ def render_status_text(host, identified, probe_data, real_ip, verbose):
         for p in entry["processes"]:
             lines.append(f"  Process : PID {p['pid']}, RSS {fmt_bytes(p['rss_bytes'])}")
         avail = entry.get("_available", [])
-        loaded = entry.get("_loaded")
-        if loaded:
-            ctx = loaded.get("context")
-            ctx_str = f", {ctx} ctx" if ctx else ""
-            size_str = f", {loaded.get('size_str')}" if loaded.get("size_str") else ""
-            status = f" ({loaded.get('status')})" if loaded.get("status") else ""
-            lines.append(f"  Loaded  : {loaded['id']}{status}{size_str}{ctx_str}")
+        loaded_models = entry.get("_loaded_models", [])
+        if loaded_models:
+            label = "Loaded  " if len(loaded_models) == 1 else f"Loaded ({len(loaded_models)})"
+            indent = "  " if len(loaded_models) == 1 else "    "
+            if len(loaded_models) > 1:
+                lines.append(f"  {label}:")
+            for i, loaded in enumerate(loaded_models):
+                ctx = loaded.get("context")
+                ctx_str = f", {ctx} ctx" if ctx else ""
+                size_str = f", {loaded.get('size_str')}" if loaded.get("size_str") else ""
+                status = f" ({loaded.get('status')})" if loaded.get("status") else ""
+                if len(loaded_models) == 1:
+                    lines.append(f"  {label}: {loaded['id']}{status}{size_str}{ctx_str}")
+                else:
+                    lines.append(f"{indent}- {loaded['id']}{status}{size_str}{ctx_str}")
         if avail:
-            if verbose:
+            if show_models:
                 lines.append(f"  Available ({len(avail)}):")
                 for m in avail:
                     lines.append(f"    - {m}")
             else:
-                lines.append(f"  Available: {len(avail)} model(s) via /v1/models  (use --verbose to list)")
+                lines.append(f"  Available: {len(avail)} model(s) via /v1/models  (use --models to list)")
     strag = probe_data.get("_stragglers", [])
     if strag:
         lines.append("")
@@ -520,7 +546,7 @@ def render_status_json(host, identified, probe_data):
                 "up":               e["up"],
                 "server":           e["server"],
                 "processes":        e["processes"],
-                "loaded_model":     e.get("_loaded"),
+                "loaded_models":    e.get("_loaded_models", []),
                 "available_models": e.get("_available", []),
             } for e in identified
         },
@@ -531,7 +557,7 @@ def render_status_json(host, identified, probe_data):
 # ---------- --client mode ----------
 
 def emit_client(server_dir, client_name, real_ip, api_key, as_json_with_meta=False,
-                server_label=None, loaded_id=None, loaded_info=None, available_models=None):
+                server_label=None, loaded_models=None, available_models=None):
     if client_name == "all":
         out = {}
         all_notes = []
@@ -540,7 +566,7 @@ def emit_client(server_dir, client_name, real_ip, api_key, as_json_with_meta=Fal
             if path.exists():
                 tpl = json.loads(path.read_text())
                 resolved = resolve_template(tpl, real_ip, api_key)
-                resolved, notes = apply_overlay(cname, resolved, server_label, loaded_id, loaded_info, available_models)
+                resolved, notes = apply_overlay(cname, resolved, server_label, loaded_models, available_models)
                 out[cname] = resolved
                 all_notes.extend(notes)
         for note in all_notes:
@@ -564,7 +590,7 @@ def emit_client(server_dir, client_name, real_ip, api_key, as_json_with_meta=Fal
         sys.exit(3)
     tpl = json.loads(path.read_text())
     resolved = resolve_template(tpl, real_ip, api_key)
-    resolved, notes = apply_overlay(client_name, resolved, server_label, loaded_id, loaded_info, available_models)
+    resolved, notes = apply_overlay(client_name, resolved, server_label, loaded_models, available_models)
     for note in notes:
         print(f"Note: {note}", file=sys.stderr)
     if as_json_with_meta:
@@ -590,7 +616,7 @@ def build_all_entry(entry, probe_data, real_ip, host, no_ssh, api_key):
     """Return one --all dict per up server."""
     base = base_url_for(entry, real_ip)
     clients = {}
-    loaded = entry.get("_loaded") or {}
+    loaded_models = entry.get("_loaded_models") or []
     available = entry.get("_available", [])
     if entry["server_dir"]:
         for cname, fname in CLIENT_FILES.items():
@@ -598,7 +624,7 @@ def build_all_entry(entry, probe_data, real_ip, host, no_ssh, api_key):
             if path.exists():
                 tpl = json.loads(path.read_text())
                 resolved = resolve_template(tpl, real_ip, api_key)
-                resolved, notes = apply_overlay(cname, resolved, entry["server"], loaded.get("id"), loaded, available)
+                resolved, notes = apply_overlay(cname, resolved, entry["server"], loaded_models, available)
                 for note in notes:
                     print(f"Note: {note}", file=sys.stderr)
                 clients[cname] = resolved
@@ -609,7 +635,7 @@ def build_all_entry(entry, probe_data, real_ip, host, no_ssh, api_key):
         "server_dir":       entry["server_dir"],
         "base_url":         base,
         "processes":        entry["processes"],
-        "loaded_model":     entry.get("_loaded"),
+        "loaded_models":    loaded_models,
         "available_models": entry.get("_available", []),
         "clients":          clients,
         "logs_command":     logs_command(entry["server"], host, no_ssh),
@@ -632,23 +658,27 @@ def render_all_text(entries):
         for k, v in rows:
             section.append(f"{k.ljust(keylen)} : {v}")
 
-        loaded = entry["loaded_model"]
-        if loaded:
+        loaded_models = entry["loaded_models"]
+        if loaded_models:
             section.append("")
-            section.append("Loaded model")
-            section.append("-" * 12)
-            lrows = [("ID", loaded.get("id"))]
-            if loaded.get("model"):
-                lrows.append(("Name", loaded["model"]))
-            if loaded.get("status"):
-                lrows.append(("Status", loaded["status"]))
-            if loaded.get("size_str"):
-                lrows.append(("Size", loaded["size_str"]))
-            if loaded.get("context") is not None:
-                lrows.append(("Context", str(loaded["context"])))
-            lkeylen = max(len(k) for k, _ in lrows)
-            for k, v in lrows:
-                section.append(f"{k.ljust(lkeylen)} : {v}")
+            heading = "Loaded model" if len(loaded_models) == 1 else f"Loaded models ({len(loaded_models)})"
+            section.append(heading)
+            section.append("-" * len(heading))
+            for i, loaded in enumerate(loaded_models):
+                if i > 0:
+                    section.append("")
+                lrows = [("ID", loaded.get("id"))]
+                if loaded.get("model") and loaded.get("model") != loaded.get("id"):
+                    lrows.append(("Name", loaded["model"]))
+                if loaded.get("status"):
+                    lrows.append(("Status", loaded["status"]))
+                if loaded.get("size_str"):
+                    lrows.append(("Size", loaded["size_str"]))
+                if loaded.get("context") is not None:
+                    lrows.append(("Context", str(loaded["context"])))
+                lkeylen = max(len(k) for k, _ in lrows)
+                for k, v in lrows:
+                    section.append(f"{k.ljust(lkeylen)} : {v}")
 
         section.append("")
         section.append("Logs (copy and run)")
@@ -699,7 +729,7 @@ def main():
     ap.add_argument("--ssh-host", default="macstudio", help="SSH alias (default: macstudio; also try macstudio-ts over Tailscale)")
     ap.add_argument("--no-ssh", action="store_true", help="Run probes locally (use when invoked on the Mac Studio itself)")
     ap.add_argument("--json", action="store_true", help="Emit JSON instead of text")
-    ap.add_argument("--verbose", action="store_true", help="Status mode: list all available models per port")
+    ap.add_argument("--models", action="store_true", help="Status mode: list all available models per port")
     ap.add_argument("--ports", default=None, help="Comma-separated port list (default: 8000,1234,8098)")
     ap.add_argument("--port", type=int, default=None, help="--client/--logs: disambiguate when multiple servers up")
 
@@ -725,8 +755,8 @@ def main():
     for entry in identified:
         if not entry["up"]:
             continue
-        loaded, avail = loaded_model_for(entry, probe_data, base_url_for(entry, real_ip), api_key)
-        entry["_loaded"] = loaded
+        loaded_models, avail = loaded_model_for(entry, probe_data, base_url_for(entry, real_ip), api_key)
+        entry["_loaded_models"] = loaded_models
         entry["_available"] = avail
 
     up_entries = [e for e in identified if e["up"]]
@@ -734,11 +764,10 @@ def main():
     # --- --client mode ---
     if args.client:
         chosen = pick_one_or_die(up_entries, args.port, "--client")
-        loaded = chosen.get("_loaded") or {}
         out = emit_client(
             chosen["server_dir"], args.client, real_ip, api_key,
             as_json_with_meta=args.json, server_label=chosen["server"],
-            loaded_id=loaded.get("id"), loaded_info=loaded,
+            loaded_models=chosen.get("_loaded_models", []),
             available_models=chosen.get("_available", []),
         )
         json.dump(out, sys.stdout, indent=2, ensure_ascii=False)
@@ -772,7 +801,7 @@ def main():
         json.dump(render_status_json(args.ssh_host, identified, probe_data), sys.stdout, indent=2)
         sys.stdout.write("\n")
     else:
-        sys.stdout.write(render_status_text(args.ssh_host, identified, probe_data, real_ip, args.verbose))
+        sys.stdout.write(render_status_text(args.ssh_host, identified, probe_data, real_ip, args.models))
 
     sys.exit(0 if up_entries else 1)
 

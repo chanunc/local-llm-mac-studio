@@ -6,6 +6,7 @@ Practical guide to the tuning surface across the Mac Studio LLM stack. Two ortho
 |:--|:--|
 | [`tuning-by-knob.md`](tuning-by-knob.md) | You know which knob you want to change (`--prefill-step-size`, thinking flag, drafter, quant, etc.) and need to know what it actually does and whether it is worth touching on our hardware. |
 | [`tuning-by-workload.md`](tuning-by-workload.md) | You know what workload you are running (raw chat, single-turn tool call, agent loop) and need to know which knobs dominate that regime. |
+| [`tuning-client-config.md`](tuning-client-config.md) | You are sizing the per-model `contextWindow` / `maxTokens` (OpenClaw) or `limit.context` / `limit.output` (OpenCode) entries in `configs/clients/<server>/`. Covers the Gemma 4 26B-A4B family ceilings (lmstudio-community + TrevorJS uncensored). |
 
 The two files cross-reference; start at whichever side you are on.
 

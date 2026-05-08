@@ -1,0 +1,47 @@
+{
+  "host": "http://192.168.31.4:8188",
+  "width": 1024,
+  "height": 1024,
+  "runs": 3,
+  "prompt": "anime girl in a flower field, soft lighting, vibrant colors, masterpiece, highly detailed",
+  "negative": "blurry, low-quality, noisy, distorted, bad anatomy, deformed hands, extra fingers",
+  "captured_at": "2026-05-08T20:56:40+0100",
+  "variants": [
+    {
+      "label": "distill-4-step",
+      "ckpt": "z-anime-distill-4step-aio-bf16.safetensors",
+      "steps": 4,
+      "cfg": 1.0,
+      "width": 1024,
+      "height": 1024,
+      "runs": 3,
+      "times": [
+        17.78084111213684,
+        17.715984106063843,
+        17.765562057495117
+      ],
+      "mean": 17.7541290918986,
+      "stdev": 0.03390637603661856,
+      "min": 17.715984106063843,
+      "max": 17.78084111213684
+    },
+    {
+      "label": "base-bf16",
+      "ckpt": "z-anime-base-aio-bf16.safetensors",
+      "steps": 28,
+      "cfg": 4.0,
+      "width": 1024,
+      "height": 1024,
+      "runs": 3,
+      "times": [
+        235.19860672950745,
+        235.07010889053345,
+        235.207200050354
+      ],
+      "mean": 235.1586385567983,
+      "stdev": 0.0767892417433426,
+      "min": 235.07010889053345,
+      "max": 235.207200050354
+    }
+  ]
+}

@@ -10,6 +10,13 @@ Operational helpers split by purpose: benchmark drivers, server-package patches,
 | [`patches/`](patches/) | Monkey-patches for installed server packages on the Mac Studio. Re-run after upstream upgrades. |
 | `switch_opencode_config.py` | Local-only helper that swaps OpenCode's config between server templates in `configs/clients/`. |
 | `chk_llm_macstu.py` | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on ports 8000 / 1234 / 8098. |
+| `list_model_to_remove.py` | LLM-free port of the `/list-model-to-remove` skill — interactive Mac Studio model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf. Reuses the skill's `inventory.sh` over SSH. |
+
+## Disk Reclaim
+
+| Script | Purpose |
+|:--|:--|
+| [`list_model_to_remove.py`](list_model_to_remove.py) | Walks every Mac Studio model storage root over SSH (`~/.cache/huggingface/hub/`, `~/.lmstudio/models/` via `lms ls --json`, `~/.omlx/models/`, `~/.cache/hauhau-gguf/`), dedupes hard-linked GGUFs by inode, flags models loaded by a running server, and lets you select rows to delete. Per-root cleanup: `huggingface-cli delete-cache` (with `rm -rf` fallback) for HF, `rm -rf <container-dir>` for LM Studio (no `lms rm` exists), `rm -rf` for oMLX, `rm` for hauhau staging. Supports `--filter <substr>`, `--min-size <GiB>`, `--root {hf,lmstudio,omlx,hauhau,all}`, `--host {macstudio,macstudio-ts}`, `--dry-run` for read-only audit, and `--yes` for non-interactive reclaim. Same behavior contract as the [`/list-model-to-remove`](../../../.claude/skills/list-model-to-remove/SKILL.md) skill but no LLM in the loop. |
 
 ## Status Checks
 
@@ -29,6 +36,7 @@ Useful as the **Event 4 pre-benchmark hygiene** primitive — see [the Sync Poli
 | [`bench/bench_agent_local.py`](bench/bench_agent_local.py) | In-process agent harness via [`gary149/llama-agent`](https://github.com/gary149/llama-agent) — embeds llama.cpp inference + the agent loop in one process (no OpenAI-compatible server in the path). Drives the resident TUI over a PTY with bracketed-paste prompts, runs the same 5 single-call scenarios + 3-turn loop as `bench_api_tool_call.py` against a sandbox at the realpath of `/tmp/bench-llama-agent` (macOS `/tmp` symlink + `--yolo` external-file warning gotcha — see script header). Captures token counts and avg gen tok/s from the agent's `/stats` between turns. Posix-only; uses stdlib `pty`. |
 | [`bench/bench_asr_smoke.py`](bench/bench_asr_smoke.py) | Qwen3-ASR smoke test: loads `Qwen/Qwen3-ASR-1.7B` on MPS, transcribes Qwen's official `asr_en.wav` (URL-fetched), prints language ID + transcript + warm/timed wall times. Pulls model from HF cache on first run (~4.7 GB). Runs out of `~/qwen-asr-env/`. |
 | [`bench/bench_asr_rtf.py`](bench/bench_asr_rtf.py) | Qwen3-ASR RTF benchmark: 1 warm-up + 3 timed passes against the cached `/tmp/asr_en.wav` clip, computes `RTF = audio_seconds / wall_seconds`, writes `/tmp/qwen_asr_rtf.json`. M3 Ultra MPS baseline (2026-05-08): 19.06× RTF on a 15.05 s English clip. |
+| [`bench/bench_zanime_walltime.py`](bench/bench_zanime_walltime.py) | ComfyUI Z-Anime image-gen wall-time benchmark. Drives ComfyUI's `/prompt` HTTP API with an 8-node txt2img workflow, polls `/history/<id>` until completion, captures wall-clock means over N runs (default 5) per variant after one warm-up. Variants: Distill-4-step AIO BF16 (4 steps, CFG 1.0) and Base AIO BF16 (28 steps, CFG 4.0) at 1024×1024 with `euler` / `beta` / shift 3.5. Writes `/tmp/zanime-walltime.json`. |
 
 Save raw output under [`docs/models/benchmarks/<model-slug>/`](../docs/models/benchmarks/) per the [Sync Policy](../CLAUDE.md#sync-policy-read-this-first-when-changing-live-state).
 

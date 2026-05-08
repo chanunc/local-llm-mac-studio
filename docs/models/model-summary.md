@@ -17,6 +17,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
 - [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
 - [Qwen3-ASR Family](#qwen3-asr-family) — 2 variants + forced aligner: **1.7B (active speech-to-text sidecar, MPS, 19.06× RTF on 15 s English clip)**, 0.6B, ForcedAligner-0.6B. Detail at [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)
+- [Z-Image / Z-Anime Family (Image Generation)](#z-image--z-anime-family-image-generation) — 2 variants on disk: **Z-Anime Distill-4-step AIO BF16 (active, 17.75 s @ 1024² M3 Ultra MPS)**, Z-Anime Base AIO BF16 (best-quality reference, 235.16 s @ 28 steps). S3-DiT 6B, Apache-2.0, ComfyUI on port 8188 (web UI only). [bench](benchmarks/z-anime/wall-time-comfyui.md)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -325,6 +326,32 @@ Apache-2.0 speech-to-text family released **2026-01-30**. Two checkpoints + a fo
 Performance on M3 Ultra MPS (1.7B, 15.05 s English clip, 3 warm passes): **avg 0.790 s wall, RTF 19.06×**, peak Python RSS 1.1 GB, model load 3.2 s warm / 42 s cold. ~13 % of Qwen's published H100 RTFx of 147.93 — but a 1-hour clip still transcribes in ~3 min. Streaming + `qwen-asr-serve` daemon are CUDA-only, so on Apple Silicon the interface is the in-process Python API (`Qwen3ASRModel.transcribe(audio=…)`) — see [`docs/servers/qwen-asr/summary.md`](../servers/qwen-asr/summary.md) for the runbook.
 
 **Quantization decision: stay bf16.** The 1.7B model is only 4.7 GB and ASR is quality-sensitive (a wrong logit becomes a transcript word error that compounds into WER). Community 4-bit/8-bit uploads on HF have no published WER baselines.
+
+---
+
+## Z-Image / Z-Anime Family (Image Generation)
+
+Apache-2.0 image-generation family. Tongyi-MAI **Z-Image** is Alibaba's S3-DiT (Single-Stream Diffusion Transformer, 6B params; [arXiv:2511.22699](https://arxiv.org/abs/2511.22699)) with a unified text + visual + image-VAE token stream. **`SeeSee21/Z-Anime`** is a full fine-tune (not a LoRA merge) for anime aesthetics; ships BF16 / FP8 safetensors, GGUF Q8_0 / Q4_K_S, diffusers folder, and AIO single-files (UNet + qwen_3_4b text encoder + ae VAE bundled).
+
+Active deploy: ComfyUI 0.20.1 on port **8188**, web UI only — no OpenAI `/v1/images/generations` shim, no `configs/clients/comfyui/`. Two AIO BF16 variants on disk for the "fast iteration vs best quality" pair. Full runbook: [`docs/servers/comfyui/summary.md`](../servers/comfyui/summary.md).
+
+| Variant | Type | Disk (BF16 AIO) | Steps · CFG | Wall time @ 1024² (MPS) | Use |
+|:--|:--|:--|:--|--:|:--|
+| **`SeeSee21/Z-Anime` Distill-4-step AIO BF16** | S3-DiT 6B, sampler-distilled | 19 GiB | 4 · 1.0 | **17.75 s** (σ 0.03 s) | Fast iteration / interactive |
+| **`SeeSee21/Z-Anime` Base AIO BF16** | S3-DiT 6B, full sampler | 19 GiB | 28 · 4.0 | **235.16 s** (σ 0.08 s) | Best-quality reference |
+| `Tongyi-MAI/Z-Image-Turbo` | Base architecture (not deployed here) | — | 4–8 · 1.0 | — | Reference architecture only |
+
+Wall times measured 2026-05-08 on Mac Studio M3 Ultra, 1 warm-up + 3 timed runs each, sampler `euler` / scheduler `beta` / `ModelSamplingAuraFlow` shift 3.5. Per-step cost is **4.4 s/step at CFG 1.0** and **8.4 s/step at CFG 4.0** — the 1.91× ratio matches CFG > 1's doubled forward pass exactly. Raw JSON: [`benchmarks/z-anime/wall-time-comfyui.json`](benchmarks/z-anime/wall-time-comfyui.json). Full benchmark write-up: [`benchmarks/z-anime/wall-time-comfyui.md`](benchmarks/z-anime/wall-time-comfyui.md).
+
+**Why ComfyUI over MLX or DrawThings:**
+- ComfyUI 0.20.x has first-party Z-Image-Turbo support (Nov 2025), loads AIO files via `CheckpointLoaderSimple` + the Z-Image-specific `ModelSamplingAuraFlow` node — no custom-node patching required for the canonical workflow.
+- [`uqer1244/MLX_z-image`](https://github.com/uqer1244/MLX_z-image) is a 4-bit MLX port of Tongyi's *base* Z-Image only — no Z-Anime weights have been MLX-ported yet. Native MLX would likely beat MPS by 2–3× on M3 Ultra but porting the SeeSee21 fine-tune is a separate research thread.
+- DrawThings on Mac doesn't yet support Z-Image / S3-DiT or the qwen_3_4b text encoder — skip.
+- Alternative ([`OrdinarySF/z-image-inference`](https://github.com/OrdinarySF/z-image-inference) — Gradio + FastAPI MPS) is kept in reserve if ComfyUI stalls; same MPS path, no advantage on M3 Ultra unless the user wants a server endpoint that ComfyUI doesn't expose.
+
+**Quantization decision: stay BF16 AIO.** The model is only 6B; FP8 (10.51 GiB AIO) saves ~9 GiB at noticeable quality cost on a 96 GB box. GGUF Q8_0 (7.22 GiB) and Q4_K_S (4.51 GiB) variants ship in the repo but require the `ComfyUI-GGUF` custom-node pack (`UnetLoaderGGUF` + `CLIPLoaderGGUF`) which isn't installed — they're useful on 12–16 GB consumer boxes, not here.
+
+**Doesn't compete with the chat servers for any port.** Port 8188 is collision-free against 8000 / 1234 / 8098 / 8099. ComfyUI can run alongside any port-8000 LLM with no orchestration changes.
 
 ---
 

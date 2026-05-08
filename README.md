@@ -14,6 +14,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
                                          dflash-mlx (sidecar) :8098
                                          llama-cpp-turboquant (sidecar) :8099
                                          qwen-asr (speech→text, no port — Python API)
+                                         comfyui (image-gen, sidecar) :8188
                                          OpenAI + Anthropic API (+ Ollama for vmlx)
 ```
 
@@ -209,6 +210,18 @@ pkill -f vmlx_engine                                                            
 ~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
 pkill -f dflash-serve                                                            # stop dflash-mlx
 pkill -f 'build/bin/llama-server'                                                # stop llama-cpp-turboquant (matches both forks)
+pkill -f 'comfyui/main.py'                                                       # stop comfyui
+
+# comfyui — image-generation sidecar on port 8188 (NOT 8000/1234/8098/8099, no
+# collision with chat servers). ComfyUI 0.20+ has first-party Z-Image-Turbo nodes;
+# Z-Anime is the SeeSee21 fine-tune (S3-DiT 6B, Apache-2.0). Web UI only — no
+# OpenAI /v1/images/generations shim. --use-pytorch-cross-attention is REQUIRED on
+# Apple Silicon (the default attention backend errors on MPS). Wall time @ 1024²:
+# Distill-4-step 17.75 s (CFG 1.0), Base 28-step 235.16 s (CFG 4.0) — see
+# docs/models/benchmarks/z-anime/wall-time-comfyui.md.
+nohup ~/comfyui/.venv/bin/python ~/comfyui/main.py \
+  --listen 0.0.0.0 --port 8188 --use-pytorch-cross-attention \
+  > /tmp/comfyui.log 2>&1 &
 
 # qwen-asr (speech→text sidecar) — no port-bound daemon. Transcribe in-process via
 # the Python API. Three calls: build venv, smoke, RTF bench.
@@ -230,8 +243,10 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
 curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # lm-studio (port 1234)
 curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            # dflash-mlx (port 8098)
 curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool            # llama-cpp-turboquant (port 8099)
+curl -s http://<MAC_STUDIO_IP>:8188/system_stats | python3 -m json.tool          # comfyui (port 8188; no /v1/models — use /models/checkpoints to list weights)
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
+open http://<MAC_STUDIO_IP>:8188                                                  # comfyui web UI (image gen)
 
 tail -f /tmp/vllm-mlx.log                                                       # vllm-mlx logs
 tail -f /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
@@ -242,6 +257,7 @@ tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          
 tail -f /tmp/dflash-mlx.log                                                     # dflash-mlx logs (per-request DFlash telemetry)
 tail -f /tmp/llama-cpp-thetom.log                                               # llama-cpp-turboquant logs (TheTom fork)
 tail -f /tmp/llama-cpp-turboquant.log                                           # llama-cpp-turboquant logs (johndpope fork)
+tail -f /tmp/comfyui.log                                                        # comfyui logs (port 8188 image gen)
 ```
 
 ### 💬 Quick Test
@@ -278,8 +294,9 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 | **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** (provisional, :8099) | ⚡ Fastest agent loop (2026-05-06) | Single GGUF + TurboQuant / RotorQuant / PlanarQuant KV cache | OpenAI | **Two forks installed.** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` (`turbo3` + auto-asymm `q8_0` K + 4-mag LUT + sparse V) is the runaway winner: smoke 4/5, **decode 68 tok/s @ 512 / 44 tok/s @ 32 K**, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 — 2.07× / 2.27× faster than Gemma 4**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` (`iso3` for RotorQuant) is documented but slower (cold prefill regression at 32 K+). See [bench](docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/) |
 | **[qwen-asr](docs/servers/qwen-asr/summary.md)** (sidecar, no port) | 🟢 19× realtime | Single (`Qwen/Qwen3-ASR-1.7B` bf16) | Python API only | **Speech-to-text sidecar** — `~/qwen-asr-env/` (transformers + MPS). 30 langs + 22 Chinese dialects. RTF 19.06× on 15 s English clip, 0.79 s warm. No `/v1/audio/transcriptions` endpoint (CUDA-only path); call `Qwen3ASRModel.transcribe(audio=…)` directly. See [bench](docs/models/benchmarks/qwen3-asr-1.7b/) |
+| **[comfyui](docs/servers/comfyui/summary.md)** (sidecar, :8188) | 🟢 18 s/img distill | `SeeSee21/Z-Anime` AIO BF16 (Distill-4-step + Base, S3-DiT 6B, Apache-2.0) | Web UI only — ComfyUI `/prompt` JSON, no OpenAI `/v1/images/generations` | **Image-generation sidecar** — `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed). 1024² wall time: Distill-4-step **17.75 s** / Base 28-step **235.16 s**. End-user path is the browser UI at `http://<MAC_STUDIO_IP>:8188`; chat clients can't trigger generations. Deployed 2026-05-08. See [bench](docs/models/benchmarks/z-anime/wall-time-comfyui.md) |
 
-All servers except `lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `qwen-asr`, and `comfyui` support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
@@ -416,6 +433,7 @@ Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 --continuous-batching` (the last flag is mandatory on vmlx 1.5.20+ — without it MLLM/VLM models crash with `Qwen2Tokenizer.stopping_criteria` and `bailing_hybrid` text models crash with `Stream(gpu, 1) not in thread`). [Maintenance](docs/servers/vmlx/maintenance.md)
 - **dflash-mlx** — Standard MLX safetensors only (no JANG/JANGTQ/`bailing_hybrid`/GGUF). PyPI 0.1.0 has no tool-calling — install 0.1.4.1+ from `git+https://github.com/bstnxbt/dflash-mlx.git`. One local patch required after install: [`patch_dflash_mlx_serve.py`](scripts/patches/patch_dflash_mlx_serve.py) (two upstream bugs in `DFlashModelProvider`). The mlx-lm tool-detection trie reset patch was retired 2026-05-08 — fix landed upstream in mlx-lm 0.31.3. Built-in `DRAFT_REGISTRY` does not include Qwen3.6 pairs — always pass `--draft-model` explicitly. OpenAI API only. [Runbook](docs/servers/dflash-mlx/summary.md)
 - **lm-studio** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30)
+- **comfyui** — Image-generation diffusion runtime, not a chat / agent server. No OpenAI `/v1/images/generations` API — clients can't trigger generations programmatically (web UI only at `:8188`). No JANG / JANGTQ / `bailing_hybrid` support (LLM concepts; doesn't apply to S3-DiT diffusion). Default attention backend errors on MPS — always launch with `--use-pytorch-cross-attention`. AIO checkpoint reload between Distill and Base BF16 variants takes ~25 s warm-up each swap (~19 GiB to MPS). Native MLX would beat MPS by an estimated 2–3× but Z-Anime has no MLX upload. [Runbook](docs/servers/comfyui/summary.md)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/per-model/model-summary-nemotron.md#nemotron-server-compatibility)

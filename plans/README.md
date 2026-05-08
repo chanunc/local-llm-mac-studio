@@ -17,10 +17,12 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | Plan | Topic |
 |:--|:--|
 | [`active/plan-bench-eval-local.md`](active/plan-bench-eval-local.md) | MMLU-Pro + TruthfulQA-gen local benchmark driver (`bench_eval_local.py`) |
+| [`active/plan-comfyui-zanime-sidecar.md`](active/plan-comfyui-zanime-sidecar.md) | ComfyUI sidecar (port 8188) for Z-Image / Z-Anime image generation — qwen-asr-style minimal posture, no OpenAI shim |
 | [`active/plan-chk-llm-macstu.md`](active/plan-chk-llm-macstu.md) | `scripts/chk_llm_macstu.py` — Mac Studio LLM server + model status probe with `--client` / `--logs` / `--all` emit modes |
 | [`active/plan-deploy-run-benchmark-model-skill.md`](active/plan-deploy-run-benchmark-model-skill.md) | `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner with disk guard and censored / uncensored branching |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |
 | [`active/plan-list-model-to-remove.md`](active/plan-list-model-to-remove.md) | `/list-model-to-remove` skill — interactive model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf |
+| [`active/plan-list-model-to-remove-python.md`](active/plan-list-model-to-remove-python.md) | `scripts/list_model_to_remove.py` — LLM-free Python port of `/list-model-to-remove`, reuses the skill's `inventory.sh` over SSH |
 | [`active/plan-lm-studio-uncen-benchmark.md`](active/plan-lm-studio-uncen-benchmark.md) | lm-studio uncensored-model benchmark slate |
 | [`active/plan-lobehub-macstudio-setup.md`](active/plan-lobehub-macstudio-setup.md) | LobeHub config against Mac Studio servers |
 | [`active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Deploy Osaurus Qwen3.6-35B-A3B JANGTQ4 as main vmlx server and run OpenCode agent benchmark |

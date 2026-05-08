@@ -45,6 +45,7 @@ Two complementary harnesses, both reported per model:
 - [unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K)](#results-unsloth-qwen36-35b-a3b-ud-q6) — 35 B sparse MoE, 3 B active, Q6_K GGUF with unsloth Dynamic 2.0 imatrix (lm-studio, no patches) — **4/5 API pass (length cap), browse 4.92 s, search 12.08 s** — *2026-05-07*
 - [lmstudio-community/gemma-4-26B-A4B-it-GGUF (Q8_0)](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — 26 B sparse MoE, 4 B active, standard Q8_0 GGUF, Google Apache 2.0 base (lm-studio, no patches) — **5/5 API pass (multi-turn 2.14 s tied 🏆 with TrevorJS); OpenCode 3/3 under scaffolded prompts: browse 2.94 s 🥈 / search 7.20 s** — *2026-05-07*
 - [mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) — 35 B sparse MoE, 3 B active, **uniform 6-bit MLX safetensors** (lm-studio, no patches; same family as unsloth UD-Q6_K GGUF) — **4/5 API pass (length cap), browse 14.88 s, search 20.79 s — 3.0× / 1.7× slower than the GGUF Q6_K sibling on the same server** — *2026-05-08*
+- [mlx-community/gemma-4-26b-a4b-it-4bit on lm-studio](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) — 26 B sparse MoE, 4 B active, **4-bit MLX safetensors** (lm-studio, no patches; same `google/gemma-4-26b-a4b-it` base as the lmstudio-community Q8_0 GGUF main) — **5/5 API pass, browse 3.29 s, search 3.23 s — fires bare prompts 3/3 (no scaffolding); search 2.2× faster than the GGUF Q8_0 sibling**, opposite of the Qwen MLX-vs-GGUF result — *2026-05-08*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -115,8 +116,9 @@ Rows ordered by browse wall time (ascending).
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s 🏆** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **bare-prompt leader (no scaffolding needed)** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
+| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **bare-prompt leader (no scaffolding needed)** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
 | **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | **2.94 s 🥈*** / ~1 s | 7.20 s* / ~5 s | 1/2t · `webfetch` · MoE 4B-act, no-think · *requires scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to browse <literal url> …`); **bare prompts hit 0/3** (RLHF refuses to guess URLs) · same speed-class as TrevorJS under scaffolding · [results](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) |
+| **mlx-community Gemma 4 26B A4B-it 4-bit MLX** | **lm-studio** | **3.29 s** / 2.02 s | **3.23 s 🏆** / 1.95 s | 2/2t · `webfetch` · MoE 4B-act, no-think, **114 tok/s** @ 512 / 77 tok/s @ 32 K · **fires bare prompts 3/3 (no scaffolding needed) — opposite of GGUF Q8_0 sibling**; search **2.2× faster** than its Q8_0 GGUF · 14.6 GiB loaded · [results](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) |
 | **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥉** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
 | **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
@@ -1495,7 +1497,78 @@ Per-turn breakdown:
 
 5. **No production flip.** This run is a comparison data point against the GGUF Q6_K sibling, not a new production candidate. The MLX 6-bit model stays loaded but `docs/current.md` is unchanged. The active lm-studio main remains `gemma-4-26b-a4b-q8` (lmstudio-community Gemma 4 26B A4B-it Q8_0 GGUF) per [`docs/current.md`](../../current.md). To restore the prior main, see the launch shape in `docs/current.md`.
 
-6. **Hypothesis update for the format-vs-runtime question.** Prior reasoning ([`docs/servers/lm-studio/prefill-speed-technique.md`](../../servers/lm-studio/prefill-speed-technique.md)) argued lm-studio's runtime advantage applies to "identical MLX safetensors / GGUF weights" — true for prefill (97 K tok/s here is in the lm-studio class), false for the agent loop. **For Qwen3.6 35B-A3B on lm-studio, GGUF Q6_K is the right choice; the MLX 6-bit container carries a per-turn overhead that the throughput bench misses.** Reproduce with `huggingface_hub.snapshot_download → lms load → bench_agent_tool_call.py` per the recipe above.
+6. **Hypothesis update for the format-vs-runtime question.** Prior reasoning ([`docs/servers/lm-studio/prefill-speed-technique.md`](../../servers/lm-studio/prefill-speed-technique.md)) argued lm-studio's runtime advantage applies to "identical MLX safetensors / GGUF weights" — true for prefill (97 K tok/s here is in the lm-studio class), false for the agent loop. **For Qwen3.6 35B-A3B on lm-studio, GGUF Q6_K is the right choice; the MLX 6-bit container carries a per-turn overhead that the throughput bench misses.** This conclusion does **not** generalise across families — see the [Gemma 4 26B-A4B-it MLX-4bit result below](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) where MLX search is 2.2× *faster* than its GGUF sibling. Reproduce per family with `huggingface_hub.snapshot_download → lms load → bench_agent_tool_call.py` per the recipe above.
+
+---
+
+## 🤖 Results: mlx-community/gemma-4-26b-a4b-it-4bit on lm-studio {#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio}
+
+**Date:** 2026-05-08
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `lms load 'mlx-community/gemma-4-26b-a4b-it' --gpu max --context-length 65536 --identifier gemma-4-26b-a4b-it-mlx-4bit -y`. **No guardrail flip needed** — 14.57 GiB resident is below the 25 % of 96 GB unified memory threshold. No parser flags (LM Studio's MLX runtime auto-detects Gemma 4 tool-call + reasoning).
+**Architecture:** Gemma 4 MoE — 26 B total, ~4 B active (128 experts, top-4 routing), 4-bit MLX safetensors with VL/audio stack. 14.57 GiB loaded (15.64 GB on disk; downloaded via `huggingface_hub.snapshot_download` directly into `~/.lmstudio/models/mlx-community/gemma-4-26b-a4b-it-4bit/` — `lms get` fails to resolve MLX repos through LM Studio's hub catalog).
+**Why this run exists:** companion data point for [`lmstudio-community/gemma-4-26B-A4B-it-GGUF` Q8_0](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — same `google/gemma-4-26b-a4b-it` base, same lm-studio runtime, MLX 4-bit safetensors vs Q8_0 GGUF. Quant levels differ (4-bit MLX ≈ 14.6 GiB vs Q8_0 ≈ 25 GiB) — this is **not** an apples-to-apples quant comparison; it's the most-downloaded MLX option at this base, run as a follow-up to the [Qwen3.6 MLX-vs-GGUF result](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) to test whether "MLX is slower than GGUF on lm-studio" generalises across families.
+**Raw JSON:** [`api-tool-test-llmster.json`](gemma-4-26b-a4b-it-4bit/api-tool-test-llmster.json), [`api-server-llmster.json`](gemma-4-26b-a4b-it-4bit/api-server-llmster.json), [`agent-bench-llmster.json`](gemma-4-26b-a4b-it-4bit/agent-bench-llmster.json)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 0.76 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 0.34 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 0.38 | `tool_calls` | `search_web` |
+| 4 | Multi-tool (list + read + write) | 0.38 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 0.44 | `tool_calls` | `run_command` |
+
+**Pass rate: 5/5.** No-think model, all five scenarios fire the appropriate tool in 0.34–0.76 s. Notably, scenario 5 passes here at 0.44 s while the Qwen3.6 thinking-model siblings hit the 1024-token cap on this scenario — the "agentic reasoning" prompt is fast for no-think models and slow for think-on models. Same shape as the Q8_0 GGUF sibling.
+
+#### Multi-turn agentic loop (3 turns, total 2.05 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 0.57 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 0.75 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 0.73 | `stop` | — final answer |
+
+Edges out the Q8_0 GGUF sibling's 2.14 s 🏆 by 0.09 s — within run-to-run noise, but worth noting as the new lower-bound for this base.
+
+### Throughput (`bench_api_server.py`, 1 warmup + 2 measured runs, median)
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--------|:--------:|:-----------:|:---------------:|
+| 512     | 0.18     | **114.0**   | 3,040           |
+| 4 K     | 0.22     | 106.4       | 18,780          |
+| 8 K     | 0.24     | 98.8        | 34,830          |
+| 32 K    | 0.33     | 76.7        | **99,580**      |
+
+Decode is **1.6× faster** than the Q8_0 GGUF sibling (70–86 tok/s per `docs/current.md`); prefill is **lower** than the GGUF (Q8_0 reportedly 158 K tok/s @ 32 K, MLX 4-bit 99 K). The 4-bit weights → less bandwidth → faster decode tradeoff is the standard MLX 4-bit profile.
+
+### OpenCode End-to-End Agent Benchmark (2026-05-08)
+
+| Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
+|:---------|:------:|:------:|:------:|:-----:|:------|:------:|
+| Browse www.example.com | **3.29 s** | 2.02 s | 3.27–3.39 s | 2 | `webfetch` | 21,743 |
+| Browse Hackernews latest topic | **3.23 s 🏆** | 1.95 s | 3.22–3.24 s | 2 | `webfetch` | 26,625 |
+
+Per-turn breakdown:
+- **Browse:** turn 1 → 1.30 s (in=10,789 / out=55, fetches example.com); turn 2 → 0.75 s (in=10,855 / out=44, summary).
+- **Search:** turn 1 → 1.48 s (in=10,794 / out=23, fetches HN top-stories); turn 2 → 0.46 s (in=15,792 / out=16, summary in 16 tokens).
+
+### Key Findings
+
+1. **No bare-prompt URL refusal — opposite of the Q8_0 GGUF sibling.** The lmstudio-community Q8_0 GGUF version of this exact base ("Browse www.example.com" prompt) hits 0/3 unscaffolded; the harness needed `Browse <url> using tool you have` / `Use webfetch to browse <literal url>` to coax tool-fires out of it. The MLX 4-bit fired webfetch **3/3 on the same bare prompts**. Two non-exclusive hypotheses: (a) `mlx_vlm`'s chat-template path differs subtly from the GGUF's embedded jinja, (b) 4-bit quantisation degraded the URL-refusal RLHF pattern enough to bypass it. Whichever, agent ergonomics are materially better here — no scaffolding needed.
+
+2. **Search 2.2× faster than the GGUF Q8_0 (3.23 s vs 7.20 s).** Same 2-turn webfetch shape; the gap comes from decode rate (114 vs 70–86 tok/s) compressing the per-turn output budget. Browse 3.29 vs 2.94 s is within scaffolding noise (the GGUF run was scaffolded; bare-prompt comparison would favour MLX even harder).
+
+3. **Inverts the Qwen3.6 finding.** [`mlx-community/Qwen3.6-35B-A3B-6bit` on lm-studio](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) showed MLX **3.0× slower** than the Q6_K GGUF sibling. Gemma 4 26B-A4B MLX 4-bit shows the **opposite** — search 2.2× faster than its GGUF Q8_0 sibling. The "MLX is slower than GGUF on lm-studio" generalisation does **not** hold across families.
+
+4. **Why the inversion?** Three plausible factors:
+   - **Architecture-specific dispatch.** Qwen3.6 has hybrid Gated DeltaNet + ViT; Gemma 4 has Gemma4-MoE + ViT/audio. LM Studio's MLX runtime may carry a tool-call/reasoning dispatch path that's slower for Qwen3.6's hybrid attention than for Gemma 4's MoE.
+   - **Think-on vs no-think.** Qwen3.6 was think-on (~57 reasoning tokens/turn); Gemma 4 26B A4B is no-think (0 reasoning tokens). The per-turn overhead I observed in the Qwen run (~4.5 s unaccounted/turn) may scale with reasoning-token budget.
+   - **Quant level.** 6-bit MLX vs Q6_K GGUF (similar bandwidth for Qwen) vs 4-bit MLX vs Q8_0 GGUF (MLX has materially less bandwidth than GGUF for Gemma). The 4-bit decode advantage masks any per-turn dispatch overhead.
+
+5. **Wall–LLM split is OpenCode bootstrap, not inference.** Wall 3.23–3.29 s − LLM 1.95–2.02 s ≈ 1.27 s/turn fixed OpenCode overhead. The model is sub-2-second on these tasks; under a thinner client (raw curl + tool-handler), throughput-bound users would see ~2 s end-to-end.
+
+6. **No production flip.** This run is a comparison data point against the Q8_0 GGUF sibling, not a new production candidate. Active lm-studio main remains `gemma-4-26b-a4b-q8` per [`docs/current.md`](../../current.md). To restore, see the launch shape in `docs/current.md`. **However** — given the search-speed win and bare-prompt ergonomics, this MLX 4-bit is a strong candidate for promotion to active main. Consider a separate flip after broader regression testing (memory + context, multi-tool, vision).
 
 ---
 

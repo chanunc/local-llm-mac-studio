@@ -334,7 +334,7 @@ Three Google Gemma 4 variants currently catalogued in this stack — the **26B-A
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
-| Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
+| Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server / lm-studio (MLX-vs-GGUF data point, 2026-05-08) | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
 | **Gemma 4 31B-it (6-bit)** | Dense 31B text-only | 29 GB | 6-bit MLX | **mlx-lm server (current main 2026-05-06)** | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
 | Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — *failed experiment 2026-05-06* | Dense 31B + MTP `gemma4_assistant` drafter | 58 GB + 839 MB | bf16 | mlx-vlm 0.5.0 (from main) | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
 | **DavidAU Gemma 4 31B Heretic Q6_k** | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | lm-studio | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |

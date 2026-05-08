@@ -88,6 +88,15 @@
             "context": 65536,
             "output": 4096
           }
+        },
+        "gemma-4-26b-a4b-it-mlx-4bit": {
+          "name": "mlx-community Gemma 4 26B A4B-it 4bit MLX (lm-studio, comparison data point vs Q8_0 GGUF) — sparse MoE 26B/4B-active + VL, no-think, 14.6 GiB",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 65536,
+            "output": 4096
+          }
         }
       }
     }

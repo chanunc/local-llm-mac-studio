@@ -200,45 +200,50 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 17, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens count both `reasoning_content` (thinking) and `content` (answer) phases — Gemma 4 always thinks before answering. 512 warm values shown (run 1 was a cold-start: 59.4 tok/s gen / 28 tok/s prefill / 18.7s TTFT).
 
-**Server:** mlx-openai-server v1.7.1 (mlx-lm 0.31.2, mlx-vlm 0.4.4) — only server tested; vllm-mlx has a known reasoning parser bug ([#38855](https://github.com/vllm-project/vllm/issues/38855)) and oMLX lacks the `gemma4` parser.
+**Servers:** (1) mlx-openai-server v1.7.1 (mlx-lm 0.31.2, mlx-vlm 0.4.4), 2026-04-17; raw JSON: [api-server-mlx-openai-server.json](gemma-4-26b-a4b-it-4bit/api-server-mlx-openai-server.json) (if present). vllm-mlx has a known reasoning parser bug ([#38855](https://github.com/vllm-project/vllm/issues/38855)) and oMLX lacks the `gemma4` parser. (2) lm-studio v0.4.12 (MLX runtime, no parser flags), 2026-05-08; raw JSON: [api-server-llmster.json](gemma-4-26b-a4b-it-4bit/api-server-llmster.json).
 
 ### Generation Speed (tok/s)
 
-| Context | mlx-openai-server |
-|:--------|:-----------------:|
-| 512 | **62.5** |
-| 4K | 54.6 |
-| 8K | **60.6** |
-| 32K | 50.6 |
-| 64K | 42.0 |
-| 128K | 27.1 |
+| Context | mlx-openai-server | lm-studio |
+|:--------|:-----------------:|:---------:|
+| 512     | 62.5              | **114.0** 🏆 |
+| 4K      | 54.6              | **106.4** 🏆 |
+| 8K      | 60.6              | **98.8** 🏆 |
+| 32K     | 50.6              | **76.7** 🏆 |
+| 64K     | 42.0              | — |
+| 128K    | 27.1              | — |
 
 ### Prefill Speed (tok/s)
 
-| Context | mlx-openai-server |
-|:--------|:-----------------:|
-| 512 | 1,710 |
-| 4K | 3,117 |
-| 8K | **3,154** |
-| 32K | 2,892 |
-| 64K | 2,542 |
-| 128K | 1,995 |
+| Context | mlx-openai-server | lm-studio |
+|:--------|:-----------------:|:---------:|
+| 512     | 1,710             | **3,040** 🏆 |
+| 4K      | 3,117             | **18,780** 🏆 |
+| 8K      | 3,154             | **34,830** 🏆 |
+| 32K     | 2,892             | **99,580** 🏆 |
+| 64K     | 2,542             | — |
+| 128K    | 1,995             | — |
 
 ### Time to First Token (seconds)
 
-| Context | mlx-openai-server |
-|:--------|:-----------------:|
-| 512 | 0.30 |
-| 4K | 1.32 |
-| 8K | 2.60 |
-| 32K | 11.34 |
-| 64K | 25.78 |
-| 128K | 65.70 |
+| Context | mlx-openai-server | lm-studio |
+|:--------|:-----------------:|:---------:|
+| 512     | 0.30              | **0.18** 🏆 |
+| 4K      | 1.32              | **0.22** 🏆 |
+| 8K      | 2.60              | **0.24** 🏆 |
+| 32K     | 11.34             | **0.33** 🏆 |
+| 64K     | 25.78             | — |
+| 128K    | 65.70             | — |
 
 **Notes:**
 - Gen speed is stable across runs (±0.1 tok/s at 32K–128K) — minimal variance due to MoE routing determinism at temperature 0.0
-- 8K slightly faster than 4K in generation — likely GPU utilization sweet spot for this sliding-window MoE
-- 128K TTFT (65.7s) is dominated by prefill time; generation itself is 27.1 tok/s once started
+- 8K slightly faster than 4K in generation on mlx-openai-server — likely GPU utilization sweet spot for this sliding-window MoE
+- 128K TTFT (65.7s) on mlx-openai-server is dominated by prefill time; generation itself is 27.1 tok/s once started
+
+**lm-studio comparison observations (2026-05-08):**
+- **lm-studio decode is 1.5–1.9× faster** than mlx-openai-server at every shared context (114 vs 62.5 tok/s @ 512; 76.7 vs 50.6 tok/s @ 32 K). Same MLX safetensors, same hardware — gap is the LM Studio MLX runtime's per-token decoder. Same magnitude as the Qwen3.6-35B-A3B-6bit gap on this server pair ([§Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit)).
+- **Prefill scaling is dramatic:** 6× faster at 4 K, 11× faster at 8 K, **34× faster at 32 K** (99,580 vs 2,892 tok/s). The lm-studio prefill kernel pattern observed for Qwen3.6 also applies to Gemma 4.
+- **Unlike Qwen3.6, OpenCode end-to-end is *faster* on this MLX path than on the GGUF Q8_0 sibling** — search 3.23 s vs 7.20 s on the Q8_0 GGUF (2.2× faster). Format-vs-runtime conclusion does not generalise across families. See [`model-benchmark-tool-call.md` § Results: mlx-community/gemma-4-26b-a4b-it-4bit on lm-studio](model-benchmark-tool-call.md#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio).
 
 ---
 

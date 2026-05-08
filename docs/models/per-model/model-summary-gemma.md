@@ -4,7 +4,7 @@ Google's Gemma 4 generation. Four variants currently catalogued in this stack: t
 
 ## Index
 
-- [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` · 15 GB · 50–62 tok/s
+- [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` / `lm-studio` (MLX-vs-GGUF data point, 2026-05-08) · 15 GB · 50–114 tok/s · **OpenCode browse 3.29 s / search 3.23 s on lm-studio (no scaffolding needed, search 2.2× faster than the Q8_0 GGUF sibling)**
 - [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · **mlx-lm server (current main 2026-05-06)** · 29 GB · 20.4 tok/s @ 512, browse 12.33 s (thinking ON) / browse 5.11 s (thinking OFF on lm-studio)
 - [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). On 0.5.0-from-main (2026-05-06): mlx-vlm emitted `delta.tool_calls` only as a final post-loop chunk → opencode hit 300 s wall (0 turns × 3). **On 0.5.0 tagged release (2026-05-08): partial fix** — browse now completes 6 webfetch turns in 300 s (model loops on the same URL but tool_calls do fire mid-conversation); search still 0 turns. API tool harness 5/5 + 12.08 s multi-turn loop (was 22.06 s, **−45 %**). Long-context decode regressed (4K/8K/16K: 13.8→4.5, 12.3→5.0, 10.7→3.7 tok/s — drafter acceptance collapses to 0.06–0.25 at long contexts). See [v0.5.0 tagged release re-test](#v050-tagged-release-re-test-2026-05-08).
 - [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `lm-studio` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
@@ -63,6 +63,46 @@ Prefill peaks at 8K (~3,154 tok/s) — typical for sliding-window models where G
 - **`chat_template_kwargs` ignored:** Bug [#279](https://github.com/cubist38/mlx-openai-server/issues/279) — `enable_thinking: false` has no effect in 1.7.1. Fixed on `main`. Thinking cannot currently be suppressed via API.
 - **vllm-mlx:** Not tested. Bug [#38855](https://github.com/vllm-project/vllm/issues/38855) means reasoning parser strips `<|channel>` markers — not recommended until vllm-mlx picks up the vLLM main fix.
 - **oMLX:** Not tested. The 4-bit MLX port includes `chat_template.jinja` so the tokenizer issue seen with 8-bit variants does not apply here; however, Gemma 4 parsers are not registered in oMLX's parser map.
+
+### Same model on lm-studio (2026-05-08, MLX-vs-GGUF data point)
+
+**lm-studio API id:** `gemma-4-26b-a4b-it-mlx-4bit` (load with `lms load 'mlx-community/gemma-4-26b-a4b-it' --gpu max --context-length 65536 --identifier gemma-4-26b-a4b-it-mlx-4bit -y`; no guardrail flip needed at 14.57 GiB resident < 25 % of 96 GB unified memory). LM Studio's MLX runtime auto-detects Gemma 4 tool-call + reasoning, no parser flags. Download via `huggingface_hub.snapshot_download(repo_id='mlx-community/gemma-4-26b-a4b-it-4bit', local_dir='~/.lmstudio/models/mlx-community/gemma-4-26b-a4b-it-4bit')` — `lms get` does not resolve MLX repos through LM Studio's hub catalog.
+
+**Why this run exists:** companion data point for the [`lmstudio-community/gemma-4-26B-A4B-it-GGUF` Q8_0](../benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) bench — same `google/gemma-4-26b-a4b-it` base, same lm-studio runtime, MLX 4-bit safetensors vs Q8_0 GGUF container. Quant levels differ materially (4-bit ≈ 14.6 GiB vs Q8_0 ≈ 25 GiB) — this is **not** an apples-to-apples quant comparison; it's a runtime/format comparison at each format's most-downloaded MLX quant for this base.
+
+#### Throughput (`bench_api_server.py`, 1 warmup + 2 measured runs, median)
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--------|:--------:|:-----------:|:---------------:|
+| 512     | 0.18     | **114.0**   | 3,040           |
+| 4 K     | 0.22     | 106.4       | 18,780          |
+| 8 K     | 0.24     | 98.8        | 34,830          |
+| 32 K    | 0.33     | 76.7        | **99,580**      |
+
+Decode is **1.6× faster** than the Q8_0 GGUF sibling (`docs/current.md` reports 70–86 tok/s for the GGUF Q8_0); prefill is **lower** than the GGUF (Q8_0 hits 158 K tok/s @ 32 K vs MLX 4-bit's 99 K). 4-bit weights → less bandwidth → faster decode is the expected tradeoff.
+
+#### API smoke (`bench_api_tool_call.py`)
+
+5/5 single-call pass, multi-turn loop **2.05 s** (3 turns: read 0.57 s + write 0.75 s + summary 0.73 s). Edges out the GGUF Q8_0 sibling's 2.14 s 🏆 by 0.09 s — both within run-to-run noise but worth noting that scenario 5 (agentic reasoning) passes here at 0.44 s without hitting any output cap.
+
+#### OpenCode end-to-end (`bench_agent_tool_call.py`)
+
+| Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
+|:---------|:------:|:------:|:------:|:-----:|:------|:------:|
+| Browse www.example.com | **3.29 s** | 2.02 s | 3.27–3.39 s | 2 | `webfetch` | 21,743 |
+| Browse Hackernews latest topic | **3.23 s** | 1.95 s | 3.22–3.24 s | 2 | `webfetch` | 26,625 |
+
+**Key contrast vs the Q8_0 GGUF sibling on the same lm-studio runtime:**
+
+1. **No bare-prompt URL refusal.** The Q8_0 GGUF's documented behaviour (`docs/models/benchmarks/model-benchmark-tool-call.md`) is "bare prompts hit 0/3 — RLHF refuses to guess URLs"; needs scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to fetch <literal url>`) to fire webfetch. The MLX 4-bit fired webfetch **3/3 on identical bare prompts**. Hypotheses: (a) `mlx_vlm` chat template differs subtly from the GGUF's embedded template; (b) 4-bit quantisation degraded the URL-refusal RLHF pattern enough to bypass it. Either way, agent ergonomics on bare prompts are materially better.
+
+2. **Search 2.2× faster than the GGUF.** Browse 3.29 vs 2.94 s (12 % slower) is within scaffolding noise; search 3.23 vs 7.20 s is a real gap — same 2-turn webfetch shape, but the MLX 4-bit decode rate (114 tok/s @ 512) finishes the summary turn faster than the Q8_0's 70–86 tok/s.
+
+3. **Wall–LLM split shows the bottleneck is OpenCode bootstrap, not inference.** LLM time of 1.95–2.02 s under 3.23–3.29 s wall means ~1.27 s/turn is fixed OpenCode overhead. The model itself is sub-2-second on these tasks.
+
+4. **Inverts the Qwen3.6 finding.** [`mlx-community/Qwen3.6-35B-A3B-6bit` on lm-studio](../benchmarks/model-benchmark-tool-call.md#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) showed MLX **3.0× slower** than its GGUF Q6_K sibling under OpenCode. Gemma 4 26B-A4B MLX 4-bit shows the **opposite** — MLX search 2.2× *faster* than its GGUF Q8_0 sibling. The "MLX is slower than GGUF on lm-studio" generalisation from the Qwen run does not hold for this family.
+
+**Raw JSONs:** [`api-tool-test-llmster.json`](../benchmarks/gemma-4-26b-a4b-it-4bit/api-tool-test-llmster.json), [`api-server-llmster.json`](../benchmarks/gemma-4-26b-a4b-it-4bit/api-server-llmster.json), [`agent-bench-llmster.json`](../benchmarks/gemma-4-26b-a4b-it-4bit/agent-bench-llmster.json).
 
 ---
 

@@ -44,7 +44,6 @@ Run on the Mac Studio (`ssh macstudio`) against the live venvs.
 | [`patches/patch_mlx_openai_tool_args.py`](patches/patch_mlx_openai_tool_args.py) | mlx-openai-server stringified tool-call argument fix |
 | [`patches/patch_vmlx_jangtq_mllm_tools.py`](patches/patch_vmlx_jangtq_mllm_tools.py) | vmlx MLLM tool-template and replay fixes |
 | [`patches/patch_dflash_mlx_serve.py`](patches/patch_dflash_mlx_serve.py) | dflash-mlx 0.1.4.1+ `default_model_map` + lazy-load banner fixes |
-| [`patches/patch_mlx_lm_match.py`](patches/patch_mlx_lm_match.py) | mlx-lm tool-detection state machine reset on terminal `s is None` |
 | [`patches/patch_dflash_mlx_host.py`](patches/patch_dflash_mlx_host.py) | dflash-mlx 0.1.0 only — bind 0.0.0.0 (obsoleted by `--host` in 0.1.4.1+) |
 
 Each patch is idempotent. Re-run after `pip install -U <package>`, `brew upgrade <pkg>`, or an MLX Studio DMG update — see the relevant runbook in [`docs/servers/`](../docs/servers/) for exact triggers.

@@ -52,14 +52,13 @@ ssh macstudio "/opt/homebrew/bin/python3.11 -m venv ~/dflash-mlx-env && \
 
 The PyPI release (`pip install dflash-mlx` → 0.1.0) lacks tool-calling support — install from main-branch git instead. Verified working at commit pinned by 0.1.4.1.
 
-**Apply the patches** that `dflash-mlx 0.1.4.1` and `mlx-lm 0.31.3` need:
+**Apply the patch** that `dflash-mlx 0.1.4.1` needs:
 
 ```bash
-ssh macstudio "~/dflash-mlx-env/bin/python ~/setup-llm-macstu/scripts/patches/patch_dflash_mlx_serve.py && \
-  ~/dflash-mlx-env/bin/python ~/setup-llm-macstu/scripts/patches/patch_mlx_lm_match.py"
+ssh macstudio "~/dflash-mlx-env/bin/python ~/setup-llm-macstu/scripts/patches/patch_dflash_mlx_serve.py"
 ```
 
-Both are idempotent. Re-run after `pip install -U dflash-mlx` or `pip install -U mlx-lm`.
+Idempotent. Re-run after `pip install -U dflash-mlx`. (Historical note: an mlx-lm tool-detection trie reset patch — `patch_mlx_lm_match.py` — used to be required here; retired 2026-05-08 because the upstream fix landed in mlx-lm 0.31.3 stock at `mlx_lm/generate.py:992` (`if s is None:`), likely via [PR #1170](https://github.com/ml-explore/mlx-lm/pull/1170).)
 
 **Pre-download the model pair** (~20 GB):
 
@@ -110,7 +109,7 @@ curl -s http://<MAC_STUDIO_IP>:8098/v1/chat/completions \
 
 Returns `finish_reason: "tool_calls"`, `tool_calls[0].function.name: "get_weather"`, `arguments: '{"location": "Paris"}'`. Reasoning blocks (`<think>…</think>`) are routed to `message.reasoning` separately from `message.content` (note: `reasoning`, not `reasoning_content` — mlx-lm naming, differs from lm-studio). Streaming uses `delta.reasoning` and `delta.content` deltas.
 
-**Tool-call detection** is driven by `mlx_lm.generate.match()`. Without the [`patch_mlx_lm_match.py`](../../../scripts/patches/patch_mlx_lm_match.py) fix, multi-call benches crash with `KeyError: None` after the first tool-call match completes — discovered while running Phase 4 of the deploy plan. After the patch, 5/5 single-call scenarios pass and 3-turn multi-turn loops complete cleanly.
+**Tool-call detection** is driven by `mlx_lm.generate.match()`. On older mlx-lm (`< 0.31.3`) multi-call benches crashed with `KeyError: None` after the first tool-call match completed — a local `patch_mlx_lm_match.py` reset the trie. As of mlx-lm **0.31.3 stock** (verified 2026-05-08, `mlx_lm/generate.py:992` reads `if s is None:`), the upstream fix is in place; the patch was retired. 5/5 single-call scenarios + 3-turn multi-turn loops complete cleanly with no local mlx-lm patch.
 
 To **disable thinking** for benches that don't measure reasoning:
 
@@ -182,7 +181,6 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 - [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — end-to-end agent loop
 - [`configs/clients/dflash-mlx/opencode.json`](../../../configs/clients/dflash-mlx/opencode.json) — OpenCode template (provisional, mirrors lm-studio posture)
 - [`scripts/patches/patch_dflash_mlx_serve.py`](../../../scripts/patches/patch_dflash_mlx_serve.py) — dflash-mlx 0.1.4.1 startup + load fixes
-- [`scripts/patches/patch_mlx_lm_match.py`](../../../scripts/patches/patch_mlx_lm_match.py) — mlx-lm tool-detection trie reset
 - [`scripts/patches/patch_dflash_mlx_host.py`](../../../scripts/patches/patch_dflash_mlx_host.py) — only needed for dflash-mlx 0.1.0; obsoleted by `--host` flag in 0.1.4.1+
 - [bstnxbt/dflash-mlx](https://github.com/bstnxbt/dflash-mlx) — upstream PyPI package
 - [z-lab/dflash](https://github.com/z-lab/dflash) — original DFlash research repo

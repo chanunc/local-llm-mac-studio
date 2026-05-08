@@ -58,7 +58,7 @@ ssh macstudio "~/vllm-mlx-env/bin/python3 \
   ~/vllm-mlx-env/lib/python3.12/site-packages/mlx_lm/generate.py"
 ```
 
-Without this: `RuntimeError: There is no Stream(gpu, 1) in current thread` from the worker thread's first `mx.eval`. Idempotent (sentinel comment).
+Without this: `RuntimeError: There is no Stream(gpu, 1) in current thread` from the worker thread's first `mx.eval`. Idempotent (sentinel comment). **Verified still required as of mlx-lm 0.31.3 (2026-05-08 smoke test).** [PR #1090](https://github.com/ml-explore/mlx-lm/pull/1090) added `mx.new_thread_local_stream(...)` API but kept the module-level singleton assignment in `mlx_lm/generate.py`, so the stream object is still created on the main thread at import — worker threads still can't access it. Reproduced with a fresh stock `vllm-mlx serve mlx-community/Ling-2.6-flash-mlx-6bit` against mlx-lm 0.31.3 (no patches): `mlx_lm/generate.py:442 mx.eval([c.state for c in prompt_cache])` raises the same error.
 
 ### Patch 3 — Inline generation on the asyncio loop
 

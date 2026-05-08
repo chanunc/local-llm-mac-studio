@@ -1,0 +1,88 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-05-08T08:52:12.584292+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:8000/v1",
+    "model": "lmstudio-community/gemma-4-31B-it-MLX-6bit",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 1,
+    "contexts": [
+      512,
+      4096,
+      8192,
+      16384
+    ]
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 0.399,
+          "total_s": 2.846,
+          "input_tokens": 543,
+          "output_tokens": 50,
+          "gen_tps": 20.43,
+          "prefill_tps": 1361.9
+        }
+      ],
+      "median_ttft_s": 0.399,
+      "median_gen_tps": 20.43,
+      "median_prefill_tps": 1361.9,
+      "input_tokens": 543,
+      "output_tokens": 50
+    },
+    "4096": {
+      "runs": [
+        {
+          "ttft_s": 0.405,
+          "total_s": 2.887,
+          "input_tokens": 4128,
+          "output_tokens": 50,
+          "gen_tps": 20.15,
+          "prefill_tps": 10180.0
+        }
+      ],
+      "median_ttft_s": 0.405,
+      "median_gen_tps": 20.15,
+      "median_prefill_tps": 10180.0,
+      "input_tokens": 4128,
+      "output_tokens": 50
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 0.419,
+          "total_s": 2.957,
+          "input_tokens": 8223,
+          "output_tokens": 50,
+          "gen_tps": 19.7,
+          "prefill_tps": 19623.5
+        }
+      ],
+      "median_ttft_s": 0.419,
+      "median_gen_tps": 19.7,
+      "median_prefill_tps": 19623.5,
+      "input_tokens": 8223,
+      "output_tokens": 50
+    },
+    "16384": {
+      "runs": [
+        {
+          "ttft_s": 0.45,
+          "total_s": 3.119,
+          "input_tokens": 16416,
+          "output_tokens": 50,
+          "gen_tps": 18.74,
+          "prefill_tps": 36483.8
+        }
+      ],
+      "median_ttft_s": 0.45,
+      "median_gen_tps": 18.74,
+      "median_prefill_tps": 36483.8,
+      "input_tokens": 16416,
+      "output_tokens": 50
+    }
+  }
+}

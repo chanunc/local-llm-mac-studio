@@ -13,7 +13,7 @@ DFlash is orthogonal to weight quantisation (the target can be 4-bit / 6-bit MLX
 | **Server** | `dflash-mlx` (port 8098) — wraps `mlx_lm.server`, runs the verify loop | [`../../servers/dflash-mlx/summary.md`](../../servers/dflash-mlx/summary.md) |
 | **Target** | Standard MLX safetensors (e.g. `mlx-community/Qwen3.6-35B-A3B-4bit`) | HF cache |
 | **Drafter** | Block-diffusion drafter from `z-lab/*` (e.g. `z-lab/Qwen3.6-35B-A3B-DFlash`) | HF cache |
-| **Patches** | Three local patches against `dflash-mlx 0.1.4.1` + `mlx-lm 0.31.3` | [`../../../scripts/patches/`](../../../scripts/patches/) |
+| **Patches** | One local patch against `dflash-mlx 0.1.4.1` (`patch_dflash_mlx_serve.py`); plus `patch_dflash_mlx_host.py` only on 0.1.0. The mlx-lm tool-detection trie reset patch (`patch_mlx_lm_match.py`) was retired 2026-05-08 — `mlx_lm/generate.py:992` now does `if s is None:` in stock 0.31.3 ([likely PR #1170](https://github.com/ml-explore/mlx-lm/pull/1170)). Re-bench 2026-05-08 with the patch retired confirms 5/5 single-call + 5.9 s 3-turn loop; raw: [`qwen36-35b-dflash/api-tool-test-dflash-mlx-lm-v0.31.3.json`](../benchmarks/qwen36-35b-dflash/api-tool-test-dflash-mlx-lm-v0.31.3.json). | [`../../../scripts/patches/`](../../../scripts/patches/) |
 
 ## Cross-fork landscape (2026-04-30)
 

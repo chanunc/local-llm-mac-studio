@@ -12,6 +12,7 @@ Operational runbooks for inference servers on the Mac Studio. Use [`docs/current
 | `vmlx` | [`vmlx/summary.md`](vmlx/summary.md) | JANGTQ / TurboQuant path via MLX Studio bundled Python |
 | `mlx-lm` | [`mlx-lm/summary.md`](mlx-lm/summary.md) | Lightweight single-model development server |
 | `llama-cpp-turboquant` | [`llama-cpp-turboquant/summary.md`](llama-cpp-turboquant/summary.md) | Provisional RotorQuant / TurboQuant / PlanarQuant KV-cache sidecar on port 8099 |
+| `qwen-asr` | [`qwen-asr/summary.md`](qwen-asr/summary.md) | Speech-to-text sidecar (Qwen3-ASR, transformers + MPS, no port-bound daemon) |
 
 ## Maintenance And Patches
 

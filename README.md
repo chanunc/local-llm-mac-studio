@@ -13,6 +13,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
                                          lm-studio (LM Studio) :1234
                                          dflash-mlx (sidecar) :8098
                                          llama-cpp-turboquant (sidecar) :8099
+                                         qwen-asr (speech→text, no port — Python API)
                                          OpenAI + Anthropic API (+ Ollama for vmlx)
 ```
 
@@ -28,6 +29,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 | `docs/servers/` | Server runbooks, setup, maintenance, and JANG patches | `docs/servers/README.md` |
 | `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/README.md` |
 | `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | `docs/clients/README.md` |
+| `docs/server-apis/` | Wire-protocol references (Responses API, etc.) and which servers speak them | `docs/server-apis/README.md` |
 | `configs/` | Ready-to-copy client config templates grouped by server type | `configs/README.md` |
 | `scripts/` | Patch helpers, benchmark drivers, and config-switching utilities | `scripts/README.md` |
 | `plans/` | Research notes and future work, not live runbooks | `plans/README.md` |
@@ -207,6 +209,16 @@ pkill -f vmlx_engine                                                            
 ~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
 pkill -f dflash-serve                                                            # stop dflash-mlx
 pkill -f 'build/bin/llama-server'                                                # stop llama-cpp-turboquant (matches both forks)
+
+# qwen-asr (speech→text sidecar) — no port-bound daemon. Transcribe in-process via
+# the Python API. Three calls: build venv, smoke, RTF bench.
+ssh macstudio "/opt/homebrew/bin/python3.12 -m venv ~/qwen-asr-env && \
+  ~/qwen-asr-env/bin/pip install -U pip wheel && \
+  ~/qwen-asr-env/bin/pip install qwen-asr"
+scp scripts/bench/bench_asr_smoke.py macstudio:/tmp/
+ssh macstudio "~/qwen-asr-env/bin/python /tmp/bench_asr_smoke.py"
+scp scripts/bench/bench_asr_rtf.py macstudio:/tmp/
+ssh macstudio "~/qwen-asr-env/bin/python /tmp/bench_asr_rtf.py"
 ```
 
 ### 🩺 Health Check
@@ -265,6 +277,7 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop | Standard MLX / GGUF | OpenAI | **Current production main (2026-05-07):** `lmstudio-community/gemma-4-26B-A4B-it-GGUF` Q8_0 (Apache 2.0, sparse MoE 4B-active, 25.02 GiB, decode 70–86 tok/s, **API multi-turn 2.14 s 🏆 tied with TrevorJS**, OpenCode scaffolded **browse 2.94 s 🥈 / search 7.20 s**; bare prompts fail — needs "use webfetch" hint + literal URL). Also on disk: unsloth Qwen3.6-35B-A3B UD-Q6 (think-on fallback), Granite 4.1 30B Q8 (Apache fallback), Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**), TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 | **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** (provisional, :8099) | ⚡ Fastest agent loop (2026-05-06) | Single GGUF + TurboQuant / RotorQuant / PlanarQuant KV cache | OpenAI | **Two forks installed.** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` (`turbo3` + auto-asymm `q8_0` K + 4-mag LUT + sparse V) is the runaway winner: smoke 4/5, **decode 68 tok/s @ 512 / 44 tok/s @ 32 K**, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 — 2.07× / 2.27× faster than Gemma 4**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` (`iso3` for RotorQuant) is documented but slower (cold prefill regression at 32 K+). See [bench](docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/) |
+| **[qwen-asr](docs/servers/qwen-asr/summary.md)** (sidecar, no port) | 🟢 19× realtime | Single (`Qwen/Qwen3-ASR-1.7B` bf16) | Python API only | **Speech-to-text sidecar** — `~/qwen-asr-env/` (transformers + MPS). 30 langs + 22 Chinese dialects. RTF 19.06× on 15 s English clip, 0.79 s warm. No `/v1/audio/transcriptions` endpoint (CUDA-only path); call `Qwen3ASRModel.transcribe(audio=…)` directly. See [bench](docs/models/benchmarks/qwen3-asr-1.7b/) |
 
 All servers except `lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·

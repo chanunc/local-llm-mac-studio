@@ -1,0 +1,12 @@
+[smoke] device=mps torch=2.11.0
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files:  50%|█████     | 1/2 [00:37<00:37, 37.51s/it]Fetching 2 files: 100%|██████████| 2/2 [00:37<00:00, 18.76s/it]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.43it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.51it/s]
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[smoke] model loaded in 42.0s
+[smoke] warm pass…
+Setting `pad_token_id` to `eos_token_id`:151645 for open-end generation.
+[smoke] WARM lang='English' t=18.36s text="Hmm. Oh yeah, yeah. He wasn't even that big when I started listening to him, but and his solo music didn't do overly well, but he did very well when he started writing for other people."
+[smoke] timed pass…
+Setting `pad_token_id` to `eos_token_id`:151645 for open-end generation.
+[smoke] TIMED lang='English' t=3.19s text="Hmm. Oh yeah, yeah. He wasn't even that big when I started listening to him, but and his solo music didn't do overly well, but he did very well when he started writing for other people."
+[smoke] DONE load=42.0s warm=18.36s timed=3.19s

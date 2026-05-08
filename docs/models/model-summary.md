@@ -16,6 +16,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 10 variants: 35B-A3B 6-bit / 4-bit / Osaurus JANGTQ4 / **DavidAU Heretic 40B Q6_K IMatrix GGUF (active lm-studio main, 2026-05-03)**, prithivMLmods Aggressive Q6_K GGUF (prior main), HauhauCS Aggressive Q6_K_P (prior main), 27B JANG 4M, 27B 6-bit, HauhauCS Balanced Q8_K_P GGUF, 35B Rust LoRA. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
 - [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
 - [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
+- [Qwen3-ASR Family](#qwen3-asr-family) — 2 variants + forced aligner: **1.7B (active speech-to-text sidecar, MPS, 19.06× RTF on 15 s English clip)**, 0.6B, ForcedAligner-0.6B. Detail at [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -308,6 +309,22 @@ IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. O
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | **Granite 4.1 30B Q8_0 (unsloth GGUF)** | Dense 30B, no MoE | 29 GB | Q8_0 GGUF | **lm-studio (active main 2026-05-05)** | [link](per-model/model-summary-granite-4.1.md) |
+
+---
+
+## Qwen3-ASR Family
+
+Apache-2.0 speech-to-text family released **2026-01-30**. Two checkpoints + a forced aligner; **`Qwen/Qwen3-ASR-1.7B`** is the active variant on this lab. ASR is a separate axis from the chat/agent stack — runs out of `~/qwen-asr-env/` on the transformers + MPS path, no port-bound daemon. Full deployment + benchmark detail at **[`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)**.
+
+| Variant | Type | Disk (bf16) | Quant | Server here | Detail |
+|:--|:--|:--|:--|:--|:--|
+| **`Qwen/Qwen3-ASR-1.7B`** | Speech→text, 30 langs + 22 Chinese dialects | 4.7 GB | bf16 (no quant — see analysis) | `~/qwen-asr-env/` (transformers + MPS) | [link](per-model/model-summary-qwen3-asr.md) |
+| `Qwen/Qwen3-ASR-0.6B` | Speech→text, throughput-leader | 1.2 GB | bf16 | not deployed | [link](per-model/model-summary-qwen3-asr.md#family-overview) |
+| `Qwen/Qwen3-ForcedAligner-0.6B` | Word/char timestamp companion (≤ 5 min) | ~1.2 GB | bf16 | not deployed | [link](per-model/model-summary-qwen3-asr.md#family-overview) |
+
+Performance on M3 Ultra MPS (1.7B, 15.05 s English clip, 3 warm passes): **avg 0.790 s wall, RTF 19.06×**, peak Python RSS 1.1 GB, model load 3.2 s warm / 42 s cold. ~13 % of Qwen's published H100 RTFx of 147.93 — but a 1-hour clip still transcribes in ~3 min. Streaming + `qwen-asr-serve` daemon are CUDA-only, so on Apple Silicon the interface is the in-process Python API (`Qwen3ASRModel.transcribe(audio=…)`) — see [`docs/servers/qwen-asr/summary.md`](../servers/qwen-asr/summary.md) for the runbook.
+
+**Quantization decision: stay bf16.** The 1.7B model is only 4.7 GB and ASR is quality-sensitive (a wrong logit becomes a transcript word error that compounds into WER). Community 4-bit/8-bit uploads on HF have no published WER baselines.
 
 ---
 

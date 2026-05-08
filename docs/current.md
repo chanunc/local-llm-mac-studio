@@ -57,6 +57,12 @@ Notes:
 - Log: `ssh macstudio "~/.lmstudio/bin/lms log show 2>&1 | tail -40"` (LM Studio doesn't write the standard `/tmp/*.log`).
 - mlx-lm (port 8000) and dflash-mlx (port 8098) remain stopped. Previously deployed mains (unsloth Qwen3.6-35B-A3B-UD-Q6_K, Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, TrevorJS Gemma 4 26B A4B, DavidAU Heretic family, prithivMLmods Aggressive) all stay on disk and are restartable from the Fallbacks table below.
 
+## Active Sidecars (no port-bound daemon)
+
+| Use case | Path | Model | Notes |
+|:--|:--|:--|:--|
+| Speech-to-text | `~/qwen-asr-env/` (Python API, transformers + MPS) | `Qwen/Qwen3-ASR-1.7B` (bf16, 4.7 GB) | Deployed 2026-05-08. RTF 19.06× on 15 s English clip, 0.79 s avg. No `/v1/audio/transcriptions` endpoint — call `Qwen3ASRModel.transcribe(audio=…)` from a Python script. Doesn't compete with port 8000 / 1234 / 8098 / 8099. Runbook: [`docs/servers/qwen-asr/summary.md`](servers/qwen-asr/summary.md). |
+
 ## Stopped / Documented Fallbacks
 
 Models are off (unloaded or stopped) until you restart them. Each row's launch shape is in its server runbook.

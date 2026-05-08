@@ -26,6 +26,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md) | Nemotron family (Nano 30B, Super 120B, Cascade-2 30B) + cross-cutting server compatibility note. |
 | [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md) | Gemma 4 family (26B-A4B 4-bit MoE multimodal, 31B-it 6-bit dense text-only). |
 | [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md) | IBM Granite 4.1 30B Q8_0 GGUF — active lm-studio main (2026-05-05), Apache 2.0, 24.8 tok/s. |
+| [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md) | Qwen3-ASR family (1.7B / 0.6B / ForcedAligner-0.6B) — speech-to-text on M3 Ultra MPS, 19.06× RTF on 1.7B. |
 
 ## Benchmarks
 

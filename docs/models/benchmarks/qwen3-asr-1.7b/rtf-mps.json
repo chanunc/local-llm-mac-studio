@@ -1,0 +1,19 @@
+{
+  "model": "Qwen/Qwen3-ASR-1.7B",
+  "device": "mps",
+  "torch": "2.11.0",
+  "clip": "/tmp/asr_en.wav",
+  "audio_seconds": 15.051,
+  "load_seconds": 3.16,
+  "passes_seconds": [
+    0.79,
+    0.788,
+    0.791
+  ],
+  "avg_seconds": 0.79,
+  "rtf_min": 19.03,
+  "rtf_max": 19.1,
+  "rtf_avg": 19.06,
+  "peak_rss_gb": 1.1,
+  "transcript": "Hmm. Oh yeah, yeah. He wasn't even that big when I started listening to him, but and his solo music didn't do overly well, but he did very well when he started writing for other people."
+}

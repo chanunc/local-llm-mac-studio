@@ -249,42 +249,44 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 **Method:** Streaming SSE `/v1/chat/completions`, 150 max tokens, temperature 0.0, 3 runs each. Generation tokens count both `reasoning_content` (thinking) and `content` (answer) phases — Qwen3.6 always thinks before answering. Warm values shown (run 1 to run 3 differ only in TTFT for ctx=512: 0.58s cold vs 0.34s warm; gen tok/s identical to ±0.3 across all runs).
 
-**Server:** mlx-openai-server v1.7.1 (`model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`). Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../servers/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml). Raw JSON: [api-server-mlx-openai-server.json](qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json).
+**Servers:** (1) mlx-openai-server v1.7.1 — `model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072`; reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../servers/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml); raw JSON: [api-server-mlx-openai-server.json](qwen36-35b-a3b-6bit/api-server-mlx-openai-server.json) (2026-04-18). (2) lm-studio v0.4.12 — LM Studio MLX runtime, no parser flags, loaded with `lms load 'mlx-community/qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-mlx-6bit -y`; raw JSON: [api-server-llmster.json](qwen36-35b-a3b-6bit/api-server-llmster.json) (2026-05-08, 50 max-tokens cap, 1 warmup + 2 measured).
 
-> Why mlx-openai-server only: `oMLX` has multiple open Qwen3.6 issues ([#812](https://github.com/jundot/omlx/issues/812), [#819](https://github.com/jundot/omlx/issues/819), [#827](https://github.com/jundot/omlx/issues/827), [#841](https://github.com/jundot/omlx/issues/841)); `vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only alternative that exposes MTP through API but inherits the upstream `mlx-lm` hybrid-cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)). Not run here.
+> Why not other servers: `oMLX` has multiple open Qwen3.6 issues ([#812](https://github.com/jundot/omlx/issues/812), [#819](https://github.com/jundot/omlx/issues/819), [#827](https://github.com/jundot/omlx/issues/827), [#841](https://github.com/jundot/omlx/issues/841)); `vllm-mlx` post-PR [#278](https://github.com/waybarrios/vllm-mlx/pull/278) is the only alternative that exposes MTP through API but inherits the upstream `mlx-lm` hybrid-cache bug ([#1162](https://github.com/ml-explore/mlx-lm/issues/1162)).
 
 ### Generation Speed (tok/s)
 
-| Context | mlx-openai-server |
-|:--------|:-----------------:|
-| 512 | **52.5** |
-| 4K | **53.0** |
-| 8K | 51.3 |
-| 32K | 46.3 |
-| 64K | 40.3 |
-| 128K | 35.6 |
+| Context | mlx-openai-server | lm-studio |
+|:--------|:-----------------:|:---------:|
+| 512     | 52.5              | **89.7** 🏆 |
+| 4K      | 53.0              | **87.7** 🏆 |
+| 8K      | 51.3              | **86.0** 🏆 |
+| 32K     | 46.3              | **76.1** 🏆 |
+| 64K     | 40.3              | — |
+| 128K    | 35.6              | — |
 
 ### Prefill Speed (tok/s)
 
-| Context | mlx-openai-server |
-|:--------|:-----------------:|
-| 512 | 1,401 |
-| 4K | **2,237** |
-| 8K | 2,197 |
-| 32K | 1,798 |
-| 64K | 1,408 |
-| 128K | 927 |
+| Context | mlx-openai-server | lm-studio |
+|:--------|:-----------------:|:---------:|
+| 512     | 1,401             | 2,610     |
+| 4K      | 2,237             | **18,820** 🏆 |
+| 8K      | 2,197             | **34,800** 🏆 |
+| 32K     | 1,798             | **96,860** 🏆 |
+| 64K     | 1,408             | — |
+| 128K    | 927               | — |
 
 ### Time to First Token (seconds)
 
-| Context | mlx-openai-server |
-|:--------|:-----------------:|
-| 512 | 0.34 |
-| 4K | 1.64 |
-| 8K | 3.32 |
-| 32K | 16.22 |
-| 64K | 41.40 |
-| 128K | 125.73 |
+| Context | mlx-openai-server | lm-studio |
+|:--------|:-----------------:|:---------:|
+| 512     | 0.34              | **0.21** 🏆 |
+| 4K      | 1.64              | **0.22** 🏆 |
+| 8K      | 3.32              | **0.24** 🏆 |
+| 32K     | 16.22             | **0.34** 🏆 |
+| 64K     | 41.40             | — |
+| 128K    | 125.73            | — |
+
+(lm-studio rows missing 64K/128K because the server was loaded with `--context-length 65536` and the probe at 65536 itself returns HTTP 400 — re-probe with `--context-length 131072` if you need the long-tail; the 32 K row is already 53 × faster TTFT than mlx-openai-server, so the prefill kernel scaling is well-established below 64 K.)
 
 **Notes:**
 - Server overhead at 512 ≈ 4% gen vs the standalone clean reading of 54.7 tok/s (`model-benchmark-standalone.md:101`); within the 4-15% band already seen for Qwen3.5-JANG on this server
@@ -293,6 +295,11 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 - Vision through API verified: `image_url` content blocks (data:image/png;base64) accepted; 64×64 solid-red PNG correctly identified as "Red"
 - Hybrid Gated DeltaNet pays off at long context: 128K gen at 35.6 tok/s is **31% faster** than Gemma 4's 27.1 tok/s at the same context, despite Qwen3.6 activating ~3B params vs Gemma 4's ~4B
 - `enable_thinking=false` not testable here — same parser-hookup gap as Gemma 4 ([#279](https://github.com/cubist38/mlx-openai-server/issues/279)); `<think>` is always emitted (counted in gen tokens above)
+
+**lm-studio comparison observations (2026-05-08):**
+- **lm-studio decode is 1.6–1.9× faster than mlx-openai-server** at every shared context (89.7 vs 52.5 tok/s @ 512; 76.1 vs 46.3 tok/s @ 32 K). Same MLX safetensors, same hardware — the gap is the LM Studio MLX runtime's per-token decoder.
+- **Prefill scaling is dramatic.** lm-studio's prefill kernel runs ~14× faster at 4 K (18.8 K vs 2.2 K tok/s) and **54× faster at 32 K** (96.9 K vs 1.8 K tok/s), matching the 47 K tok/s @ 32 K behaviour observed for `mlx-community/Qwen3.6-27B-6bit` ([§Qwen3.6-27B 6-bit on lm-studio vs vllm-mlx](#qwen36-27b-6-bit-standard-mlx-on-lm-studio-vs-vllm-mlx)). The pattern generalises across the Qwen3.6 family on this server.
+- **Despite the throughput win, OpenCode end-to-end is 3× slower than the GGUF Q6_K sibling on the same lm-studio runtime** — see [`model-benchmark-tool-call.md` § Results: mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio](model-benchmark-tool-call.md#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) for the per-turn breakdown. Format-driven gap that the throughput probe doesn't surface.
 
 ---
 

@@ -42,9 +42,12 @@ New Qwen 3.6 release. Same 35B/3B MoE size class as `Qwen3.5-35B-A3B-JANG_4K`, b
 
 **Server config:** `model_type: multimodal`, `tool_call_parser: qwen3_vl`, `reasoning_parser: qwen3_vl`, `context_length: 131072` (conservative; raise toward 262K after stability checks).
 
+**lm-studio API id:** `qwen3.6-35b-a3b-mlx-6bit` (load with `lms load 'mlx-community/qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-mlx-6bit -y`; flip `modelLoadingGuardrails.mode: high → off → high` around the load — 27.09 GiB resident exceeds 25 % of 96 GB unified memory). LM Studio's MLX runtime auto-detects Qwen3 tool-call + reasoning, no parser flags. Note: `lms get mlx-community/Qwen3.6-35B-A3B-6bit` fails to resolve through the LM Studio hub catalog — use `huggingface_hub.snapshot_download(repo_id='mlx-community/Qwen3.6-35B-A3B-6bit', local_dir='~/.lmstudio/models/mlx-community/Qwen3.6-35B-A3B-6bit')` to land the weights in LM Studio's tree.
+
 **Requirements:**
 - `mlx_lm >= 0.31.1` and `mlx_vlm >= 0.4.1` (confirmed working on Mac Studio pilot)
 - Validated through-API on `mlx-openai-server` v1.7.1 single-handler mode on 2026-04-18: text + vision smoke tests pass; full benchmark in [model-benchmark-api-server.md](../benchmarks/model-benchmark-api-server.md#qwen36-35b-a3b-6-bit) shows 52.5 tok/s @ 512 → 35.6 tok/s @ 128K
+- Re-benchmarked on lm-studio 2026-05-08 as a GGUF-vs-MLX comparison data point against [`unsloth/Qwen3.6-35B-A3B-GGUF` UD-Q6_K](#unsloth-qwen36-35b-a3b-gguf-ud-q6_k): lm-studio MLX runtime gives **1.6–1.9× faster decode** (89.7 tok/s @ 512, 76.1 tok/s @ 32 K) and **14–54× faster prefill** vs mlx-openai-server, but **OpenCode end-to-end is 3.0× slower** than the GGUF Q6_K sibling on the same lm-studio runtime (browse 14.88 s vs 4.92 s; search 20.79 s vs 12.08 s). Per-turn overhead, not gen rate. Full breakdown: [`model-benchmark-tool-call.md` § Results: mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio](../benchmarks/model-benchmark-tool-call.md#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio).
 - Reference YAML: [mlx-openai-server-qwen36-35b.yaml](../../servers/mlx-openai-server/mlx-openai-server-qwen36-35b.yaml)
 
 **Caveats:**

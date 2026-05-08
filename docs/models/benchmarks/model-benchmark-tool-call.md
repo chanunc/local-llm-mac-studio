@@ -44,6 +44,7 @@ Two complementary harnesses, both reported per model:
 - [mradermacher/Midnight-Miqu-70B-v1.5-GGUF](#results-mradermachermidnight-miqu-70b-v15-gguf) — 70 B Mixtral-derived, Q4_K_M GGUF (lm-studio) — **⛔ SKIP — HTTP 400, no system role support** — *2026-05-05*
 - [unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K)](#results-unsloth-qwen36-35b-a3b-ud-q6) — 35 B sparse MoE, 3 B active, Q6_K GGUF with unsloth Dynamic 2.0 imatrix (lm-studio, no patches) — **4/5 API pass (length cap), browse 4.92 s, search 12.08 s** — *2026-05-07*
 - [lmstudio-community/gemma-4-26B-A4B-it-GGUF (Q8_0)](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — 26 B sparse MoE, 4 B active, standard Q8_0 GGUF, Google Apache 2.0 base (lm-studio, no patches) — **5/5 API pass (multi-turn 2.14 s tied 🏆 with TrevorJS); OpenCode 3/3 under scaffolded prompts: browse 2.94 s 🥈 / search 7.20 s** — *2026-05-07*
+- [mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) — 35 B sparse MoE, 3 B active, **uniform 6-bit MLX safetensors** (lm-studio, no patches; same family as unsloth UD-Q6_K GGUF) — **4/5 API pass (length cap), browse 14.88 s, search 20.79 s — 3.0× / 1.7× slower than the GGUF Q6_K sibling on the same server** — *2026-05-08*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -130,6 +131,7 @@ Rows ordered by browse wall time (ascending).
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2/2t · `webfetch` · sparse 3B-active MoE |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2/3t · `webfetch` · A3B sparsity · search splits top-stories + item fetches |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2/2t · `webfetch` · JANGTQ4 `mxtq` MoE 35B/3B + VL · search dominated by 8K turn-2 decode |
+| **mlx-community Qwen3.6-35B-A3B 6-bit MLX** | **lm-studio** | **14.88 s** / 13.59 s | **20.79 s** / 19.41 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on (57–68 reason tok) · gen 89 tok/s @ 512 / 76 tok/s @ 32 K · prefill 97 K tok/s @ 32 K · **3.0× slower browse / 1.7× slower search than unsloth Q6_K GGUF on same server** · [results](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) |
 | Hermes 4 70B MLX-6bit | **lm-studio** | 15.63 s / 14.39 s | 79.98 s / 78.74 s | 3/6t · `webfetch`+`bash` · dense 70B Llama · search bash-loops (8 calls) · [results](#results-lmstudio-communityhermes-4-70b-mlx-6bit) |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | 15.72 s / 14.49 s | 21.38 s / 20.16 s | 2/2t · `webfetch` · MoE 35B/3B, no think prelude · [results](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx) |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2/3t · `webfetch` · dense 40B, think-on (Deckard/PDK) · [writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md) |
@@ -1427,6 +1429,73 @@ Per-turn breakdown:
 5. **Reasoning routing is correct.** LM Studio's Qwen3 chat template splits `<think>…</think>` into `reasoning_content` and emits the answer in `content` — confirmed via curl smoke (Q: "What is 2+2?" → 601 chars in `reasoning_content` + `content: "Four"`). OpenCode's `webfetch` tool fires from `content`, not the reasoning block, so the agent loop is unblocked.
 
 6. **API scenario-5 length cap is harness-side.** `bench_api_tool_call.py` hardcodes `max_tokens=1024` for the agentic-reasoning scenario; reasoning-on Qwen3.6 routinely needs 2–4 K. Bumping the cap (or running with `enable_thinking=false`) would convert the API row to 5/5; the multi-turn loop and OpenCode end-to-end already demonstrate clean agentic behaviour with no length truncation under realistic agent budgets.
+
+---
+
+## 🤖 Results: mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio {#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio}
+
+**Date:** 2026-05-08
+**Server:** lm-studio / LM Studio headless on port 1234, MLX runtime. Loaded with `lms load 'mlx-community/qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-mlx-6bit -y`. Guardrail flipped `high → off → high` around the load (27.09 GiB resident exceeds 25 % of 96 GB unified memory). No parser flags required (LM Studio's MLX runtime auto-detects Qwen3 tool-call + reasoning).
+**Architecture:** Qwen3.6 MoE — 35 B total, ~3 B active (A3B), uniform 6-bit MLX safetensors with VL stack. 27.09 GiB loaded (29.09 GB on disk; downloaded via `huggingface_hub.snapshot_download` directly into `~/.lmstudio/models/mlx-community/Qwen3.6-35B-A3B-6bit/` — `lms get mlx-community/Qwen3.6-35B-A3B-6bit` fails to resolve the MLX repo through LM Studio's hub catalog).
+**Why this run exists:** companion data point for [unsloth/Qwen3.6-35B-A3B-GGUF (UD-Q6_K)](#results-unsloth-qwen36-35b-a3b-ud-q6) — same base architecture, same server, MLX 6-bit vs GGUF Q6_K. Tests the prior conversation's hypothesis that "format probably doesn't matter much on lm-studio" — result: **format matters a lot here**.
+**Raw JSON:** [`api-tool-test-llmster.json`](qwen36-35b-a3b-6bit/api-tool-test-llmster.json), [`api-server-llmster.json`](qwen36-35b-a3b-6bit/api-server-llmster.json), [`agent-bench-llmster.json`](qwen36-35b-a3b-6bit/agent-bench-llmster.json)
+
+### API-Level Tool Calling (5-tool harness)
+
+| # | Scenario | Latency (s) | finish_reason | tools called |
+|:--|:---------|------------:|:--------------|:-------------|
+| 1 | Single tool (file read) | 1.43 | `tool_calls` | `read_file` |
+| 2 | Single tool (command) | 1.24 | `tool_calls` | `run_command` |
+| 3 | Multi-tool (search + read) | 2.33 | `tool_calls` | `search_web`, `read_file` |
+| 4 | Multi-tool (list + read + write) | 1.50 | `tool_calls` | `list_directory` |
+| 5 | Agentic reasoning ("Find the largest file in /tmp") | 12.80 | `length` | — |
+
+**Pass rate: 4/5.** Same shape as the GGUF Q6_K sibling — scenarios 1–4 dispatch correctly at 1.24–2.33 s; scenario 5 hits the 1024-token cap mid-`<think>` (think-on by default).
+
+#### Multi-turn agentic loop (3 turns, total 7.21 s)
+
+| Turn | Prompt shape | Latency (s) | finish_reason | Tool called |
+|:-----|:-------------|------------:|:--------------|:------------|
+| 1 | `Read /tmp/app/config.json, change port to 8080, write back` | 1.59 | `tool_calls` | `read_file` |
+| 2 | (with prior tool result) | 2.25 | `tool_calls` | `write_file` |
+| 3 | (with prior tool result) | 3.38 | `stop` | — final answer |
+
+### Throughput (`bench_api_server.py`, 1 warmup + 2 measured runs, median)
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--------|:--------:|:-----------:|:---------------:|
+| 512     | 0.21     | **89.7**    | 2,610           |
+| 4 K     | 0.22     | 87.7        | 18,820          |
+| 8 K     | 0.24     | 86.0        | 34,800          |
+| 32 K    | 0.34     | 76.1        | **96,860**      |
+
+(65 K probe rejected with HTTP 400 at the 65,536 max-context limit — not retried with a higher budget; this is a comparison data point, not a long-context evaluation.)
+
+### OpenCode End-to-End Agent Benchmark (2026-05-08)
+
+| Scenario | Wall (median) | LLM (median) | p5–p95 wall | Turns | Tools | Tokens (median) |
+|:---------|:------:|:------:|:------:|:-----:|:------|:------:|
+| Browse www.example.com | **14.88 s** | 13.59 s | 8.32–16.48 s | 2 | `webfetch` | 22,785 |
+| Browse Hackernews latest topic | **20.79 s** | 19.41 s | 19.17–25.75 s | 3 | `webfetch` ×2 | 44,080 |
+
+Per-turn breakdown:
+- **Browse:** turn 1 → 5.89 s (in=11,286 / out=43, fetches example.com); turn 2 → 1.24 s (in=11,408 / out=48, summary).
+- **Search:** turn 1 → 11.45 s (in=11,292 / out=50, fetches HN top-stories); turn 2 → 4.01 s (in=15,889 / out=58, fetches the top item); turn 3 → 2.38 s (in=16,685 / out=106, summary).
+- Reasoning tokens: 57 (browse median) / 68 (search median) — comparable to the GGUF Q6_K sibling's 54/66, so the gap is not a thinking-budget artefact.
+
+### Key Findings
+
+1. **MLX 6-bit is 3.0× slower on browse and 1.7× slower on search than the GGUF Q6_K sibling on the same server.** Direct comparison vs [unsloth UD-Q6_K GGUF](#results-unsloth-qwen36-35b-a3b-ud-q6): browse 14.88 vs 4.92 s, search 20.79 vs 12.08 s. Same base model, same lm-studio runtime, same OpenCode harness, same prompts, same think-on default. The only material differences are the weight container (MLX safetensors vs GGUF) and quant scheme (uniform 6-bit MLX vs Q6_K with unsloth Dynamic 2.0 imatrix).
+
+2. **The slowdown isn't visible in the throughput probe.** API-server bench: 89.7 tok/s decode @ 512, 76.1 tok/s @ 32 K, 97 K tok/s prefill — comparable to the fastest MLX entries on lm-studio (Gemma 4 31B-it MLX 6-bit lands at 36 K tok/s prefill @ 32 K, so this MLX path is actually 2.7× *faster* at prefill than the dense Gemma 4 MLX baseline). The agent-loop slowdown sits somewhere in the per-turn dispatch path — possibly tool-call detection re-running a parser pass on each emitted token, possibly a 2.5–4.5 s overhead per turn that the throughput probe (single-turn `max_tokens=50`) doesn't surface.
+
+3. **Per-turn breakdown points at fixed-overhead, not gen rate.** Browse turn 1: 5.89 s for 43 visible + 57 reasoning = ~100 output tokens. At 89 tok/s that's 1.1 s of decode + 0.3 s prefill = 1.4 s expected; the missing ~4.5 s is unaccounted for. The GGUF Q6_K sibling does the same turn in 1.84 s. Same model architecture, same prompts, same client — the discrepancy is below the inference primitive.
+
+4. **lm-studio's auto-unload bit during testing.** The LM Studio JIT eviction policy (`jitModelTTL.ttlSeconds: 3600` in `~/.lmstudio/settings.json`, plus an idle-evict path) unloaded the model between the smoke run and the api-server probe, returning HTTP 400 "No models loaded" on what should have been a warm follow-up. Required reload + back-to-back execution; not specific to MLX (would affect any lm-studio model after enough idle time).
+
+5. **No production flip.** This run is a comparison data point against the GGUF Q6_K sibling, not a new production candidate. The MLX 6-bit model stays loaded but `docs/current.md` is unchanged. The active lm-studio main remains `gemma-4-26b-a4b-q8` (lmstudio-community Gemma 4 26B A4B-it Q8_0 GGUF) per [`docs/current.md`](../../current.md). To restore the prior main, see the launch shape in `docs/current.md`.
+
+6. **Hypothesis update for the format-vs-runtime question.** Prior reasoning ([`docs/servers/lm-studio/prefill-speed-technique.md`](../../servers/lm-studio/prefill-speed-technique.md)) argued lm-studio's runtime advantage applies to "identical MLX safetensors / GGUF weights" — true for prefill (97 K tok/s here is in the lm-studio class), false for the agent loop. **For Qwen3.6 35B-A3B on lm-studio, GGUF Q6_K is the right choice; the MLX 6-bit container carries a per-turn overhead that the throughput bench misses.** Reproduce with `huggingface_hub.snapshot_download → lms load → bench_agent_tool_call.py` per the recipe above.
 
 ---
 

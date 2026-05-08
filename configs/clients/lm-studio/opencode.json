@@ -79,6 +79,15 @@
             "context": 32768,
             "output": 4096
           }
+        },
+        "qwen3.6-35b-a3b-mlx-6bit": {
+          "name": "mlx-community Qwen3.6-35B-A3B 6bit MLX (lm-studio, comparison data point vs Q6_K GGUF) — sparse MoE 35B/3B-active + VL, think-on, 27 GiB",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 4096
+          }
         }
       }
     }

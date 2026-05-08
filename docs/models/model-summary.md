@@ -220,7 +220,7 @@ Nine Qwen3.6 variants currently catalogued in this stack — all sharing the **h
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
-| Qwen3.6-35B-A3B 6-bit | MoE 35B/3B + VL | 27 GB | Uniform 6-bit MLX | mlx-openai-server | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) |
+| Qwen3.6-35B-A3B 6-bit | MoE 35B/3B + VL | 27 GB | Uniform 6-bit MLX | mlx-openai-server / lm-studio (MLX-vs-GGUF data point, 2026-05-08) | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) |
 | Qwen3.6-35B-A3B 4-bit | MoE 35B/3B + VL | 22 GB target + 1 GB drafter | 4-bit MLX + DFlash drafter | dflash-mlx (provisional) | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | MoE 35B/3B + VL | 19.7 GB | JANGTQ4 / `mxtq` | vmlx (stopped 2026-05-02 reference) | [link](per-model/model-summary-qwen-3-6.md#osaurus-qwen36-35b-a3b-jangtq4) |
 | Qwen3.6-27B JANG 4M | Dense 27B + VL | 17.5 GB | JANG mixed 4/8-bit | vllm-mlx (text-only) | [link](per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) |

@@ -11,5 +11,6 @@ Setup and troubleshooting for machines that connect to the Mac Studio servers. C
 | OpenClaw issues | [`openclaw-known-issues.md`](openclaw-known-issues.md) | Reference only |
 | Pi | [`pi-setup.md`](pi-setup.md) | `configs/clients/<server>/pi-models.json` |
 | Qwen Code | [`qwen-code-setup.md`](qwen-code-setup.md) | `configs/clients/<server>/qwen-code-settings.json` |
+| CLI prompt clients | [`cli-prompt-clients.md`](cli-prompt-clients.md) | Reference only — `llm` / `aichat` / `mods` for OpenAI-HTTP one-shots |
 
 `lm-studio` currently ships an OpenCode template only because it's provisional and OpenAI-only. If it graduates to permanent server status, backfill the other client templates per the [Sync Policy](../../CLAUDE.md#sync-policy-read-this-first-when-changing-live-state).

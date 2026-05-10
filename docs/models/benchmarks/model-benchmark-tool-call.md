@@ -81,6 +81,7 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
 | Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
+| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 0.88 - 2.23 s | 0.90 - 1.63 s | 6.65 s (dense 31B no-think · 30 tok/s · webfetch 2/2 in OpenCode) |
 | **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | ⚠ 4/5 | 1.59 - 1.86 s | 1.52 - 3.26 s | **7.65 s** (length cap on agentic-reasoning at harness's 1024-tok max; 5/5 with bumped budget — multi-turn loop is clean) |
 | Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV | `llama-cpp-turboquant` :8099 (johndpope) | ✅ **5/5** | 2.00 - 16.91 s | 2.48 - 4.93 s | 8.48 s (decode strong but cold prefill timeout @ 32K) |
 
@@ -127,6 +128,7 @@ Rows ordered by browse wall time (ascending).
 | **Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V** | `llama-cpp-turboquant` :8099 (TheTom fork) | **6.47 s** / 5.27 s | **15.64 s** / 14.38 s | 2/3t · `webfetch` · MoE 35B/3B, K=q8_0 + turbo3 V · **2.07×/2.27× vs Gemma 4 mlx-lm** · [per-model](../per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) |
 | **Dolphin Venice 24B MLX-8bit** | **lm-studio** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2/2t · `webfetch` · dense Mistral 24B, no-think · [results](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit) |
 | **Dolphin 3.0 R1 Mistral 24B MLX-8bit** | **lm-studio** | **7.5 s** / 6.28 s | 34.52 s / 4.42 s | 2.5/7t · `webfetch`+`bash` · search variance 10–59 s, bash-loops · [results](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits) |
+| **TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF** | **lm-studio** | 10.08 s / 8.86 s | 29.77 s / 28.54 s | 2/2t · `webfetch` · dense 31B no-think · 30 tok/s · harness 7/10 / **manual 10/10** mlabonne (disclaimer-prefixed complies) · [writeup](../uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2/2.5t · `webfetch` · dense 27B Q8_K_P, think-on · [results](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced) |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **mlx-lm** | 12.33 s / 11.12 s | 35.55 s / 34.38 s | 2/2t · `webfetch` · **think-ON** (121/124 tok) · prior lm-studio think-OFF: *5.11/6.37 s* · [results](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) |
 | Gemma 4 31B-it bf16 + MTP drafter | mlx-vlm 0.5.0 (incl. PRs #1112/#1115/#1117) | ⛔ **300 s timeout × 6** | ⛔ **300 s timeout × 6** | 0/0t · ⛔ no calls · drafter at upstream B=1 (3.07–4.29 acc, 12.3 tok/s) · 2 blockers: streaming hang on long-reasoning + bf16 8K reasoning ≈ 666 s/turn · non-stream harness 5/5 · [analysis](../per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
@@ -269,6 +271,7 @@ Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
+| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | **10.08 s** | 2 | `webfetch` | ~10.8K in / ~20–31 out |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥉 | 2 | `webfetch` | ~10.8K in / ~136 out |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
@@ -293,6 +296,7 @@ Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for 
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 16.28 s 🥈 | 2 | `webfetch` | ~26K | ~13K/turn |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥉 | 3 | `webfetch` | ~43K | ~13K/turn |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
+| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | 29.77 s | 2 | `webfetch` | ~26.8K | ~13K/turn |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 127.28 s | 2 | `webfetch` | ~23K | ~12K/turn |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |

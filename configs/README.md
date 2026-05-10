@@ -125,7 +125,7 @@ Speaks OpenAI + Anthropic + Ollama API on port 8000. No API key required. Runs o
 
 **Templates pin censored / standard models on lm-studio.** Default: `granite-4.1-30b-q8` (IBM Granite 4.1 30B Q8_0, dense instruct, Apache 2.0). Also lists `gemma-4-31b-it-mlx` and `qwen3.6-27b`. Ships `opencode.json` and `openclaw-provider.json`; Claude Code, Pi, qwen-code config files remain deferred.
 
-For uncensored lm-studio GGUFs (TrevorJS Gemma 4 26B A4B Q8_0 — prior main; prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/lm-studio/`](../docs/models/uncen-model/client-configs/lm-studio/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`.
+For uncensored lm-studio GGUFs (TrevorJS Gemma 4 31B-it Q4_K_M, TrevorJS Gemma 4 26B A4B Q8_0, prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K, HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P, HauhauCS Qwen3.6-27B Balanced Q8_K_P, etc.) use the matching templates under [`docs/models/uncen-model/client-configs/lm-studio/`](../docs/models/uncen-model/client-configs/lm-studio/). Custom K_P quant labels (HauhauCS family) mis-resolve through `lms get` — use direct Hub download + `lms import -L`.
 
 Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/lm-studio/summary.md`](../docs/servers/lm-studio/summary.md).
 

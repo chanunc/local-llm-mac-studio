@@ -7,7 +7,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 ## Index
 - [Adding a Model to oMLX](#adding-a-model-to-omlx)
 - [IBM Granite 4.1 Family](#ibm-granite-41-family) — 1 variant: **30B Q8_0 GGUF (unsloth, Apache 2.0, 24.8 tok/s, browse 6.24 s — active lm-studio main 2026-05-05)**. Detail at [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md)
-- [Gemma 4 Family](#gemma-4-family) — 5 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only, **mlx-lm server current main 2026-05-06**), 31B-it bf16 + MTP drafter (mlx-vlm — **failed experiment 2026-05-06**, agent-incompatible streaming), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇 — prior lm-studio main 2026-05-03). Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
+- [Gemma 4 Family](#gemma-4-family) — 6 variants: 26B-A4B (4-bit, MoE multimodal), 31B-it (6-bit, dense text-only), 31B-it bf16 + MTP drafter (mlx-vlm — **failed experiment 2026-05-06**, agent-incompatible streaming), DavidAU Heretic 31B Q6_k GGUF (uncensored, 7/10 mlabonne), TrevorJS Uncensored 26B-A4B Q8_0 GGUF (EGA abliteration, 8/10 mlabonne, 87.6 tok/s, browse 2.93 s 🥇), and **TrevorJS Uncensored 31B-it Q4_K_M GGUF (dense, abliteration, harness 7/10 / manual 10/10 mlabonne, browse 10.08 s — current lm-studio main 2026-05-10)**. Detail at [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)
 - [Qwen3-Coder Family (MLX 6-bit + 4-bit)](#qwen3-coder-family-mlx-6-bit--4-bit) — 2 variants: Coder-Next 6-bit (daily driver), Coder-30B-A3B 4-bit. Detail at [`per-model/model-summary-qwen-3-coder.md`](per-model/model-summary-qwen-3-coder.md)
 - [Qwen3.5 Family (MoE + dense distilled + JANG)](#qwen35-family-moe--dense-distilled--jang) — 4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K. Detail at [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
@@ -229,7 +229,7 @@ Nine Qwen3.6 variants currently catalogued in this stack — all sharing the **h
 | HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P | Dense 27B + VL | 32 GB | GGUF `Q8_K_P` | lm-studio (prior sidecar — superseded 2026-05-02) | [link](per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) |
 | HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P | MoE 35B/3B + VL | 31 GB | GGUF `Q6_K_P` | lm-studio (prior main — superseded 2026-05-02 by prithivMLmods) | [link](per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) |
 | prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | MoE 35B/3B + VL | 28.51 GB | GGUF `Q6_K` | lm-studio (prior main — superseded 2026-05-03 by DavidAU 40B) | [link](per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) |
-| **DavidAU Qwen3.6-40B Heretic Q6_K IMatrix** | Dense 40B | 30.17 GiB | GGUF `Q6_K` IMatrix | **lm-studio (active main, 2026-05-03)** | [link](per-model/model-summary-qwen-3-6.md#davidau-qwen36-40b-heretic-uncensored-thinking-q6_k-imatrix) |
+| DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | Dense 40B | 30.17 GiB | GGUF `Q6_K` IMatrix | lm-studio (prior main — superseded by lm-studio Gemma 4 26B-A4B Q8_0, then by TrevorJS Gemma 4 31B-it Q4_K_M 2026-05-10) | [link](per-model/model-summary-qwen-3-6.md#davidau-qwen36-40b-heretic-uncensored-thinking-q6_k-imatrix) |
 | Qwen3.6-35B Rust LoRA (jedisct1) | MoE 35B/3B (LoRA-merged) | 35 GB | Uniform 8-bit MLX | vllm-mlx | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-rust-lora-jedisct1-8-bit) |
 
 The JANGTQ-CRACK Qwen3.6 variants (`dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK` and `JANGTQ2-CRACK`) live in the private uncen-model submodule — see [`uncen-model/`](uncen-model/) and the JANGTQ deployment notes further down.
@@ -305,11 +305,11 @@ Xiaomi's `MiMoV2ForCausalLM` (`mimo_v2`), pruned by `jedisct1` to keep only the 
 
 ## IBM Granite 4.1 Family
 
-IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. One variant currently deployed: **Q8_0 GGUF** from Unsloth (28.57 GiB resident, 65K context, lm-studio). Active production main as of 2026-05-05. Full deployment recipe, smoke/perf/agent benchmarks, and caveats at **[`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md)**.
+IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. One variant currently deployed: **Q8_0 GGUF** from Unsloth (28.57 GiB resident, 65K context, lm-studio). Loaded as the lm-studio main 2026-05-05; superseded by Gemma 4 26B-A4B Q8_0 and then by TrevorJS Gemma 4 31B-it Q4_K_M (current main, 2026-05-10) — kept as the Apache-2.0 fallback in `lms ls`. Full deployment recipe, smoke/perf/agent benchmarks, and caveats at **[`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md)**.
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
-| **Granite 4.1 30B Q8_0 (unsloth GGUF)** | Dense 30B, no MoE | 29 GB | Q8_0 GGUF | **lm-studio (active main 2026-05-05)** | [link](per-model/model-summary-granite-4.1.md) |
+| Granite 4.1 30B Q8_0 (unsloth GGUF) | Dense 30B, no MoE | 29 GB | Q8_0 GGUF | lm-studio (Apache-2.0 fallback; prior main 2026-05-05) | [link](per-model/model-summary-granite-4.1.md) |
 
 ---
 
@@ -357,14 +357,16 @@ Wall times measured 2026-05-08 on Mac Studio M3 Ultra, 1 warm-up + 3 timed runs 
 
 ## Gemma 4 Family
 
-Three Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context), the dense **31B-it** instruction-tuned text-only release (**current production main 2026-05-06 on mlx-lm server**, 64K context, thinking mode ON), and the **DavidAU HERETIC 31B** uncensored fine-tune (Q6_k GGUF, lm-studio). Per-variant deployment details, server configs, benchmarks, and caveats for the censored variants live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**. Uncensored benchmark data lives in the submodule: [`uncen-model/gemma4-31b-davidau-heretic-benchmark.md`](uncen-model/gemma4-31b-davidau-heretic-benchmark.md).
+Six Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode ON), the **DavidAU HERETIC 31B** uncensored fine-tune (Q6_k GGUF, lm-studio), the **TrevorJS EGA 26B-A4B** uncensored MoE (Q8_0 GGUF, browse leader 2.93 s 🥇), and the **TrevorJS abliterated 31B-it** uncensored dense (Q4_K_M GGUF, manual 10/10 compliance, current lm-studio main 2026-05-10). Per-variant deployment details, server configs, benchmarks, and caveats for the censored variants live in the dedicated per-model file: **[`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md)**. Uncensored benchmark data lives in the submodule: [`uncen-model/`](uncen-model/).
 
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | Gemma 4 26B-A4B (4-bit) | MoE 26B/4B + vision + audio | 15 GB | 4-bit MLX (8-bit MoE proj layer 0) | mlx-openai-server / lm-studio (MLX-vs-GGUF data point, 2026-05-08) | [link](per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) |
-| **Gemma 4 31B-it (6-bit)** | Dense 31B text-only | 29 GB | 6-bit MLX | **mlx-lm server (current main 2026-05-06)** | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
+| Gemma 4 31B-it (6-bit) | Dense 31B text-only | 29 GB | 6-bit MLX | mlx-lm server | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) |
 | Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — *failed experiment 2026-05-06* | Dense 31B + MTP `gemma4_assistant` drafter | 58 GB + 839 MB | bf16 | mlx-vlm 0.5.0 (from main) | [link](per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
-| **DavidAU Gemma 4 31B Heretic Q6_k** | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | lm-studio | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
+| DavidAU Gemma 4 31B Heretic Q6_k | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | lm-studio | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
+| TrevorJS Gemma 4 26B-A4B Uncensored Q8_0 | MoE 26B/4B uncensored (EGA abliteration) | 25.02 GiB | Q8_0 GGUF | lm-studio | [bench](uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
+| **TrevorJS Gemma 4 31B-it Uncensored Q4_K_M** | Dense 31B uncensored (norm-preserving biprojected abliteration) | **17.40 GiB** | Q4_K_M GGUF | **lm-studio (current main 2026-05-10)** | [bench](uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
 
 ---
 

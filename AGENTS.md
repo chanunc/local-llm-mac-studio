@@ -111,8 +111,9 @@ ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; /opt/homebrew/bin/
 ssh macstudio "pkill -f mlx-openai-server; pkill -f vmlx_engine; /opt/homebrew/bin/brew services stop omlx; sleep 2"
 # then start vllm-mlx as above
 
-# Switch to lm-studio (CURRENT MAIN: IBM Granite 4.1 30B Q8_0, port 1234 — does not displace port 8000).
-# Guardrail mode "high" blocks the 28 GB load; flip to "off" then restore "high" after.
+# Switch to lm-studio (port 1234 — does not displace port 8000). Live model is in `docs/current.md`;
+# example below loads IBM Granite 4.1 30B Q8_0 — substitute the modelKey + identifier for whichever
+# model is current. Guardrail mode "high" blocks any load > ~25 % of RAM; flip to "off" then restore.
 ssh macstudio "python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='off'; p.write_text(json.dumps(d, indent=2))\"; \
   ~/.lmstudio/bin/lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y; \
   python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='high'; p.write_text(json.dumps(d, indent=2))\"; \

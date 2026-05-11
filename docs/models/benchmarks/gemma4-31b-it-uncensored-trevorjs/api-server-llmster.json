@@ -1,7 +1,7 @@
 {
   "benchmark": "api-server-streaming",
   "version": "1.0",
-  "timestamp": "2026-05-10T21:03:11.011183+00:00",
+  "timestamp": "2026-05-11T05:53:30.593088+00:00",
   "config": {
     "base_url": "http://192.168.31.4:1234/v1",
     "model": "gemma4-31b-it-uncensored-trevorjs-q4km",
@@ -19,100 +19,100 @@
     "512": {
       "runs": [
         {
-          "ttft_s": 0.384,
-          "total_s": 2.046,
+          "ttft_s": 0.392,
+          "total_s": 2.05,
           "input_tokens": 540,
           "output_tokens": 50,
-          "gen_tps": 30.09,
-          "prefill_tps": 1406.6
+          "gen_tps": 30.16,
+          "prefill_tps": 1377.4
         },
         {
-          "ttft_s": 0.386,
-          "total_s": 2.047,
+          "ttft_s": 0.387,
+          "total_s": 2.052,
           "input_tokens": 540,
           "output_tokens": 50,
-          "gen_tps": 30.1,
-          "prefill_tps": 1400.7
+          "gen_tps": 30.03,
+          "prefill_tps": 1395.2
         }
       ],
-      "median_ttft_s": 0.385,
+      "median_ttft_s": 0.39,
       "median_gen_tps": 30.095,
-      "median_prefill_tps": 1403.65,
+      "median_prefill_tps": 1386.3,
       "input_tokens": 540,
       "output_tokens": 50
     },
     "4096": {
       "runs": [
         {
-          "ttft_s": 0.267,
-          "total_s": 2.031,
+          "ttft_s": 0.281,
+          "total_s": 2.027,
           "input_tokens": 4125,
           "output_tokens": 50,
-          "gen_tps": 28.35,
-          "prefill_tps": 15449.6
+          "gen_tps": 28.63,
+          "prefill_tps": 14687.0
         },
         {
-          "ttft_s": 0.277,
-          "total_s": 2.036,
+          "ttft_s": 0.278,
+          "total_s": 2.037,
           "input_tokens": 4125,
           "output_tokens": 50,
-          "gen_tps": 28.42,
-          "prefill_tps": 14902.9
+          "gen_tps": 28.44,
+          "prefill_tps": 14811.9
         }
       ],
-      "median_ttft_s": 0.272,
-      "median_gen_tps": 28.385,
-      "median_prefill_tps": 15176.25,
+      "median_ttft_s": 0.28,
+      "median_gen_tps": 28.535,
+      "median_prefill_tps": 14749.45,
       "input_tokens": 4125,
       "output_tokens": 50
     },
     "8192": {
       "runs": [
         {
-          "ttft_s": 0.296,
-          "total_s": 2.086,
-          "input_tokens": 8220,
-          "output_tokens": 50,
-          "gen_tps": 27.93,
-          "prefill_tps": 27763.2
-        },
-        {
-          "ttft_s": 0.297,
+          "ttft_s": 0.284,
           "total_s": 2.084,
           "input_tokens": 8220,
           "output_tokens": 50,
-          "gen_tps": 27.97,
-          "prefill_tps": 27722.6
+          "gen_tps": 27.78,
+          "prefill_tps": 28960.4
+        },
+        {
+          "ttft_s": 0.296,
+          "total_s": 2.091,
+          "input_tokens": 8220,
+          "output_tokens": 50,
+          "gen_tps": 27.87,
+          "prefill_tps": 27736.2
         }
       ],
-      "median_ttft_s": 0.296,
-      "median_gen_tps": 27.95,
-      "median_prefill_tps": 27742.9,
+      "median_ttft_s": 0.29,
+      "median_gen_tps": 27.825,
+      "median_prefill_tps": 28348.3,
       "input_tokens": 8220,
       "output_tokens": 50
     },
     "32768": {
       "runs": [
         {
-          "ttft_s": 0.438,
-          "total_s": 2.511,
+          "ttft_s": 0.439,
+          "total_s": 2.52,
           "input_tokens": 32796,
           "output_tokens": 50,
-          "gen_tps": 24.12,
-          "prefill_tps": 74936.6
+          "gen_tps": 24.03,
+          "prefill_tps": 74710.0
         },
         {
-          "ttft_s": 0.438,
-          "total_s": 2.514,
+          "ttft_s": 0.444,
+          "total_s": 2.52,
           "input_tokens": 32796,
           "output_tokens": 50,
-          "gen_tps": 24.08,
-          "prefill_tps": 74921.0
+          "gen_tps": 24.09,
+          "prefill_tps": 73799.5
         }
       ],
-      "median_ttft_s": 0.438,
-      "median_gen_tps": 24.1,
-      "median_prefill_tps": 74928.8,
+      "median_ttft_s": 0.442,
+      "median_gen_tps": 24.06,
+      "median_prefill_tps": 74254.75,
       "input_tokens": 32796,
       "output_tokens": 50
     }

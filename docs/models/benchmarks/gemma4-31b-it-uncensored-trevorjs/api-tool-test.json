@@ -5,9 +5,9 @@
     {
       "scenario": "Single tool (file read)",
       "prompt": "Read the file /tmp/notes.txt and tell me its contents",
-      "time_s": 2.23,
+      "time_s": 9.72,
       "output_tokens": 20,
-      "rate_tps": 9.0,
+      "rate_tps": 2.1,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "read_file"
@@ -19,9 +19,9 @@
     {
       "scenario": "Single tool (command)",
       "prompt": "Run uptime to check system status",
-      "time_s": 0.88,
+      "time_s": 1.06,
       "output_tokens": 15,
-      "rate_tps": 17.1,
+      "rate_tps": 14.2,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "run_command"
@@ -33,9 +33,9 @@
     {
       "scenario": "Multi-tool (search + read)",
       "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
-      "time_s": 1.63,
+      "time_s": 1.64,
       "output_tokens": 36,
-      "rate_tps": 22.1,
+      "rate_tps": 22.0,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "search_web",
@@ -51,7 +51,7 @@
       "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
       "time_s": 0.9,
       "output_tokens": 16,
-      "rate_tps": 17.7,
+      "rate_tps": 17.8,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "list_directory"
@@ -63,9 +63,9 @@
     {
       "scenario": "Agentic reasoning",
       "prompt": "Find the largest file in /tmp",
-      "time_s": 1.28,
+      "time_s": 1.26,
       "output_tokens": 26,
-      "rate_tps": 20.3,
+      "rate_tps": 20.6,
       "finish_reason": "tool_calls",
       "tool_calls": [
         "run_command"
@@ -78,7 +78,7 @@
   "multi_turn": [
     {
       "turn": 1,
-      "time_s": 2.18,
+      "time_s": 2.23,
       "output_tokens": 22,
       "finish_reason": "tool_calls",
       "tool_calls": [
@@ -96,12 +96,12 @@
     },
     {
       "turn": 3,
-      "time_s": 2.06,
+      "time_s": 2.09,
       "output_tokens": 37,
       "finish_reason": "stop",
       "tool_calls": []
     }
   ],
   "total_turns": 3,
-  "total_time_s": 6.65
+  "total_time_s": 6.73
 }

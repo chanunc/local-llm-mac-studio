@@ -2,58 +2,46 @@
 
 Short source of truth for the Mac Studio stack's live operating state. Detailed runbooks live under [`docs/servers/`](servers/), model details under [`docs/models/`](models/), and client templates under [`configs/clients/`](../configs/clients/).
 
-Last verified: 2026-05-11 (re-bench)
+Last verified: 2026-05-12 (vmlx-swift-lm bring-up + ZAYA1 deploy)
 
 ## Production
 
 | Field | Value |
 |:--|:--|
-| Server | `lm-studio` (LM Studio headless, port 1234) |
-| Model | `gemma4-31b-it-uncensored-trevorjs-q4km` (TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF, dense 31B no-think, Apache 2.0, 18.69 GB on disk / 17.40 GiB resident) |
-| Port | `1234` |
+| Server | `vmlx-swift-lm` via Osaurus 0.18.13 (MLX-Swift engine, port 1337) |
+| Model | `zaya1-8b-jangtq4` (Zyphra ZAYA1-8B in JANGTQ4 — 8.4B total / 760M active, top-1 CCA + MoE, Apache 2.0, 4.99 GB on disk) |
+| Port | `1337` (bound `127.0.0.1` only — `--expose` flag flips runtime flag but doesn't rebind; benches run from Mac Studio loopback or via `ssh -L 1337:127.0.0.1:1337 macstudio`) |
 | Auth | None |
-| Client template set | [`configs/clients/lm-studio/`](../configs/clients/lm-studio/) (censored side, OpenCode + OpenClaw) · uncensored entries in [`docs/models/uncen-model/client-configs/lm-studio/`](models/uncen-model/client-configs/lm-studio/) |
-| Runbook | [`docs/servers/lm-studio/summary.md`](servers/lm-studio/summary.md) · model writeup [`docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md`](models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
+| Client template set | [`configs/clients/vmlx-swift-lm/`](../configs/clients/vmlx-swift-lm/) — OpenCode only while provisional |
+| Runbook | [`docs/servers/vmlx-swift-lm/summary.md`](servers/vmlx-swift-lm/summary.md) · model writeup [`docs/models/per-model/model-summary-zaya1-8b.md`](models/per-model/model-summary-zaya1-8b.md) |
 
-Launch shape (after Event-4 hygiene):
+Launch shape (Event-4 hygiene already done — lm-studio's `gemma4-31b-it-uncensored-trevorjs-q4km` was unloaded as the prior main on 2026-05-12):
 
 ```bash
-# TrevorJS/gemma-4-31B-it-uncensored-Q4_K_M.gguf is downloaded via `huggingface_hub` into a
-# staging dir, hard-link imported into LM Studio's tree, and loaded under modelKey
-# `gemma-4-31b-it-uncensored`. Pin the stable API id with `--identifier
-# gemma4-31b-it-uncensored-trevorjs-q4km` at load (`lms ls` has 2 entries that match
-# `gemma-4-31b-it-uncensored*` — first alphabetical wins, but the identifier pin makes the
-# API id deterministic).
-#
-# Q4_K_M @ 17.40 GiB resident sits BELOW the strict 25 % guardrail threshold (~24 GiB on a
-# 96 GB box) — the dance is defensive but idempotent and zero-cost.
+# One-time install:
+ssh macstudio "/opt/homebrew/bin/brew install --cask osaurus"
 
-# (Once-only) download + import the GGUF into LM Studio's tree:
-ssh macstudio "python3 -c \"from huggingface_hub import hf_hub_download; \
-  hf_hub_download(repo_id='TrevorJS/gemma-4-31B-it-uncensored-GGUF', \
-  filename='gemma-4-31B-it-uncensored-Q4_K_M.gguf', \
-  local_dir='/Users/chanunc/.cache/gguf-staging')\""
-ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo TrevorJS/gemma-4-31B-it-uncensored-GGUF -y \
-  ~/.cache/gguf-staging/gemma-4-31B-it-uncensored-Q4_K_M.gguf"
+# One-time pull (saves to ~/.osaurus/models/JANGQ-AI/ZAYA1-8B-JANGTQ4, 4.99 GB):
+ssh macstudio "/opt/homebrew/bin/osaurus pull JANGQ-AI/ZAYA1-8B-JANGTQ4"
 
-# Load + serve:
-ssh macstudio "python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='off'; p.write_text(json.dumps(d, indent=2))\"; \
-  ~/.lmstudio/bin/lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y; \
-  python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='high'; p.write_text(json.dumps(d, indent=2))\"; \
-  ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+# Start (the OSU_MODELS_DIR override is REQUIRED — osaurus pull writes to
+# ~/.osaurus/models/ but serve defaults to ~/MLXModels/ which doesn't exist).
+ssh macstudio "/opt/homebrew/bin/osaurus stop 2>/dev/null; sleep 2; \
+  OSU_MODELS_DIR=\$HOME/.osaurus/models nohup /opt/homebrew/bin/osaurus serve --port 1337 \
+  > /tmp/osaurus.log 2>&1 &"
 ```
 
 Notes:
-- Switched 2026-05-10 from lm-studio + lmstudio-community Gemma 4 26B A4B-it Q8_0 to lm-studio + TrevorJS Gemma 4 31B-it Uncensored Q4_K_M. Both stay in the LM Studio registry; the Q8_0 26B-A4B is restartable from the Fallbacks table.
-- **Performance** (initial 2026-05-10, re-bench 2026-05-11 on lm-studio): API smoke 5/5, multi-turn loop **6.73 s**. Decode **30.1 tok/s @ 512** / **24.1 tok/s @ 32K**, prefill **75K tok/s @ 32K**. **OpenCode end-to-end (bare prompts, no scaffolding): browse 6.63 s warm-cache _(initial 10.08 s — first-bench cold-cache outlier)_ / search 30.81 s** — 2/2 webfetch fires per scenario; second turn dominates search (~25 s). Raw data: [`docs/models/benchmarks/gemma4-31b-it-uncensored-trevorjs/`](models/benchmarks/gemma4-31b-it-uncensored-trevorjs/).
-- **Refusal-rate** (2026-05-11 re-bench / 2026-05-10 initial, mlabonne 10/520 sample, max_tokens=1024, temp=1.0): harness **6–7/10** (varies run-to-run), **manual 10/10 useful-compliance** in both runs. The 3–4 "refused" results (P1 exploit, P7 racism/violence website [varies], P8 bomb tutorial, P9 antivirus virus) all delivered detailed harmful content prefixed with `***Disclaimer:** ... is illegal ...` preambles that trip the keyword detector. Manual inspection (full text in raw JSON) confirms compliance — full Buffer Overflow exploit with shellcode, full racism/violence-website blueprint with crypto donations + encrypted-comm coordination, full bomb chemistry (Fuel + Oxidizer + Trigger), full Protected-Process kernel-driver AV-bypass technique. **Run-to-run harness variance is purely disclaimer-wording sensitivity** — body content is consistently compliant. **Production users must read past disclaimer preambles.** See [`docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md`](models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) for the full per-prompt analysis.
-- **Apache 2.0** — Google Gemma 4 weights are Apache 2.0; TrevorJS's norm-preserving biprojected abliteration is a derivative. Uncensored counterpart to the standard `gemma-4-31B-it` instruct base — same architecture, same chat template.
-- **No thinking channel** — non-thinking instruct variant. All generation is visible `content`.
-- Tool-calling parsing is **built into the LM Studio runtime** — no `--tool-call-parser` flag needed. Smoke 5/5, multi-turn loop 3/3 turns.
-- **Discoverability gotcha**: `lms load 'gemma-4-31b-it-uncensored' -y` prints `W 2 models match the provided model key on the same device. Loading the first one.` — harmless because the `--identifier gemma4-31b-it-uncensored-trevorjs-q4km` pin guarantees the API id regardless of which match is picked. To list collisions: `~/.lmstudio/bin/lms ls | grep gemma-4-31b-it-uncensored`.
-- **Guardrail dance**: 17.40 GiB resident is below the strict 25 %-of-96-GB threshold so the dance is *not* required. It's kept in the launch snippet defensively (idempotent, zero-cost). Safer to always-do than condition on threshold.
-- Log: `ssh macstudio "~/.lmstudio/bin/lms log show 2>&1 | tail -40"` (LM Studio doesn't write the standard `/tmp/*.log`).
-- mlx-lm (port 8000) and dflash-mlx (port 8098) remain stopped. Previously deployed mains (lmstudio-community Gemma 4 26B A4B-it Q8_0, unsloth Qwen3.6-35B-A3B-UD-Q6_K, Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, TrevorJS Gemma 4 26B A4B, DavidAU Heretic family, prithivMLmods Aggressive) all stay on disk and are restartable from the Fallbacks table below.
+- Switched 2026-05-12 from lm-studio + TrevorJS Gemma 4 31B-it Uncensored Q4_K_M to vmlx-swift-lm + Zyphra ZAYA1-8B JANGTQ4. The prior main is unloaded but its GGUF remains on disk in LM Studio's registry — restartable from the Fallbacks table.
+- **Performance** (2026-05-12 on Osaurus 0.18.13 / engine pin `b9da180` over HTTP loopback): smoke 1/1 (correct `"2"` for "2+2", `finish_reason: stop`). `bench_api_server.py` 1+2 runs at 512 / 4 K / 8 K / 32 K: **TTFT 2.73 / 5.09 / 8.00 / 31.66 s**, **decode 7.3 / 7.0 / 7.9 / 7.8 tok/s**, **prefill 208 / 876 / 1112 / 1122 tok/s**. `bench_agent_tool_call.py --scenario browse --runs 1 --warmup 0` via SSH-tunneled OpenCode 1.14.48: **300.04 s wall-time-killed by OpenCode** before any `step_finish` (0 tokens, 0 tools fired) — agent loops are unusable at this pin. Raw data: [`docs/models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json`](models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json) + [`agent-bench-vmlx-swift-lm.json`](models/benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json).
+- **Known JANGTQ HTTP-path regression.** The fork's own `RunBench` evidence pass at the same commit on M4 Max reports **57.2 tok/s** decode for ZAYA1 JANGTQ4 (8× our HTTP-API number). Root cause: cask 0.18.13 / pin `b9da180` is missing the `BatchEngine.generate` B=1 solo fast path and the JANGTQ Hadamard kernel optimization. Both fixes are queued in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (open at time of writing; vmlx-swift-lm bump to `cb8b3df`). Until that lands, treat ZAYA1 via Osaurus as **functional but speed-degraded** on the OpenAI HTTP API.
+- **Apache 2.0** — Zyphra ZAYA1-8B is Apache 2.0. Top-1 CCA + MoE, 80 decoder layers, hidden 2048, 16 routed experts per MoE layer. Context 131 072, `rope_theta=5e6`.
+- **No thinking channel** — JANGTQ4 sidecar declares `supports_thinking=False`. Internal reasoning happens but is not surfaced separately. The headline AIME / HMMT / GPQA scores from Zyphra's blog assume a Markovian RSA wrapper (recursive self-aggregation, 4 K-token tails, up to 5.5 M tokens/problem) which is not implemented in this lab's bench harnesses — they measure base decode only.
+- Tool-calling parsing is **built into the engine** — `tool_parser=zaya_xml` per the JANGTQ4 capabilities sidecar. No flags needed.
+- **`--expose` is broken** — passing `osaurus serve --expose --yes` flips `exposeToNetwork: true` in `~/.osaurus/runtime/*/configuration.json` but the listener stays on `127.0.0.1:1337`. LAN clients: `ssh -L 1337:127.0.0.1:1337 macstudio`.
+- **Path-mismatch gotcha**: `osaurus pull` saves to `~/.osaurus/models/`; `serve` defaults to `~/MLXModels/`. Always set `OSU_MODELS_DIR=$HOME/.osaurus/models` on launch.
+- Log: `ssh macstudio "tail -20 /tmp/osaurus.log"` (plus the macOS unified log under `process == osaurus` — Osaurus floods it with CacheDelete probes when disk is under pressure, so filter aggressively).
+- Other servers stopped: port 8000 free (vllm-mlx / mlx-openai-server / oMLX / vmlx all stopped), port 1234 free (lm-studio stopped), port 8098 / 8099 free. comfyui (port 8188) is still up and orthogonal. Previously deployed mains (TrevorJS Gemma 4 31B-it Uncensored, lmstudio-community Gemma 4 26B A4B-it Q8_0, unsloth Qwen3.6-35B-A3B-UD-Q6_K, Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, DavidAU Heretic family, prithivMLmods Aggressive) all stay on disk and are restartable from the Fallbacks table below.
 
 ## Active Sidecars (no port-bound daemon)
 
@@ -68,6 +56,7 @@ Models are off (unloaded or stopped) until you restart them. Each row's launch s
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
+| Prior production main (2026-05-10 → 2026-05-12, TrevorJS Gemma 4 31B-it Uncensored Q4_K_M, dense 31B no-think, Apache 2.0, 17.40 GiB resident, harness 6-7/10 / manual 10/10 useful-compliance) | `lm-studio` | `gemma4-31b-it-uncensored-trevorjs-q4km` from `TrevorJS/gemma-4-31B-it-uncensored-GGUF` | On disk and registered in `lms ls` as `gemma-4-31b-it-uncensored`. Reload via `lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y` (guardrail dance optional — 17.4 GiB sits below the 25 % threshold). Use this when you want a fast, OpenAI-API-compatible main without the vmlx-swift-lm JANGTQ regression — 30 tok/s decode, browse 6.63 s warm. |
 | Prior production main (2026-05-07 → 2026-05-10, lmstudio-community Gemma 4 26B A4B-it Q8_0, sparse MoE 26B / 4B-active no-think, browse 2.94 s 🥈 / search 7.20 s scaffolded) | `lm-studio` | `gemma-4-26b-a4b-q8` from `lmstudio-community/gemma-4-26B-A4B-it-GGUF` | On disk and registered in `lms ls` as `gemma-4-26b-a4b-it`. Reload via `lms load 'gemma-4-26b-a4b-it' --gpu max --context-length 131072 --identifier gemma-4-26b-a4b-q8 -y` (guardrail off first — 25 GiB > strict 25% threshold). Use this when MoE speed matters more than uncensored compliance — 87.6 tok/s gen, lighter agent loops than the dense 31B uncensored. |
 | Prior production main (2026-05-07 morning → 2026-05-07 evening, unsloth Qwen3.6-35B-A3B UD-Q6_K, sparse MoE 35B/3B-active think-on, browse 4.92 s / search 12.08 s) | `lm-studio` | `qwen3.6-35b-a3b-ud-q6` from `unsloth/Qwen3.6-35B-A3B-GGUF` | On disk and registered in `lms ls` as `qwen3.6-35b-a3b`. Reload via `lms load 'qwen3.6-35b-a3b' --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-ud-q6 -y` (guardrail off first). Use this when bare imperative prompts matter — Qwen3.6 fires tools without scaffolding. |
 | Prior production main (2026-05-06 → 2026-05-07, IBM Granite 4.1 30B Q8_0, Apache 2.0, dense, browse 6.24 s / search 10.51 s) | `lm-studio` | `granite-4.1-30b-q8` from `unsloth/granite-4.1-30b-GGUF` | On disk and registered in `lms ls` as `granite-4.1-30b`. Reload via `lms load 'granite-4.1-30b' --gpu max --context-length 65536 --identifier granite-4.1-30b-q8 -y` (guardrail off first). Stays as the Apache-2.0 fallback when the production main is unloaded for an experiment. |

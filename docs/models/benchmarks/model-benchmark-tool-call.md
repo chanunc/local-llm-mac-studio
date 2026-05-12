@@ -46,6 +46,7 @@ Two complementary harnesses, both reported per model:
 - [lmstudio-community/gemma-4-26B-A4B-it-GGUF (Q8_0)](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — 26 B sparse MoE, 4 B active, standard Q8_0 GGUF, Google Apache 2.0 base (lm-studio, no patches) — **5/5 API pass (multi-turn 2.14 s tied 🏆 with TrevorJS); OpenCode 3/3 under scaffolded prompts: browse 2.94 s 🥈 / search 7.20 s** — *2026-05-07*
 - [mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) — 35 B sparse MoE, 3 B active, **uniform 6-bit MLX safetensors** (lm-studio, no patches; same family as unsloth UD-Q6_K GGUF) — **4/5 API pass (length cap), browse 14.88 s, search 20.79 s — 3.0× / 1.7× slower than the GGUF Q6_K sibling on the same server** — *2026-05-08*
 - [mlx-community/gemma-4-26b-a4b-it-4bit on lm-studio](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) — 26 B sparse MoE, 4 B active, **4-bit MLX safetensors** (lm-studio, no patches; same `google/gemma-4-26b-a4b-it` base as the lmstudio-community Q8_0 GGUF main) — **5/5 API pass, browse 3.29 s, search 3.23 s — fires bare prompts 3/3 (no scaffolding); search 2.2× faster than the GGUF Q8_0 sibling**, opposite of the Qwen MLX-vs-GGUF result — *2026-05-08*
+- [Zyphra ZAYA1-8B JANGTQ4 on vmlx-swift-lm via Osaurus](#results-zyphrazaya1-8b-jangtq4-on-vmlx-swift-lm-via-osaurus) — 8.4 B sparse MoE / 760 M active, top-1 CCA + MoE, **JANGTQ4** routed-expert quant (Osaurus 0.18.13, engine pin `b9da180`) — **⛔ 300 s OpenCode wall-time × 1 (0/0t, 0 tokens) — agent loops gated on Osaurus picking up [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) `cb8b3df`** — *2026-05-12*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -132,6 +133,7 @@ Rows ordered by browse wall time (ascending).
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2/2.5t · `webfetch` · dense 27B Q8_K_P, think-on · [results](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced) |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **mlx-lm** | 12.33 s / 11.12 s | 35.55 s / 34.38 s | 2/2t · `webfetch` · **think-ON** (121/124 tok) · prior lm-studio think-OFF: *5.11/6.37 s* · [results](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) |
 | Gemma 4 31B-it bf16 + MTP drafter | mlx-vlm 0.5.0 (incl. PRs #1112/#1115/#1117) | ⛔ **300 s timeout × 6** | ⛔ **300 s timeout × 6** | 0/0t · ⛔ no calls · drafter at upstream B=1 (3.07–4.29 acc, 12.3 tok/s) · 2 blockers: streaming hang on long-reasoning + bf16 8K reasoning ≈ 666 s/turn · non-stream harness 5/5 · [analysis](../per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
+| Zyphra ZAYA1-8B JANGTQ4 | vmlx-swift-lm via Osaurus 0.18.13 (pin `b9da180`) | ⛔ **300 s timeout × 1** | not run | 0/0t · ⛔ no `step_finish` · MoE 8.4B/760M-active · top-1 CCA + MoE · API-path decode 7-8 tok/s (engine missing `BatchEngine.generate` B=1 fast path + JANGTQ Hadamard kernel) · re-bench gated on Osaurus picking up [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (`cb8b3df`) · [analysis](../per-model/model-summary-zaya1-8b.md#chosen-path--vmlx-swift-lm-via-osaurus) |
 | Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2/2t · `webfetch` · sparse 3B-active MoE |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2/3t · `webfetch` · A3B sparsity · search splits top-stories + item fetches |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2/2t · `webfetch` · JANGTQ4 `mxtq` MoE 35B/3B + VL · search dominated by 8K turn-2 decode |
@@ -177,6 +179,7 @@ Rows ordered alphabetically by model name.
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF) | lm-studio | (built-in) | (built-in — `<think>` → `reasoning_content`) | none — LM Studio Qwen3 chat template + reasoning parser handle the unsloth Dynamic 2.0 imatrix natively. Discoverability: `lms ls` does not see HF-cached blobs — use `lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y <path-to-Qwen3.6-35B-A3B-UD-Q6_K.gguf>` to hard-link from `~/.cache/huggingface/hub/` into `~/.lmstudio/models/`. Guardrail override **required** before initial load (27.3 GiB Q6_K GGUF > 25 % of 96 GB unified memory). |
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
+| Zyphra ZAYA1-8B JANGTQ4 | vmlx-swift-lm via Osaurus | (built-in — `tool_parser=zaya_xml` per JANGTQ4 capabilities sidecar) | N/A (`supports_thinking=false`) | none on the parser side — engine ships ZAYA dispatch via `LLMTypeRegistry.types["zaya"]`. Two **operational** gotchas: (1) `osaurus pull` writes to `~/.osaurus/models/` but `osaurus serve` defaults to `~/MLXModels/` — always launch with `OSU_MODELS_DIR=$HOME/.osaurus/models`; (2) `osaurus serve --expose --yes` doesn't rebind off 127.0.0.1, so LAN benches need `ssh -L 1337:127.0.0.1:1337 macstudio`. Cask 0.18.13 (engine pin `b9da180`) is **missing the JANGTQ B=1 fast path** ([PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057), merged to main 2026-05-12 as `cb8b3df`, not yet released) — agent loops timeout at OpenCode's 300 s wall until a cask picks up the new pin. |
 | lmstudio-community Gemma 4 26B A4B-it Q8_0 (standardised) | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio runtime. **Source matters:** `unsloth/gemma-4-26B-A4B-it-GGUF`'s chat template fails LM Studio's jinja with `Cannot call something that is not a function: got UndefinedValue` (HTTP 400 on every request with `tools[]`); use `lmstudio-community/gemma-4-26B-A4B-it-GGUF` instead — same Google base, Apache 2.0, fixed template. Guardrail override required (25 GiB > 25 % of 96 GB). Two `gemma-4-26b-a4b-it`-prefix entries in `lms ls` (vs. TrevorJS's `-uncensored` suffix) — load via prefix relies on alphabetical ordering, or pass full path: `unsloth/gemma-4-26B-A4B-it-GGUF/...gguf` is rejected by `lms load` so prefix is the only route. |
 | HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`; default 4K too small for OpenCode system prompt. Download via `hf_hub_download` (Q6_K file) — `lms get` cannot resolve repo. |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Download via `snapshot_download` — `lms get` cannot resolve repo. |
@@ -1668,4 +1671,54 @@ Full layer-attribution, cross-fork landscape, and the unsloth-vs-lmstudio-commun
 6. **Throughput's 64 K probe failure is harness-side** — `bench_api_server.py` doesn't reserve output budget at the requested context length, so a prompt at exactly `--context-length` returns HTTP 400. Measure 32 K and below; or extend the harness to subtract `max_tokens` from the probe size.
 
 7. **Promoted to lm-studio production main (Event 2)** — given 3/3 reliability + TrevorJS-class wall under scaffolded prompts + Apache 2.0 + standardised RLHF, this is the new lm-studio production primary as of 2026-05-07. OpenCode users should use the scaffolding convention (`Browse <url> using webfetch` / `Use webfetch to fetch <literal url> and …`); bare imperative prompts will fail. See `docs/current.md` for the live launch shape.
+
+---
+
+## 🤖 Results: Zyphra ZAYA1-8B JANGTQ4 on vmlx-swift-lm via Osaurus
+
+| Field | Value |
+|:--|:--|
+| Date | 2026-05-12 |
+| Model | `JANGQ-AI/ZAYA1-8B-JANGTQ4` (8.4 B total / 760 M active, top-1 CCA + MoE) |
+| Server | vmlx-swift-lm engine consumed via Osaurus 0.18.13 cask (engine pin `b9da180`) |
+| Endpoint | `http://127.0.0.1:1337/v1` (loopback; LAN bench via `ssh -L 1337:127.0.0.1:1337 macstudio`) |
+| Per-model writeup | [`docs/models/per-model/model-summary-zaya1-8b.md`](../per-model/model-summary-zaya1-8b.md) |
+| Runbook | [`docs/servers/vmlx-swift-lm/summary.md`](../../servers/vmlx-swift-lm/summary.md) |
+
+### API server bench (for context — non-tool-call)
+
+`scripts/bench/bench_api_server.py`, 50-token completions, 1 warmup + 2 timed runs, median. Raw: [`zaya1-8b/api-server-vmlx-swift-lm.json`](zaya1-8b/api-server-vmlx-swift-lm.json).
+
+| Context | TTFT | Decode tok/s | Prefill tok/s |
+|---:|---:|---:|---:|
+| 512 | 2.73 s | 7.3 | 208 |
+| 4096 | 5.09 s | 7.0 | 876 |
+| 8192 | 8.00 s | 7.9 | 1112 |
+| 32768 | 31.66 s | 7.8 | 1122 |
+
+For comparison the engine's own `RunBench` harness at the same commit on M4 Max 128 GB reports **57.2 tok/s** decode (fork README perf table). The 8× gap between Swift-`RunBench` and the OpenAI HTTP path is the JANGTQ HTTP-path regression — see Key Findings below.
+
+### API-Level Tool Calling (5-tool harness)
+
+**Not run.** `bench_api_tool_call.py` would still hit the JANGTQ HTTP-path regression at the same decode tok/s as the agent loop. Filed as a follow-up once the engine pin moves to `cb8b3df`.
+
+### OpenCode Agent Benchmark (`opencode run`, 2026-05-12)
+
+`scripts/bench/bench_agent_tool_call.py --scenario browse --runs 1 --warmup 0`, OpenCode 1.14.48 → SSH-tunneled Osaurus loopback. Raw: [`zaya1-8b/agent-bench-vmlx-swift-lm.json`](zaya1-8b/agent-bench-vmlx-swift-lm.json).
+
+| Scenario | Wall time | LLM time | Turns | Tools fired | Output tokens | Exit code |
+|:--|---:|---:|:--:|:--|---:|:--:|
+| `Browse www.example.com` | **300.04 s** ⛔ | 0 s | 1 (`step_start: 1, step_finish: 0`) | none | 0 | -1 |
+| `Browse Hackernews, get the only one latest topic` | not run | — | — | — | — | — |
+
+The single browse run hit OpenCode's hard 300 s cap before producing any output. Both scenarios at `--runs 3 --warmup 1` were deferred — running them now would just produce four more 300 s timeouts.
+
+### Key Findings
+
+1. **JANGTQ HTTP-path is the load-bearing bottleneck.** The Swift-side `RunBench` at the same engine pin reports 57.2 tok/s decode on M4 Max for ZAYA1 JANGTQ4 ([fork perf table](https://github.com/osaurus-ai/vmlx-swift-lm#single-stream-decode-sustained-toks)). Our HTTP path runs at 7-8 tok/s. The gap is documented in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057): cask 0.18.13 ships an engine snapshot that is missing both (a) the `BatchEngine.generate` B=1 solo fast path, and (b) the JANGTQ Hadamard `newv[8]` + cached-meta kernel optimization. Same regression that broke MiniMax M2.7's app-path decode (30 tok/s vs `RunBench`'s 46.6). PR #1057 merged to `main` 2026-05-12T07:46:36Z as commit `cb8b3df` but **no release tag has been cut yet** (latest tag `0.18.13` predates the merge by 4 days).
+2. **OpenCode's tool-injection system prompt amplifies the regression.** OpenCode injects ~10K+ tokens of tool definitions into the system message of the first turn. At ~1100 tok/s prefill that's ~10 s before generation starts, and at 7-8 tok/s decode the model needs another ~280+ s to emit the first `step_finish` event — well past OpenCode's 300 s hard wall. Same failure shape as the Gemma 4 31B-it bf16 + MTP entry above.
+3. **Tool parser is wired correctly** — JANGTQ4 capabilities sidecar declares `tool_parser=zaya_xml` and Osaurus's engine ships a matching dispatch via `LLMTypeRegistry.types["zaya"]`. End-to-end tool-call correctness is not yet verifiable through OpenCode because the wall-time gate fires first; the API-level harness will resolve this once the speed regression is fixed.
+4. **Cancellation propagation is broken at this pin too.** After `pkill -f "opencode run"`, Osaurus's `/health` continued to report `inflight: 1` for the killed request — the engine doesn't cancel the underlying `MLXBatchAdapter` producer task when the HTTP client disconnects. PR #1057's body explicitly calls out the fix: "`MLXBatchAdapter` now propagates downstream stream termination to `producerTask.cancel()` and gates same-model `maxBatchSize == 1` generation with `SoloGenerationGate`". Plan benches accordingly until the cask updates — a killed run leaves the server stuck for the full original completion budget.
+5. **Two operational gotchas to plan for before re-bench.** (a) `osaurus pull` saves to `~/.osaurus/models/`; `osaurus serve` defaults to `~/MLXModels/`. Launch with `OSU_MODELS_DIR=$HOME/.osaurus/models` or the model is invisible. (b) `osaurus serve --expose --yes` flips `exposeToNetwork: true` in `~/.osaurus/runtime/*/configuration.json` but the listener stays on 127.0.0.1 — likely needs GUI confirmation that doesn't fire over SSH. LAN clients: `ssh -L 1337:127.0.0.1:1337 macstudio`.
+6. **Re-bench gate.** Re-run `bench_agent_tool_call.py --runs 3 --warmup 1 --scenario both` (and add the API-level `bench_api_tool_call.py` row) when either: (i) the brew cask publishes a build whose engine pin is `cb8b3df` or newer, or (ii) Osaurus + vmlx-swift-lm are built from `main` HEAD locally. Until one of those, this row stays at the timeout result above. Expected post-fix decode is ~75-110 tok/s on M3 Ultra extrapolating from M4 Max bandwidth scaling — sufficient to land agent-loop walls in the 15-30 s range, comparable to other A3B-class MoE models on this server.
 

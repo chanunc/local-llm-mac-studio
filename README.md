@@ -11,11 +11,12 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
   OpenClaw                               oMLX (multi-model) :8000
   Pi                                     vmlx (JANGTQ) :8000
                                          lm-studio (LM Studio) :1234
+                                         vmlx-swift-lm via Osaurus (sidecar) :1337
                                          dflash-mlx (sidecar) :8098
                                          llama-cpp-turboquant (sidecar) :8099
                                          qwen-asr (speech→text, no port — Python API)
                                          comfyui (image-gen, sidecar) :8188
-                                         OpenAI + Anthropic API (+ Ollama for vmlx)
+                                         OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus)
 ```
 
 ## 🗂️ Repository Map
@@ -116,6 +117,20 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --continuous-batching \
   > /tmp/vmlx.log 2>&1 &
 
+# vmlx-swift-lm via Osaurus — MLX-Swift engine sidecar on port 1337 (NOT 8000).
+# Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE),
+# Hunyuan v3 (Hy3), and the MiniMax-M2.7 JANGTQ Hadamard kernel path. Installed
+# via `brew install --cask osaurus`; engine pin = osaurus-ai/vmlx-swift-lm commit
+# b9da180. OpenAI + Anthropic + Ollama APIs. Tool-call + reasoning parsers are
+# built-in per family (no flags). PATH-MISMATCH GOTCHA: `osaurus pull` writes to
+# ~/.osaurus/models/ but `osaurus serve` defaults to ~/MLXModels/ which doesn't
+# exist — set OSU_MODELS_DIR explicitly. JANGTQ HTTP-path is speed-regressed
+# pending Osaurus PR #1057 (~7-8 tok/s on ZAYA1 JANGTQ4 vs the engine's own
+# RunBench 57 tok/s). See docs/servers/vmlx-swift-lm/summary.md.
+ssh macstudio "/opt/homebrew/bin/osaurus pull JANGQ-AI/ZAYA1-8B-JANGTQ4"
+ssh macstudio "OSU_MODELS_DIR=\$HOME/.osaurus/models nohup /opt/homebrew/bin/osaurus serve --port 1337 \
+  > /tmp/osaurus.log 2>&1 &"
+
 # dflash-mlx — speculative-decoding sidecar on port 8098 (NOT 8000). Pairs a
 # standard MLX target with a DFlash drafter (block-diffusion verifier).
 # Provisional, OpenCode-only client template. Requires three local patches
@@ -212,6 +227,7 @@ pkill -f mlx-openai-server                                                      
 pkill -f vmlx_engine                                                             # stop vmlx
 ~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
 pkill -f dflash-serve                                                            # stop dflash-mlx
+/opt/homebrew/bin/osaurus stop; pkill -9 osaurus 2>/dev/null                     # stop vmlx-swift-lm / Osaurus
 pkill -f 'build/bin/llama-server'                                                # stop llama-cpp-turboquant (matches both forks)
 pkill -f 'comfyui/main.py'                                                       # stop comfyui
 
@@ -245,6 +261,7 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
   -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
 curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # lm-studio (port 1234)
 curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            # dflash-mlx (port 8098)
+curl -s http://127.0.0.1:1337/v1/models | python3 -m json.tool                  # vmlx-swift-lm / Osaurus (port 1337, loopback-only by default)
 curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool            # llama-cpp-turboquant (port 8099)
 curl -s http://<MAC_STUDIO_IP>:8188/system_stats | python3 -m json.tool          # comfyui (port 8188; no /v1/models — use /models/checkpoints to list weights)
 
@@ -258,6 +275,7 @@ tail -f /tmp/vmlx.log                                                           
 ~/.lmstudio/bin/lms log stream                                                  # lm-studio live request/response stream
 tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # lm-studio daily log file
 tail -f /tmp/dflash-mlx.log                                                     # dflash-mlx logs (per-request DFlash telemetry)
+tail -f /tmp/osaurus.log                                                        # vmlx-swift-lm / Osaurus logs (port 1337)
 tail -f /tmp/llama-cpp-thetom.log                                               # llama-cpp-turboquant logs (TheTom fork)
 tail -f /tmp/llama-cpp-turboquant.log                                           # llama-cpp-turboquant logs (johndpope fork)
 tail -f /tmp/comfyui.log                                                        # comfyui logs (port 8188 image gen)
@@ -293,13 +311,14 @@ opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 | **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | **Stopped 2026-05-06.** Prior main: Gemma 4 31B-it MLX 6-bit on `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`) — 20.4 tok/s, browse 12.33 s (thinking ON). Also: mlx-openai-server YAML multi-model mode with prompt caching + speculative decoding. |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant JANGTQ models — 64.9 tok/s on Qwen3.6-35B-A3B JANGTQ4 |
-| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop · uncensored compliance | Standard MLX / GGUF | OpenAI | **Current production main (2026-05-10, re-bench 2026-05-11):** `TrevorJS/gemma-4-31B-it-uncensored-GGUF` Q4_K_M (Apache 2.0, dense 31B no-think, 17.40 GiB resident, decode 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache **browse 6.63 s _(initial 10.08 s)_ / search 30.81 s**, refusal-rate **harness 6–7/10 / manual 10/10** — disclaimer-prefixed complies). Also on disk: lmstudio-community Gemma 4 26B A4B-it Q8_0 (prior main, MoE 4B-active 87 tok/s), unsloth Qwen3.6-35B-A3B UD-Q6 (think-on fallback), Granite 4.1 30B Q8 (Apache fallback), Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**), TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
+| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop · uncensored compliance | Standard MLX / GGUF | OpenAI | **Currently stopped (2026-05-12).** Prior production main (2026-05-10 → 2026-05-12): `TrevorJS/gemma-4-31B-it-uncensored-GGUF` Q4_K_M (Apache 2.0, dense 31B no-think, 17.40 GiB resident, decode 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache **browse 6.63 s _(initial 10.08 s)_ / search 30.81 s**, refusal-rate **harness 6–7/10 / manual 10/10** — disclaimer-prefixed complies). Also on disk: lmstudio-community Gemma 4 26B A4B-it Q8_0 (prior main, MoE 4B-active 87 tok/s), unsloth Qwen3.6-35B-A3B UD-Q6 (think-on fallback), Granite 4.1 30B Q8 (Apache fallback), Gemma 4 31B-it MLX 6-bit (browse **5.11 s 🥇 thinking OFF**), TrevorJS Gemma 4 26B A4B uncensored, DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/qwen36-35b-a3b-4bit/) |
 | **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** (provisional, :8099) | ⚡ Fastest agent loop (2026-05-06) | Single GGUF + TurboQuant / RotorQuant / PlanarQuant KV cache | OpenAI | **Two forks installed.** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` (`turbo3` + auto-asymm `q8_0` K + 4-mag LUT + sparse V) is the runaway winner: smoke 4/5, **decode 68 tok/s @ 512 / 44 tok/s @ 32 K**, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 — 2.07× / 2.27× faster than Gemma 4**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` (`iso3` for RotorQuant) is documented but slower (cold prefill regression at 32 K+). See [bench](docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/) |
+| **[vmlx-swift-lm](docs/servers/vmlx-swift-lm/summary.md)** (provisional, :1337) | 🔴 HTTP path 7-8 tok/s (regression) | Single Swift-MLX (BF16 / MLX / JANG / JANGTQ2/4 / MXFP4) | OpenAI + Anthropic + Ollama | **Current production main (2026-05-12).** [`osaurus-ai/vmlx-swift-lm`](https://github.com/osaurus-ai/vmlx-swift-lm) engine consumed via `brew install --cask osaurus`. Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE), Hunyuan v3, and the MiniMax-M2.7 JANGTQ Hadamard kernel optimization. Built-in tool/reasoning parsers (no flags). **JANGTQ HTTP-path is regressed** at pin `b9da180` — the engine's `RunBench` reports 57.2 tok/s on M4 Max but the OpenAI HTTP path runs 7-8 tok/s because the cask is missing the `BatchEngine.generate` B=1 fast path and the JANGTQ Hadamard kernel. Fix queued in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057). See [bench](docs/models/benchmarks/zaya1-8b/) |
 | **[qwen-asr](docs/servers/qwen-asr/summary.md)** (sidecar, no port) | 🟢 19× realtime | Single (`Qwen/Qwen3-ASR-1.7B` bf16) | Python API only | **Speech-to-text sidecar** — `~/qwen-asr-env/` (transformers + MPS). 30 langs + 22 Chinese dialects. RTF 19.06× on 15 s English clip, 0.79 s warm. No `/v1/audio/transcriptions` endpoint (CUDA-only path); call `Qwen3ASRModel.transcribe(audio=…)` directly. See [bench](docs/models/benchmarks/qwen3-asr-1.7b/) |
 | **[comfyui](docs/servers/comfyui/summary.md)** (sidecar, :8188) | 🟢 18 s/img distill | `SeeSee21/Z-Anime` AIO BF16 (Distill-4-step + Base, S3-DiT 6B, Apache-2.0) | Web UI only — ComfyUI `/prompt` JSON, no OpenAI `/v1/images/generations` | **Image-generation sidecar** — `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed). 1024² wall time: Distill-4-step **17.75 s** / Base 28-step **235.16 s**. End-user path is the browser UI at `http://<MAC_STUDIO_IP>:8188`; chat clients can't trigger generations. Deployed 2026-05-08. See [bench](docs/models/benchmarks/z-anime/wall-time-comfyui.md) |
 
-All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `qwen-asr`, and `comfyui` support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `qwen-asr`, `comfyui`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
@@ -307,7 +326,7 @@ All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `qwen-asr`
 
 Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) (`lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` keep install / runtime / limitations in their single `summary.md`)
 
-Current production main: **lm-studio** serving `gemma4-31b-it-uncensored-trevorjs-q4km` (TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF, Apache 2.0, dense 31B no-think, 18.69 GB on disk / 17.40 GiB resident) on port **1234** (deployed 2026-05-10, re-bench 2026-05-11). Built-in tool-call parsing (no parser flags), non-thinking model. Decode 30 tok/s @ 512 / 24 tok/s @ 32K, prefill 75K tok/s @ 32K. **API tool-call 5/5 + multi-turn loop 6.73 s**; OpenCode end-to-end **warm-cache browse 6.63 s _(initial 10.08 s — first-bench cold-cache outlier)_ / search 30.81 s** with bare prompts (2/2 webfetch fires per scenario, no scaffolding required). Refusal-rate **harness 6–7/10 / manual 10/10** on mlabonne harmful_behaviors @ max_tokens=1024 — all "refused" results are **disclaimer-prefixed complies** (full Buffer Overflow exploit + shellcode, full racism/violence-website blueprint with crypto donations + encrypted-comm coordination, full bomb chemistry, full Protected-Process kernel-driver AV-bypass) where the keyword detector trips on `***Disclaimer:** ... is illegal ...` preambles. Run-to-run harness variance (6/10 ↔ 7/10) is purely disclaimer-wording sensitivity; body content is consistently compliant. Production users must read past the preambles. Same vendor / abliteration recipe as the prior main (TrevorJS Gemma 4 26B A4B Uncensored Q8_0) but on the dense 31B base — no MoE, no thinking. Loaded via `lms load 'gemma-4-31b-it-uncensored' --identifier gemma4-31b-it-uncensored-trevorjs-q4km --gpu max --context-length 65536` after `lms import -L`; the `modelLoadingGuardrails.mode = "off"` flip is defensive only (17.40 GiB sits below the strict 25%-of-96-GB threshold). Prior main: lmstudio-community Gemma 4 26B A4B-it Q8_0 (2026-05-07, browse 2.94 s 🥈 scaffolded, MoE 4B-active 87 tok/s) — kept as fallback in `lms ls`. All prior mains documented in [`docs/current.md`](docs/current.md) for restart.
+Current production main: **vmlx-swift-lm via Osaurus 0.18.13** serving `zaya1-8b-jangtq4` (Zyphra ZAYA1-8B in JANGTQ4, Apache 2.0, top-1 CCA + MoE, 8.4B total / 760M active, 4.99 GB on disk) on port **1337** loopback (deployed 2026-05-12). Built-in `zaya_xml` tool parser, `supports_thinking=False`. **HTTP path is speed-regressed** at engine pin `b9da180`: decode 7.3 / 7.0 / 7.9 / 7.8 tok/s at 512 / 4 K / 8 K / 32 K; prefill 208 / 876 / 1112 / 1122 tok/s; TTFT 2.73 / 5.09 / 8.00 / 31.66 s. The fork's own `RunBench` at the same commit on M4 Max reports 57.2 tok/s — the gap is documented in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (missing `BatchEngine.generate` B=1 fast path + JANGTQ Hadamard kernel optimization; fix bumps the engine to `cb8b3df`). Two operational gotchas: (1) `osaurus pull` writes to `~/.osaurus/models/` but `serve` defaults to `~/MLXModels/` — always launch with `OSU_MODELS_DIR=$HOME/.osaurus/models`. (2) `osaurus serve --expose --yes` flips `exposeToNetwork: true` in the runtime config but doesn't rebind off 127.0.0.1 — LAN clients need an `ssh -L` tunnel. Prior main (2026-05-10 → 2026-05-12): lm-studio + TrevorJS Gemma 4 31B-it Uncensored Q4_K_M (browse 6.63 s warm / search 30.81 s, harness 6-7/10 / manual 10/10 useful-compliance) — still on disk, restartable from [`docs/current.md`](docs/current.md) Fallbacks table. All prior mains documented there.
 
 Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
 
@@ -320,7 +339,8 @@ All models fit in **96GB unified memory**.
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--------------------------------------|:------------|----------:|--------:|:---------|
-| [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | **Current production main (deployed 2026-05-10, re-bench 2026-05-11)** — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
+| [Zyphra ZAYA1-8B JANGTQ4](docs/models/per-model/model-summary-zaya1-8b.md) | MoE 8.4B / 760M-active | 4.65 | 131K | **Current production main (deployed 2026-05-12 on vmlx-swift-lm port 1337)** — Apache 2.0, top-1 CCA + MoE, `tool_parser=zaya_xml`. HTTP-path decode 7-8 tok/s pending Osaurus PR #1057 (engine's own `RunBench` reports 57.2 tok/s at the same commit; cask is missing the JANGTQ B=1 fast path) |
+| [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | Prior production main (2026-05-10 → 2026-05-12) — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
 | [lmstudio-community Gemma 4 26B A4B-it Q8_0](docs/models/benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) | MoE 26B/4B active | 25 | 128K | Prior production main (2026-05-07 → 2026-05-10) — Apache 2.0, 70–86 tok/s, **API multi-turn 2.14 s 🏆**, OpenCode scaffolded browse 2.94 s 🥈 / search 7.20 s; bare prompts fail (needs "use webfetch" + literal URL) |
 | [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
 | [IBM Granite 4.1 30B Q8_0](docs/models/per-model/model-summary-granite-4.1.md) | Dense 30B | 29 | 65K | Prior production main (2026-05-06) — Apache 2.0 fallback, dense instruct, 24.8 tok/s, browse 6.24 s, search 10.51 s |

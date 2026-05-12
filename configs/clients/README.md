@@ -21,6 +21,7 @@ One subdirectory per server. The contents mirror each other so you can swap serv
 | [`omlx/`](omlx/) | `oMLX` | Multi-model roster | All four client configs maintained in lockstep — see Sync Policy. |
 | [`vmlx/`](vmlx/) | `vmlx` | `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` | Standard-fine-tune JANGTQ path via MLX Studio bundled Python. For dealignai JANGTQ-CRACK variants use the uncen-model submodule's vmlx templates. |
 | [`llama-cpp-turboquant/`](llama-cpp-turboquant/) | `llama-cpp-turboquant` (TurboQuant / RotorQuant sidecar) | `qwen3.6-35b-a3b-turboquant-turbo3` (Qwen3.6-35B-A3B Q6_K + turbo3 V on TheTom fork) | Sidecar on port 8099. **OpenCode template only.** Two forks installed: `TheTom/llama-cpp-turboquant` (turbo2/3/4) + `johndpope/llama-cpp-turboquant` (iso3/4 + planar3/4 + turbo2/3/4). |
+| [`vmlx-swift-lm/`](vmlx-swift-lm/) | `vmlx-swift-lm` (Osaurus MLX-Swift engine) | `zaya1-8b-jangtq4` (Zyphra ZAYA1-8B JANGTQ4 — top-1 CCA + MoE, 8.4B / 760M-active, Apache 2.0) | Provisional sidecar on port 1337. **OpenCode template only.** Only Mac Studio runtime that natively supports the ZAYA CCA cache contract. Engine: [osaurus-ai/vmlx-swift-lm](https://github.com/osaurus-ai/vmlx-swift-lm); app: `brew install --cask osaurus`. |
 
 ## Files per server
 

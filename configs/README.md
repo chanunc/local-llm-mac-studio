@@ -16,8 +16,9 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | **dflash-mlx** | **8098** | DFlash speculative-decoding sidecar — target+drafter pair, wraps `mlx_lm.server` in 0.1.4.1+, requires 3 local patches | Qwen3.6-35B-A3B-4bit + DFlash drafter (~23GB) | Not needed |
 | **llama-cpp-turboquant** | **8099** | TurboQuant / RotorQuant / PlanarQuant KV-cache sidecar — two forks installed: `TheTom/llama-cpp-turboquant` (`turbo2/3/4`, auto-asymm `q8_0` K, sparse V dequant, 4-mag LUT) and `johndpope/llama-cpp-turboquant` (`iso3/4`, `planar3/4`). See [`docs/servers/llama-cpp-turboquant/summary.md`](../docs/servers/llama-cpp-turboquant/summary.md) | unsloth/Qwen3.6-35B-A3B-UD-Q6_K.gguf (~27 GB) | Not needed |
 | **qwen-asr** | — (no port, Python API only) | Speech-to-text sidecar — `qwen-asr` package in `~/qwen-asr-env/`, transformers + MPS backend. `qwen-asr-serve` daemon is CUDA-only and not usable on Apple Silicon; clients call `Qwen3ASRModel.transcribe(audio=…)` in-process. No client templates ship in `configs/clients/` for this server (no chat client speaks audio). See [`docs/servers/qwen-asr/summary.md`](../docs/servers/qwen-asr/summary.md) | `Qwen/Qwen3-ASR-1.7B` bf16 (4.7 GB) | Not needed |
+| **vmlx-swift-lm** | **1337** | MLX-Swift engine via Osaurus macOS cask. Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE), Hunyuan v3 (Hy3), and the MiniMax-M2.7 JANGTQ kernel optimization. Built-in tool/reasoning parsers (no flags). Independent of port 8000. See [`docs/servers/vmlx-swift-lm/summary.md`](../docs/servers/vmlx-swift-lm/summary.md) | `JANGQ-AI/ZAYA1-8B-JANGTQ4` (8.4B / 760M-active, 4.65 GiB) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio (1234), dflash-mlx (8098), llama-cpp-turboquant (8099), and qwen-asr (no port) each occupy their own slot** and can coexist with whichever port-8000 server is up — though the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time to avoid cross-contaminated benchmarks. For what's actually live right now see [`docs/current.md`](../docs/current.md).
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio (1234), dflash-mlx (8098), llama-cpp-turboquant (8099), vmlx-swift-lm / Osaurus (1337), and qwen-asr (no port) each occupy their own slot** and can coexist with whichever port-8000 server is up — though the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time to avoid cross-contaminated benchmarks. For what's actually live right now see [`docs/current.md`](../docs/current.md).
 
 ### Why vllm-mlx is Primary
 
@@ -129,6 +130,16 @@ For uncensored lm-studio GGUFs (TrevorJS Gemma 4 31B-it Q4_K_M, TrevorJS Gemma 4
 
 Speaks **OpenAI-compatible** API on port **1234** (NOT 8000). No API key required. Default `lms server start` binds to `127.0.0.1`; LAN clients require `--bind 0.0.0.0`. Tool calling and `<think>` reasoning parsing are built into the MLX runtime — no parser flags needed. Full server runbook: [`docs/servers/lm-studio/summary.md`](../docs/servers/lm-studio/summary.md).
 
+### `clients/vmlx-swift-lm/` -- Osaurus MLX-Swift Engine (Port 1337)
+
+| File | Copy to | Used by |
+|------|---------|---------|
+| `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
+
+**Default model:** `zaya1-8b-jangtq4` — Zyphra ZAYA1-8B in JANGTQ4 format (8.4B total / 760M active, top-1 CCA + MoE, Apache 2.0). **OpenCode template only** — Claude Code, OpenClaw, Pi, qwen-code config files are deferred while this server type is provisional (the JANGTQ HTTP-path regression in Osaurus 0.18.13 / vmlx-swift-lm pin `b9da180` caps decode at ~7-8 tok/s pending [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057)).
+
+Speaks **OpenAI + Anthropic + Ollama** compatible APIs on port **1337**. No API key. Default bind is `127.0.0.1` — clients on the same Mac use the loopback URL; LAN clients require an `ssh -L` tunnel or the upcoming `--expose` flag landing properly (the current cask flips the runtime flag but doesn't rebind the listener). Tool-call + reasoning parsers are built into the engine — no flags needed (ZAYA emits `zaya_xml`; Qwen/Hermes/Hunyuan have their own parsers). Pulled models live in `~/.osaurus/models/` (not the documented `~/MLXModels`) — set `OSU_MODELS_DIR=$HOME/.osaurus/models` on `osaurus serve`. Full runbook: [`docs/servers/vmlx-swift-lm/summary.md`](../docs/servers/vmlx-swift-lm/summary.md).
+
 ### `clients/dflash-mlx/` -- DFlash Speculative-Decoding Sidecar (Standard MLX, Port 8098)
 
 | File | Copy to | Used by |
@@ -183,6 +194,13 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
 #   python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF', filename='Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf', local_dir='/Users/chanunc/.cache/prithiv-gguf')"
 #   ~/.lmstudio/bin/lms import -L --user-repo mradermacher/Qwen3.6-35B-A3B-Uncensored-Aggressive-GGUF -y ~/.cache/prithiv-gguf/Qwen3.6-35B-A3B-Uncensored-Aggressive.Q6_K.gguf
 #   ~/.lmstudio/bin/lms load qwen3.6-35b-a3b-uncensored-aggressive --gpu max --context-length 65536 --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k -y
+
+# Switch to vmlx-swift-lm via Osaurus (port 1337 — independent of port 8000).
+# First-time: brew install --cask osaurus; then osaurus pull <hf-repo-id>.
+# OSU_MODELS_DIR override is REQUIRED — osaurus pull writes to ~/.osaurus/models/
+# but serve defaults to reading ~/MLXModels/ (path-mismatch bug not yet upstreamed).
+OSU_MODELS_DIR=$HOME/.osaurus/models nohup /opt/homebrew/bin/osaurus serve --port 1337 \
+  > /tmp/osaurus.log 2>&1 &
 
 # Switch to dflash-mlx (port 8098 — does not displace port 8000 but eats ~25 GB unified memory)
 # First-time: pip install 'git+https://github.com/bstnxbt/dflash-mlx.git' in ~/dflash-mlx-env/,

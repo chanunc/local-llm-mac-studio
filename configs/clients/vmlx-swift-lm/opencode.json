@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-vmlx-swift-lm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:1337/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "zaya1-8b-jangtq4": {
+          "name": "Zyphra ZAYA1-8B JANGTQ4 (vmlx-swift-lm, provisional) — top-1 CCA + MoE, 8.4B total / 760M active, Apache 2.0. Bundle id derived from config.json. HTTP-path decode ~7-8 tok/s pending Osaurus PR #1057 (vmlx-swift-lm pin cb8b3df) — see docs/servers/vmlx-swift-lm/summary.md § Known limitations.",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-vmlx-swift-lm/zaya1-8b-jangtq4",
+  "small_model": "macstudio-vmlx-swift-lm/zaya1-8b-jangtq4"
+}

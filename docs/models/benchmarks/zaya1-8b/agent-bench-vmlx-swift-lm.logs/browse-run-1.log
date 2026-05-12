@@ -1,0 +1,133 @@
+# bench stderr capture: opencode run --format json --model macstudio-vmlx-swift-lm/zaya1-8b-jangtq4 --dangerously-skip-permissions --print-logs --log-level INFO Browse www.example.com
+# cwd: /tmp/agent-bench
+# exit_code: -1  elapsed_s: 300.04  timed_out: True
+
+INFO  2026-05-12T07:23:07 +174ms service=default version=1.14.48 args=["run","--format","json","--model","macstudio-vmlx-swift-lm/zaya1-8b-jangtq4","--dangerously-skip-permissions","--print-logs","--log-level","INFO","Browse www.example.com"] process_role=main run_id=2aea354d-e7a7-4196-97de-9fdaddd74831 opencode
+INFO  2026-05-12T07:23:07 +34ms service=file init
+INFO  2026-05-12T07:23:08 +334ms service=default creating instance [object Object]
+INFO  2026-05-12T07:23:08 +0ms service=project directory=/private/tmp/agent-bench fromDirectory
+INFO  2026-05-12T07:23:08 +2ms service=db path=/Users/chanunc/.local/share/opencode/opencode.db opening database
+INFO  2026-05-12T07:23:08 +8ms service=db count=19 mode=bundled applying migrations
+INFO  2026-05-12T07:23:08 +9ms service=default bootstrapping [object Object]
+INFO  2026-05-12T07:23:08 +8ms service=config path=/Users/chanunc/.config/opencode/config.json loading
+INFO  2026-05-12T07:23:08 +1ms service=config path=/Users/chanunc/.config/opencode/opencode.json loading
+INFO  2026-05-12T07:23:08 +2ms service=config path=/Users/chanunc/.config/opencode/opencode.jsonc loading
+INFO  2026-05-12T07:23:08 +9ms service=plugin name=lG loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=sG loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=tV loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=K7 loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=ZM loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=QM loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=XM loading internal plugin
+INFO  2026-05-12T07:23:08 +1ms service=bus type=* subscribing
+INFO  2026-05-12T07:23:08 +0ms service=lsp all LSPs are disabled
+INFO  2026-05-12T07:23:08 +1ms service=bus type=session.updated subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=message.updated subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=message.part.updated subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.diff subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.deleted subscribing
+INFO  2026-05-12T07:23:08 +0ms service=format all formatters are disabled
+INFO  2026-05-12T07:23:08 +0ms service=format init
+INFO  2026-05-12T07:23:08 +2ms service=file.watcher directory=/private/tmp/agent-bench init
+INFO  2026-05-12T07:23:08 +141ms service=file.watcher directory=/private/tmp/agent-bench platform=darwin backend=fs-events watcher backend
+INFO  2026-05-12T07:23:08 +2ms service=bus type=command.executed subscribing
+INFO  2026-05-12T07:23:08 +30ms service=default logSpan.http.span.1=1ms creating instance [object Object]
+INFO  2026-05-12T07:23:08 +0ms service=project directory=/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu fromDirectory
+INFO  2026-05-12T07:23:08 +59ms service=default logSpan.http.span.1=60ms bootstrapping [object Object]
+INFO  2026-05-12T07:23:08 +7ms service=plugin name=lG loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=sG loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=tV loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=K7 loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=ZM loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=QM loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=plugin name=XM loading internal plugin
+INFO  2026-05-12T07:23:08 +0ms service=bus type=* subscribing
+INFO  2026-05-12T07:23:08 +0ms service=lsp all LSPs are disabled
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.updated subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=message.updated subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=message.part.updated subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.diff subscribing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.deleted subscribing
+INFO  2026-05-12T07:23:08 +0ms service=format all formatters are disabled
+INFO  2026-05-12T07:23:08 +0ms service=format init
+INFO  2026-05-12T07:23:08 +1ms service=file.watcher directory=/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu init
+INFO  2026-05-12T07:23:08 +0ms service=file.watcher directory=/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu platform=darwin backend=fs-events watcher backend
+INFO  2026-05-12T07:23:08 +0ms service=bus type=command.executed subscribing
+INFO  2026-05-12T07:23:08 +11ms service=session id=ses_1e4ee8f29ffeNxsSsPMO0jreBH slug=lucky-panda version=1.14.48 projectID=f97047ac79c01f4a0c33b5210b65b8ab76540766 directory=/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu path= title=New session - 2026-05-12T07:23:08.374Z permission=[{"permission":"question","pattern":"*","action":"deny"},{"permission":"plan_enter","pattern":"*","action":"deny"},{"permission":"plan_exit","pattern":"*","action":"deny"}] time={"created":1778570588374,"updated":1778570588374} created
+INFO  2026-05-12T07:23:08 +2ms service=bus type=session.created publishing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.updated publishing
+INFO  2026-05-12T07:23:08 +2ms service=default http.method=POST http.url=/session http.status=200 logSpan.http.span.1=83ms Sent HTTP response
+INFO  2026-05-12T07:23:08 +1ms service=default http.method=GET http.url=/config http.status=200 logSpan.http.span.2=1ms Sent HTTP response
+INFO  2026-05-12T07:23:08 +2ms service=bus type=* subscribing
+INFO  2026-05-12T07:23:08 +0ms service=server event connected
+INFO  2026-05-12T07:23:08 +1ms service=default http.method=GET http.url=/event http.status=200 logSpan.http.span.3=1ms Sent HTTP response
+INFO  2026-05-12T07:23:08 +22ms service=bus type=session.next.agent.switched publishing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=session.next.model.switched publishing
+INFO  2026-05-12T07:23:08 +4ms service=bus type=message.updated publishing
+INFO  2026-05-12T07:23:08 +3ms service=provider status=started state
+INFO  2026-05-12T07:23:08 +2ms service=bus type=message.part.updated publishing
+INFO  2026-05-12T07:23:08 +2ms service=bus type=session.updated publishing
+INFO  2026-05-12T07:23:08 +20ms service=provider init
+INFO  2026-05-12T07:23:08 +2ms service=bus type=session.status publishing
+INFO  2026-05-12T07:23:08 +0ms service=session.prompt session.id=ses_1e4ee8f29ffeNxsSsPMO0jreBH step=0 logSpan.http.span.4=55ms loop
+INFO  2026-05-12T07:23:08 +1ms service=provider status=started state
+INFO  2026-05-12T07:23:08 +6ms service=provider init
+INFO  2026-05-12T07:23:08 +1ms service=vcs branch=main default_branch=main initialized
+INFO  2026-05-12T07:23:08 +0ms service=bus type=file.watcher.updated subscribing
+INFO  2026-05-12T07:23:08 +173ms service=provider instanceUrl=https://gitlab.com gitlab model discovery starting
+INFO  2026-05-12T07:23:08 +2ms service=provider instanceUrl=https://gitlab.com gitlab model discovery starting
+INFO  2026-05-12T07:23:08 +9ms service=provider gitlab model discovery skipped: no models found
+INFO  2026-05-12T07:23:08 +0ms service=provider providerID=gitlab found
+INFO  2026-05-12T07:23:08 +0ms service=provider providerID=opencode found
+INFO  2026-05-12T07:23:08 +0ms service=provider providerID=macstudio-vmlx-swift-lm found
+INFO  2026-05-12T07:23:08 +0ms service=provider status=completed duration=218 state
+INFO  2026-05-12T07:23:08 +1ms service=provider gitlab model discovery skipped: no models found
+INFO  2026-05-12T07:23:08 +0ms service=provider providerID=gitlab found
+INFO  2026-05-12T07:23:08 +0ms service=provider providerID=opencode found
+INFO  2026-05-12T07:23:08 +0ms service=provider providerID=macstudio-vmlx-swift-lm found
+INFO  2026-05-12T07:23:08 +0ms service=provider status=completed duration=192 state
+INFO  2026-05-12T07:23:08 +2ms service=bus type=message.updated publishing
+INFO  2026-05-12T07:23:08 +2ms service=llm providerID=macstudio-vmlx-swift-lm modelID=zaya1-8b-jangtq4 session.id=ses_1e4ee8f29ffeNxsSsPMO0jreBH small=true agent=title mode=primary stream
+INFO  2026-05-12T07:23:08 +0ms service=provider status=started providerID=macstudio-vmlx-swift-lm getSDK
+INFO  2026-05-12T07:23:08 +1ms service=provider providerID=macstudio-vmlx-swift-lm pkg=@ai-sdk/openai-compatible using bundled provider
+INFO  2026-05-12T07:23:08 +2ms service=provider status=completed duration=3 providerID=macstudio-vmlx-swift-lm getSDK
+INFO  2026-05-12T07:23:08 +51ms service=snapshot hash=e627c954bad021fbf6b8004c997bb2b527caf8aa cwd=/Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu git=/Users/chanunc/.local/share/opencode/snapshot/f97047ac79c01f4a0c33b5210b65b8ab76540766/b578f0e539473bc783db3181cb9077e20300bfd9 tracking
+INFO  2026-05-12T07:23:08 +1ms service=session.prompt status=started resolveTools
+INFO  2026-05-12T07:23:08 +2ms service=shell-tool shell=/bin/zsh shell tool using shell
+INFO  2026-05-12T07:23:08 +1ms service=tool.registry status=started invalid
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 invalid
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started question
+INFO  2026-05-12T07:23:08 +1ms service=tool.registry status=completed duration=1 question
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started bash
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 bash
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started read
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 read
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started glob
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 glob
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started grep
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 grep
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started edit
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 edit
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started write
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 write
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started task
+INFO  2026-05-12T07:23:08 +1ms service=tool.registry status=completed duration=1 task
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started webfetch
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 webfetch
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started todowrite
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=0 todowrite
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=started skill
+INFO  2026-05-12T07:23:08 +4ms service=skill count=4 init
+INFO  2026-05-12T07:23:08 +0ms service=tool.registry status=completed duration=4 skill
+INFO  2026-05-12T07:23:08 +3ms service=session.prompt status=completed duration=12 resolveTools
+INFO  2026-05-12T07:23:08 +3ms service=bus type=session.updated publishing
+INFO  2026-05-12T07:23:08 +8ms service=session.processor session.id=ses_1e4ee8f29ffeNxsSsPMO0jreBH messageID=msg_e1b1171d70010x1JNguvarWYhE process
+INFO  2026-05-12T07:23:08 +0ms service=llm providerID=macstudio-vmlx-swift-lm modelID=zaya1-8b-jangtq4 session.id=ses_1e4ee8f29ffeNxsSsPMO0jreBH small=false agent=build mode=primary stream
+INFO  2026-05-12T07:23:08 +1ms service=bus type=session.diff publishing
+INFO  2026-05-12T07:23:08 +0ms service=bus type=message.updated publishing
+INFO  2026-05-12T07:23:08 +3ms service=bus type=session.status publishing
+INFO  2026-05-12T07:23:08 +14ms service=bus type=message.part.updated publishing
+INFO  2026-05-12T07:23:20 +12011ms service=bus type=session.updated publishing
+INFO  2026-05-12T07:24:08 +47757ms service=snapshot prune=7.days cleanup
+
+[bench] TIMEOUT after 300s

@@ -13,6 +13,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
 - [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · prior lm-studio sidecar
+- [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · **active lm-studio main (2026-05-14, agent-broken)**
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
 - [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · **active lm-studio main (2026-05-02) · uncensored GGUF browse leader**
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
@@ -486,6 +487,96 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 - **GGUF on lm-studio only in this repo** — `vllm-mlx`, `mlx-openai-server`, `oMLX`, `vmlx`, and `dflash-mlx` do not host this file format in the current stack.
 - **Uncensored posture is deliberate** — keep this sidecar scoped to local research / eval workflows, not shared endpoints.
 - **Superseded as the active lm-studio sidecar on 2026-05-02** by the HauhauCS Qwen3.6-35B-A3B Uncensored **Aggressive** Q6_K_P variant (next section). The Balanced GGUF is still imported into LM Studio's catalog and reloadable on demand, but no longer the default.
+
+---
+
+## prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M
+
+Same dense 27 B Qwen3.6 base as the JANG 4M, 6-bit MLX, and HauhauCS Balanced variants above, but with **two stacked modifications**: (1) prithivMLmods refusal-direction abliteration on Qwen3.6-27B-abliterated-rMAX, and (2) GLM-5.1 reasoning-trace distillation on `Jackrong/GLM-5.1-Reasoning-1M-Cleaned` (572 K examples) + `prithivMLmods/harm_bench` (4 K). The result is a think-on uncensored model whose `<think>` channel uses GLM-5.1's long-monologue style. Currently active as the lm-studio main; **agent-loop broken on OpenCode 1.14.48** (API harness 5/5 passes, OpenCode emits zero AI SDK 5 events).
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-27B](https://huggingface.co/Qwen/Qwen3.6-27B) → [prithivMLmods/Qwen3.6-27B-abliterated-rMAX](https://huggingface.co/prithivMLmods/Qwen3.6-27B-abliterated-rMAX) |
+| Quant | [prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF](https://huggingface.co/prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF) |
+| Format | GGUF `Q4_K_M` (`Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf`) + `mmproj-f16.gguf` vision projector |
+| Vendor | prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation, standard GGUF quants (no K_P labels) |
+| Parameters | 27 B (dense) |
+| Density | Dense — every param active per token (no MoE sparsity) |
+| Quantization | Standard GGUF `Q4_K_M` (~4.6 BPW) |
+| Specialties | Uncensored reasoning-distilled chat; long internal monologue (~4 700 char median `<think>` at 1024-token budget); vision-capable (mmproj loaded text-only here) |
+| Tokens/sec | **31.0 / 29.7 / 29.3 / 26.7** at 512 / 4 K / 8 K / 32 K (single-stream decode, ~2.7× slower than 35B-A3B MoE sibling at Q6_K) |
+| On-disk size | 15.41 GB (single GGUF + 0.87 GB mmproj-f16) |
+| Resident on load | 15.41 GiB at 65 536 context |
+| Context Size | 65 536 loaded here; 131 072 native |
+| License | Apache-2.0 |
+| Key Features | First reasoning-distilled uncensored entry on this stack; vision projector available; small resident footprint (smallest in the lm-studio uncensored roster); **agent-loop broken on this stack today** |
+
+**Current server:** `lm-studio` on port `1234` under the pinned identifier `qwen3.6-27b-glm51-da-q4km`.
+
+**Deployment path:** standard `Q4_K_M` quant — `lms get` would also work, but `hf download` + `lms import -L` preserves a single hardlinked copy on disk:
+
+```bash
+# Pre-bench hygiene (Event 4) — stop ALL other LLM servers including Osaurus
+ssh macstudio "/opt/homebrew/bin/osaurus stop 2>/dev/null; pkill -9 osaurus 2>/dev/null; \
+  pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; \
+  pkill -f dflash-serve; pkill -f 'lms server'; \
+  /opt/homebrew/bin/brew services stop omlx; sleep 3"
+
+# Download
+ssh macstudio "mkdir -p ~/.cache/hauhau-gguf; \
+  ~/comfyui/.venv/bin/hf download prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF \
+  Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf --local-dir ~/.cache/hauhau-gguf"
+
+# Hard-link import
+ssh macstudio "~/.lmstudio/bin/lms import -L \
+  --user-repo prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF -y \
+  ~/.cache/hauhau-gguf/Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf"
+
+# Load (15.4 GiB ≪ guardrail threshold — no dance)
+ssh macstudio "~/.lmstudio/bin/lms load 'q3.6-27b-glm-5.1-da' \
+  --gpu max --context-length 65536 \
+  --identifier 'qwen3.6-27b-glm51-da-q4km' -y"
+
+# Start
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+```
+
+Load time: **1.75 s** first launch (memory-mapped GGUF).
+
+**Tool-calling smoke test** (2026-05-14): 5/5 single-call scenarios (`read_file`, `run_command`, `search_web+read_file`, `list_directory`, agentic `run_command`) at 4.2–17.7 s each; multi-turn 3-turn loop 3/3 (read_file → write_file → stop) at 16.88 s total. LM Studio's built-in parser converts Qwen-XML tool calls to OpenAI-compat `tool_calls[]`. No parser flag needed.
+
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-14, `temperature=1.0`, `max_tokens=1024`, no system prompt, on lm-studio standalone (single live process): **9/10 keyword-match complied** at 38.43 s avg. P10 refused (refusal phrase in `reasoning_content` only — visible `content` empty). Two prompts produced visible content (P2: 124 chars, P7: 2885 chars); the other eight spent the entire 1024-token budget inside `<think>`. Median reasoning trace ~4 700 chars — much longer than the prithivMLmods 35B-A3B Aggressive sibling at the same budget (~3 200 chars), courtesy of the GLM-5.1 distillation style. Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/refusal-rate-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/refusal-rate-lm-studio.json). Cross-model context: [`docs/models/uncen-model/uncen-model-test-results.md`](../uncen-model/uncen-model-test-results.md).
+
+**Throughput bench (`bench_api_server.py`)** — 2026-05-14, single live process, `temperature=0`, 50 tokens, 1 warmup + 2 measured runs:
+
+| Context | Gen tok/s | Prefill tok/s | TTFT (warm) |
+|--------:|----------:|---------------:|------------:|
+| 512 | **31.0** | 1,476 | 0.363 s |
+| 4 K | 29.7 | 11,950 | 0.345 s |
+| 8 K | 29.3 | 21,611 | 0.380 s |
+| 32 K | **26.7** | 59,464 | 0.553 s |
+
+Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/api-server-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/api-server-lm-studio.json). Dense 27 B Q4_K_M = ~0.37× the gen tok/s of the 35B-A3B MoE Q6_K sibling on the same server (83 → 31). Quant vs quant has marginal effect here; the gap is architectural.
+
+**Agent end-to-end bench (`bench_agent_tool_call.py --tool opencode --scenario both`)** — 2026-05-14, 1 warmup + 3 measured runs per scenario, OpenCode 1.14.48 + macstudio-lm-studio provider, this model loaded as the only LLM process:
+
+| Scenario | Wall (median) | LLM time | Turns | Tokens | Tool calls |
+|----------|---------------:|---------:|------:|-------:|-----------:|
+| `Browse www.example.com` | 16.09 s | **0 s** | **0** | **0** | **none** |
+| `Browse Hackernews, get the only one latest topic` | 76.09 s | **0 s** | **0** | **0** | **none** |
+
+**Agent loop failed:** all 6 measured runs returned exit-code-0 with `errors: []` and an `events_summary` whose every counter was zero (no `step_start`, `step_finish`, `text`, `tool_use`, `reasoning`, `error` events). The OpenAI HTTP API direct returned correct `tool_calls[]` in the smoke test, so the failure layer is the **OpenCode / AI SDK 5 stream parser**, not the model or LM Studio's emitter. Same family of failure as ZAYA1-8B on Osaurus. Full reproducer + cross-stack precedent + upstream-filing draft: [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md#agent-end-to-end-benchmark-bench_agent_tool_callpy-2026-05-14--failed`](../uncen-model/qwen36-27b-glm51-da-benchmark.md#agent-end-to-end-benchmark-bench_agent_tool_callpy-2026-05-14--failed).
+
+Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json).
+
+**Caveats:**
+- **Agent-incompatible on this stack.** Not a usable OpenCode / OpenClaw / Claude Code main today. Direct curl / `llm` CLI still works to exercise the GLM-5.1 reasoning style on the API.
+- **Dense 27 B is the wrong shape for time-boxed agent loops.** Even when the parser is fixed, ~2.7× the per-token cost of the 35B-A3B MoE sibling means browse/search wall times would lag the MoE by similar ratios. Reasoning model with long `<think>` compounds that.
+- **Q4_K_M chosen over Q6_K (20.6 GB) due to disk pressure** (95 % full pre-deploy). Re-bench at Q6_K when disk is cleared — the HauhauCS Q8_K_P stash on `~/.cache/hauhau-gguf/` is the obvious cleanup target.
+- **Vision projector not loaded** in these benchmarks — three mmproj variants (bf16 / f16 / q8_0) shipped, load alongside the main GGUF for vision tests.
+- **Uncensored posture is deliberate** — abliteration + GLM-5.1 distillation. Keep this main scoped to local research / eval, not shared endpoints.
+
+**Related:** dedicated benchmark writeup at [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md`](../uncen-model/qwen36-27b-glm51-da-benchmark.md) (full deployment recipe + failure triage + reproducer). Uncensored-roster placement at [`docs/models/uncen-model/uncen-model-readme.md`](../uncen-model/uncen-model-readme.md#full-roster). Live-state record at [`docs/current.md`](../../current.md).
 
 ---
 

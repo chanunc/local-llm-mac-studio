@@ -13,7 +13,7 @@ Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gat
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
 - [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · prior lm-studio sidecar
-- [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · **active lm-studio main (2026-05-14, browse 10.78 s / search 18.21 s)**
+- [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · **active lm-studio main (2026-05-14, browse 11.62 s / search 19.47 s)**
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
 - [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · **active lm-studio main (2026-05-02) · uncensored GGUF browse leader**
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
@@ -509,7 +509,7 @@ Same dense 27 B Qwen3.6 base as the JANG 4M, 6-bit MLX, and HauhauCS Balanced va
 | Resident on load | 15.41 GiB at 65 536 context |
 | Context Size | 65 536 loaded here; 131 072 native |
 | License | Apache-2.0 |
-| Key Features | First reasoning-distilled uncensored entry on this stack; vision projector available; small resident footprint (smallest in the lm-studio uncensored roster); OpenCode browse 10.78 s / search 18.21 s @ 2 turns + `webfetch` |
+| Key Features | First reasoning-distilled uncensored entry on this stack; vision projector available; small resident footprint (smallest in the lm-studio uncensored roster); OpenCode browse 11.62 s / search 19.47 s @ 2 turns + `webfetch` |
 
 **Current server:** `lm-studio` on port `1234` under the pinned identifier `qwen3.6-27b-glm51-da-q4km`.
 
@@ -562,17 +562,17 @@ Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/api-server-lm-studio.json`](..
 
 | Scenario | Wall (median) | LLM time | Turns | Tokens | Reasoning | Tool calls |
 |----------|---------------:|---------:|------:|-------:|----------:|-----------:|
-| `Browse www.example.com` | **10.78 s** | 9.95 s | 2 | 23 622 | 48 | `webfetch` |
-| `Browse Hackernews, get the only one latest topic` | **18.21 s** | 17.37 s | 2 | 24 904 | 67 | `webfetch` |
+| `Browse www.example.com` | **11.62 s** | 9.95 s | 2 | 23 622 | 48 | `webfetch` |
+| `Browse Hackernews, get the only one latest topic` | **19.47 s** | 17.37 s | 2 | 24 904 | 67 | `webfetch` |
 
-Browse 10.78 s slots between Dolphin 3.0 R1 Mistral 24B (7.5 s) and HauhauCS Qwen3.6-27B Balanced Q8_K_P (11.16 s); search 18.21 s is **10.7 s faster** than the HauhauCS Q8_K_P sibling (Q4_K_M smaller-weight benefit on the 3-turn HN prompt). p5–p95 spreads are tight (browse 10.07–12.09, search 17.24–18.32).
+Browse 11.62 s slots between Dolphin 3.0 R1 Mistral 24B (7.5 s) and HauhauCS Qwen3.6-27B Balanced Q8_K_P (11.16 s); search 19.47 s is **9.4 s faster** than the HauhauCS Q8_K_P sibling (Q4_K_M smaller-weight benefit on the 3-turn HN prompt). p5–p95 spreads are tight (browse 10.07–12.09, search 17.24–18.32).
 
 **Initial 0-turns reading was a bench-rig regression.** OpenCode 1.14.50+ reads `PWD` (not `cwd`) when bootstrapping its project context. `subprocess.run(env=os.environ.copy())` in `bench_agent_tool_call.py` inherited the parent shell's `PWD=…/setup-llm-macstu`, OpenCode bootstrapped *twice* (once in the actual `cwd=/tmp/agent-bench`, once in the inherited PWD), and the JSON event stream sank into the wrong session DB — `proc.stdout` was empty even though OpenCode ran fine. Fix landed this session: pin `env["PWD"] = cwd`. Benefits every future agent-bench invocation. Full triage + reproducer: [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14`](../uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14).
 
 Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json).
 
 **Caveats:**
-- **Dense 27 B is slower than 35B-A3B MoE siblings.** ~2.7× per-token cost vs the MoE Aggressive variants — browse 10.78 s vs prithivMLmods Aggressive's 5.05 s. GLM-5.1's long `<think>` is short in agent context (48–67 reasoning tokens), so the multiplier shows up less here than in the 1024-token refusal bench.
+- **Dense 27 B is slower than 35B-A3B MoE siblings.** ~2.7× per-token cost vs the MoE Aggressive variants — browse 11.62 s vs prithivMLmods Aggressive's 5.05 s. GLM-5.1's long `<think>` is short in agent context (48–67 reasoning tokens), so the multiplier shows up less here than in the 1024-token refusal bench.
 - **Q4_K_M chosen over Q6_K (20.6 GB) due to disk pressure** (95 % full pre-deploy). Re-bench at Q6_K when disk is cleared — the HauhauCS Q8_K_P stash on `~/.cache/hauhau-gguf/` is the obvious cleanup target.
 - **Vision projector not loaded** in these benchmarks — three mmproj variants (bf16 / f16 / q8_0) shipped, load alongside the main GGUF for vision tests.
 - **Uncensored posture is deliberate** — abliteration + GLM-5.1 distillation. Keep this main scoped to local research / eval, not shared endpoints.

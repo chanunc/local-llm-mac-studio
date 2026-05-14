@@ -38,7 +38,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`benchmarks/model-benchmark-agent-local.md`](benchmarks/model-benchmark-agent-local.md) | llama-agent in-process agent loop (no API server in the path). |
 | [`benchmarks/model-benchmark-standalone.md`](benchmarks/model-benchmark-standalone.md) | Standalone generation benchmarks. |
 | [`benchmarks/model-benchmark-turboquant-jang.md`](benchmarks/model-benchmark-turboquant-jang.md) | TurboQuant / JANG benchmark notes. |
-| [`benchmarks/<model-slug>/`](benchmarks/) | Raw `agent-bench.json`, `api-server-<server>.json`, and per-run logs. |
+| [`benchmarks/logs/<model-slug>/`](benchmarks/logs/) | Raw `agent-bench.json`, `api-server-<server>.json`, and per-run logs. |
 
 ## How-to
 
@@ -58,5 +58,5 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 
 - Production-track specs go in [`model-summary.md`](model-summary.md) — keep one row in the Index plus one per-model section.
 - If a model needs more than ~150 lines of detail, put it in [`per-model/`](per-model/) and stub-link from the catalog.
-- Benchmark JSON belongs under [`benchmarks/<model-slug>/`](benchmarks/) named `<benchmark-type>.json` or `<benchmark-type>-<server>.json` for cross-server comparisons.
+- Benchmark JSON belongs under [`benchmarks/logs/<model-slug>/`](benchmarks/logs/) named `<benchmark-type>.json` or `<benchmark-type>-<server>.json` for cross-server comparisons.
 - Add new content following the [Sync Policy](../../CLAUDE.md#sync-policy-read-this-first-when-changing-live-state) — README.md, model-summary.md, and the relevant client config file all need to land together.

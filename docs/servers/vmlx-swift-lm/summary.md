@@ -124,7 +124,7 @@ Reasoning channel is opt-in per family. ZAYA1's capabilities sidecar declares `s
 
 ### ZAYA1-8B-JANGTQ4 on M3 Ultra (this lab, Osaurus 0.18.13 at engine pin `b9da180`)
 
-`bench_api_server.py`, 50-token generations, 1 warmup + 2 timed runs, median reported. Raw JSON at [`docs/models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json`](../../models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json).
+`bench_api_server.py`, 50-token generations, 1 warmup + 2 timed runs, median reported. Raw JSON at [`docs/models/benchmarks/logs/zaya1-8b/api-server-vmlx-swift-lm.json`](../../models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json).
 
 | Context | TTFT | Decode tok/s | Prefill tok/s |
 |---:|---:|---:|---:|
@@ -135,7 +135,7 @@ Reasoning channel is opt-in per family. ZAYA1's capabilities sidecar declares `s
 
 ### Agent loop bench
 
-`bench_agent_tool_call.py` against OpenCode 1.14.48 → SSH-tunneled Osaurus, `--scenario browse --runs 1 --warmup 0`. Raw JSON: [`docs/models/benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json`](../../models/benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json).
+`bench_agent_tool_call.py` against OpenCode 1.14.48 → SSH-tunneled Osaurus, `--scenario browse --runs 1 --warmup 0`. Raw JSON: [`docs/models/benchmarks/logs/zaya1-8b/agent-bench-vmlx-swift-lm.json`](../../models/benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json).
 
 | Scenario | Wall time | Turns | Tools fired | Tokens out |
 |:--|---:|:--:|:--|---:|

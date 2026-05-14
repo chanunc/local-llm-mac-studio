@@ -110,7 +110,7 @@ Requires API key (`<YOUR_API_KEY>`). oMLX uses SSD-backed KV cache and supports 
 | `pi-models.json` | `~/.pi/agent/models.json` | Pi Coding Agent |
 | `openclaw-provider.json` | Merge into `~/.openclaw/openclaw.json` | OpenClaw |
 
-**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/qwen36-35b-a3b-jangtq4-osaurus/). Restart command lives in [`docs/current.md`](../docs/current.md).
+**Templates pin the censored Osaurus JANGTQ4 fine-tune.** Default: `OsaurusAI/Qwen3.6-35B-A3B-JANGTQ4` -- Qwen3.6 MoE+VL (35B total / ~3B active), JANGTQ4 / `mxtq`, ~19.7 GB on disk. API tool harness passes 5/5; OpenCode median is 72.75 s browse and 135.06 s search. Raw results: [`docs/models/benchmarks/logs/qwen36-35b-a3b-jangtq4-osaurus/`](../docs/models/benchmarks/logs/qwen36-35b-a3b-jangtq4-osaurus/). Restart command lives in [`docs/current.md`](../docs/current.md).
 
 For uncensored vmlx JANGTQ-CRACK variants use the matching templates under [`docs/models/uncen-model/client-configs/vmlx/`](../docs/models/uncen-model/client-configs/vmlx/). Note: `dealignai/MiniMax-M2.7-JANGTQ-CRACK` and `dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK` were removed from disk 2026-05-05; `dealignai/Qwen3.6-35B-A3B-JANGTQ2-CRACK` remains on disk.
 

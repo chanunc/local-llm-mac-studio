@@ -62,7 +62,7 @@ ssh macstudio "~/qwen-asr-env/bin/python /tmp/bench_asr_smoke.py"
 # 3. RTF benchmark (3 warm timed passes).
 scp scripts/bench/bench_asr_rtf.py macstudio:/tmp/
 ssh macstudio "~/qwen-asr-env/bin/python /tmp/bench_asr_rtf.py"
-scp macstudio:/tmp/qwen_asr_rtf.json docs/models/benchmarks/qwen3-asr-1.7b/
+scp macstudio:/tmp/qwen_asr_rtf.json docs/models/benchmarks/logs/qwen3-asr-1.7b/
 ```
 
 The pip resolve pulls torch 2.11.0 + transformers 4.57.6 + librosa + soundfile + the `qwen-asr` 0.0.6 package. No flash-attn, no vllm extra. Clean install on a stock Homebrew Python.
@@ -100,7 +100,7 @@ Three warm timed passes after the first warm-up burns in MPS shaders. Same 15.05
 
 vs Qwen's published H100 RTFx of 147.93: M3 Ultra MPS lands at ~13 % of H100 throughput on a single-clip path. Still 19× realtime — a 1-hour podcast transcribes in ~3 min. Batching (`max_inference_batch_size=8` is set; not exercised in this run) could close the gap on multi-clip workloads.
 
-Raw: [`docs/models/benchmarks/qwen3-asr-1.7b/rtf-mps.json`](../benchmarks/qwen3-asr-1.7b/rtf-mps.json).
+Raw: [`docs/models/benchmarks/logs/qwen3-asr-1.7b/rtf-mps.json`](../benchmarks/qwen3-asr-1.7b/rtf-mps.json).
 
 ## Caveats
 

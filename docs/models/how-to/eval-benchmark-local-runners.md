@@ -177,7 +177,7 @@ We already run a 10-prompt subsample with keyword-match scoring via [`refusal_ha
 3. **StrongREJECT rubric judge** — [`dsbowen/strong_reject`](https://github.com/dsbowen/strong_reject) (136 stars, active). Rubric scores refusal + specificity + convincingness 0–1. The fine-tuned-Gemma-2B judge variant runs locally; the rubric judge is GPT-4-by-default but the prompt is open-source — point it at Hermes 4 70B on lm-studio by setting `OPENAI_API_BASE=http://<MAC_STUDIO_IP>:1234/v1`. Captures partial-compliance that keyword-match misses ([HarmMetric Eval paper](https://arxiv.org/pdf/2509.24384)).
 4. **HarmBench classifier as gold standard** — `cais/HarmBench-Llama-2-13b-cls` (option from the HarmBench section above) gives binary yes/no per (behavior, completion); ~93 % human-label agreement.
 
-**Recommended drop-in upgrade for `refusal_harness.py`:** replace the `REFUSAL_PHRASES` list + `refused()` function with an HTTP call to a second LM Studio model serving Llama-Guard-3-8B. Treat `unsafe` token as "complied with harmful request", `safe` as refusal/redirection. Persist the upgraded scores to `docs/models/benchmarks/<slug>/refusal-rate-llamaguard-lm-studio.json` alongside the existing keyword-match JSON for cross-validation during the transition.
+**Recommended drop-in upgrade for `refusal_harness.py`:** replace the `REFUSAL_PHRASES` list + `refused()` function with an HTTP call to a second LM Studio model serving Llama-Guard-3-8B. Treat `unsafe` token as "complied with harmful request", `safe` as refusal/redirection. Persist the upgraded scores to `docs/models/benchmarks/logs/<slug>/refusal-rate-llamaguard-lm-studio.json` alongside the existing keyword-match JSON for cross-validation during the transition.
 
 ---
 
@@ -198,7 +198,7 @@ LM Studio routes `chat.completions` by the `model` field, so all three judges ca
 1. **Day 1 (1 hr):** Verify `/v1/completions` logprobs work on LM Studio (curl test in MMLU section). If yes → run `lm_eval --tasks mmlu --limit 200 --num_fewshot 5` for an MMLU-200 number that matches the existing `uncen-model-comparison.md` table.
 2. **Day 1–2 (4 hrs):** Run `chigkim/Ollama-MMLU-Pro` with `subset = 0.1` (1200 q smoke) → calibrate `max_tokens`/`parallel` → kick off full 12 k overnight.
 3. **Day 2 (30 min):** Run `lm_eval --tasks truthfulqa_mc1,truthfulqa_mc2,truthfulqa_gen --metric rouge,bleu` (no judge needed for mc1/mc2; ROUGE for gen).
-4. **Day 3 (1 hr setup + overnight):** Drop `refusal_harness.py` from 10 → 520 prompts, add Llama-Guard-3-8B sidecar judge. Persist to `docs/models/benchmarks/<slug>/refusal-rate-llamaguard-lm-studio.json`. Replaces ~80 % of HarmBench's signal at ~5 % the operational cost.
+4. **Day 3 (1 hr setup + overnight):** Drop `refusal_harness.py` from 10 → 520 prompts, add Llama-Guard-3-8B sidecar judge. Persist to `docs/models/benchmarks/logs/<slug>/refusal-rate-llamaguard-lm-studio.json`. Replaces ~80 % of HarmBench's signal at ~5 % the operational cost.
 5. **Day 4–5 (4 hrs):** Run HarmBench `step_2_and_3` on the 40-behavior `_val` CSV with the local classifier as the gold standard. Only escalate to the 400-prompt full set if val results are surprising.
 
 ### Logprobs reality check
@@ -222,4 +222,4 @@ For MMLU on lm-studio specifically, you may need to either (a) accept the genera
 - [`docs/models/uncen-model/uncen-model-comparison.md` § Benchmark Glossary](../uncen-model/uncen-model-comparison.md#benchmark-glossary) — what each benchmark measures, scale, interpretation
 - [`scripts/bench/`](../../../scripts/bench/) — the inference-harness benchmarks we run on every deploy (tool-call smoke, throughput, agent loop)
 - [`~/.claude/skills/deploy-run-benchmark-uncen-model/refusal_harness.py`](file:///Users/chanunc/.claude/skills/deploy-run-benchmark-uncen-model/refusal_harness.py) — current keyword-match refusal harness; recommended evolution: Llama-Guard-3-8B HTTP judge as a second LM Studio model slot
-- [`docs/models/benchmarks/`](../benchmarks/) — raw bench JSONs + per-benchmark cross-model summaries
+- [`docs/models/benchmarks/`](../benchmarks/) — per-benchmark cross-model summaries (`model-benchmark-*.md`); raw bench JSONs live under [`docs/models/benchmarks/logs/<model-slug>/`](../benchmarks/logs/)

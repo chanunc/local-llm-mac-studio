@@ -157,7 +157,7 @@ Per-step cost: **4.4 s/step** at CFG 1.0 (Distill), **8.4 s/step** at CFG 4.0 (B
 
 For "best quality": Base 28-step ≈ **4 minutes per image**. For interactive iteration: Distill-4-step ≈ **18 seconds per image**.
 
-Raw JSON: [`docs/models/benchmarks/z-anime/wall-time-comfyui.json`](../../models/benchmarks/z-anime/wall-time-comfyui.json). Detailed write-up: [`wall-time-comfyui.md`](../../models/benchmarks/z-anime/wall-time-comfyui.md).
+Raw JSON: [`docs/models/benchmarks/logs/z-anime/wall-time-comfyui.json`](../../models/benchmarks/z-anime/wall-time-comfyui.json). Detailed write-up: [`wall-time-comfyui.md`](../../models/benchmarks/z-anime/wall-time-comfyui.md).
 
 ## Known limitations
 
@@ -172,7 +172,7 @@ Raw JSON: [`docs/models/benchmarks/z-anime/wall-time-comfyui.json`](../../models
 ## See also
 
 - [`scripts/bench/bench_zanime_walltime.py`](../../../scripts/bench/bench_zanime_walltime.py) — wall-time benchmark driver
-- [`docs/models/benchmarks/z-anime/wall-time-comfyui.md`](../../models/benchmarks/z-anime/wall-time-comfyui.md) — benchmark write-up
+- [`docs/models/benchmarks/logs/z-anime/wall-time-comfyui.md`](../../models/benchmarks/z-anime/wall-time-comfyui.md) — benchmark write-up
 - [`plans/active/plan-comfyui-zanime-sidecar.md`](../../../plans/active/plan-comfyui-zanime-sidecar.md) — deploy plan
 - [SeeSee21/Z-Anime model card](https://huggingface.co/SeeSee21/Z-Anime) (Apache-2.0, S3-DiT 6B, AIO + diffusers + GGUF)
 - [Tongyi-MAI/Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) — base architecture

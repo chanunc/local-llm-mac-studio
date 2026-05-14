@@ -9,7 +9,7 @@
     "discovered_from": "/Users/chanunc/.config/opencode/opencode.json",
     "warmup_runs": 0,
     "measured_runs": 1,
-    "log_dir": "docs/models/benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.logs"
+    "log_dir": "docs/models/benchmarks/logs/zaya1-8b/agent-bench-vmlx-swift-lm.logs"
   },
   "scenarios": {
     "browse": {

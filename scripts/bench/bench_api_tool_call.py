@@ -3,13 +3,13 @@
 
 Runs 5 single-call scenarios + a 3-turn agentic loop against
 /v1/chat/completions (non-streaming, temperature 0). Output JSON
-matches docs/models/benchmarks/qwen36-27b-jang4m/api-tool-test.json.
+matches docs/models/benchmarks/logs/qwen36-27b-jang4m/api-tool-test.json.
 
 Usage:
   ./bench_api_tool_call.py \
     --base-url http://<MAC_STUDIO_IP>:8000/v1 \
     --model JANGQ-AI/Qwen3.6-27B-JANG_4M \
-    --output docs/models/benchmarks/qwen36-27b-jang4m/api-tool-test.json
+    --output docs/models/benchmarks/logs/qwen36-27b-jang4m/api-tool-test.json
 """
 
 import argparse

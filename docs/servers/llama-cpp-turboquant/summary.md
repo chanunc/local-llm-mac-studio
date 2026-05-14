@@ -170,7 +170,7 @@ Smoke (`bench_api_tool_call.py`): **4/5 single-call** (one length-cap fail on ag
 
 OpenCode end-to-end: **browse 6.47 s 🥇 / search 15.64 s 🥇** — **2.07× / 2.27× faster than Gemma 4** (12.33 s / 35.55 s). New agent-loop speed leader.
 
-Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../../models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/).
+Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-turboquant-turbo3/`](../../models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/).
 
 ### johndpope iso3 (prior sidecar — kept for RotorQuant comparison)
 
@@ -183,7 +183,7 @@ Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](..
 
 Smoke: 5/5; multi-turn 8.48 s; OpenCode browse 20.5 s / search 151.18 s.
 
-Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
+Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
 
 ### Key takeaway
 
@@ -203,4 +203,4 @@ The cold-prefill regression on iso3 was the K-side compression compute, **not** 
 - Upstream fork: [`johndpope/llama-cpp-turboquant`](https://github.com/johndpope/llama-cpp-turboquant)
 - Original RotorQuant project: [`scrya-com/rotorquant`](https://github.com/scrya-com/rotorquant)
 - TurboQuant paper: [arXiv 2504.19874](https://arxiv.org/abs/2504.19874) (ICLR 2026)
-- Bench data: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/)
+- Bench data: [`docs/models/benchmarks/logs/qwen36-35b-a3b-rotorquant-iso3/`](../../models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/)

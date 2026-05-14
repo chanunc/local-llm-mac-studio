@@ -175,7 +175,7 @@ The server logs **per-request DFlash telemetry**: `122.3 tok/s | 81.2% accepted 
 
 - [`docs/models/techniques/model-technique-dflash.md`](../../models/techniques/model-technique-dflash.md) — DFlash technique reference + M3 Ultra regression analysis
 - [`docs/models/per-model/`](../../models/per-model/) — per-model deep dives (catalog stub: [`docs/models/model-summary.md`](../../models/model-summary.md))
-- [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../../models/benchmarks/qwen36-35b-a3b-4bit/) — raw bench JSONs
+- [`docs/models/benchmarks/logs/qwen36-35b-a3b-4bit/`](../../models/benchmarks/qwen36-35b-a3b-4bit/) — raw bench JSONs
 - [`docs/models/benchmarks/model-benchmark-api-server.md`](../../models/benchmarks/model-benchmark-api-server.md) — cross-server prefill / decode comparison
 - [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — cross-server tool-call latency
 - [`docs/models/benchmarks/model-benchmark-tool-call.md`](../../models/benchmarks/model-benchmark-tool-call.md) — end-to-end agent loop

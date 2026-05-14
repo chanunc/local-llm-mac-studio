@@ -6,7 +6,7 @@ Operational helpers split by purpose: benchmark drivers, server-package patches,
 
 | Subdir | Purpose |
 |:--|:--|
-| [`bench/`](bench/) | Benchmark drivers (run from any client; output lands under `docs/models/benchmarks/<model>/`). |
+| [`bench/`](bench/) | Benchmark drivers (run from any client; output lands under `docs/models/benchmarks/logs/<model>/`). |
 | [`patches/`](patches/) | Monkey-patches for installed server packages on the Mac Studio. Re-run after upstream upgrades. |
 | `switch_opencode_config.py` | Local-only helper that swaps OpenCode's config between server templates in `configs/clients/`. |
 | `chk_llm_macstu.py` | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on ports 8000 / 1234 / 8098. |
@@ -38,7 +38,7 @@ Useful as the **Event 4 pre-benchmark hygiene** primitive — see [the Sync Poli
 | [`bench/bench_asr_rtf.py`](bench/bench_asr_rtf.py) | Qwen3-ASR RTF benchmark: 1 warm-up + 3 timed passes against the cached `/tmp/asr_en.wav` clip, computes `RTF = audio_seconds / wall_seconds`, writes `/tmp/qwen_asr_rtf.json`. M3 Ultra MPS baseline (2026-05-08): 19.06× RTF on a 15.05 s English clip. |
 | [`bench/bench_zanime_walltime.py`](bench/bench_zanime_walltime.py) | ComfyUI Z-Anime image-gen wall-time benchmark. Drives ComfyUI's `/prompt` HTTP API with an 8-node txt2img workflow, polls `/history/<id>` until completion, captures wall-clock means over N runs (default 5) per variant after one warm-up. Variants: Distill-4-step AIO BF16 (4 steps, CFG 1.0) and Base AIO BF16 (28 steps, CFG 4.0) at 1024×1024 with `euler` / `beta` / shift 3.5. Writes `/tmp/zanime-walltime.json`. |
 
-Save raw output under [`docs/models/benchmarks/<model-slug>/`](../docs/models/benchmarks/) per the [Sync Policy](../CLAUDE.md#sync-policy-read-this-first-when-changing-live-state).
+Save raw output under [`docs/models/benchmarks/logs/<model-slug>/`](../docs/models/benchmarks/) per the [Sync Policy](../CLAUDE.md#sync-policy-read-this-first-when-changing-live-state).
 
 ## Patches
 

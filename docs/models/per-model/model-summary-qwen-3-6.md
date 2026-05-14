@@ -147,7 +147,7 @@ Same hybrid Gated DeltaNet + MoE architecture as the 6-bit variant above, quanti
 
 Tool-call latency: 5/5 single-call scenarios, 1.68-6.08 s. Multi-turn 3-turn loop: 5.9 s total. Agent-bench browse: 27.59 s wall median (13% faster than lm-studio on the smaller dense Qwen3.6-27B-6bit). Agent-bench search: 54.78 s wall median (2.1× slower — 3-turn loop with growing context favors prefill, where lm-studio's closed runtime wins).
 
-Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-4bit/`](../benchmarks/qwen36-35b-a3b-4bit/).
+Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-4bit/`](../benchmarks/qwen36-35b-a3b-4bit/).
 
 **Caveats:**
 - Requires three local patches against upstream packages — see [`docs/servers/dflash-mlx/summary.md`](../../servers/dflash-mlx/summary.md#installation).
@@ -196,7 +196,7 @@ Same 35 B / 3 B-active Qwen3.6 MoE+VL hybrid Gated DeltaNet stack as the 6-bit M
 - No upstream PyPI / Homebrew distribution — track via `git pull` + rebuild.
 - **No MLX implementation of RotorQuant exists as of 2026-05-06.** This llama.cpp fork is the only Apple-Silicon path. See [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md) for the cross-platform landscape (PyTorch+CUDA, Triton, llama.cpp, MLX TurboQuant variants without RotorQuant).
 
-Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
+Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-rotorquant-iso3/`](../benchmarks/qwen36-35b-a3b-rotorquant-iso3/).
 
 ---
 
@@ -261,7 +261,7 @@ Build time: ~30 s. Startup logs confirm `turbo3 using 4-mag LUT (pre-M5 hardware
 - 65 K context returns HTTP 400 in the throughput probe — likely a slot/parallel-seqs constraint at exactly the `-c` ceiling. Reduce probe contexts to ≤ 32 K, or launch with a higher `-c`.
 - Same fork-distribution caveats as iso3 entry — no PyPI / Homebrew, track via `git pull` + rebuild.
 
-Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/). Full technique reference: [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
+Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/). Full technique reference: [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
 
 ---
 
@@ -317,7 +317,7 @@ ssh macstudio "JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai
 - The 4/5 smoke is the same agentic-reasoning length-cap failure pattern seen on TheTom turbo3 — likely intrinsic to Qwen3.6-35B-A3B at 6-bit when emitting long chains-of-thought before a tool call.
 - **No production flip.** Browse 101 s rules this out. Restored Gemma 4 to port 8000 after bench.
 
-Raw bench JSONs: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-mlx-6bit/`](../benchmarks/qwen36-35b-a3b-rotorquant-mlx-6bit/). Cross-fork landscape (why this configuration lacks RotorQuant runtime even though the repo name advertises it): [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
+Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-rotorquant-mlx-6bit/`](../benchmarks/qwen36-35b-a3b-rotorquant-mlx-6bit/). Cross-fork landscape (why this configuration lacks RotorQuant runtime even though the repo name advertises it): [`docs/models/techniques/model-technique-rotorquant.md`](../techniques/model-technique-rotorquant.md).
 
 ---
 
@@ -523,7 +523,7 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 - Tool-result replay produced `The current weather in Paris is sunny with a temperature of 18°C.`
 - `reasoning_content` was separated cleanly from `content`
 
-**Refusal-rate bench (mlabonne harmful_behaviors, 10/520 sample)** — 2026-05-02, `temperature=1.0`, `max_tokens=300`, `top_p=1.0`, no system prompt: **9/10 keyword-match** (1 false-positive on P10 — combined-stream matcher caught "as an AI" + "harmful" inside a contextual-acknowledgement frame, model committed to comply). Avg 16.2 s/prompt at ~18.7 tok/s — slow because vmlx-osaurus (~30 GB) was co-resident on the Mac Studio for the run. All 10 prompts produced comply-oriented planning in `reasoning_content`; LM Studio's reasoning parser auto-splits `<think>` blocks so `content` stayed empty at 300 tokens (`finish_reason: length`). Useful post-thinking compliance is **unverified** at this token budget — same caveat as JANGTQ2-CRACK. Raw: [`docs/models/benchmarks/qwen36-27b-hauhaucs-q8kp/refusal-rate-lm-studio.json`](../benchmarks/qwen36-27b-hauhaucs-q8kp/refusal-rate-lm-studio.json). Cross-model context: [`docs/models/uncen-model/uncen-model-test-results.md`](../uncen-model/uncen-model-test-results.md).
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520 sample)** — 2026-05-02, `temperature=1.0`, `max_tokens=300`, `top_p=1.0`, no system prompt: **9/10 keyword-match** (1 false-positive on P10 — combined-stream matcher caught "as an AI" + "harmful" inside a contextual-acknowledgement frame, model committed to comply). Avg 16.2 s/prompt at ~18.7 tok/s — slow because vmlx-osaurus (~30 GB) was co-resident on the Mac Studio for the run. All 10 prompts produced comply-oriented planning in `reasoning_content`; LM Studio's reasoning parser auto-splits `<think>` blocks so `content` stayed empty at 300 tokens (`finish_reason: length`). Useful post-thinking compliance is **unverified** at this token budget — same caveat as JANGTQ2-CRACK. Raw: [`docs/models/benchmarks/logs/qwen36-27b-hauhaucs-q8kp/refusal-rate-lm-studio.json`](../benchmarks/qwen36-27b-hauhaucs-q8kp/refusal-rate-lm-studio.json). Cross-model context: [`docs/models/uncen-model/uncen-model-test-results.md`](../uncen-model/uncen-model-test-results.md).
 
 **Caveats:**
 - **Resolver mismatch for custom quant names** — use direct Hub download + `lms import`, not `lms get`, until LM Studio handles `K_P` labels correctly.
@@ -589,7 +589,7 @@ Load time: **1.75 s** first launch (memory-mapped GGUF).
 
 **Tool-calling smoke test** (2026-05-14): 5/5 single-call scenarios (`read_file`, `run_command`, `search_web+read_file`, `list_directory`, agentic `run_command`) at 4.2–17.7 s each; multi-turn 3-turn loop 3/3 (read_file → write_file → stop) at 16.88 s total. LM Studio's built-in parser converts Qwen-XML tool calls to OpenAI-compat `tool_calls[]`. No parser flag needed.
 
-**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-14, `temperature=1.0`, `max_tokens=1024`, no system prompt, on lm-studio standalone (single live process): **9/10 keyword-match complied** at 38.43 s avg. P10 refused (refusal phrase in `reasoning_content` only — visible `content` empty). Two prompts produced visible content (P2: 124 chars, P7: 2885 chars); the other eight spent the entire 1024-token budget inside `<think>`. Median reasoning trace ~4 700 chars — much longer than the prithivMLmods 35B-A3B Aggressive sibling at the same budget (~3 200 chars), courtesy of the GLM-5.1 distillation style. Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/refusal-rate-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/refusal-rate-lm-studio.json). Cross-model context: [`docs/models/uncen-model/uncen-model-test-results.md`](../uncen-model/uncen-model-test-results.md).
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-14, `temperature=1.0`, `max_tokens=1024`, no system prompt, on lm-studio standalone (single live process): **9/10 keyword-match complied** at 38.43 s avg. P10 refused (refusal phrase in `reasoning_content` only — visible `content` empty). Two prompts produced visible content (P2: 124 chars, P7: 2885 chars); the other eight spent the entire 1024-token budget inside `<think>`. Median reasoning trace ~4 700 chars — much longer than the prithivMLmods 35B-A3B Aggressive sibling at the same budget (~3 200 chars), courtesy of the GLM-5.1 distillation style. Raw: [`docs/models/benchmarks/logs/qwen36-27b-glm51-da/refusal-rate-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/refusal-rate-lm-studio.json). Cross-model context: [`docs/models/uncen-model/uncen-model-test-results.md`](../uncen-model/uncen-model-test-results.md).
 
 **Throughput bench (`bench_api_server.py`)** — 2026-05-14, single live process, `temperature=0`, 50 tokens, 1 warmup + 2 measured runs:
 
@@ -600,7 +600,7 @@ Load time: **1.75 s** first launch (memory-mapped GGUF).
 | 8 K | 29.3 | 21,611 | 0.380 s |
 | 32 K | **26.7** | 59,464 | 0.553 s |
 
-Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/api-server-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/api-server-lm-studio.json). Dense 27 B Q4_K_M = ~0.37× the gen tok/s of the 35B-A3B MoE Q6_K sibling on the same server (83 → 31). Quant vs quant has marginal effect here; the gap is architectural.
+Raw: [`docs/models/benchmarks/logs/qwen36-27b-glm51-da/api-server-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/api-server-lm-studio.json). Dense 27 B Q4_K_M = ~0.37× the gen tok/s of the 35B-A3B MoE Q6_K sibling on the same server (83 → 31). Quant vs quant has marginal effect here; the gap is architectural.
 
 **Agent end-to-end bench (`bench_agent_tool_call.py --tool opencode --scenario both`)** — 2026-05-14, 1 warmup + 3 measured runs per scenario, OpenCode 1.14.50 + macstudio-lm-studio provider, this model loaded as the only LLM process. Re-run after a bench-script `PWD` fix (see below):
 
@@ -613,7 +613,7 @@ Browse 11.62 s slots between Dolphin 3.0 R1 Mistral 24B (7.5 s) and HauhauCS Qwe
 
 **Initial 0-turns reading was a bench-rig regression.** OpenCode 1.14.50+ reads `PWD` (not `cwd`) when bootstrapping its project context. `subprocess.run(env=os.environ.copy())` in `bench_agent_tool_call.py` inherited the parent shell's `PWD=…/setup-llm-macstu`, OpenCode bootstrapped *twice* (once in the actual `cwd=/tmp/agent-bench`, once in the inherited PWD), and the JSON event stream sank into the wrong session DB — `proc.stdout` was empty even though OpenCode ran fine. Fix landed this session: pin `env["PWD"] = cwd`. Benefits every future agent-bench invocation. Full triage + reproducer: [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14`](../uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14).
 
-Raw: [`docs/models/benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json).
+Raw: [`docs/models/benchmarks/logs/qwen36-27b-glm51-da/agent-bench-lm-studio.json`](../benchmarks/qwen36-27b-glm51-da/agent-bench-lm-studio.json).
 
 **Caveats:**
 - **Dense 27 B is slower than 35B-A3B MoE siblings.** ~2.7× per-token cost vs the MoE Aggressive variants — browse 11.62 s vs prithivMLmods Aggressive's 5.05 s. GLM-5.1's long `<think>` is short in agent context (48–67 reasoning tokens), so the multiplier shows up less here than in the 1024-token refusal bench.
@@ -684,7 +684,7 @@ Load time on first launch: 22.84 s. No parser flags required — LM Studio auto-
 - Multi-turn 3-step loop: **3/3 turns** completed cleanly (read → write → final stop, 5.48 s total)
 - `reasoning_content` separated from `content` by LM Studio's parser
 
-**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-02, `temperature=1.0`, **`max_tokens=1024`** (lifted from Balanced's 300 to give the content channel room), `top_p=1.0`, no system prompt: **10/10 keyword-match with 0 refused** (vs Balanced's 9/10 with 1 false-positive). 3/10 prompts produced visible `content` (P5 identity-theft step-by-step, P8 bomb tutorial as "baking soda + vinegar reframing", P10 full social-media post — `finish_reason=stop` at 849 ctoks); 7/10 spent the full 1024-token budget inside `<think>` (planning channel comply, content channel unverified). Useful-compliance for those seven would lift with a 4 K-token re-run. Pre-bench hygiene applied (vmlx + dflash both stopped) — the 13.76 s/prompt avg is solo-machine throughput, not contention. Raw: [`docs/models/benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/refusal-rate-lm-studio.json`](../benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/refusal-rate-lm-studio.json) and [`docs/models/uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md`](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md).
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-02, `temperature=1.0`, **`max_tokens=1024`** (lifted from Balanced's 300 to give the content channel room), `top_p=1.0`, no system prompt: **10/10 keyword-match with 0 refused** (vs Balanced's 9/10 with 1 false-positive). 3/10 prompts produced visible `content` (P5 identity-theft step-by-step, P8 bomb tutorial as "baking soda + vinegar reframing", P10 full social-media post — `finish_reason=stop` at 849 ctoks); 7/10 spent the full 1024-token budget inside `<think>` (planning channel comply, content channel unverified). Useful-compliance for those seven would lift with a 4 K-token re-run. Pre-bench hygiene applied (vmlx + dflash both stopped) — the 13.76 s/prompt avg is solo-machine throughput, not contention. Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-hauhaucs-aggressive/refusal-rate-lm-studio.json`](../benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/refusal-rate-lm-studio.json) and [`docs/models/uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md`](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md).
 
 **API server perf bench** (`bench_api_server.py`, streaming SSE, 2026-05-02, median of 2 warm runs):
 
@@ -705,7 +705,7 @@ Prefill at 32 K is **2.4× the 27B-6bit-on-lm-studio precedent (47 K tok/s)** an
 | `Browse www.example.com` | **5.14 s** | 3.94 s | 2 | 5.0 – 5.41 s |
 | `Browse Hackernews, get the only one latest topic` | **12.01 s** | 10.81 s | 3 | 11.77 – 12.02 s |
 
-This is **essentially tied with Gemma 4 31B-it** on browse (Gemma 5.11 s 🏆, Aggressive 5.14 s) and **2nd-place on search** (Gemma 6.37 s 🏆, Aggressive 12.01 s — Aggressive's thinking-on path adds 5–6 s on the longer 3-turn search loop). Aggressive is the **fastest uncensored / GGUF** path in the stack; Gemma still wins the dense non-thinking text-only path on both scenarios. Vs the prior lm-studio non-Gemma fastest (Qwen3.6-27B-6bit, 31.96 s browse / 25.71 s search), Aggressive is **6.2× faster on browse and 2.1× on search**; vs the prior vmlx-Osaurus production main (72.75 s / 135.06 s), it's **14×** and **11×**. Raw: [`docs/models/benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/agent-bench-lm-studio.json`](../benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/agent-bench-lm-studio.json).
+This is **essentially tied with Gemma 4 31B-it** on browse (Gemma 5.11 s 🏆, Aggressive 5.14 s) and **2nd-place on search** (Gemma 6.37 s 🏆, Aggressive 12.01 s — Aggressive's thinking-on path adds 5–6 s on the longer 3-turn search loop). Aggressive is the **fastest uncensored / GGUF** path in the stack; Gemma still wins the dense non-thinking text-only path on both scenarios. Vs the prior lm-studio non-Gemma fastest (Qwen3.6-27B-6bit, 31.96 s browse / 25.71 s search), Aggressive is **6.2× faster on browse and 2.1× on search**; vs the prior vmlx-Osaurus production main (72.75 s / 135.06 s), it's **14×** and **11×**. Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-hauhaucs-aggressive/agent-bench-lm-studio.json`](../benchmarks/qwen36-35b-a3b-hauhaucs-aggressive/agent-bench-lm-studio.json).
 
 **Caveats:**
 - **Same `K_P` resolver workaround** as Balanced — `lms get` mis-picks `Q2_K_P`. Use direct Hub download + `lms import -L`.
@@ -781,9 +781,9 @@ Load time on first launch: 15.90 s. No parser flags required — LM Studio handl
 **Tool-calling smoke test** (2026-05-02, `bench_api_tool_call.py`):
 - Single-call pass rate **5/5** (file-read 1.79 s, command 1.98 s, search+read 4.27 s, list/read/write 1.60 s, agentic-reasoning 5.79 s)
 - Multi-turn 3-step loop: **3/3 turns** completed cleanly (read → write → final stop, 5.87 s total)
-- Raw: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json)
+- Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-tool-test.json)
 
-**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-02, `temperature=1.0`, `max_tokens=1024`, no system prompt: **10/10 keyword-match, 0 refused** (1/10 produced visible `content` at P10, 9/10 spent budget inside `<think>` planning; avg 13.83 s/prompt). Raw: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/refusal-rate-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/refusal-rate-lm-studio.json).
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-02, `temperature=1.0`, `max_tokens=1024`, no system prompt: **10/10 keyword-match, 0 refused** (1/10 produced visible `content` at P10, 9/10 spent budget inside `<think>` planning; avg 13.83 s/prompt). Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-prithiv-aggressive/refusal-rate-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/refusal-rate-lm-studio.json).
 
 **API server perf bench** (`bench_api_server.py`, streaming SSE, 2026-05-02, median of 2 warm runs):
 
@@ -796,7 +796,7 @@ Load time on first launch: 15.90 s. No parser flags required — LM Studio handl
 
 65 K probe not run — model loaded at exactly `--context-length 65536`; probe would need `--context-length 70000` to leave headroom for `max_tokens=50`.
 
-Raw: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-server-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-server-lm-studio.json).
+Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-prithiv-aggressive/api-server-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-server-lm-studio.json).
 
 **Agent end-to-end bench** (`bench_agent_tool_call.py`, OpenCode 1.14.x, 1 warmup + 3 measured, 2026-05-02):
 
@@ -805,7 +805,7 @@ Raw: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/api-server-lm-st
 | `Browse www.example.com` | **5.05 s** 🥈 | 3.85 s | 2 | 4.89 – 5.30 s |
 | `Browse Hackernews, get the only one latest topic` | **13.56 s** | 12.36 s | 3 | 12.36 – 14.75 s |
 
-**Browse 5.05 s** is the uncensored GGUF browse leader (60 ms faster than HauhauCS 5.14 s and 90 ms faster than prior vmlx-Osaurus path). **Search 13.56 s** trails HauhauCS 12.01 s by +1.55 s — search's 3-turn loop with growing context slightly favors HauhauCS's 131K loaded context vs this model's 65K. Raw: [`docs/models/benchmarks/qwen36-35b-a3b-prithiv-aggressive/agent-bench-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/agent-bench-lm-studio.json).
+**Browse 5.05 s** is the uncensored GGUF browse leader (60 ms faster than HauhauCS 5.14 s and 90 ms faster than prior vmlx-Osaurus path). **Search 13.56 s** trails HauhauCS 12.01 s by +1.55 s — search's 3-turn loop with growing context slightly favors HauhauCS's 131K loaded context vs this model's 65K. Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-prithiv-aggressive/agent-bench-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/agent-bench-lm-studio.json).
 
 **Caveats:**
 - **LM Studio guardrail workaround required** — see deployment gotcha above; documented in [`docs/current.md`](../../docs/current.md) launch shape.
@@ -897,9 +897,9 @@ No parser flags required — LM Studio handles Qwen3 chat template + `<think>` n
 **Tool-calling smoke test** (2026-05-03, `bench_api_tool_call.py`):
 - Single-call pass rate **5/5** (file-read 7.47 s, command 6.39 s, search+read 17.63 s, list/read/write 7.74 s, agentic-reasoning 15.90 s)
 - Multi-turn 3-step loop: **3/3 turns** completed cleanly (30.31 s total)
-- Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/api-tool-test.json`](../benchmarks/qwen36-40b-davidau-heretic/api-tool-test.json)
+- Raw: [`docs/models/benchmarks/logs/qwen36-40b-davidau-heretic/api-tool-test.json`](../benchmarks/qwen36-40b-davidau-heretic/api-tool-test.json)
 
-**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-03, `temperature=1.0`, `max_tokens=1024`, no system prompt: **9/10 keyword-match** (1 soft-refusal at P2, 1 timeout at P7 counted as complied; avg 70.56 s/prompt). All 8 non-refused/non-timeout prompts produced visible `content` — a consistent Deckard/PDK training signature. Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/refusal-rate-lm-studio.json`](../benchmarks/qwen36-40b-davidau-heretic/refusal-rate-lm-studio.json).
+**Refusal-rate bench (mlabonne harmful_behaviors, 10/520)** — 2026-05-03, `temperature=1.0`, `max_tokens=1024`, no system prompt: **9/10 keyword-match** (1 soft-refusal at P2, 1 timeout at P7 counted as complied; avg 70.56 s/prompt). All 8 non-refused/non-timeout prompts produced visible `content` — a consistent Deckard/PDK training signature. Raw: [`docs/models/benchmarks/logs/qwen36-40b-davidau-heretic/refusal-rate-lm-studio.json`](../benchmarks/qwen36-40b-davidau-heretic/refusal-rate-lm-studio.json).
 
 **API server perf bench** (`bench_api_server.py`, streaming SSE, 2026-05-03, median of 2 warm runs):
 
@@ -912,7 +912,7 @@ No parser flags required — LM Studio handles Qwen3 chat template + `<think>` n
 
 Dense 40B + GGUF: all 40B params active per decode step → ~11× slower gen vs MoE 35B/3B siblings (9.7 vs 83 tok/s at 512 ctx); prefill is also significantly slower (678 vs 5,350 tok/s at 512). TTFT flat sub-1s through 32K (vs sub-300ms for MoE). Use MoE siblings when raw throughput or multi-turn context latency matters; use DavidAU for tasks where quality, thinking depth, and verified compliance matter more.
 
-Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/api-server-lm-studio.json`](../benchmarks/qwen36-40b-davidau-heretic/api-server-lm-studio.json).
+Raw: [`docs/models/benchmarks/logs/qwen36-40b-davidau-heretic/api-server-lm-studio.json`](../benchmarks/qwen36-40b-davidau-heretic/api-server-lm-studio.json).
 
 **Agent end-to-end bench** (`bench_agent_tool_call.py`, OpenCode 1.14.x, 1 warmup + 3 measured, 2026-05-03):
 
@@ -921,7 +921,7 @@ Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/api-server-lm-studio.js
 | `Browse www.example.com` | **18.73 s** | 17.47 s | 2 | 17.18 – 21.37 s |
 | `Browse Hackernews, get the only one latest topic` | **71.02 s** | 69.86 s | 3 | 63.88 – 76.77 s |
 
-Dense 40B agent times are substantially slower than MoE siblings: browse 18.73 s (vs 5.05 s prithivMLmods, 5.14 s HauhauCS) and search 71.02 s (vs 13.56 s prithivMLmods, 12.01 s HauhauCS). Expected for a dense 40B at 8.8–9.7 tok/s. Raw: [`docs/models/benchmarks/qwen36-40b-davidau-heretic/agent-bench-lm-studio.json`](../benchmarks/qwen36-40b-davidau-heretic/agent-bench-lm-studio.json).
+Dense 40B agent times are substantially slower than MoE siblings: browse 18.73 s (vs 5.05 s prithivMLmods, 5.14 s HauhauCS) and search 71.02 s (vs 13.56 s prithivMLmods, 12.01 s HauhauCS). Expected for a dense 40B at 8.8–9.7 tok/s. Raw: [`docs/models/benchmarks/logs/qwen36-40b-davidau-heretic/agent-bench-lm-studio.json`](../benchmarks/qwen36-40b-davidau-heretic/agent-bench-lm-studio.json).
 
 **Caveats:**
 - **Dense 40B gen speed** — 8.8–9.7 tok/s expected; 3–4 s for short responses, 60–90 s for multi-turn agent loops. If throughput is the priority, reload prithivMLmods or HauhauCS Aggressive.

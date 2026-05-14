@@ -111,7 +111,7 @@ There's no `/v1/models` to curl — see [Known limitations](#known-limitations).
 
 For context, Qwen's published H100 RTFx is 147.93 — M3 Ultra MPS is ~13 % of that, but **19× realtime** still means a 1-hour clip transcribes in ~3 minutes. Variance across passes is sub-1 % so a single warm timing is representative.
 
-Raw JSON: [`docs/models/benchmarks/qwen3-asr-1.7b/rtf-mps.json`](../../models/benchmarks/qwen3-asr-1.7b/rtf-mps.json).
+Raw JSON: [`docs/models/benchmarks/logs/qwen3-asr-1.7b/rtf-mps.json`](../../models/benchmarks/qwen3-asr-1.7b/rtf-mps.json).
 
 ## Known limitations
 

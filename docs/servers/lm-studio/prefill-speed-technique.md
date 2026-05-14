@@ -88,7 +88,7 @@ libc++abi: terminating due to uncaught exception of type std::runtime_error:
 
 This happens roughly 60% through prefill on a 65K prompt — the 8192-token activation chunk plus the growing KV cache plus the 6-bit weights exceed the Metal command-buffer ceiling on 96 GB unified memory. Mirrors the public observation in [`lmstudio-js#507`](https://github.com/lmstudio-ai/lmstudio-js/issues/507) that 16384 regresses; on M3 Ultra + Gemma 4 31B 6-bit the cliff is at 8192 for full-window contexts.
 
-**3. We are already past the prefill bottleneck.** Baseline at default 2048 (raw JSON: [`docs/models/benchmarks/gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json`](../../models/benchmarks/gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json)) on Gemma 4 31B-it 6-bit beats lm-studio on prefill across the board on the same weights:
+**3. We are already past the prefill bottleneck.** Baseline at default 2048 (raw JSON: [`docs/models/benchmarks/logs/gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json`](../../models/benchmarks/gemma-4-31b-it-mlx-6bit/api-server-mlx-lm.json)) on Gemma 4 31B-it 6-bit beats lm-studio on prefill across the board on the same weights:
 
 | Context | `mlx_lm.server` @ 2048 (default) | lm-studio | Ratio |
 |:--|--:|--:|--:|

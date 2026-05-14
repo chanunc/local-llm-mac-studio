@@ -129,7 +129,7 @@ Verified empirically: launching TheTom's `llama-server` with `--cache-type-k tur
 
 ### Recommended next experiment ✅ **completed 2026-05-06**
 
-Did the rebuild on TheTom's `feature/turboquant-kv-cache`. Cold prefill at 32 K dropped from `>600 s timeout` to **29.88 s**. OpenCode search dropped from `iso3`'s 151.18 s to **15.64 s** (also beating Gemma 4's 35.55 s baseline by 2.27×). turbo3 on TheTom's fork is now a real production-flip candidate. Bench data: [`docs/models/benchmarks/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/).
+Did the rebuild on TheTom's `feature/turboquant-kv-cache`. Cold prefill at 32 K dropped from `>600 s timeout` to **29.88 s**. OpenCode search dropped from `iso3`'s 151.18 s to **15.64 s** (also beating Gemma 4's 35.55 s baseline by 2.27×). turbo3 on TheTom's fork is now a real production-flip candidate. Bench data: [`docs/models/benchmarks/logs/qwen36-35b-a3b-turboquant-turbo3/`](../benchmarks/qwen36-35b-a3b-turboquant-turbo3/).
 
 ## See also
 
@@ -139,4 +139,4 @@ Did the rebuild on TheTom's `feature/turboquant-kv-cache`. Cold prefill at 32 K 
 - Original TurboQuant paper: [arXiv 2504.19874](https://arxiv.org/abs/2504.19874) (ICLR 2026)
 - vLLM feature request: [`vllm#38291`](https://github.com/vllm-project/vllm/issues/38291)
 - TurboQuant on MLX (separate, no RotorQuant): [`arozanov/turboquant-mlx`](https://github.com/arozanov/turboquant-mlx), [`helgklaizar/turboquant-mlx`](https://github.com/helgklaizar/turboquant-mlx)
-- Bench data: [`docs/models/benchmarks/qwen36-35b-a3b-rotorquant-iso3/`](../benchmarks/qwen36-35b-a3b-rotorquant-iso3/)
+- Bench data: [`docs/models/benchmarks/logs/qwen36-35b-a3b-rotorquant-iso3/`](../benchmarks/qwen36-35b-a3b-rotorquant-iso3/)

@@ -101,7 +101,7 @@ JANGTQ4 over JANGTQ2: same decode speed in the fork's published numbers, JANGTQ4
 3. **Engine pin matches the JANGTQ4 README.** The fork's evidence pass at commit `b9da180` is the runtime-pin that JANGTQ4 explicitly calls for. The released Osaurus cask tracks the same fork.
 4. **Continuous batching, multi-tier KV cache, TurboQuant KV compression** are all built in — same engine that powers Osaurus's stress harness (199/199 mixed-concurrent in their published `STRESS-TEST-RESULTS.md`).
 
-**Measured performance on M3 Ultra 96 GB** — `bench_api_server.py` against `http://127.0.0.1:1337/v1`, 50-token generations, 1 warmup + 2 timed runs, median. Raw JSON: [`docs/models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json`](../benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json).
+**Measured performance on M3 Ultra 96 GB** — `bench_api_server.py` against `http://127.0.0.1:1337/v1`, 50-token generations, 1 warmup + 2 timed runs, median. Raw JSON: [`docs/models/benchmarks/logs/zaya1-8b/api-server-vmlx-swift-lm.json`](../benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json).
 
 | Context | TTFT | Decode tok/s | Prefill tok/s |
 |---:|---:|---:|---:|
@@ -112,7 +112,7 @@ JANGTQ4 over JANGTQ2: same decode speed in the fork's published numbers, JANGTQ4
 
 **Known JANGTQ HTTP-path regression.** The fork's own `RunBench` evidence pass at the same commit on M4 Max reports **57.2 tok/s** decode for JANGTQ4 — **8× our measured HTTP number**. Root cause documented in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057): cask 0.18.13 / engine pin `b9da180` is missing both the `BatchEngine.generate` B=1 solo fast path *and* the JANGTQ Hadamard `newv[8]` + cached-meta kernel optimization. PR #1057 bumps the engine to `cb8b3df` and restores both. Until that ships, treat ZAYA1 via Osaurus as **functional but speed-degraded** on the OpenAI HTTP API. The regression is engine-internal — it persists after Event-4 hygiene (verified by killing LM Studio's 61 GB llmworker mid-bench; numbers were identical before and after).
 
-**Agent loop bench (OpenCode → ZAYA1 via the SSH-tunneled HTTP path)** — `bench_agent_tool_call.py --scenario browse --runs 1 --warmup 0`. Raw JSON: [`docs/models/benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json`](../benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json).
+**Agent loop bench (OpenCode → ZAYA1 via the SSH-tunneled HTTP path)** — `bench_agent_tool_call.py --scenario browse --runs 1 --warmup 0`. Raw JSON: [`docs/models/benchmarks/logs/zaya1-8b/agent-bench-vmlx-swift-lm.json`](../benchmarks/zaya1-8b/agent-bench-vmlx-swift-lm.json).
 
 | Scenario | Wall time | Turns | Tools fired | Output tokens | Exit code |
 |:--|---:|:--:|:--|---:|:--:|
@@ -166,7 +166,7 @@ ssh macstudio "/usr/bin/python3 /tmp/bench_api_server.py \
   --base-url http://127.0.0.1:1337/v1 --model zaya1-8b-jangtq4 \
   --contexts 512,4096,8192,32768 --max-tokens 50 --warmup 1 --runs 2 \
   --output /tmp/zaya-api-server.json"
-scp macstudio:/tmp/zaya-api-server.json docs/models/benchmarks/zaya1-8b/api-server-vmlx-swift-lm.json
+scp macstudio:/tmp/zaya-api-server.json docs/models/benchmarks/logs/zaya1-8b/api-server-vmlx-swift-lm.json
 ```
 
 **Verified behaviors after this sequence:**

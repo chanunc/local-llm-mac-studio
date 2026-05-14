@@ -28,7 +28,7 @@ Usage:
   ./bench_agent_local.py \
     --bin ~/llama-agent-bin/llama-agent \
     --model ~/.lmstudio/models/unsloth/granite-4.1-30b-GGUF/granite-4.1-30b-Q8_0.gguf \
-    --output docs/models/benchmarks/granite-4.1-30b-q8/agent-local.json
+    --output docs/models/benchmarks/logs/granite-4.1-30b-q8/agent-local.json
 """
 
 import argparse

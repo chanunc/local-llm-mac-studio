@@ -2,53 +2,51 @@
 
 Short source of truth for the Mac Studio stack's live operating state. Detailed runbooks live under [`docs/servers/`](servers/), model details under [`docs/models/`](models/), and client templates under [`configs/clients/`](../configs/clients/).
 
-Last verified: 2026-05-15 (added `llama-cpp-mtp` sidecar on port 8100 — `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` via [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) PR #22673; lm-studio main unchanged)
+Last verified: 2026-05-15 (production switched from lm-studio + GLM-5.1-DA to `llama-cpp-mtp` + `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — user-elected MTP main; the prior GLM-5.1-DA Q4_K_M is faster on agent loops and stays on disk as a fallback)
 
 ## Production
 
 | Field | Value |
 |:--|:--|
-| Server | `lm-studio` (LM Studio headless, port 1234) |
-| Model | `qwen3.6-27b-glm51-da-q4km` (prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M — dense 27 B + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1 reasoning-trace distillation, think-on, Apache 2.0, 15.41 GB on disk / 15.41 GiB resident) |
-| Port | `1234` (LAN-bound `0.0.0.0:1234`, CORS on, no auth) |
+| Server | `llama-cpp-mtp` (custom `llama-server` from [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) PR #22673, port 8100) |
+| Model | `qwen3.6-27b-mtp-ud-q6kxl` (`unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — dense 27 B Qwen3.6 + MTP self-drafting heads, Unsloth Dynamic 2.0 6-bit GGUF, 26 GB on disk / ~28 GB resident, Apache 2.0 base) |
+| Port | `8100` (LAN-bound `0.0.0.0:8100`, no auth) |
 | Auth | None |
-| Client template set | [`docs/models/uncen-model/client-configs/lm-studio/`](models/uncen-model/client-configs/lm-studio/) — uncensored-side templates; OpenCode entry updated, default unchanged |
-| Runbook | [`docs/servers/lm-studio/summary.md`](servers/lm-studio/summary.md) · model writeup [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md`](models/uncen-model/qwen36-27b-glm51-da-benchmark.md) · per-model section [`docs/models/per-model/model-summary-qwen-3-6.md`](models/per-model/model-summary-qwen-3-6.md) |
+| Client template set | [`configs/clients/llama-cpp-mtp/opencode.json`](../configs/clients/llama-cpp-mtp/opencode.json) — OpenCode template only (provisional posture; Claude Code / Pi / OpenClaw / Qwen-Code templates deferred) |
+| Runbook | [`docs/servers/llama-cpp-mtp/summary.md`](servers/llama-cpp-mtp/summary.md) · technique [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](models/techniques/model-technique-qwen-3-6-mtp.md) · family pitfalls [`docs/models/per-model/model-summary-qwen-3-6.md`](models/per-model/model-summary-qwen-3-6.md) |
 
-> 🟢 **Agent-loop verified.** OpenCode 1.14.50 + macstudio-lm-studio provider: browse **11.62 s** wall (9.95 s LLM) / search **19.47 s** wall (17.37 s LLM), 2 turns, `webfetch` fired correctly across all 3 runs of each scenario. API harness `bench_api_tool_call.py` passes **5/5** single-call + **3/3** multi-turn at the OpenAI layer; `harmful_behaviors` refusal slice **9/10 keyword-complied / 38.4 s avg** at `max_tokens=1024`. Earlier `agent_turns=0` reading was a bench-script regression on OpenCode 1.14.50 — `subprocess.run(env=os.environ.copy())` inherited the parent's `PWD`, OpenCode bootstrapped in the wrong project dir and sank its JSON event stream into the wrong session DB. Fix landed in `scripts/bench/bench_agent_tool_call.py` (pin `env["PWD"] = cwd`); benefits every future agent-bench run on opencode 1.14.50+.
+> 🟢 **MTP engaged + agent-loop verified.** Launch log confirms `creating MTP draft context against the target model` + `adding speculative implementation 'draft-mtp'`. Per-response `timings.draft_n_accepted/draft_n` reports **84–89 %** MTP draft acceptance across context sizes (exactly the upper-end of Unsloth's claim). API harness `bench_api_tool_call.py` passes **5/5** single-call + 3-turn multi-turn **21.92 s** at the OpenAI layer; OpenCode 1.14.50 end-to-end: browse **35.98 s** wall / search **35.24 s** wall, 2 turns + `webfetch` fired on every run. **Slower than the prior LM Studio Q4_K_M main** (browse 11.62 s / search 19.47 s) — MTP's ~1.5–2× decode speedup doesn't close the dense-27B-6-bit weight-bundle gap; if speed matters more than the MTP experiment, restart the GLM-5.1-DA fallback (one-liner in the table below).
 
-Launch shape (Event-4 hygiene already done — Osaurus + ZAYA1-8B were stopped 2026-05-14 before this deploy):
+Launch shape (Event-2 ps -axo capture from the running process on Mac Studio):
 
 ```bash
-# One-time download (15.41 GB Q4_K_M GGUF):
-ssh macstudio "mkdir -p ~/.cache/hauhau-gguf; \
-  ~/comfyui/.venv/bin/hf download prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF \
-  Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf --local-dir ~/.cache/hauhau-gguf"
+# Build is one-time — see docs/servers/llama-cpp-mtp/summary.md § Installation.
+# Production switch command, captured 2026-05-15 from `ps -axo command=`:
+ssh macstudio "GGUF=~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/main/Qwen3.6-27B-UD-Q6_K_XL.gguf; \
+  nohup ~/llama-cpp-mtp/build/bin/llama-server \
+    -m \"\$GGUF\" \
+    -ngl 99 -fa on -np 1 -c 32768 \
+    --spec-type draft-mtp --spec-draft-n-max 2 \
+    --host 0.0.0.0 --port 8100 \
+    --alias qwen3.6-27b-mtp-ud-q6kxl \
+    --jinja --reasoning on \
+    > /tmp/llama-cpp-mtp.log 2>&1 &"
 
-# Hard-link import into LM Studio's registry (no duplicate on disk):
-ssh macstudio "~/.lmstudio/bin/lms import -L \
-  --user-repo prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF -y \
-  ~/.cache/hauhau-gguf/Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf"
-
-# Load with stable identifier + 65K context (15.4 GiB ≪ guardrail threshold, no dance):
-ssh macstudio "~/.lmstudio/bin/lms load 'q3.6-27b-glm-5.1-da' \
-  --gpu max --context-length 65536 \
-  --identifier 'qwen3.6-27b-glm51-da-q4km' -y"
-
-# Start server (LAN-bound, CORS):
-ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
+# Stop (do NOT match bare 'llama-server' — that also kills llama-cpp-turboquant if running):
+ssh macstudio "pkill -f 'llama-cpp-mtp/build/bin/llama-server'"
 ```
 
 Notes:
-- Switched 2026-05-14 from vmlx-swift-lm + Zyphra ZAYA1-8B JANGTQ4 to lm-studio + prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M. ZAYA1 was agent-broken at Osaurus pin `b9da180`; the new main is agent-functional after a session-2 bench-script `PWD` fix. TrevorJS Gemma 4 31B-it Uncensored is still on disk as the alt-fallback if you want a smaller, non-thinking dense Gemma.
-- **API-level performance** (2026-05-14 on LM Studio headless via port 1234, single live process): smoke 5/5 single-call + 3/3 multi-turn at the OpenAI API layer. `bench_api_server.py` 1+2 runs at 512 / 4 K / 8 K / 32 K: **TTFT 0.36 / 0.35 / 0.38 / 0.55 s**, **decode 31.0 / 29.7 / 29.3 / 26.7 tok/s** (dense 27 B Q4_K_M, ~2.7× slower than the 35B-A3B MoE sibling), **prefill 1 476 / 11 950 / 21 611 / 59 464 tok/s**. Refusal-rate harness: **9/10 keyword-complied** at `max_tokens=1024 temp=1.0` (P10 refusal phrase leaked into `reasoning_content` only, visible `content` empty). Raw data: [`docs/models/benchmarks/logs/qwen36-27b-glm51-da/`](models/benchmarks/qwen36-27b-glm51-da/).
-- **Agent-loop (post bench-rig fix).** OpenCode 1.14.50: browse **11.62 s wall / 9.95 s LLM**, search **19.47 s wall / 17.37 s LLM**, 2 turns + `webfetch` fired on every run. Lands between Dolphin 3.0 R1 Mistral 24B (7.5 / 34.5 s) and HauhauCS Qwen3.6-27B Balanced Q8_K_P (11.16 / 28.91 s) — search is 9.4 s faster than HauhauCS Balanced thanks to Q4_K_M vs Q8_K_P. First reading reported `agent_turns=0` because `subprocess.run(env=os.environ.copy())` inherited the parent shell's `PWD` and OpenCode 1.14.50+ honours `PWD` over `cwd` when bootstrapping, sinking the JSON stream into the wrong session DB. Fix landed in `scripts/bench/bench_agent_tool_call.py` — `env["PWD"] = cwd`. Full triage in [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14`](models/uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14).
-- **Apache 2.0** — prithivMLmods/Q3.6-27B-GLM-5.1-DA is Apache 2.0. Dense 27 B Qwen3.6 base with prithivMLmods refusal-direction abliteration (`Qwen3.6-27B-abliterated-rMAX`) + GLM-5.1 reasoning-trace distillation on `Jackrong/GLM-5.1-Reasoning-1M-Cleaned` (572 K). Includes vision projector (`mmproj-f16.gguf`, 870 MB, loaded text-only here).
-- **Reasoning channel** — LM Studio auto-detects Qwen `<think>` and exposes `reasoning_content` to OpenAI-compat clients. Median reasoning trace ~4 700 chars at `max_tokens=1024`; very long internal monologue style courtesy of the GLM-5.1 distillation.
-- Tool-calling parsing is **built into LM Studio** (no `--tool-call-parser` flag) — model emits Qwen XML, parser converts to `tool_calls[]` at the API layer.
-- **Disk pressure** — chose Q4_K_M (15.4 GB) over Q6_K (20.6 GB) because `/System/Volumes/Data` was at 95 % full pre-deploy. Re-bench at Q6_K once disk is cleared.
-- Log: `ssh macstudio "~/.lmstudio/bin/lms log stream | tail -30"` (LM Studio doesn't write to `/tmp/`).
-- Other servers stopped: port 8000 free (vllm-mlx / mlx-openai-server / oMLX / vmlx all stopped), port 1337 free (Osaurus stopped 2026-05-14 as part of pre-bench hygiene), port 8098 / 8099 free. comfyui (port 8188) is still up and orthogonal. Previously deployed mains (Zyphra ZAYA1-8B on Osaurus, TrevorJS Gemma 4 31B-it Uncensored, lmstudio-community Gemma 4 26B A4B-it Q8_0, unsloth Qwen3.6-35B-A3B-UD-Q6_K, Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, DavidAU Heretic family, prithivMLmods Aggressive) all stay on disk and are restartable from the Fallbacks table below.
+- Switched 2026-05-15 from lm-studio + prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M to llama-cpp-mtp + unsloth Qwen3.6-27B-MTP UD-Q6_K_XL. User-elected switch — bench numbers show the prior GLM-5.1-DA main is faster on agent loops (browse 11.62 s vs 35.98 s), so the prior main stays as the **speed-first fallback** in the table below.
+- **API-level performance** (2026-05-15, real-content prompt rig — standard `bench_api_server.py` filler triggers EOS at temp=0 for this 6-bit MTP quant; see runbook § Known limitations). Decode **22.9 / 22.3 / 22.0 / 20.0 tok/s** @ 414 / 3 648 / 7 274 / 29 128 input tokens. Warm TTFT 0.15 / 0.16 / 0.16 / 0.21 s. Prefill 2 746 / 23 453 / 44 954 / 139 320 tok/s. MTP draft acceptance 31/35 (88.6 %) → 31/36 (86.1 %) across context sizes. Smoke (`bench_api_tool_call.py`): 5/5 single-call, multi-turn 21.92 s. Raw data: [`docs/models/benchmarks/logs/qwen36-27b-mtp/`](models/benchmarks/logs/qwen36-27b-mtp/).
+- **Agent-loop.** OpenCode 1.14.50 (1 warmup + 3 measured each scenario): browse **35.98 s wall / 35.2 s LLM** (range 24.48 – 48.34 s), search **35.24 s wall / 34.45 s LLM** (range 29.42 – 70.45 s), 2 turns + `webfetch` fired on every measured run. Bench-rig `PWD` fix from 2026-05-14 carries over cleanly to a llama.cpp backend (no zero-turn regression).
+- **Apache 2.0 base** — `unsloth/Qwen3.6-27B-MTP-GGUF` is the Apache 2.0 dense Qwen3.6-27B with Unsloth's Multi-Token Prediction draft heads baked into a single GGUF. The MTP heads are part of the target weights — no separate drafter file, no `--spec-draft-model` flag.
+- **Reasoning channel** — `--reasoning on` routes `<think>...</think>` content into `choices[].message.reasoning_content`, separate from `content`. Tool calls dispatch from the GGUF's embedded chat template via `--jinja` — there are **no** `--tool-call-parser` / `--reasoning-parser` flags on this build (verified against `llama-server --help`).
+- **MTP flag corrections** — the Unsloth HF card writes `--spec-type mtp` but the mtp-clean branch enum entry is `draft-mtp` (sibling of `draft-simple`, `draft-eagle3`, ngram variants). Default `--spec-draft-n-max` is 16; **must override to 2** per the HF card or acceptance drops to ~50 %.
+- **MTP limitations** — `-np > 1` and `--mmproj` are unsupported with MTP active, so this main has **no multi-pipeline** and **no vision input** (the dense Qwen3.6-27B's VL capability is lost in this configuration). For VL with the same Qwen3.6-27B base, restart the LM Studio GLM-5.1-DA fallback below.
+- **Build maintenance** — custom `am17an/llama.cpp@mtp-clean` branch, pinned at commit `08b147428` / build tag `b9172`. Re-pull + rebuild after upstream llama.cpp lands new features. No PyPI / Homebrew pin.
+- Log: `ssh macstudio "tail -20 /tmp/llama-cpp-mtp.log"`.
+- Other servers stopped: port 8000 free, port 1234 free (lm-studio stopped 2026-05-15 during this switch), port 8098 / 8099 free, port 1337 free. comfyui (port 8188) is orthogonal and stays up. All previously deployed mains (Zyphra ZAYA1-8B on Osaurus, GLM-5.1-DA on lm-studio, TrevorJS Gemma 4 31B-it Uncensored, lmstudio-community Gemma 4 26B A4B-it Q8_0, unsloth Qwen3.6-35B-A3B-UD-Q6_K, Granite 4.1 30B Q8_0, Gemma 4 31B-it MLX 6-bit, DavidAU Heretic family, prithivMLmods Aggressive) stay on disk and are restartable from the Fallbacks table below.
 
 ## Active Sidecars (no port-bound daemon)
 
@@ -56,7 +54,6 @@ Notes:
 |:--|:--|:--|:--|
 | Speech-to-text | `~/qwen-asr-env/` (Python API, transformers + MPS) | `Qwen/Qwen3-ASR-1.7B` (bf16, 4.7 GB) | Deployed 2026-05-08. RTF 19.06× on 15 s English clip, 0.79 s avg. No `/v1/audio/transcriptions` endpoint — call `Qwen3ASRModel.transcribe(audio=…)` from a Python script. Doesn't compete with port 8000 / 1234 / 8098 / 8099. Runbook: [`docs/servers/qwen-asr/summary.md`](servers/qwen-asr/summary.md). |
 | Image generation (port 8188) | `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed) | `SeeSee21/Z-Anime` AIO BF16 — Distill-4-step + Base (~19 GiB each, S3-DiT 6B, Apache-2.0) | Deployed 2026-05-08. Web UI only at `http://192.168.31.4:8188`; no `/v1/images/generations` shim. Wall time @ 1024² (3 timed runs after 1 warm-up): Distill-4-step **17.75 s** (CFG 1.0), Base 28-step **235.16 s** (CFG 4.0). Doesn't compete with port 8000 / 1234 / 8098 / 8099 / 8100. Launch: `nohup ~/comfyui/.venv/bin/python ~/comfyui/main.py --listen 0.0.0.0 --port 8188 --use-pytorch-cross-attention > /tmp/comfyui.log 2>&1 &`. Runbook: [`docs/servers/comfyui/summary.md`](servers/comfyui/summary.md). |
-| Qwen3.6 MTP self-drafting speculative decoding (port 8100) | `llama-cpp-mtp` (`~/llama-cpp-mtp/build/bin/llama-server`, built from [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) PR #22673) | `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` (dense 27 B + MTP heads, Unsloth Dynamic 2.0 6-bit, 26 GB on disk) | Deployed 2026-05-15. Patch-free apart from building the right branch. Smoke 5/5 single-call + 3-turn multi 21.92 s; perf decode 22.9 → 20.0 tok/s @ 414 → 29 128 input tokens with **84–89 % MTP draft acceptance** (`draft-mtp` self-drafting); OpenCode browse **35.98 s** / search **35.24 s** median wall (slower than the lm-studio Q4_K_M main; the dense 27 B + 6-bit weight bundle outweighs MTP's ~1.5–2× decode speedup for agent loops). Launch: `nohup ~/llama-cpp-mtp/build/bin/llama-server -m "$GGUF" -ngl 99 -fa on -np 1 -c 32768 --spec-type draft-mtp --spec-draft-n-max 2 --host 0.0.0.0 --port 8100 --alias qwen3.6-27b-mtp-ud-q6kxl --jinja --reasoning on > /tmp/llama-cpp-mtp.log 2>&1 &`. Runbook: [`docs/servers/llama-cpp-mtp/summary.md`](servers/llama-cpp-mtp/summary.md) · technique: [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](models/techniques/model-technique-qwen-3-6-mtp.md). |
 
 ## Stopped / Documented Fallbacks
 
@@ -64,6 +61,7 @@ Models are off (unloaded or stopped) until you restart them. Each row's launch s
 
 | Use case | Server | Model | Status |
 |:--|:--|:--|:--|
+| Prior production main (2026-05-14 → 2026-05-15, lm-studio + prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M, dense 27 B Qwen3.6 + ViT + GLM-5.1 reasoning-trace distillation, think-on, Apache 2.0, 15.41 GiB resident, **faster agent loop than the current MTP main** — browse 11.62 s / search 19.47 s vs MTP's 35.98 / 35.24 s) | `lm-studio` (port 1234) | `qwen3.6-27b-glm51-da-q4km` from `prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF` | On disk and registered in `lms ls` as `q3.6-27b-glm-5.1-da`. **Speed-first fallback** — reload via `lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y; lms server start --bind 0.0.0.0 --cors` (Q4_K_M @ 15.4 GiB is below LM Studio's strict 25 % guardrail, no dance needed). Use this when you want a faster agent loop, full vision (mmproj), or vendor-built tool-call/reasoning parsing instead of the custom MTP llama.cpp build. **Loading this on port 1234 does not displace the MTP main on port 8100** — both can coexist if you want to A/B benchmark. |
 | Prior production main (2026-05-12 → 2026-05-14, Zyphra ZAYA1-8B JANGTQ4 on Osaurus, top-1 CCA + MoE 8.4B/760M, Apache 2.0, 4.99 GB on disk, **agent-broken** at cask 0.18.13 / engine pin `b9da180`) | `vmlx-swift-lm` (Osaurus) | `zaya1-8b-jangtq4` from `JANGQ-AI/ZAYA1-8B-JANGTQ4` | On disk at `~/.osaurus/models/JANGQ-AI/ZAYA1-8B-JANGTQ4`. Osaurus stopped 2026-05-14 in this skill's pre-bench hygiene. Restart with: `OSU_MODELS_DIR=$HOME/.osaurus/models nohup /opt/homebrew/bin/osaurus serve --port 1337 > /tmp/osaurus.log 2>&1 &`. Same JANGTQ HTTP-path regression as documented for ZAYA1: 7-8 tok/s vs M4-Max-RunBench 57 tok/s — wait for [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) to ship `cb8b3df` before relying on it. |
 | Prior production main (2026-05-10 → 2026-05-12, TrevorJS Gemma 4 31B-it Uncensored Q4_K_M, dense 31B no-think, Apache 2.0, 17.40 GiB resident, harness 6-7/10 / manual 10/10 useful-compliance, browse 6.63 s warm) | `lm-studio` | `gemma4-31b-it-uncensored-trevorjs-q4km` from `TrevorJS/gemma-4-31B-it-uncensored-GGUF` | On disk and registered in `lms ls` as `gemma-4-31b-it-uncensored`. Reload via `lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y` (guardrail dance optional — 17.4 GiB sits below the 25 % threshold). Use this when you want a faster non-thinking dense Gemma alternative to the current GLM-5.1-DA main — 30 tok/s decode, browse 6.63 s warm. **Note:** loading this displaces the current GLM-5.1-DA main (only one model fits on LM Studio per port-1234 instance unless you raise the parallel-model limit). |
 | Prior production main (2026-05-07 → 2026-05-10, lmstudio-community Gemma 4 26B A4B-it Q8_0, sparse MoE 26B / 4B-active no-think, browse 2.94 s 🥈 / search 7.20 s scaffolded) | `lm-studio` | `gemma-4-26b-a4b-q8` from `lmstudio-community/gemma-4-26B-A4B-it-GGUF` | On disk and registered in `lms ls` as `gemma-4-26b-a4b-it`. Reload via `lms load 'gemma-4-26b-a4b-it' --gpu max --context-length 131072 --identifier gemma-4-26b-a4b-q8 -y` (guardrail off first — 25 GiB > strict 25% threshold). Use this when MoE speed matters more than uncensored compliance — 87.6 tok/s gen, lighter agent loops than the dense 31B uncensored. |

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-llama-cpp-mtp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:8100/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "qwen3.6-27b-mtp-ud-q6kxl": {
+          "name": "Qwen3.6-27B UD-Q6_K_XL + MTP self-drafting speculative decoding (am17an/llama.cpp@mtp-clean, PR #22673 — provisional sidecar)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-llama-cpp-mtp/qwen3.6-27b-mtp-ud-q6kxl",
+  "small_model": "macstudio-llama-cpp-mtp/qwen3.6-27b-mtp-ud-q6kxl"
+}

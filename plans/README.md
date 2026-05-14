@@ -18,6 +18,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 |:--|:--|
 | [`active/plan-bench-eval-local.md`](active/plan-bench-eval-local.md) | MMLU-Pro + TruthfulQA-gen local benchmark driver (`bench_eval_local.py`) |
 | [`active/plan-comfyui-zanime-sidecar.md`](active/plan-comfyui-zanime-sidecar.md) | ComfyUI sidecar (port 8188) for Z-Image / Z-Anime image generation — qwen-asr-style minimal posture, no OpenAI shim |
+| [`active/plan-deploy-llama-cpp-mtp-sidecar-qwen36-27b.md`](active/plan-deploy-llama-cpp-mtp-sidecar-qwen36-27b.md) | New `llama-cpp-mtp` sidecar (port 8100) — `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` on `am17an/llama.cpp@mtp-clean` (PR #22673), self-drafting speculative decoding |
 | [`active/plan-chk-llm-macstu.md`](active/plan-chk-llm-macstu.md) | `scripts/chk_llm_macstu.py` — Mac Studio LLM server + model status probe with `--client` / `--logs` / `--all` emit modes |
 | [`active/plan-deploy-run-benchmark-model-skill.md`](active/plan-deploy-run-benchmark-model-skill.md) | `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner with disk guard and censored / uncensored branching |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |

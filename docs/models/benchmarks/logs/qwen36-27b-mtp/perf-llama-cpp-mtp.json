@@ -1,0 +1,141 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0-mtp-realprompt",
+  "timestamp": "2026-05-14T23:10:27.274428+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:8100/v1",
+    "model": "qwen3.6-27b-mtp-ud-q6kxl",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      4096,
+      8192,
+      32768
+    ],
+    "prompt_methodology": "real-content (varied English passage) \u2014 Qwen3.6-27B-MTP picks EOS on the standard 'Hello world. ' filler at temp=0"
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 0.151,
+          "total_s": 2.334,
+          "input_tokens": 414,
+          "output_tokens": 50,
+          "gen_tps": 22.9,
+          "prefill_tps": 2746.5,
+          "draft_n": 35,
+          "draft_n_accepted": 31
+        },
+        {
+          "ttft_s": 0.151,
+          "total_s": 2.336,
+          "input_tokens": 414,
+          "output_tokens": 50,
+          "gen_tps": 22.89,
+          "prefill_tps": 2742.8,
+          "draft_n": 35,
+          "draft_n_accepted": 31
+        }
+      ],
+      "median_ttft_s": 0.151,
+      "median_gen_tps": 22.895,
+      "median_prefill_tps": 2744.65,
+      "input_tokens": 414,
+      "output_tokens": 50,
+      "draft_acceptance_rate": 0.886
+    },
+    "4096": {
+      "runs": [
+        {
+          "ttft_s": 0.156,
+          "total_s": 2.394,
+          "input_tokens": 3648,
+          "output_tokens": 50,
+          "gen_tps": 22.34,
+          "prefill_tps": 23453.3,
+          "draft_n": 36,
+          "draft_n_accepted": 31
+        },
+        {
+          "ttft_s": 0.156,
+          "total_s": 2.395,
+          "input_tokens": 3648,
+          "output_tokens": 50,
+          "gen_tps": 22.33,
+          "prefill_tps": 23317.7,
+          "draft_n": 36,
+          "draft_n_accepted": 31
+        }
+      ],
+      "median_ttft_s": 0.156,
+      "median_gen_tps": 22.335,
+      "median_prefill_tps": 23385.5,
+      "input_tokens": 3648,
+      "output_tokens": 50,
+      "draft_acceptance_rate": 0.861
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 0.164,
+          "total_s": 2.442,
+          "input_tokens": 7274,
+          "output_tokens": 50,
+          "gen_tps": 21.95,
+          "prefill_tps": 44388.9,
+          "draft_n": 36,
+          "draft_n_accepted": 31
+        },
+        {
+          "ttft_s": 0.162,
+          "total_s": 2.439,
+          "input_tokens": 7274,
+          "output_tokens": 50,
+          "gen_tps": 21.96,
+          "prefill_tps": 44954.5,
+          "draft_n": 36,
+          "draft_n_accepted": 31
+        }
+      ],
+      "median_ttft_s": 0.163,
+      "median_gen_tps": 21.955,
+      "median_prefill_tps": 44671.7,
+      "input_tokens": 7274,
+      "output_tokens": 50,
+      "draft_acceptance_rate": 0.861
+    },
+    "32768": {
+      "runs": [
+        {
+          "ttft_s": 0.209,
+          "total_s": 2.714,
+          "input_tokens": 29128,
+          "output_tokens": 50,
+          "gen_tps": 19.96,
+          "prefill_tps": 139319.6,
+          "draft_n": 36,
+          "draft_n_accepted": 31
+        },
+        {
+          "ttft_s": 0.209,
+          "total_s": 2.713,
+          "input_tokens": 29128,
+          "output_tokens": 50,
+          "gen_tps": 19.97,
+          "prefill_tps": 139067.9,
+          "draft_n": 36,
+          "draft_n_accepted": 31
+        }
+      ],
+      "median_ttft_s": 0.209,
+      "median_gen_tps": 19.965,
+      "median_prefill_tps": 139193.75,
+      "input_tokens": 29128,
+      "output_tokens": 50,
+      "draft_acceptance_rate": 0.861
+    }
+  }
+}

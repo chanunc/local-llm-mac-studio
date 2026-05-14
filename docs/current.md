@@ -2,7 +2,7 @@
 
 Short source of truth for the Mac Studio stack's live operating state. Detailed runbooks live under [`docs/servers/`](servers/), model details under [`docs/models/`](models/), and client templates under [`configs/clients/`](../configs/clients/).
 
-Last verified: 2026-05-14 (lm-studio swap to prithivMLmods Q3.6-27B-GLM-5.1-DA — agent-functional after bench-rig fix)
+Last verified: 2026-05-15 (added `llama-cpp-mtp` sidecar on port 8100 — `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` via [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) PR #22673; lm-studio main unchanged)
 
 ## Production
 
@@ -55,7 +55,8 @@ Notes:
 | Use case | Path | Model | Notes |
 |:--|:--|:--|:--|
 | Speech-to-text | `~/qwen-asr-env/` (Python API, transformers + MPS) | `Qwen/Qwen3-ASR-1.7B` (bf16, 4.7 GB) | Deployed 2026-05-08. RTF 19.06× on 15 s English clip, 0.79 s avg. No `/v1/audio/transcriptions` endpoint — call `Qwen3ASRModel.transcribe(audio=…)` from a Python script. Doesn't compete with port 8000 / 1234 / 8098 / 8099. Runbook: [`docs/servers/qwen-asr/summary.md`](servers/qwen-asr/summary.md). |
-| Image generation (port 8188) | `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed) | `SeeSee21/Z-Anime` AIO BF16 — Distill-4-step + Base (~19 GiB each, S3-DiT 6B, Apache-2.0) | Deployed 2026-05-08. Web UI only at `http://192.168.31.4:8188`; no `/v1/images/generations` shim. Wall time @ 1024² (3 timed runs after 1 warm-up): Distill-4-step **17.75 s** (CFG 1.0), Base 28-step **235.16 s** (CFG 4.0). Doesn't compete with port 8000 / 1234 / 8098 / 8099. Launch: `nohup ~/comfyui/.venv/bin/python ~/comfyui/main.py --listen 0.0.0.0 --port 8188 --use-pytorch-cross-attention > /tmp/comfyui.log 2>&1 &`. Runbook: [`docs/servers/comfyui/summary.md`](servers/comfyui/summary.md). |
+| Image generation (port 8188) | `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed) | `SeeSee21/Z-Anime` AIO BF16 — Distill-4-step + Base (~19 GiB each, S3-DiT 6B, Apache-2.0) | Deployed 2026-05-08. Web UI only at `http://192.168.31.4:8188`; no `/v1/images/generations` shim. Wall time @ 1024² (3 timed runs after 1 warm-up): Distill-4-step **17.75 s** (CFG 1.0), Base 28-step **235.16 s** (CFG 4.0). Doesn't compete with port 8000 / 1234 / 8098 / 8099 / 8100. Launch: `nohup ~/comfyui/.venv/bin/python ~/comfyui/main.py --listen 0.0.0.0 --port 8188 --use-pytorch-cross-attention > /tmp/comfyui.log 2>&1 &`. Runbook: [`docs/servers/comfyui/summary.md`](servers/comfyui/summary.md). |
+| Qwen3.6 MTP self-drafting speculative decoding (port 8100) | `llama-cpp-mtp` (`~/llama-cpp-mtp/build/bin/llama-server`, built from [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) PR #22673) | `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` (dense 27 B + MTP heads, Unsloth Dynamic 2.0 6-bit, 26 GB on disk) | Deployed 2026-05-15. Patch-free apart from building the right branch. Smoke 5/5 single-call + 3-turn multi 21.92 s; perf decode 22.9 → 20.0 tok/s @ 414 → 29 128 input tokens with **84–89 % MTP draft acceptance** (`draft-mtp` self-drafting); OpenCode browse **35.98 s** / search **35.24 s** median wall (slower than the lm-studio Q4_K_M main; the dense 27 B + 6-bit weight bundle outweighs MTP's ~1.5–2× decode speedup for agent loops). Launch: `nohup ~/llama-cpp-mtp/build/bin/llama-server -m "$GGUF" -ngl 99 -fa on -np 1 -c 32768 --spec-type draft-mtp --spec-draft-n-max 2 --host 0.0.0.0 --port 8100 --alias qwen3.6-27b-mtp-ud-q6kxl --jinja --reasoning on > /tmp/llama-cpp-mtp.log 2>&1 &`. Runbook: [`docs/servers/llama-cpp-mtp/summary.md`](servers/llama-cpp-mtp/summary.md) · technique: [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](models/techniques/model-technique-qwen-3-6-mtp.md). |
 
 ## Stopped / Documented Fallbacks
 

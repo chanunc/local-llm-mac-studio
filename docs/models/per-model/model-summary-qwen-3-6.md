@@ -2,6 +2,50 @@
 
 Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gated Attention** stack (linear-attention recurrence interleaved with classic attention) plus a 27-layer ViT vision tower. The same architecture appears at three model sizes (27 B dense, 35 B/3 B-active MoE) and across multiple quants (uniform 4 / 6 / 8-bit MLX, JANG 4M mixed-precision, GGUF `Q8_K_P`, JANGTQ CRACK variants — see [`uncen-model/`](../uncen-model/) for the JANGTQ CRACK entries) plus one LoRA-merged variant tuned on Rust diffs.
 
+## Family-wide pitfalls (read before deploying any Qwen3.6 variant)
+
+Hard-won gotchas accumulated across the variants below. Re-reading these before kicking off a new Qwen3.6 deploy saves rediscovery time.
+
+### Server / runtime flags
+
+- **`--tool-call-parser qwen3_coder`, NOT `qwen`** — Qwen3.5 / 3.6 emit XML tool calls (`<function=name><parameter=key>value</parameter></function>`), not JSON inside `<tool_call>` tags. The `qwen3_coder` parser (aliased to `HermesToolParser`) is the only one that decodes them on vllm-mlx. Same applies on vmlx where the equivalent flag is `--tool-call-parser qwen3`. LM Studio auto-detects the chat template — no parser flag needed.
+- **`--reasoning-parser qwen3` is required** for any think-on variant — without it `<think>…</think>` blocks dump into `content` instead of `reasoning_content`, and OpenCode renders the raw thought process as the assistant's visible reply ("thinking nonsense"). The MLX runtime auto-detects this; vllm-mlx / vmlx / mlx-openai-server need the flag explicitly.
+- **`--continuous-batching` is mandatory on vmlx 1.5.20+** — without it the MLLM / VL path crashes on `Qwen2Tokenizer.stopping_criteria`.
+
+### Quant / format traps
+
+- **Custom HauhauCS `K_P` quant labels mis-resolve through `lms get`** — it pulls `Q2_K_P` when asked for `Q8_K_P`. Always use direct `hf download` + `lms import -L` for HauhauCS Q*_K_P GGUFs. Standard mradermacher / prithivMLmods quants don't have this trap.
+- **LM Studio guardrail can block large GGUFs** — `modelLoadingGuardrails.mode: "high"` blocks models > ~25 % of unified memory (~24 GiB on a 96 GB Mac Studio). For 26+ GiB GGUFs (HauhauCS Aggressive, prithivMLmods Aggressive, DavidAU 40B Heretic, Gemma 4 26B-A4B Q8_0) flip to `"off"` in `~/.lmstudio/settings.json` for the load and restore `"high"` immediately. Models ≤ 17 GiB (Q4_K_M variants, TrevorJS 31B-it, GLM-5.1-DA Q4_K_M) sit below the threshold and don't need the dance.
+- **`Qwen3.6-27B JANG 4M` is text-only via vllm-mlx** despite the HF card advertising vision — the JANG wrapper drops the ViT branch. For vision use one of the standard MLX or GGUF dense 27B variants instead.
+- **mradermacher GGUF `Q6_K` matches HauhauCS `Q6_K_P` closely on throughput** (71-83 vs 70-82 tok/s) but the two diverge on agent search wall (prithivMLmods Q6_K is ~1.5 s slower than HauhauCS Q6_K_P on the 3-turn HN prompt) — pick on roster traits (visible-content rate, refusal floor) not raw tok/s.
+- **JANGTQ MLLM-tools bug** — vmlx 1.0.3 silently drops `tools[]` on the MLLM code path; apply `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` (idempotent; re-apply after every DMG upgrade) before deploying any `is_mllm=True` JANGTQ Qwen3.6 variant.
+
+### lm-studio specifics
+
+- **Model-key prefix collisions** — multiple variants share the `qwen3.6-35b-a3b-uncensored-aggressive*` prefix. Always pin with `--identifier <stable-slug>` and verify with `lms ps` after `lms load`. `-y` picks the first alphabetical match silently.
+- **Reasoning channel split** — LM Studio auto-splits `<think>…</think>` into `reasoning_content`, leaving `content` empty unless the model emits a post-think reply within the `max_tokens` budget. At `max_tokens=300` the budget exhausts inside `<think>` for almost all think-on Qwen3.6 variants on hard prompts; use `max_tokens=1024` (or higher) when you need visible content for verification.
+- **`lms server start --bind 0.0.0.0 --cors`** — the default bind is `127.0.0.1`; without `--bind 0.0.0.0` LAN clients can't connect.
+
+### Agent-loop infrastructure
+
+- **`bench_agent_tool_call.py` + OpenCode 1.14.50+ PWD trap** — `subprocess.run(env=os.environ.copy())` inherits the caller's `PWD`. OpenCode 1.14.50+ reads `PWD` (not `cwd`) when bootstrapping its project context, so an inherited `PWD ≠ cwd` makes OpenCode double-bootstrap (once in the actual cwd, once in the inherited-PWD dir) and sink its JSON event stream into the wrong session DB — `proc.stdout` ends up empty and the bench falsely reports `agent_turns=0 tool_calls=[]` even though the agent ran fine. **Fix landed in `scripts/bench/bench_agent_tool_call.py` 2026-05-14** (set `env["PWD"] = cwd` after `env = os.environ.copy()`). If you see a fresh-deploy agent bench returning all-zero events on a model that passes the API smoke 5/5, this is the first thing to check — confirm the patch is still present in the bench script. Full case study: [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14`](../uncen-model/qwen36-27b-glm51-da-benchmark.md#bench-rig-regression-discovered-during-this-deploy-2026-05-14).
+- **Smoke-then-agent sequencing** — always run `bench_api_tool_call.py` first (direct OpenAI HTTP + tools, non-streaming). If smoke fails, the model / chat-template / parser is the issue. If smoke passes but agent bench shows zero turns, the failure is downstream (OpenCode / AI SDK / bench-rig environment) — don't burn time on parser hypotheses.
+
+### Family-wide speed ranking on lm-studio (browse / search agent wall, 2026-05-14)
+
+For quick "is the new variant in the expected speed class?" sanity-checking:
+
+| Variant | Browse | Search | Class |
+|--|--:|--:|--|
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | 5.05 s | 13.56 s | MoE 35B/3B, fastest |
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | 5.14 s | 12.01 s | MoE 35B/3B, search-leader |
+| unsloth Qwen3.6-35B-A3B UD-Q6_K | 4.92 s | 12.08 s | MoE 35B/3B, no scaffolding |
+| **prithivMLmods Q3.6-27B GLM-5.1-DA Q4_K_M** | **11.62 s** | **19.47 s** | **dense 27B + GLM-distill, current main** |
+| HauhauCS Qwen3.6-27B Balanced Q8_K_P | 11.16 s | 28.91 s | dense 27B Q8 |
+| Qwen3.6-27B 6bit MLX (mlx-community) | 31.96 s (lm-studio) | 25.71 s (lm-studio) | dense 27B, slowest |
+
+New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18–32 s search band on lm-studio. Significantly worse → something's wrong (wrong parser flag, guardrail-blocked load mid-flight, `PWD` bench-rig regression, etc.).
+
 ## Index
 
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision · 3 B active · 262 K native (1 M YaRN)

@@ -238,6 +238,26 @@ After the switch, **capture the exact running command** (`ps -axo command= | gre
 
 #### Event 3: Adding a new model (any server)
 
+**Precondition — read the family doc first (if one exists).** Before downloading, deploying, or benchmarking any new model, check whether its base architecture already has a per-model family doc under `docs/models/per-model/`. Family docs accumulate gotchas, parser flags, quant traps, and operational caveats discovered across every prior variant — re-reading them up front saves you from rediscovering the same patches and bench-rig regressions.
+
+Current family / per-model docs in this repo:
+
+| If the new model is in this family… | Read this first |
+|:--|:--|
+| Qwen3.6 (27B dense, 35B-A3B MoE, JANG / JANGTQ / CRACK variants, GLM-distilled / abliterated derivatives) | [`docs/models/per-model/model-summary-qwen-3-6.md`](docs/models/per-model/model-summary-qwen-3-6.md) — especially the **Family-wide pitfalls** section at the top (parser flags, K_P trap, guardrail dance, OpenCode `PWD` regression) |
+| Qwen3.5 (27B Opus Distilled, 122B-A10B 4-bit / JANG_2S, 35B-A3B JANG_4K) | [`docs/models/per-model/model-summary-qwen-3-5.md`](docs/models/per-model/model-summary-qwen-3-5.md) |
+| Qwen3-Coder | [`docs/models/per-model/model-summary-qwen-3-coder.md`](docs/models/per-model/model-summary-qwen-3-coder.md) |
+| Qwen3-ASR (speech-to-text) | [`docs/models/per-model/model-summary-qwen3-asr.md`](docs/models/per-model/model-summary-qwen3-asr.md) |
+| Gemma 4 (26B-A4B MoE, 31B-it dense, DavidAU Heretic / TrevorJS Uncensored derivatives) | [`docs/models/per-model/model-summary-gemma.md`](docs/models/per-model/model-summary-gemma.md) — note the bf16 + MTP streaming hang on long-reasoning prompts |
+| IBM Granite 4.1 (dense instruct) | [`docs/models/per-model/model-summary-granite-4.1.md`](docs/models/per-model/model-summary-granite-4.1.md) |
+| Ling-2.6-flash / `bailing_hybrid` derivatives | [`docs/models/per-model/model-summary-ling.md`](docs/models/per-model/model-summary-ling.md) — three patches required, mlx-openai-server incompatible |
+| MiMo V2.5 (Xiaomi 130-expert MoE) | [`docs/models/per-model/model-summary-mimo-v2.5.md`](docs/models/per-model/model-summary-mimo-v2.5.md) |
+| NemotronH / Nemotron-3 (hybrid Mamba-2 / MoE) | [`docs/models/per-model/model-summary-nemotron.md`](docs/models/per-model/model-summary-nemotron.md) |
+| Zyphra ZAYA1 (top-1 CCA + MoE) | [`docs/models/per-model/model-summary-zaya1-8b.md`](docs/models/per-model/model-summary-zaya1-8b.md) — vmlx-swift-lm via Osaurus only; JANGTQ HTTP regression at pin `b9da180` |
+| HyperNova (CompactifAI-compressed gpt-oss derivatives) | [`docs/models/per-model/model-summary-hypernova.md`](docs/models/per-model/model-summary-hypernova.md) — pre-deployment candidate analysis only, not yet benchmarked |
+
+If a family doc does not yet exist for the new model's architecture and the deploy uncovers non-trivial gotchas, create one as part of the deploy commit (see the per-model section creation rule below). One-off variants of an existing family go in the family doc, not their own file.
+
 When a new model file lands in `~/.cache/huggingface/`, `~/.omlx/models/`, or `~/.lmstudio/models/` and you serve it:
 - `docs/models/model-summary.md` — add an Index entry **and** a per-model section with the standard spec table (Base Model, Quant, Format, Vendor, Parameters, Density, Quantization, Specialties, Tokens/sec, On-disk size, Context Size, License, Key Features), server config, performance numbers if benchmarked, caveats. Place the entry near siblings (Qwen3.6 family together, etc.)
 - `docs/models/per-model/model-summary-<slug>.md` — only if the model needs more than ~150 lines of detail (deployment recipe, patch list, failure analysis). The catalog entry should then be a stub linking here.

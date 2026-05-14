@@ -162,8 +162,14 @@ class OpenCodeRunner(AgentRunner):
             cmd += ["--print-logs", "--log-level", "INFO"]
         cmd.append(prompt)
 
-        env = os.environ.copy()
         cwd = working_dir or tempfile.mkdtemp(prefix="agent-bench-")
+        env = os.environ.copy()
+        # OpenCode 1.14.50+ reads PWD (not the actual cwd) when bootstrapping its
+        # project context; an inherited PWD pointing at the caller's dir causes
+        # OpenCode to double-bootstrap and silently sink its JSON event stream
+        # into the wrong session DB — proc.stdout ends up empty and the bench
+        # parser reports 0 turns / 0 tools even though the agent runs fine.
+        env["PWD"] = cwd
 
         if verbose:
             print(f"  CMD: {' '.join(cmd)}", file=sys.stderr)

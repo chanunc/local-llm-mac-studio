@@ -24,7 +24,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md) | Qwen3.5 family (4 variants: 27B Opus Distilled, 122B-A10B 4-bit, 122B-A10B JANG 2S, 35B-A3B JANG 4K). |
 | [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md) | Qwen3.6 family (7 variants: 35B-A3B 6-bit/4-bit, Osaurus JANGTQ4, 27B JANG 4M, 27B 6-bit, HauhauCS Q8_K_P GGUF, 35B Rust LoRA). |
 | [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md) | Nemotron family (Nano 30B, Super 120B, Cascade-2 30B) + cross-cutting server compatibility note. |
-| [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md) | Gemma 4 family (26B-A4B 4-bit MoE multimodal, 31B-it 6-bit dense text-only). |
+| [`per-model/model-summary-gemma.md`](per-model/model-summary-gemma.md) | Gemma 4 family (7 variants: 26B-A4B 4-bit MoE, 31B-it 6-bit dense, DavidAU Heretic 31B, TrevorJS Uncensored 26B-A4B Q8_0 + 31B-it Q4_K_M, Huihui abliterated 26B-A4B i1-Q6_K — active lm-studio main 2026-05-15). |
 | [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md) | IBM Granite 4.1 30B Q8_0 GGUF — active lm-studio main (2026-05-05), Apache 2.0, 24.8 tok/s. |
 | [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md) | Qwen3-ASR family (1.7B / 0.6B / ForcedAligner-0.6B) — speech-to-text on M3 Ultra MPS, 19.06× RTF on 1.7B. |
 | [`per-model/model-summary-zaya1-8b.md`](per-model/model-summary-zaya1-8b.md) | Zyphra ZAYA1-8B (8.4B / 760M-active CCA + top-1 MoE) — Markovian RSA explanation, quant matrix, why vmlx-swift-lm via Osaurus is the only viable path. |

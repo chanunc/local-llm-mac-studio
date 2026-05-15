@@ -35,6 +35,15 @@
             "output": 4096
           }
         },
+        "gemma4-26b-a4b-huihui-abliterated-q6k": {
+          "name": "Huihui-ai abliterated Gemma 4 26B A4B i1-Q6_K (lm-studio, current uncen main) — sparse MoE ~4B active, 9/10 mlabonne, mradermacher imatrix Q6_K",
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        },
         "gemma4-26b-a4b-trevorjs-uncen-q8": {
           "name": "TrevorJS Gemma 4 26B A4B uncensored Q8 (lm-studio, prior main) — sparse MoE ~4B active, 8/10 mlabonne, browse 2.93 s 🥇 / search 7.35 s",
           "tools": true,

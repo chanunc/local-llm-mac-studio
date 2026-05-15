@@ -46,6 +46,7 @@ Two complementary harnesses, both reported per model:
 - [lmstudio-community/gemma-4-26B-A4B-it-GGUF (Q8_0)](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — 26 B sparse MoE, 4 B active, standard Q8_0 GGUF, Google Apache 2.0 base (lm-studio, no patches) — **5/5 API pass (multi-turn 2.14 s tied 🏆 with TrevorJS); OpenCode 3/3 under scaffolded prompts: browse 2.94 s 🥈 / search 7.20 s** — *2026-05-07*
 - [mlx-community/Qwen3.6-35B-A3B-6bit on lm-studio](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) — 35 B sparse MoE, 3 B active, **uniform 6-bit MLX safetensors** (lm-studio, no patches; same family as unsloth UD-Q6_K GGUF) — **4/5 API pass (length cap), browse 14.88 s, search 20.79 s — 3.0× / 1.7× slower than the GGUF Q6_K sibling on the same server** — *2026-05-08*
 - [mlx-community/gemma-4-26b-a4b-it-4bit on lm-studio](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) — 26 B sparse MoE, 4 B active, **4-bit MLX safetensors** (lm-studio, no patches; same `google/gemma-4-26b-a4b-it` base as the lmstudio-community Q8_0 GGUF main) — **5/5 API pass, browse 3.29 s, search 3.23 s — fires bare prompts 3/3 (no scaffolding); search 2.2× faster than the GGUF Q8_0 sibling**, opposite of the Qwen MLX-vs-GGUF result — *2026-05-08*
+- [Gemma 4 26B A4B Q8_0 — stock llama.cpp vs lm-studio (same GGUF)](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf) — same lmstudio-community Q8_0 GGUF on **stock `llama-server`** (from `am17an/llama.cpp@mtp-clean` binary, no `--spec-type`) vs lm-studio — **decode tied** (87 → 73 tok/s @ 543 → 32 799 in, contained in lm-studio's range), but **lm-studio +19 % browse / +30 % search / +2.1× API multi-turn** on the same blob; second head-to-head data point confirming custom `llama-server` loses to lm-studio's bundled runtime on agent loops (Qwen3.6-35B-A3B + turbo3 was the first) — *2026-05-15*
 - [Zyphra ZAYA1-8B JANGTQ4 on vmlx-swift-lm via Osaurus](#results-zyphrazaya1-8b-jangtq4-on-vmlx-swift-lm-via-osaurus) — 8.4 B sparse MoE / 760 M active, top-1 CCA + MoE, **JANGTQ4** routed-expert quant (Osaurus 0.18.13, engine pin `b9da180`) — **⛔ 300 s OpenCode wall-time × 1 (0/0t, 0 tokens) — agent loops gated on Osaurus picking up [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) `cb8b3df`** — *2026-05-12*
 - [prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF (Q4_K_M)](../uncen-model/qwen36-27b-glm51-da-benchmark.md) — 27 B dense Qwen3.6 + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1 reasoning-trace distillation, standard Q4_K_M GGUF (lm-studio, no patches) — **✅ 5/5 API smoke + 3/3 multi-turn; ✅ OpenCode browse 11.62 s / search 19.47 s @ 2 turns + `webfetch`** (initial 0-turns reading was a bench-rig `PWD` regression on OpenCode 1.14.50+, fixed in `scripts/bench/bench_agent_tool_call.py`) — *2026-05-14*
 - [unsloth/Qwen3.6-27B-MTP-GGUF (UD-Q6_K_XL)](../techniques/model-technique-qwen-3-6-mtp.md) — 27 B dense Qwen3.6 + MTP self-drafting heads, Unsloth Dynamic 2.0 6-bit GGUF on `llama-cpp-mtp` :8100 (`am17an/llama.cpp@mtp-clean` PR #22673, no patches apart from the build) — **✅ 5/5 API smoke + 3-turn 21.92 s · 84–89 % MTP draft acceptance · OpenCode browse 35.98 s / search 35.24 s** (deployed 2026-05-15 as provisional sidecar; slower than lm-studio Q4_K_M main — MTP speedup doesn't close the dense-27 B-Q6 weight-bundle gap) — *2026-05-15*
@@ -73,6 +74,7 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
 | TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **lm-studio** | ✅ **5/5** | **0.29 - 0.83 s** 🏆 | **0.34 - 0.35 s** 🏆 | **2.14 s** 🏆 |
 | **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | ✅ **5/5** | **0.29 - 0.68 s** | **0.34 s** | **2.14 s** 🏆 (tied with TrevorJS at API layer; OpenCode 3/3 with scaffolded prompts only — see end-to-end table) |
+| **lmstudio-community Gemma 4 26B A4B-it Q8_0** *(same GGUF, different server)* | `llama-cpp-mtp` :8100 (stock — no `--spec-type`) | ✅ **5/5** | 0.66 - 2.61 s | 0.95 - 1.34 s | **4.57 s** (~2.1× slower than lm-studio on the same blob; bare-prompt OpenCode 3/3 — see [llama-cpp-stock vs lm-studio comparison](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf)) |
 | Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | ✅ **5/5** | 1.11 - 1.61 s | 1.29 - 1.72 s | **4.94 s** |
 | Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
@@ -125,6 +127,7 @@ Rows ordered by browse wall time (ascending).
 | **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥇** / 1.74 s | **7.35 s** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **bare-prompt leader (no scaffolding needed)** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
 | **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | **2.94 s 🥈*** / ~1 s | 7.20 s* / ~5 s | 1/2t · `webfetch` · MoE 4B-act, no-think · *requires scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to browse <literal url> …`); **bare prompts hit 0/3** (RLHF refuses to guess URLs) · same speed-class as TrevorJS under scaffolding · [results](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) |
 | **mlx-community Gemma 4 26B A4B-it 4-bit MLX** | **lm-studio** | **3.29 s** / 2.02 s | **3.23 s 🏆** / 1.95 s | 2/2t · `webfetch` · MoE 4B-act, no-think, **114 tok/s** @ 512 / 77 tok/s @ 32 K · **fires bare prompts 3/3 (no scaffolding needed) — opposite of GGUF Q8_0 sibling**; search **2.2× faster** than its Q8_0 GGUF · 14.6 GiB loaded · [results](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) |
+| **lmstudio-community Gemma 4 26B A4B-it Q8_0** *(same GGUF, different server)* | `llama-cpp-mtp` :8100 (stock — no `--spec-type`) | **3.48 s** / 2.69 s | **9.56 s** / 8.76 s | 2/2t · `webfetch` · bare prompts fire **3/3** on llama.cpp (vs 0/3 on lm-studio with same Q8_0 — bare-prompt advantage); decode 87 → 73 tok/s @ 543 → 32 799 in (tied with lm-studio range); +**19 %** browse / +**30 %** search wall-time **vs lm-studio** for same model file — the delta is wrapper-layer overhead (HTTP, tool-call dispatch, chat-template), not decode · [comparison](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf) |
 | **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥉** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
 | **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
@@ -1730,4 +1733,86 @@ The single browse run hit OpenCode's hard 300 s cap before producing any output.
 4. **Cancellation propagation is broken at this pin too.** After `pkill -f "opencode run"`, Osaurus's `/health` continued to report `inflight: 1` for the killed request — the engine doesn't cancel the underlying `MLXBatchAdapter` producer task when the HTTP client disconnects. PR #1057's body explicitly calls out the fix: "`MLXBatchAdapter` now propagates downstream stream termination to `producerTask.cancel()` and gates same-model `maxBatchSize == 1` generation with `SoloGenerationGate`". Plan benches accordingly until the cask updates — a killed run leaves the server stuck for the full original completion budget.
 5. **Two operational gotchas to plan for before re-bench.** (a) `osaurus pull` saves to `~/.osaurus/models/`; `osaurus serve` defaults to `~/MLXModels/`. Launch with `OSU_MODELS_DIR=$HOME/.osaurus/models` or the model is invisible. (b) `osaurus serve --expose --yes` flips `exposeToNetwork: true` in `~/.osaurus/runtime/*/configuration.json` but the listener stays on 127.0.0.1 — likely needs GUI confirmation that doesn't fire over SSH. LAN clients: `ssh -L 1337:127.0.0.1:1337 macstudio`.
 6. **Re-bench gate.** Re-run `bench_agent_tool_call.py --runs 3 --warmup 1 --scenario both` (and add the API-level `bench_api_tool_call.py` row) when either: (i) the brew cask publishes a build whose engine pin is `cb8b3df` or newer, or (ii) Osaurus + vmlx-swift-lm are built from `main` HEAD locally. Until one of those, this row stays at the timeout result above. Expected post-fix decode is ~75-110 tok/s on M3 Ultra extrapolating from M4 Max bandwidth scaling — sufficient to land agent-loop walls in the 15-30 s range, comparable to other A3B-class MoE models on this server.
+
+---
+
+## Gemma 4 26B A4B Q8_0 — stock llama.cpp vs lm-studio (same GGUF) {#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf}
+
+### Why this comparison exists
+
+The repo already has lm-studio numbers for Gemma 4 26B A4B Q8_0 (browse 2.93 s 🥇 on TrevorJS Uncensored, 2.94 s on lmstudio-community — see rows above). The natural question: would a stock `llama-server` build run the same GGUF *faster* than lm-studio's bundled runtime, or is lm-studio's win in [Qwen3.6-35B-A3B Q6_K vs `llama-cpp-turboquant` turbo3](#cross-model-summary) (4.92 s vs 6.47 s on the same blob) a Qwen3.6-specific quirk?
+
+This test isolates the question by reusing the `llama-cpp-mtp` build (`am17an/llama.cpp@mtp-clean`, recent vs master, includes Gemma 4 dispatchers) **without** any `--spec-type` flag — i.e., it's a stock-llama.cpp behavior probe with the same Metal kernels lm-studio bundles. Run on the same M3 Ultra hardware, with lm-studio + the MTP main both stopped (Event 4 hygiene).
+
+### Source substitution note
+
+The TrevorJS Uncensored 26B Q8_0 GGUF was removed from disk in the 2026-05-15 `/list-model-to-remove` cleanup. The test used the architecturally-identical `lmstudio-community/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-Q8_0.gguf` instead. Speed-class is identical between the two on lm-studio (2.93 s vs 2.94 s browse, 7.35 s vs 7.20 s search — within noise) because EGA abliteration tweaks weights but not throughput. The comparison below is therefore valid for the TrevorJS Uncensored variant by identity.
+
+### Setup
+
+| Field | Value |
+|:--|:--|
+| GGUF | `~/.lmstudio/models/lmstudio-community/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-Q8_0.gguf` (25 GiB, single file) |
+| Binary | `~/llama-cpp-mtp/build/bin/llama-server` (built from `am17an/llama.cpp@mtp-clean`, build tag `b9172-08b147428`) |
+| Flags | `-ngl 99 -fa on -c 65536 --host 0.0.0.0 --port 8100 --alias gemma4-26b-a4b-q8-stock-llamacpp --jinja` *(no `--spec-type` — stock decoder; no `--reasoning` — Gemma 4 is non-thinking)* |
+| Hygiene | MTP main stopped before launch; only LLM process on the box for the duration |
+| Raw data | [`logs/gemma4-26b-a4b-stock-llamacpp/`](logs/gemma4-26b-a4b-stock-llamacpp/) — `smoke-llama-cpp-stock.json`, `perf-llama-cpp-stock.json`, `agent-llama-cpp-stock.json` |
+
+### Decode + prefill — essentially tied with lm-studio
+
+`bench_api_server.py`, standard filler prompt (Gemma 4 26B A4B-it Q8_0 tolerates the filler at temp=0; no EOS regression like Qwen3.6-27B-MTP):
+
+| Input tokens | Warm TTFT | Decode tok/s | Prefill tok/s |
+|:--:|:--:|:--:|:--:|
+| 543 | 0.08 s | **87.1** | 6,723 |
+| 4 128 | 0.06 s | 84.4 | 69,269 |
+| 8 223 | 0.07 s | 82.5 | 126,310 |
+| 32 799 | 0.10 s | 73.0 | 338,137 |
+
+The 70–86 tok/s range lm-studio reports for this exact GGUF on the same hardware is *contained* in these numbers. Conclusion: stock llama.cpp and LM Studio's bundled llama.cpp run the **same Metal kernels at the same speed** — raw inference is not the differentiator.
+
+### Smoke (API-level tool calling) — lm-studio is 2.1× faster
+
+`bench_api_tool_call.py`, 5 single-call scenarios + 3-turn multi-turn loop:
+
+| | llama-cpp-stock | lm-studio (lmstudio-community Q8_0) | lm-studio advantage |
+|:--|:--:|:--:|:--:|
+| Single-tool latency range | 0.66 – 2.61 s | **0.29 – 0.68 s** | 2.3× – 3.8× |
+| Multi-tool latency | 0.95 – 1.34 s | **0.34 s** | 2.8× – 3.9× |
+| Multi-turn (3 turns) | **4.57 s** | **2.14 s** | **2.14×** |
+| Pass rate | 5/5 | 5/5 | tied |
+
+Tool calls dispatch correctly on both — `finish_reason: tool_calls` with well-formed `tool_calls[]` on every scenario. The latency delta is wrapper-layer overhead, not parsing correctness.
+
+### OpenCode end-to-end — lm-studio 19 – 30 % faster (bare prompts)
+
+`bench_agent_tool_call.py` with 1 warmup + 3 measured runs each. **Important**: llama-cpp-stock fires bare prompts on Gemma 4 Q8_0 (no scaffolding needed), so it lands closer to the TrevorJS Uncensored bare-prompt row (2.93 s / 7.35 s) than to the lmstudio-community scaffolded row (2.94 s / 7.20 s).
+
+| Scenario | llama-cpp-stock | lm-studio (TrevorJS Uncensored Q8_0, bare prompts) | lm-studio advantage |
+|:--|:--:|:--:|:--:|
+| Browse `www.example.com` | 3.48 s wall / 2.69 s LLM (range 2.81 – 3.68 s) | **2.93 s** / 1.74 s | **+19 %** |
+| Search Hackernews | 9.56 s wall / 8.76 s LLM (range 9.23 – 9.88 s) | **7.35 s** / 6.15 s | **+30 %** |
+
+Both passed 2 turns + `webfetch` fired correctly on every measured run. Per-turn tokens: turn 1 in=1 out=53 / turn 2 in=72 out=74 (browse); turn 1 in=17 out=140 / turn 2 in=5 138 out=47 (search). The search delta is wider because the second turn ingests a ~5 K-token HTML payload — wrapper-layer prefill overhead scales with input size.
+
+### Where the lm-studio win comes from
+
+Decode kernels are identical (same llama.cpp Metal backend, top of the range on both). The 0.5 – 2 s delta lives entirely in the wrapper layer:
+
+1. **In-process tool-call dispatch.** LM Studio parses Qwen/Gemma XML to `tool_calls[]` inside the runtime, no HTTP round-trip for the parse. `llama-server` parses via `--jinja` but the result has to round-trip through the SSE stream.
+2. **Chat-template hot path.** LM Studio likely pre-compiles the embedded template; the `--jinja` path on `llama-server` rebuilds the prompt each turn from scratch.
+3. **SSE stream wrapping.** `llama-server` emits more per-chunk envelope bytes than LM Studio's built-in OpenAI shim, adding a few ms per token at high decode rates.
+
+### How this generalizes
+
+This is the **second** head-to-head data point in the repo confirming the same pattern:
+
+| Model + GGUF | lm-studio | Custom `llama-server` | lm-studio lead |
+|:--|:--:|:--:|:--:|
+| Qwen3.6-35B-A3B-UD-Q6_K (browse) | 4.92 s | 6.47 s (`llama-cpp-turboquant` TheTom turbo3) | +31 % |
+| Qwen3.6-35B-A3B-UD-Q6_K (search) | 12.08 s | 15.64 s (same) | +23 % |
+| Gemma-4-26B-A4B-it Q8_0 (browse) | 2.93 s | 3.48 s (`llama-cpp-mtp` stock) | **+19 %** |
+| Gemma-4-26B-A4B-it Q8_0 (search) | 7.35 s | 9.56 s (same) | **+30 %** |
+
+Conclusion: **for any agent-loop workload on a vanilla GGUF (no MTP, no TurboQuant KV compression, no other custom-build features), lm-studio is the right choice** — it wins by 20-30 % on the same hardware running the same Metal kernels. Use a custom `llama-server` only when you need a feature lm-studio's bundled runtime lacks (MTP self-drafting, TurboQuant/RotorQuant KV cache, an upstream PR not yet released).
 

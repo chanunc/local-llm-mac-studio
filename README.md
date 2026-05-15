@@ -326,14 +326,10 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -d '{"model":"<MODEL_NAME>","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
   | python3 -m json.tool
 
-# openai-cli one-shot prompt test (works against any server — swap BASE_URL port/model).
-# Pipe through jq -r to decode \uXXXX escapes for non-ASCII output (Thai, CJK, emoji).
-OPENAI_API_KEY=not-needed \
-OPENAI_BASE_URL=http://<MAC_STUDIO_IP>:8080/v1 \
-openai chat:completions create \
-  --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" \
-  --message '{"role":"user","content":"Translate to English: สวัสดีครับ"}' \
-  --max-tokens 100 | jq -r '.choices[0].message.content'
+# openai-cli one-shot prompt — add this function to ~/.zshrc for a one-word shortcut:
+# chinda() { OPENAI_API_KEY=not-needed OPENAI_BASE_URL=http://<MAC_STUDIO_IP>:8080/v1 openai chat:completions create --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" --message "{\"role\":\"user\",\"content\":\"$*\"}" --max-tokens 200 | jq -r '.choices[0].message.content'; }
+chinda Translate to English: สวัสดีครับ วันนี้อากาศดีมาก
+chinda แปลไทย How are you?
 
 # End-to-end agent + tool-call test via OpenCode (requires the model to be
 # present in ~/.config/opencode/opencode.json under the `macstudio` provider).

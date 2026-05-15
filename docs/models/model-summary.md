@@ -350,14 +350,9 @@ curl -s http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
   }' | python3 -m json.tool
 # content: "Hello! The weather is very nice today."
 
-# openai-cli (thinking disabled at server level — no extra flag needed)
-# Pipe through jq -r to decode \uXXXX escapes — the Go CLI ASCII-encodes Thai by default.
-OPENAI_API_KEY=not-needed \
-OPENAI_BASE_URL=http://<MAC_STUDIO_IP>:8080/v1 \
-openai chat:completions create \
-  --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" \
-  --message '{"role": "user", "content": "Translate to English: สวัสดีครับ วันนี้อากาศดีมาก"}' \
-  --max-tokens 200 | jq -r '.choices[0].message.content'
+# openai-cli — add shell function to ~/.zshrc for a one-word shortcut:
+# chinda() { OPENAI_API_KEY=not-needed OPENAI_BASE_URL=http://<MAC_STUDIO_IP>:8080/v1 openai chat:completions create --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" --message "{\"role\":\"user\",\"content\":\"$*\"}" --max-tokens 200 | jq -r '.choices[0].message.content'; }
+chinda Translate to English: สวัสดีครับ วันนี้อากาศดีมาก
 # Hello! The weather is very nice today.
 ```
 

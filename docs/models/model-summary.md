@@ -16,6 +16,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 11 variants: 35B-A3B 6-bit / 4-bit / Osaurus JANGTQ4 / DavidAU Heretic 40B Q6_K IMatrix GGUF (prior main), prithivMLmods 35B-A3B Aggressive Q6_K GGUF (prior main), HauhauCS Aggressive Q6_K_P (prior main), 27B JANG 4M, 27B 6-bit, HauhauCS Balanced Q8_K_P GGUF, **prithivMLmods Q3.6-27B GLM-5.1-DA Q4_K_M (prior lm-studio main, 2026-05-14 → 2026-05-15 — browse 11.62 s / search 19.47 s)**, 35B Rust LoRA. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
 - [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
 - [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
+- [ChindaMT-4B (Thai ↔ English Translation)](#chindamt-4b-thai--english-translation) — **active mlx-lm sidecar on port 8080**, 186 tok/s, 2.2 GB MLX 4-bit, Apache-2.0. Qwen3.5-4B base + hybrid SSM architecture; GGUF not viable.
 - [Qwen3-ASR Family](#qwen3-asr-family) — 2 variants + forced aligner: **1.7B (active speech-to-text sidecar, MPS, 19.06× RTF on 15 s English clip)**, 0.6B, ForcedAligner-0.6B. Detail at [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)
 - [Z-Image / Z-Anime Family (Image Generation)](#z-image--z-anime-family-image-generation) — 2 variants on disk: **Z-Anime Distill-4-step AIO BF16 (active, 17.75 s @ 1024² M3 Ultra MPS)**, Z-Anime Base AIO BF16 (best-quality reference, 235.16 s @ 28 steps). S3-DiT 6B, Apache-2.0, ComfyUI on port 8188 (web UI only). [bench](benchmarks/z-anime/wall-time-comfyui.md)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
@@ -312,6 +313,60 @@ IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. O
 | Variant | Type | Size | Quant | Primary server here | Detail |
 |:--------|:-----|----:|:------|:--------------------|:-------|
 | Granite 4.1 30B Q8_0 (unsloth GGUF) | Dense 30B, no MoE | 29 GB | Q8_0 GGUF | lm-studio (Apache-2.0 fallback; prior main 2026-05-05) | [link](per-model/model-summary-granite-4.1.md) |
+
+---
+
+## ChindaMT-4B (Thai ↔ English Translation)
+
+**`iapp/ChindaMT-4B`** — Thai-English machine translation fine-tune of Qwen3.5-4B by iApp Technology (Apache-2.0, gated HF repo). **Active sidecar on mlx-lm port 8080.** Deployed 2026-05-15.
+
+| Field | Value |
+|:--|:--|
+| Base model | Qwen/Qwen3.5-4B |
+| Architecture | `Qwen3_5ForConditionalGeneration` — hybrid: 24/32 layers are Mamba-style SSM (linear attention), 8/32 are full attention. Vision encoder present but not loaded. |
+| Task | Thai ↔ English machine translation (NOT a general-purpose model) |
+| Format on disk | MLX 4-bit quantized (2.2 GB) at `~/mlx-models/chindamt-4b-4bit/` |
+| Context | 262,144 tokens max |
+| License | Apache-2.0 |
+| HF | [`iapp/ChindaMT-4B`](https://huggingface.co/iapp/ChindaMT-4B) (gated) |
+| Server | `mlx-lm` 0.31.3 (Cellar libexec binary), port 8080, OpenAI API |
+| Decode | **186 tok/s** @ 2.5 GB peak memory (M3 Ultra, 4-bit) |
+| Prefill | 33 tok/s |
+| Memory | 2.5 GB peak — coexists with any main model on the 96 GB M3 Ultra |
+
+**Usage note:** The Qwen3.5 chat template defaults to thinking mode (`<think>` block). The model's fine-tuning places translations inside the thinking block, so without disabling thinking, the response appears in `message.reasoning` rather than `message.content`. Always pass `chat_template_kwargs: {"enable_thinking": false}`:
+
+```bash
+curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "/Users/chanunc/mlx-models/chindamt-4b-4bit",
+    "messages": [{"role": "user", "content": "Translate English to Thai:\n\nEN: Hello, how are you?"}],
+    "max_tokens": 80,
+    "chat_template_kwargs": {"enable_thinking": false}
+  }'
+# content: "สวัสดีครับ วันนี้เป็นอย่างไรบ้างครับ?"
+```
+
+**Conversion notes (for re-deploy):**
+- No GGUF path: llama.cpp has no runtime support for SSM/linear-attention (turboquant converter handles the format but the runtime CPU-spins without output)
+- MLX conversion requires stripping the tied `lm_head.weight` first — bug in mlx-lm 0.31.3's `qwen3_5` outer `sanitize()` method (`language_model.lm_head.weight` is not popped before passing to the inner sanitize). Fixed-HF source with weight stripped at `~/mlx-models/chindamt-4b-fixed-hf/` (8.5 GB, keep for re-convert)
+- Rebuild: `mlx_lm.convert --hf-path ~/mlx-models/chindamt-4b-fixed-hf --mlx-path ~/mlx-models/chindamt-4b-4bit -q --q-bits 4`
+
+Launch:
+
+```bash
+ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
+  --model /Users/chanunc/mlx-models/chindamt-4b-4bit \
+  --host 0.0.0.0 --port 8080 \
+  > /tmp/chindamt.log 2>&1 &"
+```
+
+Stop:
+
+```bash
+ssh macstudio "pkill -f 'mlx_lm.server.*chindamt'"
+```
 
 ---
 

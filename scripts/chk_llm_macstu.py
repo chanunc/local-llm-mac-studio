@@ -2,8 +2,8 @@
 """Probe the Mac Studio over SSH and report the live LLM stack.
 
 Reports which LLM server (vllm-mlx / mlx-openai-server / oMLX / vmlx / lm-studio /
-dflash-mlx / llama-cpp-turboquant / llama-cpp-mtp) is currently running on ports
-8000 / 1234 / 8098 / 8099 / 8100, the loaded model, and (in --all / --client /
+dflash-mlx / llama-cpp-turboquant / llama-cpp-mtp / mlx-lm) is currently running on ports
+8000 / 1234 / 8080 / 8098 / 8099 / 8100, the loaded model, and (in --all / --client /
 --logs modes) the matching client config or log-tail command for the detected
 server.
 
@@ -52,6 +52,7 @@ SERVER_PATTERNS = [
     ("llama-cpp-turboquant/build/bin/llama-server", "llama-cpp-turboquant", "llama-cpp-turboquant", 8099),
     ("llama-cpp-thetom/build/bin/llama-server",     "llama-cpp-turboquant", "llama-cpp-turboquant", 8099),
     ("llama-cpp-mtp/build/bin/llama-server",        "llama-cpp-mtp",        "llama-cpp-mtp",        8100),
+    ("mlx_lm.server",                               "mlx-lm",              "mlx-lm",              8080),
 ]
 
 # When a port is listening but no SERVER_PATTERNS process matches, fall back here.
@@ -60,6 +61,7 @@ FALLBACK_SERVER_BY_PORT = {
     1234: ("lm-studio", "lm-studio"),  # LM Studio app holds the socket; daemon may not be visible
     8099: ("llama-cpp-turboquant", "llama-cpp-turboquant"),
     8100: ("llama-cpp-mtp", "llama-cpp-mtp"),
+    8080: ("mlx-lm", "mlx-lm"),
 }
 
 # Server label → log-tail command (gets `ssh <host> "..."`-wrapped unless --no-ssh).
@@ -74,6 +76,7 @@ SERVER_LOGS = {
     # live is the one that has a recent /tmp/llama-cpp-*.log mtime.
     "llama-cpp-turboquant": "tail -f /tmp/llama-cpp-thetom.log /tmp/llama-cpp-turboquant.log 2>/dev/null",
     "llama-cpp-mtp":        "tail -f /tmp/llama-cpp-mtp.log",
+    "mlx-lm":               "tail -f /tmp/chindamt.log",
 }
 
 # --client name → filename under configs/clients/<server>/
@@ -85,11 +88,11 @@ CLIENT_FILES = {
     "claude-code":  "claude-code-settings.json",
 }
 
-DEFAULT_PORTS = [8000, 1234, 8098, 8099, 8100]
+DEFAULT_PORTS = [8000, 1234, 8080, 8098, 8099, 8100]
 
 # Servers that hold exactly one model in memory at a time → overlay rewrites the default.
 # Multi-model servers (mlx-openai-server, oMLX) only get roster-sync (append missing models).
-SINGLE_MODEL_SERVERS = {"vllm-mlx", "vmlx", "dflash-mlx", "lm-studio", "llama-cpp-turboquant", "llama-cpp-mtp"}
+SINGLE_MODEL_SERVERS = {"vllm-mlx", "vmlx", "dflash-mlx", "lm-studio", "llama-cpp-turboquant", "llama-cpp-mtp", "mlx-lm"}
 
 # Substrings (lowercase) that flip the reasoning flag on overlay stub injection.
 REASONING_KEYWORDS = ("thinking", "reasoning", "heretic-thinking", "-r1", "cot", "deepseek-r1")
@@ -107,17 +110,17 @@ def probe(host, no_ssh=False):
     sep = "---SEP---"
     cmd = (
         "ps -axo pid=,rss=,command= 2>/dev/null | "
-        "grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|\\.lmstudio|omlx|llama-server' | "
+        "grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|\\.lmstudio|omlx|llama-server|mlx_lm.server' | "
         "grep -v grep || true; "
         f"echo '{sep}'; "
         "lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | "
-        "grep -E ':(8000|8098|8099|8100|1234) \\(LISTEN\\)' || true; "
+        "grep -E ':(8000|8080|8098|8099|8100|1234) \\(LISTEN\\)' || true; "
         f"echo '{sep}'; "
         "if [ -x ~/.lmstudio/bin/lms ]; then ~/.lmstudio/bin/lms ps 2>/dev/null; fi; "
         f"echo '{sep}'; "
         # Enrich any lsof-detected PIDs with their RSS + full command line.
         "PIDS=$(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | "
-        "grep -E ':(8000|8098|8099|8100|1234) \\(LISTEN\\)' | awk '{print $2}' | sort -u); "
+        "grep -E ':(8000|8080|8098|8099|8100|1234) \\(LISTEN\\)' | awk '{print $2}' | sort -u); "
         "if [ -n \"$PIDS\" ]; then ps -p $(echo $PIDS | tr ' ' ',') -o pid=,rss=,command= 2>/dev/null; fi"
     )
     try:

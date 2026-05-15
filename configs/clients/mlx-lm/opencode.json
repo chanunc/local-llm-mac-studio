@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-mlx-lm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:8080/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "/Users/chanunc/mlx-models/chindamt-4b-4bit": {
+          "name": "iapp/ChindaMT-4B — Qwen3.5-4B Thai↔English MT (MLX 4-bit, hybrid SSM/attention, mlx-lm sidecar port 8080)",
+          "tools": false,
+          "reasoning": false,
+          "limit": {
+            "context": 8192,
+            "output": 1024
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-mlx-lm//Users/chanunc/mlx-models/chindamt-4b-4bit",
+  "small_model": "macstudio-mlx-lm//Users/chanunc/mlx-models/chindamt-4b-4bit"
+}

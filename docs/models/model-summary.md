@@ -334,18 +334,31 @@ IBM Granite 4.1 30B Instruct — dense decoder-only model, Apache 2.0 license. O
 | Prefill | 33 tok/s |
 | Memory | 2.5 GB peak — coexists with any main model on the 96 GB M3 Ultra |
 
-**Usage note:** The Qwen3.5 chat template defaults to thinking mode (`<think>` block). The model's fine-tuning places translations inside the thinking block, so without disabling thinking, the response appears in `message.reasoning` rather than `message.content`. Always pass `chat_template_kwargs: {"enable_thinking": false}`:
+**Model ID:** `mlx_lm.server` uses the exact string passed to `--model` as the model ID — always send the full absolute path in API requests and client configs. Short aliases (e.g. `chindamt-4b`) trigger a HuggingFace 404 as the server tries to resolve them remotely.
+
+**Chat template quirk:** The Qwen3.5 template defaults to thinking mode, placing output in `message.reasoning` instead of `message.content`. Disable it server-wide at launch with `--chat-template-args '{"enable_thinking":false}'` (preferred). Per-request fallback: include `"chat_template_kwargs": {"enable_thinking": false}` in the JSON body.
 
 ```bash
-curl http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
+# curl (with per-request kwarg as fallback)
+curl -s http://<MAC_STUDIO_IP>:8080/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "/Users/chanunc/mlx-models/chindamt-4b-4bit",
-    "messages": [{"role": "user", "content": "Translate English to Thai:\n\nEN: Hello, how are you?"}],
-    "max_tokens": 80,
+    "messages": [{"role": "user", "content": "Translate to English: สวัสดีครับ วันนี้อากาศดีมาก"}],
+    "max_tokens": 200,
     "chat_template_kwargs": {"enable_thinking": false}
-  }'
-# content: "สวัสดีครับ วันนี้เป็นอย่างไรบ้างครับ?"
+  }' | python3 -m json.tool
+# content: "Hello! The weather is very nice today."
+
+# openai-cli (thinking disabled at server level — no extra flag needed)
+# Pipe through jq -r to decode \uXXXX escapes — the Go CLI ASCII-encodes Thai by default.
+OPENAI_API_KEY=not-needed \
+OPENAI_BASE_URL=http://<MAC_STUDIO_IP>:8080/v1 \
+openai chat:completions create \
+  --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" \
+  --message '{"role": "user", "content": "Translate to English: สวัสดีครับ วันนี้อากาศดีมาก"}' \
+  --max-tokens 200 | jq -r '.choices[0].message.content'
+# Hello! The weather is very nice today.
 ```
 
 **Conversion notes (for re-deploy):**
@@ -359,6 +372,7 @@ Launch:
 ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
   --model /Users/chanunc/mlx-models/chindamt-4b-4bit \
   --host 0.0.0.0 --port 8080 \
+  --chat-template-args '{\"enable_thinking\":false}' \
   > /tmp/chindamt.log 2>&1 &"
 ```
 

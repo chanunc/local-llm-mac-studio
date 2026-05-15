@@ -295,6 +295,7 @@ curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            
 curl -s http://127.0.0.1:1337/v1/models | python3 -m json.tool                  # vmlx-swift-lm / Osaurus (port 1337, loopback-only by default)
 curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool            # llama-cpp-turboquant (port 8099)
 curl -s http://<MAC_STUDIO_IP>:8100/v1/models | python3 -m json.tool            # llama-cpp-mtp (port 8100)
+curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool            # mlx-lm sidecar (port 8080, ChindaMT Thai↔EN)
 curl -s http://<MAC_STUDIO_IP>:8188/system_stats | python3 -m json.tool          # comfyui (port 8188; no /v1/models — use /models/checkpoints to list weights)
 
 open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
@@ -324,6 +325,15 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"<MODEL_NAME>","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
   | python3 -m json.tool
+
+# openai-cli one-shot prompt test (works against any server — swap BASE_URL port/model).
+# Pipe through jq -r to decode \uXXXX escapes for non-ASCII output (Thai, CJK, emoji).
+OPENAI_API_KEY=not-needed \
+OPENAI_BASE_URL=http://<MAC_STUDIO_IP>:8080/v1 \
+openai chat:completions create \
+  --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" \
+  --message '{"role":"user","content":"Translate to English: สวัสดีครับ"}' \
+  --max-tokens 100 | jq -r '.choices[0].message.content'
 
 # End-to-end agent + tool-call test via OpenCode (requires the model to be
 # present in ~/.config/opencode/opencode.json under the `macstudio` provider).

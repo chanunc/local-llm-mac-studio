@@ -2,7 +2,7 @@
 
 Lightweight CLIs for sending one-shot prompts to the Mac Studio servers over their **OpenAI-compatible HTTP API**. Use these when an agent harness (OpenCode, OpenClaw, Pi, Claude Code) is the wrong tool — non-agent models like `sulphur-2-base` (T2V prompt rewriter, 8 K context), interactive smoke tests, ad-hoc rewrites, shell pipelines.
 
-*Last updated: 2026-05-07.*
+*Last updated: 2026-05-08.*
 
 ## Index
 - [Why these tools](#why-these-tools)
@@ -145,6 +145,7 @@ mods -C                                  # continue last conversation
 
 ## Honorable mentions
 
+- **`openai` (openai/openai-cli)** — official OpenAI CLI (Apache-2.0, Go, `brew install openai/tools/openai`, v1.1.2 2026-05-07). Full deep-dive in [`docs/server-apis/openai-responses.md`](../server-apis/openai-responses.md). Primarily targets the **Responses API** (`POST /v1/responses`) but also speaks **Chat Completions** (`openai chat:completions create --model ... --message '{"role":"user","content":"..."}'`) — useful for one-shot testing against any local server with `OPENAI_API_KEY=not-needed OPENAI_BASE_URL=http://<ip>:<port>/v1`. Validated against the mlx-lm ChindaMT-4B sidecar (port 8080) 2026-05-15. **Encoding note:** the Go CLI JSON-encodes non-ASCII as `\uXXXX` — pipe through `jq -r '.choices[0].message.content'` to render Thai / CJK / emoji correctly. Responses API is **native only on `lm-studio:1234`** in this lab (≥ v0.3.29 ships `/v1/responses`); other servers need [chutesai/responses-proxy](https://github.com/chutesai/responses-proxy) or LiteLLM in front. Verbose by design (no `-m model "prompt"` shorthand, no `-c` continuation, no `-s` system prompt); reach for it when you want raw API inspection or Responses-native semantics, not when you want the prompt-shorthand UX of `llm`/`aichat`/`mods`.
 - **`shell-gpt` / `sgpt`** — `pipx install shell-gpt`; set `API_BASE_URL` and `DEFAULT_MODEL` in `~/.config/shell_gpt/.sgptrc`. MIT, v1.5.1 (2026-05-06), 12k stars. Solid; Python-heavy and biased toward "generate shell command" use cases.
 - **`gptme`** — agentic CLI (file ops, exec) with custom-provider support in `~/.config/gptme/config.toml`. Pick if you want a coding agent rather than a one-liner. Heavier than the rest.
 - **`tgpt`** — GPL-3.0, v2.11.1 (2026-02-01). Custom-provider support exists but config is awkward.
@@ -164,8 +165,10 @@ mods -C                                  # continue last conversation
 | Single binary on a fresh machine, no Python | `aichat` |
 | Pipe `git diff` / `cat log` / `kubectl logs` into a model | `mods` |
 | Shell-command suggestions (`how do I tar this?`) | `sgpt` |
+| Raw API test against a local server (any port) | `openai chat:completions create` with `OPENAI_BASE_URL` override — pipe `\| jq -r '.choices[0].message.content'` for non-ASCII output |
 | Agent loop with tools, file edits, browse | `opencode` (see [opencode-setup.md](opencode-setup.md)) |
 | Talk to LM Studio's loaded model via its native SDK, no HTTP | `lms chat -p` |
+| Use the Responses API (`previous_response_id`, typed `output[]`, typed event stream) | `openai` against `lm-studio:1234`; shim the other six servers with [`chutesai/responses-proxy`](https://github.com/chutesai/responses-proxy) or [LiteLLM](https://docs.litellm.ai/docs/response_api) |
 | Raw debugging of request/response shape | `curl` |
 
 ## When to reach for `lms chat -p` instead
@@ -183,6 +186,7 @@ Use the OpenAI-API CLIs above when you need any of:
 
 ## See also
 
+- [`../server-apis/openai-responses.md`](../server-apis/openai-responses.md) — Responses API deep-dive: hosted tools, local server support matrix, shim path.
 - [`opencode-setup.md`](opencode-setup.md) — agent harness for tool-using models.
 - [`opencode-analysis.md`](opencode-analysis.md) — OpenCode latency overhead vs raw API.
 - [`docs/servers/lm-studio/summary.md`](../servers/lm-studio/summary.md) — LM Studio runbook (port 1234).

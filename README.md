@@ -58,7 +58,10 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 ### 🚀 Start a Server
 
-Pick one — all serve on port 8000. Stop others first if switching.
+Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, Osaurus `:1337`, comfyui `:8188`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
+
+<details>
+<summary>⚡ <strong>vllm-mlx</strong> (:8000) — fastest, single model · 3 launch variants + stop</summary>
 
 ```bash
 # vllm-mlx — fastest, single model. Current production primary:
@@ -96,14 +99,55 @@ nohup ~/vllm-mlx-env/bin/vllm-mlx serve mlx-community/Ling-2.6-flash-mlx-6bit \
   --enable-auto-tool-choice --tool-call-parser hermes \
   > /tmp/vllm-mlx.log 2>&1 &
 
+pkill -f vllm-mlx                                                                # stop vllm-mlx
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool             # health (port 8000)
+tail -f /tmp/vllm-mlx.log                                                        # logs
+```
+
+</details>
+
+<details>
+<summary>🟢 <strong>mlx-openai-server</strong> (:8000) — multi-model, low overhead + stop</summary>
+
+```bash
 # mlx-openai-server — multi-model, low overhead
 JANG_PATCH_ENABLED=1 nohup ~/mlx-openai-server-env/bin/mlx-openai-server launch \
   --config ~/mlx-openai-server-multimodel.yaml --no-log-file \
   > /tmp/mlx-openai-server.log 2>&1 &
 
+pkill -f mlx-openai-server                                                       # stop mlx-openai-server
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool             # health (port 8000)
+tail -f /tmp/mlx-openai-server.log                                               # logs
+```
+
+</details>
+
+<details>
+<summary>🔴 <strong>oMLX</strong> (:8000) — 9 models, hot-swap + stop</summary>
+
+```bash
 # oMLX — 9 models, hot-swap
 /opt/homebrew/bin/brew services start omlx
 
+/opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
+  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # health (auth required)
+open http://<MAC_STUDIO_IP>:8000/admin                                            # dashboard
+tail -f ~/.omlx/logs/server.log                                                  # logs
+```
+
+</details>
+
+<details>
+<summary>🟢 <strong>vmlx</strong> (:8000) — JANGTQ CRACK, MLX Studio bundled Python + stop</summary>
+
+```bash
 # vmlx — JANGTQ CRACK (MLX Studio bundled Python, headless)
 # Tool use + Qwen3 thinking require all four flags AND a one-time
 # source patch (scripts/patches/patch_vmlx_jangtq_mllm_tools.py). See
@@ -119,20 +163,116 @@ nohup $BP/bin/python3 -m vmlx_engine.cli serve "$SNAP" \
   --continuous-batching \
   > /tmp/vmlx.log 2>&1 &
 
-# vmlx-swift-lm via Osaurus — MLX-Swift engine sidecar on port 1337 (NOT 8000).
-# Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE),
-# Hunyuan v3 (Hy3), and the MiniMax-M2.7 JANGTQ Hadamard kernel path. Installed
-# via `brew install --cask osaurus`; engine pin = osaurus-ai/vmlx-swift-lm commit
-# b9da180. OpenAI + Anthropic + Ollama APIs. Tool-call + reasoning parsers are
-# built-in per family (no flags). PATH-MISMATCH GOTCHA: `osaurus pull` writes to
-# ~/.osaurus/models/ but `osaurus serve` defaults to ~/MLXModels/ which doesn't
-# exist — set OSU_MODELS_DIR explicitly. JANGTQ HTTP-path is speed-regressed
-# pending Osaurus PR #1057 (~7-8 tok/s on ZAYA1 JANGTQ4 vs the engine's own
-# RunBench 57 tok/s). See docs/servers/vmlx-swift-lm/summary.md.
-ssh macstudio "/opt/homebrew/bin/osaurus pull JANGQ-AI/ZAYA1-8B-JANGTQ4"
-ssh macstudio "OSU_MODELS_DIR=\$HOME/.osaurus/models nohup /opt/homebrew/bin/osaurus serve --port 1337 \
-  > /tmp/osaurus.log 2>&1 &"
+pkill -f vmlx_engine                                                             # stop vmlx
 
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool             # health (port 8000)
+tail -f /tmp/vmlx.log                                                            # logs
+```
+
+</details>
+
+<details>
+<summary>⚡ <strong>lm-studio</strong> (:1234, CURRENT PRODUCTION MAIN) — Huihui Gemma 4 26B-A4B + prior models + stop</summary>
+
+```bash
+# lm-studio (LM Studio headless, port 1234) — current production main
+# `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF:i1-Q6_K`:
+# huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE
+# (~4B active) + mradermacher imatrix Q6_K GGUF. 22.64 GB on disk, 21.08 GiB
+# resident at 65 K context. 9/10 mlabonne (first Gemma 4 entry to clear 9/10),
+# browse 2.55 s 🥇 all-time leader. Switched 2026-05-15 from llama-cpp-mtp +
+# Qwen3.6-27B-MTP (prior MTP main stays on disk, restartable from docs/current.md).
+# `lms get` mis-resolves i1-Q6_K — use direct Hub download + `lms import -L`.
+# LM Studio guardrail dance only required on first load (subsequent reloads OK).
+~/.lmstudio/bin/lms load 'huihui-gemma-4-26b-a4b-it-abliterated-i1' \
+  --gpu max --context-length 65536 \
+  --identifier 'gemma4-26b-a4b-huihui-abliterated-q6k' -y
+~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
+
+# Prior main (2026-05-14): prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF (Apache 2.0,
+# dense 27B Qwen3.6 + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1
+# reasoning-trace distillation, think-on, 15.41 GiB resident, decode 31 / 30 / 29 / 27
+# tok/s @ 512/4K/8K/32K, API smoke 5/5 single-call + 3/3 multi-turn 16.88 s,
+# refusal 9/10 @ max_tokens=1024, OpenCode 1.14.50 browse 11.62 s / search 19.47 s
+# @ 2 turns + webfetch fired). Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid.
+# Tool-call + reasoning parsing built into the LM Studio runtime — no parser flags needed.
+# (Once-only) download + hard-link import:
+ssh macstudio "mkdir -p ~/.cache/hauhau-gguf; \
+  ~/comfyui/.venv/bin/hf download prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF \
+  Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf --local-dir ~/.cache/hauhau-gguf"
+ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF -y \
+  ~/.cache/hauhau-gguf/Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf"
+# Q4_K_M @ 15.41 GiB is BELOW the strict 25 % guardrail threshold (~24 GiB on 96 GB) — no dance.
+ssh macstudio "~/.lmstudio/bin/lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y"
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"          # default port 1234
+
+# Prior main (TrevorJS Gemma 4 31B-it Uncensored Q4_K_M) — fallback for working agent loops.
+# Reload via: lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y
+
+~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool             # health (port 1234)
+~/.lmstudio/bin/lms log stream                                                   # live request/response stream
+tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log           # daily log file
+```
+
+</details>
+
+<details>
+<summary>⚪ <strong>mlx-lm server (Gemma 4)</strong> (:8000) — STOPPED 2026-05-06, restart shape for reference</summary>
+
+```bash
+# mlx-lm server — STOPPED 2026-05-06 (was previous main with Gemma 4 31B-it MLX 6-bit).
+# Restart shape kept here for reference. Direct mlx_lm.server binary, port 8000.
+# IMPORTANT — launch via the Cellar libexec binary, NOT /opt/homebrew/bin/mlx_lm.server.
+# /opt/homebrew/bin/mlx_lm.server symlinks to a python3.11 install whose mlx_lm lacks
+# Gemma 4 (raises 'Model type gemma4 not supported'); the Cellar libexec uses python3.14
+# which has full Gemma 4 support.
+ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
+  --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
+  --host 0.0.0.0 --port 8000 \
+  --max-tokens 8192 \
+  > /tmp/mlx-lm-server.log 2>&1 &"
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool             # health (port 8000, when running)
+tail -f /tmp/mlx-lm-server.log                                                   # logs
+```
+
+</details>
+
+<details>
+<summary>⚡ <strong>mlx-lm sidecar (ChindaMT-4B)</strong> (:8080, sidecar) — Thai↔EN translation + stop</summary>
+
+```bash
+# mlx-lm sidecar — iapp/ChindaMT-4B (Qwen3.5-4B hybrid SSM, MLX 4-bit, 2.2 GB) as a
+# dedicated Thai ↔ English translation endpoint on port 8080 (coexists with every
+# other server). --chat-template-args disables thinking server-wide so translations
+# land in message.content not message.reasoning. Model ID in API calls must be the
+# full path /Users/chanunc/mlx-models/chindamt-4b-4bit (short alias → HF 404).
+# Launch via the Cellar libexec binary, NOT /opt/homebrew/bin/mlx_lm.server.
+# Client guide: docs/clients/fabric-setup.md · catalog: docs/models/model-summary.md#chindamt-4b-thai--english-translation
+nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
+  --model /Users/chanunc/mlx-models/chindamt-4b-4bit \
+  --host 0.0.0.0 --port 8080 \
+  --chat-template-args '{"enable_thinking":false}' \
+  > /tmp/chindamt.log 2>&1 &
+
+pkill -f 'mlx_lm.server.*chindamt'                                               # stop mlx-lm ChindaMT sidecar
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool             # health (port 8080, ChindaMT Thai↔EN)
+tail -f /tmp/chindamt.log                                                        # logs
+```
+
+</details>
+
+<details>
+<summary>🟢 <strong>dflash-mlx</strong> (:8098, sidecar) — speculative decoding (DFlash drafter) + stop</summary>
+
+```bash
 # dflash-mlx — speculative-decoding sidecar on port 8098 (NOT 8000). Pairs a
 # standard MLX target with a DFlash drafter (block-diffusion verifier).
 # Provisional, OpenCode-only client template. Requires three local patches
@@ -146,6 +286,19 @@ nohup ~/dflash-mlx-env/bin/dflash-serve \
   --temp 0.0 --max-tokens 512 \
   > /tmp/dflash-mlx.log 2>&1 &
 
+pkill -f dflash-serve                                                            # stop dflash-mlx
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool             # health (port 8098)
+tail -f /tmp/dflash-mlx.log                                                      # logs (per-request DFlash telemetry)
+```
+
+</details>
+
+<details>
+<summary>⚡ <strong>llama-cpp-turboquant</strong> (:8099, sidecar) — TheTom turbo3 + johndpope iso3 + stop</summary>
+
+```bash
 # llama-cpp-turboquant — TurboQuant / RotorQuant KV-cache-compression sidecar on
 # port 8099 (NOT 8000). Two forks installed: ~/llama-cpp-thetom/ (TheTom — turbo2/3/4,
 # auto-asymmetric q8_0 K + sparse V, 4-mag LUT for pre-M5; CURRENT SPEED LEADER)
@@ -184,63 +337,20 @@ nohup ~/llama-cpp-turboquant/build/bin/llama-server \
   -c 65536 --jinja \
   > /tmp/llama-cpp-turboquant.log 2>&1 &
 
-# lm-studio — CURRENT PRODUCTION MAIN (2026-05-14). LM Studio headless on port 1234.
-# prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF (Apache 2.0, dense 27B Qwen3.6 + ViT,
-# prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1 reasoning-trace distillation,
-# think-on, 15.41 GiB resident, decode 31 / 30 / 29 / 27 tok/s @ 512/4K/8K/32K,
-# API smoke 5/5 single-call + 3/3 multi-turn 16.88 s, refusal 9/10 @ max_tokens=1024,
-# OpenCode 1.14.50 browse 11.62 s / search 19.47 s @ 2 turns + webfetch fired).
-# Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid. Tool-call + reasoning parsing
-# built into the LM Studio runtime — no parser flags needed.
-# (Once-only) download + hard-link import:
-ssh macstudio "mkdir -p ~/.cache/hauhau-gguf; \
-  ~/comfyui/.venv/bin/hf download prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF \
-  Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf --local-dir ~/.cache/hauhau-gguf"
-ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF -y \
-  ~/.cache/hauhau-gguf/Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf"
-# Q4_K_M @ 15.41 GiB is BELOW the strict 25 % guardrail threshold (~24 GiB on 96 GB) — no dance.
-ssh macstudio "~/.lmstudio/bin/lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y"
-ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"          # default port 1234
-
-# Prior main (TrevorJS Gemma 4 31B-it Uncensored Q4_K_M) — fallback for working agent loops.
-# Reload via: lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y
-
-# mlx-lm server — STOPPED 2026-05-06 (was previous main with Gemma 4 31B-it MLX 6-bit).
-# Restart shape kept here for reference. Direct mlx_lm.server binary, port 8000.
-# IMPORTANT — launch via the Cellar libexec binary, NOT /opt/homebrew/bin/mlx_lm.server.
-# /opt/homebrew/bin/mlx_lm.server symlinks to a python3.11 install whose mlx_lm lacks
-# Gemma 4 (raises 'Model type gemma4 not supported'); the Cellar libexec uses python3.14
-# which has full Gemma 4 support.
-ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
-  --model /Users/chanunc/.lmstudio/models/lmstudio-community/gemma-4-31B-it-MLX-6bit \
-  --host 0.0.0.0 --port 8000 \
-  --max-tokens 8192 \
-  > /tmp/mlx-lm-server.log 2>&1 &"
-
-pkill -f vllm-mlx                                                                # stop vllm-mlx
-pkill -f mlx-openai-server                                                       # stop mlx-openai-server
-/opt/homebrew/bin/brew services stop omlx                                        # stop oMLX
-pkill -f vmlx_engine                                                             # stop vmlx
-~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
-pkill -f dflash-serve                                                            # stop dflash-mlx
-/opt/homebrew/bin/osaurus stop; pkill -9 osaurus 2>/dev/null                     # stop vmlx-swift-lm / Osaurus
 pkill -f 'build/bin/llama-server'                                                # stop llama-cpp-turboquant or llama-cpp-mtp (matches both forks + MTP sidecar; if you have multiple llama-server processes alive, pkill -f 'llama-cpp-mtp/build/bin/llama-server' targets only the MTP one)
-pkill -f 'comfyui/main.py'                                                       # stop comfyui
 
-# lm-studio (LM Studio headless, port 1234) — current production main
-# `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF:i1-Q6_K`:
-# huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE
-# (~4B active) + mradermacher imatrix Q6_K GGUF. 22.64 GB on disk, 21.08 GiB
-# resident at 65 K context. 9/10 mlabonne (first Gemma 4 entry to clear 9/10),
-# browse 2.55 s 🥇 all-time leader. Switched 2026-05-15 from llama-cpp-mtp +
-# Qwen3.6-27B-MTP (prior MTP main stays on disk, restartable from docs/current.md).
-# `lms get` mis-resolves i1-Q6_K — use direct Hub download + `lms import -L`.
-# LM Studio guardrail dance only required on first load (subsequent reloads OK).
-~/.lmstudio/bin/lms load 'huihui-gemma-4-26b-a4b-it-abliterated-i1' \
-  --gpu max --context-length 65536 \
-  --identifier 'gemma4-26b-a4b-huihui-abliterated-q6k' -y
-~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool             # health (port 8099)
+tail -f /tmp/llama-cpp-thetom.log                                                # logs (TheTom fork)
+tail -f /tmp/llama-cpp-turboquant.log                                            # logs (johndpope fork)
+```
 
+</details>
+
+<details>
+<summary>🟢 <strong>llama-cpp-mtp</strong> (:8100, sidecar) — Qwen3.6 MTP self-drafting + stop</summary>
+
+```bash
 # llama-cpp-mtp — Qwen3.6 MTP (Multi-Token Prediction / Next-n) self-drafting
 # speculative-decoding sidecar on port 8100 (NOT 8000/1234/8098/8099). Prior
 # production main (2026-05-15, superseded by lm-studio + Huihui Gemma 4 26B-A4B
@@ -262,6 +372,46 @@ nohup ~/llama-cpp-mtp/build/bin/llama-server \
   --jinja --reasoning on \
   > /tmp/llama-cpp-mtp.log 2>&1 &
 
+pkill -f 'llama-cpp-mtp/build/bin/llama-server'                                  # stop llama-cpp-mtp only (does not touch the turboquant forks)
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8100/v1/models | python3 -m json.tool             # health (port 8100)
+tail -f /tmp/llama-cpp-mtp.log                                                   # logs (port 8100, Qwen3.6 MTP sidecar)
+```
+
+</details>
+
+<details>
+<summary>🔴 <strong>vmlx-swift-lm / Osaurus</strong> (:1337, sidecar) — MLX-Swift engine (ZAYA1 / Hunyuan v3) + stop</summary>
+
+```bash
+# vmlx-swift-lm via Osaurus — MLX-Swift engine sidecar on port 1337 (NOT 8000).
+# Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE),
+# Hunyuan v3 (Hy3), and the MiniMax-M2.7 JANGTQ Hadamard kernel path. Installed
+# via `brew install --cask osaurus`; engine pin = osaurus-ai/vmlx-swift-lm commit
+# b9da180. OpenAI + Anthropic + Ollama APIs. Tool-call + reasoning parsers are
+# built-in per family (no flags). PATH-MISMATCH GOTCHA: `osaurus pull` writes to
+# ~/.osaurus/models/ but `osaurus serve` defaults to ~/MLXModels/ which doesn't
+# exist — set OSU_MODELS_DIR explicitly. JANGTQ HTTP-path is speed-regressed
+# pending Osaurus PR #1057 (~7-8 tok/s on ZAYA1 JANGTQ4 vs the engine's own
+# RunBench 57 tok/s). See docs/servers/vmlx-swift-lm/summary.md.
+ssh macstudio "/opt/homebrew/bin/osaurus pull JANGQ-AI/ZAYA1-8B-JANGTQ4"
+ssh macstudio "OSU_MODELS_DIR=\$HOME/.osaurus/models nohup /opt/homebrew/bin/osaurus serve --port 1337 \
+  > /tmp/osaurus.log 2>&1 &"
+
+/opt/homebrew/bin/osaurus stop; pkill -9 osaurus 2>/dev/null                     # stop vmlx-swift-lm / Osaurus
+
+# health + logs:
+curl -s http://127.0.0.1:1337/v1/models | python3 -m json.tool                   # health (port 1337, loopback-only by default)
+tail -f /tmp/osaurus.log                                                         # logs (port 1337)
+```
+
+</details>
+
+<details>
+<summary>🟢 <strong>comfyui</strong> (:8188, sidecar) — image generation (Z-Anime) + stop</summary>
+
+```bash
 # comfyui — image-generation sidecar on port 8188 (NOT 8000/1234/8098/8099/8100, no
 # collision with chat servers). ComfyUI 0.20+ has first-party Z-Image-Turbo nodes;
 # Z-Anime is the SeeSee21 fine-tune (S3-DiT 6B, Apache-2.0). Web UI only — no
@@ -273,6 +423,20 @@ nohup ~/comfyui/.venv/bin/python ~/comfyui/main.py \
   --listen 0.0.0.0 --port 8188 --use-pytorch-cross-attention \
   > /tmp/comfyui.log 2>&1 &
 
+pkill -f 'comfyui/main.py'                                                       # stop comfyui
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8188/system_stats | python3 -m json.tool           # health (port 8188; no /v1/models — use /models/checkpoints to list weights)
+open http://<MAC_STUDIO_IP>:8188                                                  # web UI (image gen)
+tail -f /tmp/comfyui.log                                                          # logs (port 8188 image gen)
+```
+
+</details>
+
+<details>
+<summary>🟢 <strong>qwen-asr</strong> (no port, sidecar) — speech→text, in-process Python API (no daemon)</summary>
+
+```bash
 # qwen-asr (speech→text sidecar) — no port-bound daemon. Transcribe in-process via
 # the Python API. Three calls: build venv, smoke, RTF bench.
 ssh macstudio "/opt/homebrew/bin/python3.12 -m venv ~/qwen-asr-env && \
@@ -284,40 +448,14 @@ scp scripts/bench/bench_asr_rtf.py macstudio:/tmp/
 ssh macstudio "~/qwen-asr-env/bin/python /tmp/bench_asr_rtf.py"
 ```
 
-### 🩺 Health Check
-
-```bash
-curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool            # vllm-mlx / mlx-openai-server
-curl -s http://<MAC_STUDIO_IP>:8000/v1/models \
-  -H "Authorization: Bearer <YOUR_API_KEY>" | python3 -m json.tool               # oMLX (auth required)
-curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool            # lm-studio (port 1234)
-curl -s http://<MAC_STUDIO_IP>:8098/v1/models | python3 -m json.tool            # dflash-mlx (port 8098)
-curl -s http://127.0.0.1:1337/v1/models | python3 -m json.tool                  # vmlx-swift-lm / Osaurus (port 1337, loopback-only by default)
-curl -s http://<MAC_STUDIO_IP>:8099/v1/models | python3 -m json.tool            # llama-cpp-turboquant (port 8099)
-curl -s http://<MAC_STUDIO_IP>:8100/v1/models | python3 -m json.tool            # llama-cpp-mtp (port 8100)
-curl -s http://<MAC_STUDIO_IP>:8080/v1/models | python3 -m json.tool            # mlx-lm sidecar (port 8080, ChindaMT Thai↔EN)
-curl -s http://<MAC_STUDIO_IP>:8188/system_stats | python3 -m json.tool          # comfyui (port 8188; no /v1/models — use /models/checkpoints to list weights)
-
-open http://<MAC_STUDIO_IP>:8000/admin                                            # oMLX dashboard
-open http://<MAC_STUDIO_IP>:8188                                                  # comfyui web UI (image gen)
-
-tail -f /tmp/vllm-mlx.log                                                       # vllm-mlx logs
-tail -f /tmp/mlx-openai-server.log                                              # mlx-openai-server logs
-tail -f ~/.omlx/logs/server.log                                                 # oMLX logs
-tail -f /tmp/vmlx.log                                                           # vmlx logs
-~/.lmstudio/bin/lms log stream                                                  # lm-studio live request/response stream
-tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log          # lm-studio daily log file
-tail -f /tmp/dflash-mlx.log                                                     # dflash-mlx logs (per-request DFlash telemetry)
-tail -f /tmp/osaurus.log                                                        # vmlx-swift-lm / Osaurus logs (port 1337)
-tail -f /tmp/llama-cpp-thetom.log                                               # llama-cpp-turboquant logs (TheTom fork)
-tail -f /tmp/llama-cpp-turboquant.log                                           # llama-cpp-turboquant logs (johndpope fork)
-tail -f /tmp/llama-cpp-mtp.log                                                  # llama-cpp-mtp logs (port 8100, Qwen3.6 MTP sidecar)
-tail -f /tmp/comfyui.log                                                        # comfyui logs (port 8188 image gen)
-```
+</details>
 
 ### 💬 Quick Test
 
 Works on all servers — swap `<MODEL_NAME>` from `/v1/models`. Add auth header for oMLX.
+
+<details>
+<summary>🌐 <strong>curl</strong> — raw HTTP chat round-trip (any server)</summary>
 
 ```bash
 # Plain chat round-trip
@@ -325,7 +463,14 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"<MODEL_NAME>","messages":[{"role":"user","content":"Say hello"}],"max_tokens":50}' \
   | python3 -m json.tool
+```
 
+</details>
+
+<details>
+<summary>🔧 <strong>openai-cli</strong> — one-shot prompt test (any server, swap BASE_URL)</summary>
+
+```bash
 # openai-cli one-shot prompt test (works against any server — swap BASE_URL port/model).
 # Pipe through jq -r to decode \uXXXX escapes for non-ASCII output (Thai, CJK, emoji).
 OPENAI_API_KEY=not-needed \
@@ -334,7 +479,14 @@ openai chat:completions create \
   --model "/Users/chanunc/mlx-models/chindamt-4b-4bit" \
   --message '{"role":"user","content":"Translate to English: สวัสดีครับ"}' \
   --max-tokens 100 | jq -r '.choices[0].message.content'
+```
 
+</details>
+
+<details>
+<summary>🤖 <strong>OpenCode</strong> — end-to-end agent + tool-call test</summary>
+
+```bash
 # End-to-end agent + tool-call test via OpenCode (requires the model to be
 # present in ~/.config/opencode/opencode.json under the `macstudio` provider).
 # "Browse www.example.com" reliably triggers webfetch (a concrete URL avoids
@@ -343,6 +495,36 @@ openai chat:completions create \
 # model) is wired correctly end-to-end.
 opencode run --model "macstudio/<MODEL_NAME>" "Browse www.example.com"
 ```
+
+</details>
+
+<details>
+<summary>🧵 <strong>Fabric</strong> — prompt-pattern CLI over any <code>/v1</code> server (full guide: <a href="docs/clients/fabric-setup.md"><code>docs/clients/fabric-setup.md</code></a>)</summary>
+
+```bash
+# Install (binary is `fabric-ai`; symlink to `fabric` once — it uses its own
+# name as the default pattern, so bare `fabric-ai` errors without -p).
+brew install fabric-ai && ln -s /opt/homebrew/bin/fabric-ai ~/.local/bin/fabric
+
+# 1. Raw passthrough (NO pattern) — correct mode for ChindaMT translation
+echo "Translate to Thai: Good evening" | fabric
+fabric < document.txt
+
+# 2. Pattern mode — wrap input in a curated prompt (250+ via `fabric -l`).
+#    Patterns are general-LLM prompts → point at a GENERAL model, not ChindaMT.
+echo "long article text" | fabric -p summarize -m "<general-model-id>"
+fabric -y "https://youtube.com/watch?v=..." -p extract_wisdom -m "<general-model-id>"
+
+# 3. Change model / server — edit ~/.config/fabric/.env (or run `fabric -S`):
+#    DEFAULT_VENDOR=LM Studio
+#    DEFAULT_MODEL=/Users/chanunc/mlx-models/chindamt-4b-4bit   # exact /v1/models ID
+#    LM_STUDIO_API_URL=http://<MAC_STUDIO_IP>:8080/v1           # MUST end in /v1
+#    LM_STUDIO_API_KEY=not-needed
+#    → retarget another server by changing the URL (e.g. :8000/v1) + DEFAULT_MODEL.
+#    → per-run override without editing .env:  ... | fabric -V "LM Studio" -m "<id>"
+```
+
+</details>
 
 ---
 

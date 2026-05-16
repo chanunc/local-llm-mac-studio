@@ -124,7 +124,7 @@ Output dir is `docs/models/benchmarks/<slug>/` either way. Refusal JSON simply i
 
 #### Censored branch — parent-only, no submodule
 
-- `docs/current.md` — flip Production row (unless `--no-flip`); add prior main to Stopped/Documented Fallbacks
+- `scripts/chk_llm_macstu.py` — run-state is probed here, not tracked in docs
 - `CLAUDE.md` + `AGENTS.md` (mirrored) — overview line for the new main
 - `README.md` — Quick Start launch snippet, Models table row, Servers table sidecar/main note
 - `configs/README.md` — Server Roles row + per-server section description
@@ -139,7 +139,7 @@ Output dir is `docs/models/benchmarks/<slug>/` either way. Refusal JSON simply i
 
 #### Uncensored branch — unchanged from existing skill
 
-`docs/models/uncen-model/` submodule edits as in the existing skill, plus the parent edits for `docs/current.md` / `README.md` / `CLAUDE.md` / `AGENTS.md` / `configs/README.md` / `docs/models/benchmarks/`.
+`docs/models/uncen-model/` submodule edits as in the existing skill, plus the parent edits for `README.md` / `CLAUDE.md` / `AGENTS.md` / `configs/README.md` / `docs/models/benchmarks/` (run-state is probed via `scripts/chk_llm_macstu.py`, not tracked in docs).
 
 ### Phase 6 — Commits (BRANCHED)
 
@@ -179,7 +179,7 @@ The first invocation of the new skill is the Granite 4.1 30B Q8_0 deploy that tr
    - Phase 5: parent docs flip to Granite as new lm-studio main; submodule untouched
    - Phase 6: one parent commit staged, `git push` printed, no auto-push
 2. `/deploy-run-benchmark-model HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive` reproduces the existing uncensored skill's 2026-05-02 run end-to-end (regression check)
-3. `/deploy-run-benchmark-model unsloth/granite-4.1-30b-GGUF --no-flip` runs benchmarks but does NOT change `docs/current.md` Production row or `opencode.json` defaults
+3. `/deploy-run-benchmark-model unsloth/granite-4.1-30b-GGUF --no-flip` runs benchmarks but does NOT change `opencode.json` defaults
 4. Re-running on an already-deployed model is idempotent (model stays loaded; benchmarks re-run; doc edits are no-ops where unchanged)
 5. Phase 0 disk guard correctly aborts on a synthetic low-space scenario (test by setting `NEED_GB` artificially high)
 

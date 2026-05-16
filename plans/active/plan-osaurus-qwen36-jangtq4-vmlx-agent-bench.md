@@ -286,7 +286,7 @@ After successful runs:
 - Add a Qwen3.6 family entry to `docs/models/per-model/model-summary-qwen-3-6.md`.
 - Add a model row to `README.md` only if the result is worth keeping as a documented model in the roster.
 - Update `docs/models/techniques/model-quantization-turboquant.md` if the run reveals new JANGTQ/vmlx behavior.
-- Update `docs/current.md` if this main-server deployment persists beyond the benchmark session.
+- Run-state is probed via `scripts/chk_llm_macstu.py`, not tracked in docs.
 
 ## Failure handling
 

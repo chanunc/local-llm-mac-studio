@@ -99,7 +99,7 @@ Primary perf comparison is **MTP-enabled (UD-Q6_K_XL)** vs **plain Qwen3.6-27B G
 **Existing files to edit:**
 - `README.md` — data-flow diagram, Servers table, Quick Start launch+stop, Health Check curl, Models table row, Known Limitations entry.
 - `CLAUDE.md` **and** `AGENTS.md` (mirror) — overview paragraph, Architecture bullet, data-flow diagram, Common Commands launch+stop blocks.
-- `docs/current.md` — sidecar row matching the turboquant format.
+- run-state is probed via `scripts/chk_llm_macstu.py`, not tracked in docs.
 - `docs/servers/README.md` — new runbook index row.
 - `configs/README.md` — Server Roles table row, new `clients/llama-cpp-mtp/` section, Switching Servers note.
 - `configs/clients/README.md` — Layout-table row.
@@ -114,7 +114,7 @@ Primary perf comparison is **MTP-enabled (UD-Q6_K_XL)** vs **plain Qwen3.6-27B G
 2. `curl` a chat-completion with a single tool — `tool_calls[]` populated, not raw XML in `content`.
 3. `bench_api_server.py` decode tok/s with MTP should beat published Qwen3.6-27B GGUF baselines; if it's within noise of stock, MTP heads aren't engaging — re-check `--spec-type mtp` is on the actual `argv` (`ps -ax | grep llama-server`).
 4. `bench_agent_tool_call.py` returns `agent_turns >= 1` and a non-empty `tool_calls[]` (validates the OpenCode 1.14.50+ `PWD` fix carries to a llama.cpp backend).
-5. Pre-commit drift sweep: `grep -n "llama-cpp-mtp\|Qwen3.6-27B-MTP" README.md AGENTS.md CLAUDE.md configs/README.md docs/current.md docs/models/model-summary.md`.
+5. Pre-commit drift sweep: `grep -n "llama-cpp-mtp\|Qwen3.6-27B-MTP" README.md AGENTS.md CLAUDE.md configs/README.md docs/models/model-summary.md`.
 
 ## Out of scope
 

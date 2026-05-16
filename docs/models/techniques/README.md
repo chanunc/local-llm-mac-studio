@@ -40,6 +40,6 @@ Server-specific technique docs (not in this folder, but cross-listed for discove
 - One file per technique. Filename leads with `model-<category>-` so listing the folder shows the category at a glance.
 - Lead with **what it is** in one paragraph for readers who do not know the technique yet, then *how it integrates with this stack*, then performance / known limitations / cross-references.
 - Cross-link to `../benchmarks/` for raw JSON, `../../servers/<name>/summary.md` for runbooks, `../per-model/` for model-specific deployment, and `../../../plans/active/` if there is an active investigation plan.
-- If a technique becomes operationally adopted, surface the conclusion in [`../../current.md`](../../current.md) and the relevant server runbook — keep the deeper notes here.
+- If a technique becomes operationally adopted, surface the conclusion in the relevant server runbook — keep the deeper notes here.
 
 Future fits: `model-technique-prefix-caching.md`, `model-technique-prompt-caching.md`, `model-architecture-mimo-v2.md`, `model-quantization-mlx-mxfp4.md`, etc.

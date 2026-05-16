@@ -2,7 +2,7 @@
 
 ## Context
 
-You have a self-hosted LobeHub (Docker) instance but it isn't pointed at the Mac Studio, so no local models are reachable. The two servers currently running on Mac Studio are **vllm-mlx** (primary, Qwen3.5 JANG models) and **vmlx** (JANGTQ-CRACK models). Both speak OpenAI- and Anthropic-compatible APIs on `:8000` but are **mutually exclusive** — only one runs at a time on that port.
+You have a self-hosted LobeHub (Docker) instance but it isn't pointed at the Mac Studio, so no local models are reachable. The Mac Studio's port-8000 servers (e.g. **vllm-mlx**, **vmlx**) speak OpenAI- and Anthropic-compatible APIs on `:8000` but are **mutually exclusive** — only one runs at a time on that port. Run `scripts/chk_llm_macstu.py` to see which server/model is live (run-state is not recorded in any doc).
 
 Goal: add LobeHub to the repo's existing per-server / per-client config pattern so the setup is (1) actually working today and (2) persisted in this repo alongside the OpenCode / Claude Code / Qwen Code configs. Since LobeHub is Docker-hosted, env vars are the primary config mechanism.
 

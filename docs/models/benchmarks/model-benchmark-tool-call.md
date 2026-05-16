@@ -1027,7 +1027,7 @@ The state-machine reset patch (`patch_mlx_lm_match.py`) is what unblocks turn 2 
 ### Caveats
 
 - Dense 40B at 8.8–9.7 tok/s is expected. Reload prithivMLmods Aggressive Q6_K (`lms load qwen3.6-35b-a3b-uncensored-aggressive --identifier qwen3.6-35b-a3b-prithiv-aggressive-q6k --context-length 65536 -y`) when throughput matters.
-- LM Studio memory guardrail must be set to `"off"` before loading this model (dense 40B + 131K context) — see `docs/current.md` launch shape for the full toggle recipe.
+- LM Studio memory guardrail must be set to `"off"` before loading this model (dense 40B + 131K context) — see [`docs/servers/lm-studio/summary.md`](../../servers/lm-studio/summary.md) for the full toggle recipe.
 - Thinking mode is on by default; the model produces `<think>` reasoning before each tool call, contributing to latency but not blocking tool-call correctness.
 
 ---
@@ -1517,7 +1517,7 @@ Per-turn breakdown:
 
 4. **lm-studio's auto-unload bit during testing.** The LM Studio JIT eviction policy (`jitModelTTL.ttlSeconds: 3600` in `~/.lmstudio/settings.json`, plus an idle-evict path) unloaded the model between the smoke run and the api-server probe, returning HTTP 400 "No models loaded" on what should have been a warm follow-up. Required reload + back-to-back execution; not specific to MLX (would affect any lm-studio model after enough idle time).
 
-5. **No production flip.** This run is a comparison data point against the GGUF Q6_K sibling, not a new production candidate. The MLX 6-bit model stays loaded but `docs/current.md` is unchanged. The active lm-studio main remains `gemma-4-26b-a4b-q8` (lmstudio-community Gemma 4 26B A4B-it Q8_0 GGUF) per [`docs/current.md`](../../current.md). To restore the prior main, see the launch shape in `docs/current.md`.
+5. **No production flip.** This run was a comparison data point against the GGUF Q6_K sibling, not a new production candidate. Live run-state is not tracked in docs — run [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py) to see what is loaded.
 
 6. **Hypothesis update for the format-vs-runtime question.** Prior reasoning ([`docs/servers/lm-studio/prefill-speed-technique.md`](../../servers/lm-studio/prefill-speed-technique.md)) argued lm-studio's runtime advantage applies to "identical MLX safetensors / GGUF weights" — true for prefill (97 K tok/s here is in the lm-studio class), false for the agent loop. **For Qwen3.6 35B-A3B on lm-studio, GGUF Q6_K is the right choice; the MLX 6-bit container carries a per-turn overhead that the throughput bench misses.** This conclusion does **not** generalise across families — see the [Gemma 4 26B-A4B-it MLX-4bit result below](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) where MLX search is 2.2× *faster* than its GGUF sibling. Reproduce per family with `huggingface_hub.snapshot_download → lms load → bench_agent_tool_call.py` per the recipe above.
 
@@ -1562,7 +1562,7 @@ Edges out the Q8_0 GGUF sibling's 2.14 s 🏆 by 0.09 s — within run-to-run no
 | 8 K     | 0.24     | 98.8        | 34,830          |
 | 32 K    | 0.33     | 76.7        | **99,580**      |
 
-Decode is **1.6× faster** than the Q8_0 GGUF sibling (70–86 tok/s per `docs/current.md`); prefill is **lower** than the GGUF (Q8_0 reportedly 158 K tok/s @ 32 K, MLX 4-bit 99 K). The 4-bit weights → less bandwidth → faster decode tradeoff is the standard MLX 4-bit profile.
+Decode is **1.6× faster** than the Q8_0 GGUF sibling (measured at 70–86 tok/s); prefill is **lower** than the GGUF (Q8_0 reportedly 158 K tok/s @ 32 K, MLX 4-bit 99 K). The 4-bit weights → less bandwidth → faster decode tradeoff is the standard MLX 4-bit profile.
 
 ### OpenCode End-to-End Agent Benchmark (2026-05-08)
 
@@ -1590,7 +1590,7 @@ Per-turn breakdown:
 
 5. **Wall–LLM split is OpenCode bootstrap, not inference.** Wall 3.23–3.29 s − LLM 1.95–2.02 s ≈ 1.27 s/turn fixed OpenCode overhead. The model is sub-2-second on these tasks; under a thinner client (raw curl + tool-handler), throughput-bound users would see ~2 s end-to-end.
 
-6. **No production flip.** This run is a comparison data point against the Q8_0 GGUF sibling, not a new production candidate. Active lm-studio main remains `gemma-4-26b-a4b-q8` per [`docs/current.md`](../../current.md). To restore, see the launch shape in `docs/current.md`. **However** — given the search-speed win and bare-prompt ergonomics, this MLX 4-bit is a strong candidate for promotion to active main. Consider a separate flip after broader regression testing (memory + context, multi-tool, vision).
+6. **No production flip.** This run was a comparison data point against the Q8_0 GGUF sibling, not a new production candidate. Live run-state is not tracked in docs — run [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py) to see what is loaded. **However** — given the search-speed win and bare-prompt ergonomics, this MLX 4-bit is a strong candidate for a future main. Consider a separate evaluation after broader regression testing (memory + context, multi-tool, vision).
 
 ---
 
@@ -1685,7 +1685,7 @@ Full layer-attribution, cross-fork landscape, and the unsloth-vs-lmstudio-commun
 
 6. **Throughput's 64 K probe failure is harness-side** — `bench_api_server.py` doesn't reserve output budget at the requested context length, so a prompt at exactly `--context-length` returns HTTP 400. Measure 32 K and below; or extend the harness to subtract `max_tokens` from the probe size.
 
-7. **Promoted to lm-studio production main (Event 2)** — given 3/3 reliability + TrevorJS-class wall under scaffolded prompts + Apache 2.0 + standardised RLHF, this is the new lm-studio production primary as of 2026-05-07. OpenCode users should use the scaffolding convention (`Browse <url> using webfetch` / `Use webfetch to fetch <literal url> and …`); bare imperative prompts will fail. See `docs/current.md` for the live launch shape.
+7. **Deployed to lm-studio on 2026-05-07** — given 3/3 reliability + TrevorJS-class wall under scaffolded prompts + Apache 2.0 + standardised RLHF, this model was deployed on lm-studio on 2026-05-07. OpenCode users should use the scaffolding convention (`Browse <url> using webfetch` / `Use webfetch to fetch <literal url> and …`); bare imperative prompts will fail. To check what is currently loaded, run [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py).
 
 ---
 

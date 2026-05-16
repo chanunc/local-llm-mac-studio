@@ -1,6 +1,6 @@
 # Server Docs
 
-Operational runbooks for inference servers on the Mac Studio. Use [`docs/current.md`](../current.md) first to see what is live now, then open the matching runbook below.
+Operational runbooks for inference servers on the Mac Studio. Run [`scripts/chk_llm_macstu.py`](../../scripts/chk_llm_macstu.py) to probe what is live now, then open the matching runbook below.
 
 | Server | Runbook | Role |
 |:--|:--|:--|

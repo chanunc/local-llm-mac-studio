@@ -2,7 +2,7 @@
 
 **What it is.** A pair of low-level tuning choices in LM Studio's bundled `mlx-lm` build that together explain why [`lm-studio`](summary.md) can run **3–5× faster end-to-end** than `vllm-mlx` and the upstream `mlx_lm.server` on identical MLX safetensors / GGUF weights for agent-style workloads. Despite the closed-distribution Electron packaging and the `mlx-llm-mac-arm64-apple-metal-advsimd@1.6.0` binary filename, neither lever is a proprietary kernel — both are documented in public LM Studio patches and bug reports, and both can be applied to stock `mlx-lm` directly.
 
-This file is the canonical reference for *what the technique is*. The lm-studio runbook ([`docs/servers/lm-studio/summary.md`](summary.md)) cross-links here for the explanation; the production-state pointer in [`docs/current.md`](../../current.md) credits this technique when lm-studio is the live primary.
+This file is the canonical reference for *what the technique is*. The lm-studio runbook ([`docs/servers/lm-studio/summary.md`](summary.md)) cross-links here for the explanation. To check what is currently live on the Mac Studio, run [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py).
 
 ## The "closed-source" framing is overstated
 
@@ -122,4 +122,4 @@ The remaining 5.11 s vs 12.33 s OpenCode browse gap to lm-studio on identical we
 - [`docs/servers/lm-studio/summary.md`](summary.md) — server runbook; the [Performance](summary.md#performance-mac-studio-m3-ultra-96-gb) table is the local benchmark this technique explains.
 - [`docs/models/per-model/model-summary-gemma.md`](../../models/per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) — Gemma 4 31B-it 6-bit on lm-studio (5.11 s browse / 6.37 s search) vs the same weights on `mlx_lm.server` (12.33 s / 35.55 s) is a clean side-by-side of this technique's impact, modulo thinking-mode default.
 - [`docs/models/benchmarks/model-benchmark-api-server.md`](../../models/benchmarks/model-benchmark-api-server.md) — raw cross-server prefill numbers that motivated this writeup.
-- [`docs/current.md`](../../current.md) — production-state pointer.
+- [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py) — probe the Mac Studio for live run-state.

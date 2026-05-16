@@ -82,7 +82,7 @@ Prefill peaks at 8K (~3,154 tok/s) — typical for sliding-window models where G
 | 8 K     | 0.24     | 98.8        | 34,830          |
 | 32 K    | 0.33     | 76.7        | **99,580**      |
 
-Decode is **1.6× faster** than the Q8_0 GGUF sibling (`docs/current.md` reports 70–86 tok/s for the GGUF Q8_0); prefill is **lower** than the GGUF (Q8_0 hits 158 K tok/s @ 32 K vs MLX 4-bit's 99 K). 4-bit weights → less bandwidth → faster decode is the expected tradeoff.
+Decode is **1.6× faster** than the Q8_0 GGUF sibling (the GGUF Q8_0 was measured at 70–86 tok/s); prefill is **lower** than the GGUF (Q8_0 hits 158 K tok/s @ 32 K vs MLX 4-bit's 99 K). 4-bit weights → less bandwidth → faster decode is the expected tradeoff.
 
 #### API smoke (`bench_api_tool_call.py`)
 
@@ -111,7 +111,7 @@ Decode is **1.6× faster** than the Q8_0 GGUF sibling (`docs/current.md` reports
 
 ## Gemma 4 31B-it (6-bit)
 
-Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/audio — single-modality model. Built-in thinking mode (ON by default on mlx-lm server; OFF on LM Studio). Deployed via the **lmstudio-community** MLX 6-bit conversion. **Current production main (2026-05-06)** on mlx-lm server (port 8000). Verified on Mac Studio M3 Ultra (96 GB) on May 1, 2026 (lm-studio) and May 6, 2026 (mlx-lm server).
+Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/audio — single-modality model. Built-in thinking mode (ON by default on mlx-lm server; OFF on LM Studio). Deployed via the **lmstudio-community** MLX 6-bit conversion. Deployed on mlx-lm server (port 8000) on 2026-05-06. Verified on Mac Studio M3 Ultra (96 GB) on May 1, 2026 (lm-studio) and May 6, 2026 (mlx-lm server).
 
 | Spec | Value |
 |:-----|:------|
@@ -542,7 +542,7 @@ The footprint of users running **31B dense bf16 + B = 1 + ≥ 4 K ctx** on mlx-v
 
 - **Fix mlx-vlm's streaming tool-call emission** to mirror mlx-lm's per-token state machine. File upstream against [Blaizzy/mlx-vlm](https://github.com/Blaizzy/mlx-vlm). Tracked upstream limitations: [PR #773](https://github.com/Blaizzy/mlx-vlm/pull/773) (the original tool-calling PR) explicitly acknowledged "*mlx_lm parses the streaming output one token at a time during generation. This implementation parses it at the end of the stream*" — known compromise from day one. [PR #1037](https://github.com/Blaizzy/mlx-vlm/pull/1037) (merged) only strips raw markup from `delta.content`, "*preserving the existing single-emission pattern*". [PR #1012](https://github.com/Blaizzy/mlx-vlm/pull/1012) author noted "*End-of-stream chunk (... + tool_calls) … emitted once per request, not per token*". No open PR proposes per-token incremental `delta.tool_calls` emission. Related: [opencode #4255](https://github.com/anomalyco/opencode/issues/4255) (empty `tool_calls: []` array hang, open).
 - **mlx-lm gaining `gemma4_assistant` arch support** (still **0 PRs open** as of 2026-05-08 — only matching MTP work in mlx-lm is [PR #990 "Native MTP speculative decoding (Qwen3.5/3.6 reference implementation)"](https://github.com/ml-explore/mlx-lm/pull/990), open since 2026-03-13 and Qwen-only). With mlx-lm hosting the drafter, the proven-working incremental tool-call streaming + prompt-cache reuse from the current 6-bit run would carry over, *and* mlx-lm could quantize the target so 6-bit + drafter avoids the bf16 bandwidth tax entirely. **This is the cleanest path forward.**
-- **Until either of the above lands**, keep the 6-bit production main on `mlx_lm.server` and treat the mlx-vlm install as documentation-only.
+- **Until either of the above lands**, keep the 6-bit main on `mlx_lm.server` and treat the mlx-vlm install as documentation-only.
 
 ### Runtime support landscape (verified 2026-05-06)
 

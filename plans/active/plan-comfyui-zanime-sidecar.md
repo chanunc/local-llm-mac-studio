@@ -107,7 +107,7 @@ Per the qwen-asr precedent, **skip** these Event 1 items (they don't apply to a 
 **Do** update:
 
 - ✅ `README.md` — data-flow diagram (add `comfyui :8188` under sidecars), Quick Start launch + stop, Health Check curl + log tail, Servers table row (link to `docs/servers/comfyui/summary.md`), Known Limitations entry ("no OpenAI `/v1/images/generations` API — web UI only")
-- ✅ `docs/current.md` — Sidecars table row (server / model / launch shape / runbook link)
+- ✅ run-state is probed via `scripts/chk_llm_macstu.py`, not tracked in docs
 - ✅ `CLAUDE.md` **and** `AGENTS.md` — overview paragraph (ComfyUI sentence after qwen-asr in the server list), Architecture bullet, data-flow diagram, Common Commands launch + stop, Editing Workflow scope note. Mirror edits between the two files.
 - ✅ `docs/servers/comfyui/summary.md` — **NEW** runbook (Overview / Architecture / Installation / Starting the server / Health check / Performance / Known limitations / See also), matching `docs/servers/qwen-asr/summary.md` shape
 - ✅ `docs/servers/README.md` — runbook index row
@@ -121,7 +121,6 @@ Per the qwen-asr precedent, **skip** these Event 1 items (they don't apply to a 
 
 - `README.md` — data flow, Servers table, Quick Start, Health Check, Known Limitations
 - `CLAUDE.md` and `AGENTS.md` — overview, Architecture, data flow, Common Commands (mirror; lines must stay content-identical except header)
-- `docs/current.md` — Sidecars table
 - `docs/servers/comfyui/summary.md` — **NEW** runbook
 - `docs/servers/README.md` — runbook index
 - `docs/models/model-summary.md` — Z-Anime + Z-Image base entries
@@ -154,7 +153,7 @@ Functional smoke (after Phase 4):
 Drift check (Sync Policy compliance, run before commit):
 ```
 grep -n "comfyui\|ComfyUI\|Z-Anime\|Z-Image" \
-  README.md AGENTS.md CLAUDE.md docs/current.md \
+  README.md AGENTS.md CLAUDE.md \
   docs/servers/README.md docs/models/README.md \
   docs/models/model-summary.md
 ```

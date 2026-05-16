@@ -740,7 +740,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 **Server:** lm-studio, GGUF runtime. Loaded with `lms load 'qwen3.6-40b-deck-opus-neo-code-here-2t-ot' --gpu max --context-length 131072 --identifier 'qwen36-40b-davidau-heretic-q6k' -y`. No parser flags required — LM Studio handles Qwen3 chat-template tool-calls and `<think>` natively.
 
-**Deployment gotcha:** LM Studio memory guardrail (`modelLoadingGuardrails.mode: "high"`) counts only ~24 GB free pages, ignoring 60+ GB inactive/reclaimable — consistently blocks dense 40B + 131K load. Must temporarily set `mode` to `"off"`, load, then restore to `"high"`. See [`docs/current.md`](../../current.md) for the full toggle recipe.
+**Deployment gotcha:** LM Studio memory guardrail (`modelLoadingGuardrails.mode: "high"`) counts only ~24 GB free pages, ignoring 60+ GB inactive/reclaimable — consistently blocks dense 40B + 131K load. Must temporarily set `mode` to `"off"`, load, then restore to `"high"`. See [`docs/servers/lm-studio/summary.md`](../../servers/lm-studio/summary.md) for the full toggle recipe.
 
 ### Generation Speed (tok/s)
 

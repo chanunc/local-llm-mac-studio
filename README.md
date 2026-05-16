@@ -29,7 +29,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 | Path | Purpose | Start Here |
 |:-----|:--------|:-----------|
-| `docs/current.md` | Current live server / model / client-template state | Read before changing production |
+| `scripts/chk_llm_macstu.py` | Probe the Mac Studio over SSH for the live server / model / client-template state (run-state is **not** stored in any doc) | `python3 scripts/chk_llm_macstu.py` |
 | `docs/servers/` | Server runbooks, setup, maintenance, and JANG patches | `docs/servers/README.md` |
 | `docs/models/` | Model catalog, compatibility notes, conversion guides, benchmarks | `docs/models/README.md` |
 | `docs/clients/` | Client-side setup for Claude Code, OpenCode, OpenClaw, and Pi | `docs/clients/README.md` |
@@ -41,7 +41,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 ### Canonical reading order
 
 1. Read this `README.md` for the stack overview.
-2. Read [`docs/current.md`](docs/current.md) for the current live production and sidecar state.
+2. Run [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) to see which server/model is live right now (run-state is intentionally not recorded in docs — the Mac Studio is a personal machine).
 3. Read one server runbook from [`docs/servers/README.md`](docs/servers/README.md).
 4. Read [`configs/README.md`](configs/README.md) for the matching client config templates.
 5. Read [`docs/models/README.md`](docs/models/README.md) when choosing, adding, or benchmarking models.
@@ -51,7 +51,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 - `summary.md` files are the main operational entry points.
 - `maintenance.md` and `jang-patch.md` files are task-specific follow-ups.
-- [`docs/current.md`](docs/current.md) is the concise live-state pointer.
+- [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) is the only source of truth for live run-state — it probes the Mac Studio over SSH; no doc asserts what is "current".
 - `plans/` captures ideas, experiments, and pending investigations; it is not the live runbook layer.
 
 ## ⚡ Quick Start
@@ -64,9 +64,9 @@ Port-8000 servers are mutually exclusive — stop the current one before startin
 <summary>⚡ <strong>vllm-mlx</strong> (:8000) — fastest, single model · 3 launch variants + stop</summary>
 
 ```bash
-# vllm-mlx — fastest, single model. Current production primary:
-# Ling-2.6-flash mlx-6bit (see Ling block below). Qwen3.6-27B JANG 4M is the
-# go-to dense+VL fallback (17.5 GB, switched from Qwen3.5-122B-JANG_2S on 2026-04-23).
+# vllm-mlx — fastest, single model. Example below serves Qwen3.6-27B JANG 4M
+# (dense+VL, 17.5 GB); Ling-2.6-flash mlx-6bit is the bailing_hybrid path (see Ling
+# block below). Run scripts/chk_llm_macstu.py to see what is live.
 # Qwen3.5/3.6 need --tool-call-parser qwen3_coder (NOT qwen — they emit XML
 # tool calls, not JSON). --reasoning-parser qwen3 extracts <think> blocks.
 # See docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers
@@ -173,16 +173,16 @@ tail -f /tmp/vmlx.log                                                           
 </details>
 
 <details>
-<summary>⚡ <strong>lm-studio</strong> (:1234, CURRENT PRODUCTION MAIN) — Huihui Gemma 4 26B-A4B + prior models + stop</summary>
+<summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
 
 ```bash
-# lm-studio (LM Studio headless, port 1234) — current production main
+# lm-studio (LM Studio headless, port 1234) — launch recipe for
 # `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF:i1-Q6_K`:
 # huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE
 # (~4B active) + mradermacher imatrix Q6_K GGUF. 22.64 GB on disk, 21.08 GiB
 # resident at 65 K context. 9/10 mlabonne (first Gemma 4 entry to clear 9/10),
-# browse 2.55 s 🥇 all-time leader. Switched 2026-05-15 from llama-cpp-mtp +
-# Qwen3.6-27B-MTP (prior MTP main stays on disk, restartable from docs/current.md).
+# browse 2.55 s 🥇 all-time leader. (Run scripts/chk_llm_macstu.py to see what
+# is live — run-state is not tracked in docs.)
 # `lms get` mis-resolves i1-Q6_K — use direct Hub download + `lms import -L`.
 # LM Studio guardrail dance only required on first load (subsequent reloads OK).
 ~/.lmstudio/bin/lms load 'huihui-gemma-4-26b-a4b-it-abliterated-i1' \
@@ -352,9 +352,8 @@ tail -f /tmp/llama-cpp-turboquant.log                                           
 
 ```bash
 # llama-cpp-mtp — Qwen3.6 MTP (Multi-Token Prediction / Next-n) self-drafting
-# speculative-decoding sidecar on port 8100 (NOT 8000/1234/8098/8099). Prior
-# production main (2026-05-15, superseded by lm-studio + Huihui Gemma 4 26B-A4B
-# above). Built from am17an/llama.cpp@mtp-clean (PR #22673 — unmerged upstream).
+# speculative-decoding sidecar on port 8100 (NOT 8000/1234/8098/8099).
+# Built from am17an/llama.cpp@mtp-clean (PR #22673 — unmerged upstream).
 # Single-file unsloth GGUF carries both target weights and the MTP draft heads;
 # no separate drafter file, no --spec-draft-model flag. Patch-free apart from
 # building the right branch. -np > 1 and --mmproj unsupported with MTP active.
@@ -533,17 +532,17 @@ fabric -y "https://youtube.com/watch?v=..." -p extract_wisdom -m "<general-model
 | Server | Speed | Models | API | Best For |
 |:-------|:-----:|:------:|:----|:---------|
 | **[vllm-mlx](docs/servers/vllm-mlx/summary.md)** | ⚡ Fastest | Single | OpenAI + Anthropic | Daily use — lowest overhead on Apple Silicon |
-| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | **Stopped 2026-05-06.** Prior main: Gemma 4 31B-it MLX 6-bit on `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`) — 20.4 tok/s, browse 12.33 s (thinking ON). Also: mlx-openai-server YAML multi-model mode with prompt caching + speculative decoding. |
+| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | Single-model direct path or YAML multi-model mode with prompt caching + speculative decoding. Launch the direct server from `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`). Benchmarked with Gemma 4 31B-it MLX 6-bit: 20.4 tok/s, browse 12.33 s (thinking ON). |
 | **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant JANGTQ models — 64.9 tok/s on Qwen3.6-35B-A3B JANGTQ4 |
-| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, **CURRENT MAIN 2026-05-15**, :1234) | ⚡ Fastest agent loop · uncensored compliance | Standard MLX / GGUF | OpenAI | **Current production main (2026-05-15):** `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF` `i1-Q6_K` (Apache 2.0, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE, 22.64 GB on disk / 21.08 GiB resident, decode 91.6 tok/s @ 512, refusal **9/10** @ 1024 tok — first Gemma 4 entry to clear 9/10, OpenCode browse **2.55 s 🥇 all-time leader** / search 19.59 s @ 2 turns, `task` subagent fired for HN scrape). Also on disk: `prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF` Q4_K_M (prior 2026-05-14 → 2026-05-15 main, dense 27B + ViT think-on, browse 11.62 s / search 19.47 s, 9/10 refusal), TrevorJS Gemma 4 26B A4B uncensored Q8_0 (prior browse leader 2.93 s, **search leader 7.35 s 🥇**, 8/10 refusal), TrevorJS Gemma 4 31B-it Uncensored Q4_K_M (browse 6.63 s warm / search 30.81 s, harness 6–7/10 / manual 10/10), lmstudio-community Gemma 4 26B A4B-it Q8_0 (prior main, MoE 4B-active 87 tok/s), unsloth Qwen3.6-35B-A3B UD-Q6, Granite 4.1 30B Q8, Gemma 4 31B-it MLX 6-bit (browse **5.11 s thinking OFF**), DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
+| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop · uncensored compliance | Standard MLX / GGUF | OpenAI | Benchmarked uncensored agent-loop leader: `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF` `i1-Q6_K` (Apache 2.0, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE, 22.64 GB on disk / 21.08 GiB resident, decode 91.6 tok/s @ 512, refusal **9/10** @ 1024 tok — first Gemma 4 entry to clear 9/10, OpenCode browse **2.55 s 🥇 all-time leader** / search 19.59 s @ 2 turns, `task` subagent fired for HN scrape). Also on disk: `prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF` Q4_K_M (prior 2026-05-14 → 2026-05-15 main, dense 27B + ViT think-on, browse 11.62 s / search 19.47 s, 9/10 refusal), TrevorJS Gemma 4 26B A4B uncensored Q8_0 (prior browse leader 2.93 s, **search leader 7.35 s 🥇**, 8/10 refusal), TrevorJS Gemma 4 31B-it Uncensored Q4_K_M (browse 6.63 s warm / search 30.81 s, harness 6–7/10 / manual 10/10), lmstudio-community Gemma 4 26B A4B-it Q8_0 (prior main, MoE 4B-active 87 tok/s), unsloth Qwen3.6-35B-A3B UD-Q6, Granite 4.1 30B Q8, Gemma 4 31B-it MLX 6-bit (browse **5.11 s thinking OFF**), DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
 | **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/logs/qwen36-35b-a3b-4bit/) |
 | **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** (provisional, :8099) | ⚡ Fastest agent loop (2026-05-06) | Single GGUF + TurboQuant / RotorQuant / PlanarQuant KV cache | OpenAI | **Two forks installed.** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` (`turbo3` + auto-asymm `q8_0` K + 4-mag LUT + sparse V) is the runaway winner: smoke 4/5, **decode 68 tok/s @ 512 / 44 tok/s @ 32 K**, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 — 2.07× / 2.27× faster than Gemma 4**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` (`iso3` for RotorQuant) is documented but slower (cold prefill regression at 32 K+). See [bench](docs/models/benchmarks/logs/qwen36-35b-a3b-turboquant-turbo3/) |
-| **[llama-cpp-mtp](docs/servers/llama-cpp-mtp/summary.md)** (provisional sidecar, :8100) | 🟢 84–89 % MTP draft acceptance | Single GGUF with embedded MTP draft heads | OpenAI | **MTP-experiment sidecar (stopped 2026-05-15):** `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — Qwen3.6 Multi-Token Prediction self-drafting speculative decoding via [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) (PR #22673, unmerged upstream). Dense 27 B + MTP heads, Unsloth Dynamic 6-bit, 26 GB. Decode 22.9 → 20.0 tok/s @ 414 → 29 128 input tokens with 84–89 % avg draft acceptance, smoke **5/5** single-call + 3-turn multi 21.92 s, OpenCode browse 35.98 s / search 35.24 s. Patch-free apart from the build; only path for Qwen3.6 MTP on Apple Silicon today. `-np > 1` and `--mmproj` unsupported with MTP active. **Was briefly production main (2026-05-15 early hours); superseded same day by lm-studio + Huihui** which is 14× faster on browse. Port 8100 does not displace lm-studio — restartable for MTP-specific experiments. See [bench](docs/models/benchmarks/logs/qwen36-27b-mtp/) |
-| **[vmlx-swift-lm](docs/servers/vmlx-swift-lm/summary.md)** (provisional, :1337) | 🔴 HTTP path 7-8 tok/s (regression) | Single Swift-MLX (BF16 / MLX / JANG / JANGTQ2/4 / MXFP4) | OpenAI + Anthropic + Ollama | **Stopped 2026-05-14** (was production main 2026-05-12 → 2026-05-14 with `JANGQ-AI/ZAYA1-8B-JANGTQ4`; Osaurus killed in pre-bench hygiene when swapping to lm-studio main). [`osaurus-ai/vmlx-swift-lm`](https://github.com/osaurus-ai/vmlx-swift-lm) engine consumed via `brew install --cask osaurus`. Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE), Hunyuan v3, and the MiniMax-M2.7 JANGTQ Hadamard kernel optimization. Built-in tool/reasoning parsers (no flags). **JANGTQ HTTP-path was regressed** at pin `b9da180` — the engine's `RunBench` reports 57.2 tok/s on M4 Max but the OpenAI HTTP path ran 7-8 tok/s because the cask was missing the `BatchEngine.generate` B=1 fast path and the JANGTQ Hadamard kernel. Fix queued in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057). See [bench](docs/models/benchmarks/logs/zaya1-8b/) |
-| **[mlx-lm](docs/servers/mlx-lm/summary.md)** (sidecar, :8080) | ⚡ 186 tok/s | `iapp/ChindaMT-4B` MLX 4-bit (2.2 GB) | OpenAI | **Thai ↔ English translation sidecar** — dedicated 4B MT model on port 8080. Hybrid Qwen3.5 architecture with 24/32 SSM (linear-attention) layers; GGUF path not viable (llama.cpp has no SSM runtime). Use `chat_template_kwargs: {"enable_thinking": false}` or output appears in `message.reasoning`. 2.5 GB peak memory — coexists with any main model. Deployed 2026-05-15. |
+| **[llama-cpp-mtp](docs/servers/llama-cpp-mtp/summary.md)** (provisional sidecar, :8100) | 🟢 84–89 % MTP draft acceptance | Single GGUF with embedded MTP draft heads | OpenAI | **MTP-experiment sidecar:** `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — Qwen3.6 Multi-Token Prediction self-drafting speculative decoding via [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) (PR #22673, unmerged upstream). Dense 27 B + MTP heads, Unsloth Dynamic 6-bit, 26 GB. Decode 22.9 → 20.0 tok/s @ 414 → 29 128 input tokens with 84–89 % avg draft acceptance, smoke **5/5** single-call + 3-turn multi 21.92 s, OpenCode browse 35.98 s / search 35.24 s. Patch-free apart from the build; only path for Qwen3.6 MTP on Apple Silicon today. `-np > 1` and `--mmproj` unsupported with MTP active. Browse is ~14× slower than the Gemma 4 26B-A4B baseline — MTP's speedup doesn't beat a dense-27 B-Q6 weight bundle here. Port 8100 does not displace lm-studio — restartable for MTP-specific experiments. See [bench](docs/models/benchmarks/logs/qwen36-27b-mtp/) |
+| **[vmlx-swift-lm](docs/servers/vmlx-swift-lm/summary.md)** (provisional, :1337) | 🔴 HTTP path 7-8 tok/s (regression) | Single Swift-MLX (BF16 / MLX / JANG / JANGTQ2/4 / MXFP4) | OpenAI + Anthropic + Ollama | Runs `JANGQ-AI/ZAYA1-8B-JANGTQ4`. [`osaurus-ai/vmlx-swift-lm`](https://github.com/osaurus-ai/vmlx-swift-lm) engine consumed via `brew install --cask osaurus`. Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE), Hunyuan v3, and the MiniMax-M2.7 JANGTQ Hadamard kernel optimization. Built-in tool/reasoning parsers (no flags). **JANGTQ HTTP-path was regressed** at pin `b9da180` — the engine's `RunBench` reports 57.2 tok/s on M4 Max but the OpenAI HTTP path ran 7-8 tok/s because the cask was missing the `BatchEngine.generate` B=1 fast path and the JANGTQ Hadamard kernel. Fix queued in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057). See [bench](docs/models/benchmarks/logs/zaya1-8b/) |
+| **[mlx-lm](docs/servers/mlx-lm/summary.md)** (sidecar, :8080) | ⚡ 186 tok/s | `iapp/ChindaMT-4B` MLX 4-bit (2.2 GB) | OpenAI | **Thai ↔ English translation sidecar** — dedicated 4B MT model on port 8080. Hybrid Qwen3.5 architecture with 24/32 SSM (linear-attention) layers; GGUF path not viable (llama.cpp has no SSM runtime). Use `chat_template_kwargs: {"enable_thinking": false}` or output appears in `message.reasoning`. 2.5 GB peak memory — coexists with any main model. |
 | **[qwen-asr](docs/servers/qwen-asr/summary.md)** (sidecar, no port) | 🟢 19× realtime | Single (`Qwen/Qwen3-ASR-1.7B` bf16) | Python API only | **Speech-to-text sidecar** — `~/qwen-asr-env/` (transformers + MPS). 30 langs + 22 Chinese dialects. RTF 19.06× on 15 s English clip, 0.79 s warm. No `/v1/audio/transcriptions` endpoint (CUDA-only path); call `Qwen3ASRModel.transcribe(audio=…)` directly. See [bench](docs/models/benchmarks/logs/qwen3-asr-1.7b/) |
-| **[comfyui](docs/servers/comfyui/summary.md)** (sidecar, :8188) | 🟢 18 s/img distill | `SeeSee21/Z-Anime` AIO BF16 (Distill-4-step + Base, S3-DiT 6B, Apache-2.0) | Web UI only — ComfyUI `/prompt` JSON, no OpenAI `/v1/images/generations` | **Image-generation sidecar** — `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed). 1024² wall time: Distill-4-step **17.75 s** / Base 28-step **235.16 s**. End-user path is the browser UI at `http://<MAC_STUDIO_IP>:8188`; chat clients can't trigger generations. Deployed 2026-05-08. See [bench](docs/models/benchmarks/logs/z-anime/wall-time-comfyui.md) |
+| **[comfyui](docs/servers/comfyui/summary.md)** (sidecar, :8188) | 🟢 18 s/img distill | `SeeSee21/Z-Anime` AIO BF16 (Distill-4-step + Base, S3-DiT 6B, Apache-2.0) | Web UI only — ComfyUI `/prompt` JSON, no OpenAI `/v1/images/generations` | **Image-generation sidecar** — `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed). 1024² wall time: Distill-4-step **17.75 s** / Base 28-step **235.16 s**. End-user path is the browser UI at `http://<MAC_STUDIO_IP>:8188`; chat clients can't trigger generations. See [bench](docs/models/benchmarks/logs/z-anime/wall-time-comfyui.md) |
 
 All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
@@ -553,9 +552,9 @@ All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp
 
 Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) (`lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` keep install / runtime / limitations in their single `summary.md`)
 
-Current production main: **`lm-studio`** (LM Studio headless on port 1234) serving `gemma4-26b-a4b-huihui-abliterated-q6k` (`mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF:i1-Q6_K` — Gemma 4 26B sparse MoE / ~4B active with huihui-ai refusal-direction abliteration + mradermacher imatrix Q6_K, 22.64 GB on disk / 21.08 GiB resident, Apache 2.0 base) on port **1234** (LAN-bound `0.0.0.0`, deployed 2026-05-15). Tool calls dispatch via LM Studio's built-in Gemma 4 parser (no `--tool-call-parser` flag). Smoke 5/5 + multi-turn **1.93 s** (new API-level leader); throughput 91.6 / 83.2 / 80.4 / 72.2 tok/s @ 512 / 4K / 8K / 32K (65K → HTTP 400 — Gemma 4 sliding-window boundary); **refusal: 9/10** mlabonne (first Gemma 4 uncensored to clear 9/10 on this harness; only P4 detailed-bomb refused). **Agent loop** (OpenCode 1.14.50, 1 warmup + 3 measured): browse **2.55 s 🥇 all-time leader** / search **19.59 s** (search fires `task` subagent rather than bare `webfetch` — distinct tool path from TrevorJS Gemma 4 26B A4B; 2 turns both scenarios). Prior main (2026-05-15, ~11 hours): llama-cpp-mtp + `qwen3.6-27b-mtp-ud-q6kxl` on port 8100 (on disk, restartable from [`docs/current.md`](docs/current.md)); GLM-5.1-DA Q4_K_M is the speed-first GGUF fallback.
+**There is no fixed "production main".** The live server/model is whatever experiment is currently loaded, and the repo deliberately does not record it — the Mac Studio is a personal machine. Run [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) to see what is live right now (it probes over SSH and can also emit the matching client config). Server capabilities are in the table above; per-model specs and benchmark numbers are in the [Models](#-models) and [Benchmarks](#-benchmarks) sections.
 
-Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single-model, Qwen3.6-only mode — switched 2026-04-18 for through-server benchmarking).
+`mlx-openai-server` config templates expose a stable superset of compatible model IDs (e.g. `mlx-community/Qwen3.6-35B-A3B-6bit`); they are not a live mirror — check `/v1/models` (or `scripts/chk_llm_macstu.py`) for the actual roster.
 
 
 ---
@@ -564,38 +563,67 @@ Current `mlx-openai-server` roster: `mlx-community/Qwen3.6-35B-A3B-6bit` (single
 
 All models fit in **96GB unified memory**.
 
+<details>
+<summary>🧱 <strong>Dense</strong> — 11 models</summary>
+
 | Model | Type | Size&#124;GB | Context | Best For |
-|:--------------------------------------|:------------|----------:|--------:|:---------|
-| [mradermacher Huihui Gemma 4 26B A4B Abliterated i1-Q6_K](docs/models/uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) | MoE 26B/4B active | 22.64 | 65K | **Current production main (deployed 2026-05-15 on `lm-studio` port 1234)** — Apache 2.0 base, huihui-ai refusal-direction abliteration + mradermacher imatrix Q6_K GGUF, smoke 5/5 + multi-turn **1.93 s** (new API-level leader), 91.6 / 72.2 tok/s @ 512 / 32K, **refusal 9/10** mlabonne (first Gemma 4 uncensored to clear 9/10), OpenCode browse **2.55 s 🥇** all-time leader / search 19.59 s (`task` subagent) |
-| [unsloth Qwen3.6-27B-MTP UD-Q6_K_XL](docs/models/techniques/model-technique-qwen-3-6-mtp.md) | Dense 27B + MTP heads (vision broken under MTP) | 26 | 32K (262K train) | Prior production main (deployed 2026-05-15 on `llama-cpp-mtp` port 8100, superseded same day by lm-studio + Huihui) — Apache 2.0 base, Unsloth Dynamic 2.0 6-bit GGUF + Multi-Token Prediction self-drafting heads, **84–89 % MTP draft acceptance**, decode 22.9 / 22.3 / 22.0 / 20.0 tok/s @ 414 / 3 648 / 7 274 / 29 128 input tokens, smoke 5/5 + multi-turn 21.92 s, OpenCode browse **35.98 s** / search **35.24 s** @ 2 turns w/ `webfetch` (slower than the prior GLM-5.1-DA main — kept as speed-first fallback) |
-| [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md) | Dense 27B + VL (think-on) | 15.41 | 65K | Prior production main (2026-05-14 → 2026-05-15 on lm-studio port 1234) — Apache 2.0, prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation, decode 31 / 30 / 29 / 27 tok/s @ 512 / 4K / 8K / 32K, smoke 5/5 + multi-turn 3/3 at API layer, refusal 9/10 @ 1024 tok, OpenCode browse **11.62 s** / search **19.47 s** @ 2 turns w/ `webfetch`. **Faster agent loop than the current MTP main** — restart as speed-first fallback via `lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y; lms server start --bind 0.0.0.0 --cors` |
-| [Zyphra ZAYA1-8B JANGTQ4](docs/models/per-model/model-summary-zaya1-8b.md) | MoE 8.4B / 760M-active | 4.65 | 131K | Prior production main (2026-05-12 → 2026-05-14, vmlx-swift-lm :1337) — Apache 2.0, top-1 CCA + MoE, `tool_parser=zaya_xml`. HTTP-path decode 7-8 tok/s pending [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (engine's own `RunBench` reports 57.2 tok/s at the same commit; cask missing JANGTQ B=1 fast path). Also agent-broken at this pin |
-| [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | Prior production main (2026-05-10 → 2026-05-12) — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
-| [lmstudio-community Gemma 4 26B A4B-it Q8_0](docs/models/benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) | MoE 26B/4B active | 25 | 128K | Prior production main (2026-05-07 → 2026-05-10) — Apache 2.0, 70–86 tok/s, **API multi-turn 2.14 s 🏆**, OpenCode scaffolded browse 2.94 s 🥈 / search 7.20 s; bare prompts fail (needs "use webfetch" + literal URL) |
-| [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
-| [IBM Granite 4.1 30B Q8_0](docs/models/per-model/model-summary-granite-4.1.md) | Dense 30B | 29 | 65K | Prior production main (2026-05-06) — Apache 2.0 fallback, dense instruct, 24.8 tok/s, browse 6.24 s, search 10.51 s |
-| [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥈 (no scaffolding needed), search 7.35 s 🥇, 8/10 compliance — uncensored search speed leader |
-| [Gemma 4 26B-A4B (4-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
+|:--|:--|--:|--:|:--|
+| [DavidAU Qwen3.6-40B Heretic Q6_K IMatrix](docs/models/per-model/model-summary-qwen-3-6.md#davidau-qwen36-40b-heretic-uncensored-thinking-q6_k-imatrix) | Dense 40B | 30.2 | 131K | Prior lm-studio main (2026-05-03) — Heretic recipe, 9/10 compliance, visible content, browse 18.73 s |
 | [Gemma 4 31B-it (6-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-31b-it-6-bit) | Dense 31B | 29 | 64K | Fastest standard agent-loop model on lm-studio (5–6 s browse) |
-| [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
+| [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) | Dense 27B + VL | 32 | 262K (1M YaRN) | Prior lm-studio GGUF sidecar (superseded 2026-05-02) *(removed from disk 2026-05-05)* |
+| [IBM Granite 4.1 30B Q8_0](docs/models/per-model/model-summary-granite-4.1.md) | Dense 30B | 29 | 65K | Prior production main (2026-05-06) — Apache 2.0 fallback, dense instruct, 24.8 tok/s, browse 6.24 s, search 10.51 s |
+| [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5 | 262K | Lightweight coding agent |
+| [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md) | Dense 27B + VL (think-on) | 15.41 | 65K | Prior production main (2026-05-14 → 2026-05-15 on lm-studio port 1234) — Apache 2.0, prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation, decode 31 / 30 / 29 / 27 tok/s @ 512 / 4K / 8K / 32K, smoke 5/5 + multi-turn 3/3 at API layer, refusal 9/10 @ 1024 tok, OpenCode browse **11.62 s** / search **19.47 s** @ 2 turns w/ `webfetch`. Launch recipe: `lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y; lms server start --bind 0.0.0.0 --cors` |
 | [Qwen3-Coder-Next 6-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
+| [Qwen3.5-27B Opus Distilled](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19 | 128K | Reasoning / chain-of-thought |
+| [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
+| [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | Prior production main (2026-05-10 → 2026-05-12) — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
+| [unsloth Qwen3.6-27B-MTP UD-Q6_K_XL](docs/models/techniques/model-technique-qwen-3-6-mtp.md) | Dense 27B + MTP heads (vision broken under MTP) | 26 | 32K (262K train) | Prior production main (deployed 2026-05-15 on `llama-cpp-mtp` port 8100, superseded same day by lm-studio + Huihui) — Apache 2.0 base, Unsloth Dynamic 2.0 6-bit GGUF + Multi-Token Prediction self-drafting heads, **84–89 % MTP draft acceptance**, decode 22.9 / 22.3 / 22.0 / 20.0 tok/s @ 414 / 3 648 / 7 274 / 29 128 input tokens, smoke 5/5 + multi-turn 21.92 s, OpenCode browse **35.98 s** / search **35.24 s** @ 2 turns w/ `webfetch` (slower than the GLM-5.1-DA Q4_K_M build) |
+
+</details>
+
+<details>
+<summary>🧬 <strong>Hybrid</strong> — 1 model</summary>
+
+| Model | Type | Size&#124;GB | Context | Best For |
+|:--|:--|--:|--:|:--|
+| [Nemotron Cascade 2 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
+
+</details>
+
+<details>
+<summary>🧩 <strong>Hybrid MoE</strong> — 4 models</summary>
+
+| Model | Type | Size&#124;GB | Context | Best For |
+|:--|:--|--:|--:|:--|
+| [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) | Hybrid MoE 35B/3B + VL | 31 | 262K (1M YaRN) | Prior lm-studio main (superseded 2026-05-02) — uncensored search-speed leader (12.01 s) |
+| [prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) | Hybrid MoE 35B/3B + VL | 28.5 | 65K | Prior lm-studio main (2026-05-02) — uncensored GGUF browse leader (browse 5.05 s, search 13.56 s) |
+| [Qwen3.6-35B-A3B 4-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
+| [Qwen3.6-35B-A3B 6-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
+
+</details>
+
+<details>
+<summary>🔀 <strong>MoE</strong> — 14 models</summary>
+
+| Model | Type | Size&#124;GB | Context | Best For |
+|:--|:--|--:|--:|:--|
+| [Gemma 4 26B-A4B (4-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
+| [lmstudio-community Gemma 4 26B A4B-it Q8_0](docs/models/benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) | MoE 26B/4B active | 25 | 128K | Prior production main (2026-05-07 → 2026-05-10) — Apache 2.0, 70–86 tok/s, **API multi-turn 2.14 s 🏆**, OpenCode scaffolded browse 2.94 s 🥈 / search 7.20 s; bare prompts fail (needs "use webfetch" + literal URL) |
+| [mradermacher Huihui Gemma 4 26B A4B Abliterated i1-Q6_K](docs/models/uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) | MoE 26B/4B active | 22.64 | 65K | Apache 2.0 base, huihui-ai refusal-direction abliteration + mradermacher imatrix Q6_K GGUF (lm-studio); smoke 5/5 + multi-turn **1.93 s** (API-level leader), 91.6 / 72.2 tok/s @ 512 / 32K, **refusal 9/10** mlabonne (first Gemma 4 uncensored to clear 9/10), OpenCode browse **2.55 s 🥇** all-time leader / search 19.59 s (`task` subagent) |
+| [Nemotron 3 Nano 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
+| [Nemotron 3 Super 120B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | MoE 35B/3B + VL | 19.7 | 262K | Prior vmlx main (stopped 2026-05-02); tool-capable JANGTQ4, 64.9 tok/s @ 512, 52.6 tok/s @ 64K |
 | [Qwen3-Coder-30B-A3B Instruct 4-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-30b-a3b-instruct-4-bit) | MoE 30.5B/3.3B | 17.2 | 262K | Compact coding model |
 | [Qwen3.5-122B-A10B 4-bit](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65 | 128K | Full-precision alternative |
-| [Qwen3.5-27B Opus Distilled](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19 | 128K | Reasoning / chain-of-thought |
-| [OmniCoder-9B 8-bit](docs/models/model-summary.md#omnicoder-9b-8-bit) | Dense 9B | 9.5 | 262K | Lightweight coding agent |
+| [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3.5-35B-A3B JANG 4K](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19 | 262K | Fast small MoE *(removed from disk 2026-05-05)* |
-| [Qwen3.6-35B-A3B 6-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
-| [Qwen3.6-35B-A3B 4-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
-| [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
-| [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) | Dense 27B + VL | 32 | 262K (1M YaRN) | Prior lm-studio GGUF sidecar (superseded 2026-05-02) *(removed from disk 2026-05-05)* |
-| [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](docs/models/per-model/model-summary-qwen-3-6.md#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) | Hybrid MoE 35B/3B + VL | 31 | 262K (1M YaRN) | Prior lm-studio main (superseded 2026-05-02) — uncensored search-speed leader (12.01 s) |
-| [DavidAU Qwen3.6-40B Heretic Q6_K IMatrix](docs/models/per-model/model-summary-qwen-3-6.md#davidau-qwen36-40b-heretic-uncensored-thinking-q6_k-imatrix) | Dense 40B | 30.2 | 131K | Prior lm-studio main (2026-05-03) — Heretic recipe, 9/10 compliance, visible content, browse 18.73 s |
-| [prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) | Hybrid MoE 35B/3B + VL | 28.5 | 65K | Prior lm-studio main (2026-05-02) — uncensored GGUF browse leader (browse 5.05 s, search 13.56 s) |
-| [Nemotron 3 Super 120B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-super-120b-a12b-45-bit) | MoE 120B/12B | 66.5 | 200K | Mamba-2 hybrid |
-| [Nemotron 3 Nano 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-3-nano-30b-a3b-8-bit) | MoE 32B/3B | 34 | 262K | NVIDIA MoE |
-| [Nemotron Cascade 2 30B](docs/models/per-model/model-summary-nemotron.md#nemotron-cascade-2-30b-a3b-nvfp4) | Hybrid 30B/3B | 17 | 262K | Mamba-2 + MoE |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | MoE 35B/3B + VL | 19.7 | 262K | Prior vmlx main (stopped 2026-05-02); tool-capable JANGTQ4, 64.9 tok/s @ 512, 52.6 tok/s @ 64K |
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
+| [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥈 (no scaffolding needed), search 7.35 s 🥇, 8/10 compliance — uncensored search speed leader |
+| [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
+| [Zyphra ZAYA1-8B JANGTQ4](docs/models/per-model/model-summary-zaya1-8b.md) | MoE 8.4B / 760M-active | 4.65 | 131K | Prior production main (2026-05-12 → 2026-05-14, vmlx-swift-lm :1337) — Apache 2.0, top-1 CCA + MoE, `tool_parser=zaya_xml`. HTTP-path decode 7-8 tok/s pending [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (engine's own `RunBench` reports 57.2 tok/s at the same commit; cask missing JANGTQ B=1 fast path). Also agent-broken at this pin |
+
+</details>
 
 Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 

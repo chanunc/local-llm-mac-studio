@@ -1,6 +1,6 @@
 # Plans
 
-Plans are design notes and work queues. They are **not** live runbooks and should not be treated as canonical operational truth. Use [`docs/current.md`](../docs/current.md) for current state and [`docs/servers/`](../docs/servers/) for runbooks.
+Plans are design notes and work queues. They are **not** live runbooks and should not be treated as canonical operational truth. Run [`scripts/chk_llm_macstu.py`](../scripts/chk_llm_macstu.py) for live run-state (it is intentionally not recorded in any doc) and see [`docs/servers/`](../docs/servers/) for runbooks.
 
 ## Folders
 

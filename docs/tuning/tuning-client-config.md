@@ -15,7 +15,7 @@ These two are independent, but they live in the same conversation budget: at any
 
 ## Hard ceilings — Gemma 4 26B-A4B family
 
-Both the **lmstudio-community Gemma 4 26B-A4B-it Q8_0** (current production main) and the **TrevorJS uncensored EGA-abliterated** variant share the same base (`google/gemma-4-26B-A4B-it`), so all numbers below apply identically to both. Verified by reading the GGUF header on each file:
+Both the **lmstudio-community Gemma 4 26B-A4B-it Q8_0** and the **TrevorJS uncensored EGA-abliterated** variant share the same base (`google/gemma-4-26B-A4B-it`), so all numbers below apply identically to both. Verified by reading the GGUF header on each file:
 
 ```
 context_length = 0x40000 = 262144 tokens (256K)
@@ -59,7 +59,7 @@ Both Gemma 4 26B-A4B variants now ship with `contextWindow = 131072`, `maxTokens
 | [`configs/clients/lm-studio/openclaw-provider.json`](../../configs/clients/lm-studio/openclaw-provider.json) | `gemma-4-26b-a4b-q8` | `macstudio.models[].{contextWindow, maxTokens}` |
 | [`configs/clients/lm-studio/openclaw-provider.json`](../../configs/clients/lm-studio/openclaw-provider.json) | `gemma-4-26b-a4b-it-uncensored` | same |
 
-Server-side, [`docs/current.md`](../current.md) and the [`README.md`](../../README.md) Quick Start launch shape carry the matching `--context-length 131072` for the lmstudio-community variant. The TrevorJS reload command in the Fallbacks table is still documented at 65 536 — it is a documented restart shape, not a live-state assertion, and should be raised to 131 072 the next time it is reloaded as a main.
+Server-side, the [`README.md`](../../README.md) Quick Start launch shape carries the matching `--context-length 131072` for the lmstudio-community variant. A TrevorJS reload command was previously documented at 65 536 — it is a documented restart shape, not a live-state assertion, and should be raised to 131 072 whenever it is reloaded as a main.
 
 The full lm-studio template set (`opencode.json`, `openclaw-provider.json`, `claude-code-settings.json`, `pi-models.json`, `qwen-code-settings.json`) ships under `configs/clients/lm-studio/`. The Claude Code, Pi, and qwen-code templates carry the same `contextWindow=131072` / `maxTokens=8192` numbers for both Gemma 4 26B-A4B variants (Pi config) and the matching defaults (Claude Code uses the OpenAI-compat path: `CLAUDE_CODE_USE_OPENAI=1` + `OPENAI_BASE_URL` + `CLAUDE_CODE_OPENAI_MODEL`, since LM Studio does not speak the Anthropic API).
 
@@ -89,5 +89,5 @@ Three places must all agree:
 
 - [`tuning-by-knob.md`](tuning-by-knob.md) — server-side flags (`--prefill-step-size`, drafter, parser, etc.).
 - [`tuning-by-workload.md`](tuning-by-workload.md) — which knobs dominate per workload regime.
-- [`../current.md`](../current.md) — live production server / model / launch shape.
+- [`../../scripts/chk_llm_macstu.py`](../../scripts/chk_llm_macstu.py) — probe the Mac Studio for live server / model run-state.
 - Memory: "Update narutaki openclaw.json in two places" — sync rule for live OpenClaw configs.

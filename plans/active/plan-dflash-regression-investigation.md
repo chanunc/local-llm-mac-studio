@@ -164,7 +164,7 @@ After each benchmark batch:
 - Add raw JSON files under `docs/models/benchmarks/qwen36-35b-a3b-4bit/`.
 - Update `docs/models/benchmarks/model-benchmark-standalone.md`.
 - Update `docs/models/techniques/model-technique-dflash.md` with the current root-cause table.
-- Update `docs/current.md` only if operational posture changes.
+- Run-state is probed via `scripts/chk_llm_macstu.py`, not tracked in docs.
 
 ## Verification
 

@@ -57,9 +57,9 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
 - [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · prior lm-studio sidecar
-- [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · **active lm-studio main (2026-05-14, browse 11.62 s / search 19.47 s)**
+- [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · benchmarked on lm-studio 2026-05-14 (browse 11.62 s / search 19.47 s)
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
-- [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · **active lm-studio main (2026-05-02) · uncensored GGUF browse leader**
+- [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · benchmarked on lm-studio 2026-05-02 · uncensored GGUF browse leader
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
 
 ---
@@ -621,7 +621,7 @@ Raw: [`docs/models/benchmarks/logs/qwen36-27b-glm51-da/agent-bench-lm-studio.jso
 - **Vision projector not loaded** in these benchmarks — three mmproj variants (bf16 / f16 / q8_0) shipped, load alongside the main GGUF for vision tests.
 - **Uncensored posture is deliberate** — abliteration + GLM-5.1 distillation. Keep this main scoped to local research / eval, not shared endpoints.
 
-**Related:** dedicated benchmark writeup at [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md`](../uncen-model/qwen36-27b-glm51-da-benchmark.md) (full deployment recipe + failure triage + reproducer). Uncensored-roster placement at [`docs/models/uncen-model/uncen-model-readme.md`](../uncen-model/uncen-model-readme.md#full-roster). Live-state record at [`docs/current.md`](../../current.md).
+**Related:** dedicated benchmark writeup at [`docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md`](../uncen-model/qwen36-27b-glm51-da-benchmark.md) (full deployment recipe + failure triage + reproducer). Uncensored-roster placement at [`docs/models/uncen-model/uncen-model-readme.md`](../uncen-model/uncen-model-readme.md#full-roster). Live run-state is not tracked in docs — run [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py).
 
 ---
 
@@ -808,7 +808,7 @@ Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-prithiv-aggressive/api-server-
 **Browse 5.05 s** is the uncensored GGUF browse leader (60 ms faster than HauhauCS 5.14 s and 90 ms faster than prior vmlx-Osaurus path). **Search 13.56 s** trails HauhauCS 12.01 s by +1.55 s — search's 3-turn loop with growing context slightly favors HauhauCS's 131K loaded context vs this model's 65K. Raw: [`docs/models/benchmarks/logs/qwen36-35b-a3b-prithiv-aggressive/agent-bench-lm-studio.json`](../benchmarks/qwen36-35b-a3b-prithiv-aggressive/agent-bench-lm-studio.json).
 
 **Caveats:**
-- **LM Studio guardrail workaround required** — see deployment gotcha above; documented in [`docs/current.md`](../../docs/current.md) launch shape.
+- **LM Studio guardrail workaround required** — see deployment gotcha above; the guardrail toggle recipe is in [`docs/servers/lm-studio/summary.md`](../../servers/lm-studio/summary.md).
 - **65K context probe headroom** — for a true 65K throughput reading, load with `--context-length 70000` (adds ~600 MB resident memory vs the 65536 setting).
 - **Useful-compliance partial at 1024 tokens** — 1/10 prompts produced visible content; 9/10 stayed in `<think>`. A 4K-token re-run would lift the verified count.
 - **Vision architecture present but not tested** — `qwen35moe` arch has ViT definitions; mmproj GGUF not available in the mradermacher repo, so vision is text-only here.
@@ -925,7 +925,7 @@ Dense 40B agent times are substantially slower than MoE siblings: browse 18.73 s
 
 **Caveats:**
 - **Dense 40B gen speed** — 8.8–9.7 tok/s expected; 3–4 s for short responses, 60–90 s for multi-turn agent loops. If throughput is the priority, reload prithivMLmods or HauhauCS Aggressive.
-- **LM Studio guardrail override required** — must temporarily disable `mode: "high"` before each initial load (dense 40B + 131K context consistently triggers it). Documented in [`docs/current.md`](../../docs/current.md) launch shape.
+- **LM Studio guardrail override required** — must temporarily disable `mode: "high"` before each initial load (dense 40B + 131K context consistently triggers it). The guardrail toggle recipe is in [`docs/servers/lm-studio/summary.md`](../../servers/lm-studio/summary.md).
 - **P2 soft-refusal** — government DB hacking prompt; model committed to defensive security framing from the start. 9/10 overall compliance is strong for a dense 40B with Deckard/PDK.
 - **P7 timeout** — timed out at exactly 300 s (classified as complied by harness methodology; no refusal keyword in partial output).
 - **P8 near-timeout** — 293.77 s; model spent ~270 s in `<think>` before producing the `content` answer.
@@ -972,4 +972,4 @@ Qwen3.6-35B-A3B base with a rank-8 LoRA (alpha 16) trained on **356 K Rust commi
 
 - Catalog stub: [`docs/models/model-summary.md` § Qwen3.6 Family](../model-summary.md#qwen36-family-hybrid-gated-deltanet--vision)
 - JANGTQ-CRACK Qwen3.6 variants (research only, private submodule): [`docs/models/uncen-model/`](../uncen-model/)
-- Sibling per-model: [`model-summary-ling.md`](model-summary-ling.md) (production primary) · [`model-summary-mimo-v2.5.md`](model-summary-mimo-v2.5.md)
+- Sibling per-model: [`model-summary-ling.md`](model-summary-ling.md) · [`model-summary-mimo-v2.5.md`](model-summary-mimo-v2.5.md)

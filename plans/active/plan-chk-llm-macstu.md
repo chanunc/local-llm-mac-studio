@@ -219,7 +219,7 @@ No other docs touched. No CLAUDE.md / AGENTS.md / README.md edits — Event 5 is
 ### Files NOT modified (intentional)
 
 - `README.md`, `CLAUDE.md`, `AGENTS.md` — Event 5 doesn't require it; the script is operator-facing tooling, not a workflow change. (If future skills come to depend on it as a primitive — e.g., `/deploy-run-benchmark-uncen-model` calling it for hygiene — *that* change would update CLAUDE.md's Event 4 snippet to reference it.)
-- `configs/`, `docs/servers/`, `docs/current.md` — no live state changes.
+- `configs/`, `docs/servers/` — no live state changes (run-state is probed via `scripts/chk_llm_macstu.py`, not tracked in docs).
 - `~/.claude/skills/list-model-to-remove/` — the skill's `inventory.sh` covers a different question (what models are *on disk*, not what's *running*); they're complementary, not overlapping. No edit.
 
 ## Verification

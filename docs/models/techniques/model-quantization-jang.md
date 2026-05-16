@@ -67,7 +67,7 @@ JANG (weight quantisation) and TurboQuant (KV cache compression) are independent
 | [`JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S`](https://huggingface.co/JANGQ-AI/Qwen3.5-122B-A10B-JANG_2S) | JANG 2-bit | (downloaded, not in current roster) | 35 GB | Available |
 | [`JANGQ-AI/Qwen3.6-27B-JANG_4M`](https://huggingface.co/JANGQ-AI/Qwen3.6-27B-JANG_4M) | JANG 4-bit | vllm-mlx (previous primary) | 14 GB | Available |
 
-Live roster reference: [`../../current.md`](../../current.md).
+Live run-state is not tracked in docs — run [`../../../scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py) to see what is loaded.
 
 ## See also
 

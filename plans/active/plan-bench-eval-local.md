@@ -163,7 +163,7 @@ python3 /Users/chanunc/cc-prjs/cc-claude/setup-llm-macstu/scripts/bench/bench_ev
 5. Wall time < 40 min total (sanity cap; if > 50 min, bump `--mmlu-parallel` next run).
 6. Partial-failure smoke: re-run with `--skip-truthfulqa` → JSON has only `mmlu_pro` under `results`, exit `0`.
 
-**Then repeat for HauhauCS Aggressive + HauhauCS Balanced** (each ~30-40 min, both already on disk and reloadable per `docs/current.md` Stopped/Fallbacks). Three runs total (~90-120 min) populate the `MMLU` and `TruthfulQA` columns for half the comparison table.
+**Then repeat for HauhauCS Aggressive + HauhauCS Balanced** (each ~30-40 min, both already on disk and reloadable). Three runs total (~90-120 min) populate the `MMLU` and `TruthfulQA` columns for half the comparison table.
 
 **Out of scope** (explicit non-goals — defer):
 - Auto-install of external tools (fail-fast with instructions only).

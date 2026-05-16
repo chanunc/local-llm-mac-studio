@@ -113,7 +113,7 @@ Every other Qwen3.5/3.6 model in this repo uses `--tool-call-parser qwen3_coder 
 
 - [`../per-model/model-summary-ling.md`](../per-model/model-summary-ling.md) — Ling-2.6-flash spec table, benchmark links, when-to-use
 - [`../../servers/vllm-mlx/`](../../servers/vllm-mlx/) — vllm-mlx server runbook
-- [`../../current.md`](../../current.md) — live production state
+- [`../../../scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py) — probe the Mac Studio for live run-state
 - [`../benchmarks/model-benchmark-api-server.md` § Ling](../benchmarks/model-benchmark-api-server.md#ling-26-flash-mlx-6bit-104b7b-active-bailing_hybrid) — gen / prefill / TTFT across context lengths
 - [`../benchmarks/model-benchmark-tool-call.md`](../benchmarks/model-benchmark-tool-call.md#results-mlx-communityling-26-flash-mlx-6bit) — agent-loop tool calling
 - [`../../../scripts/patches/patch_mlx_lm_threadlocal_stream.py`](../../../scripts/patches/patch_mlx_lm_threadlocal_stream.py)

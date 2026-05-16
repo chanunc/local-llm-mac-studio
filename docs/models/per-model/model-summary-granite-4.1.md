@@ -4,7 +4,7 @@ IBM's Granite 4.1 generation. One variant currently catalogued in this stack: th
 
 ## Index
 
-- [Granite 4.1 30B Q8_0 (unsloth GGUF)](#granite-41-30b-q8_0-unsloth-gguf) — Dense 30B instruct · 65K loaded · `lm-studio` · 28.57 GiB · 24.8 tok/s · **active lm-studio main 2026-05-05**
+- [Granite 4.1 30B Q8_0 (unsloth GGUF)](#granite-41-30b-q8_0-unsloth-gguf) — Dense 30B instruct · 65K loaded · `lm-studio` · 28.57 GiB · 24.8 tok/s · benchmarked on lm-studio 2026-05-05
 
 ---
 
@@ -131,5 +131,5 @@ Model load: **3.84 s** (one-time). Steady gen rate per scenario: **21.0–21.4 t
 
 - **65K context probe HTTP 400** — Granite 4.1 sliding window boundary; real queries < 32K work fine. Same pattern as Gemma 4 on lm-studio.
 - **Dense 30B decode speed** — all 30B params active per token; 24.8 tok/s is expected (vs 87.6 tok/s for Gemma 4 26B-A4B MoE at ~4B active). For higher throughput use the Gemma 4 26B A4B or a sparse MoE model.
-- **Censored/aligned** — standard IBM RLHF safety training. For uncensored content workflows, reload TrevorJS Gemma 4 26B A4B Uncensored Q8_0 from `docs/current.md` fallbacks.
+- **Censored/aligned** — standard IBM RLHF safety training. For uncensored content workflows, reload an uncensored variant such as TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (see [`docs/models/per-model/model-summary-gemma.md`](model-summary-gemma.md)). To check what is live, run [`scripts/chk_llm_macstu.py`](../../../scripts/chk_llm_macstu.py).
 - **Guardrail required** — LM Studio guardrail `mode: "high"` blocks this load; must toggle `"off"` before `lms load`, then restore.

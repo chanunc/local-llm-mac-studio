@@ -61,6 +61,54 @@ This repository is primarily an **operations notebook + config bundle** for the 
 Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, Osaurus `:1337`, comfyui `:8188`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
 
 <details>
+<summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
+
+```bash
+# lm-studio (LM Studio headless, port 1234) — launch recipe for
+# `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF:i1-Q6_K`:
+# huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE
+# (~4B active) + mradermacher imatrix Q6_K GGUF. 22.64 GB on disk, 21.08 GiB
+# resident at 65 K context. 9/10 mlabonne (first Gemma 4 entry to clear 9/10),
+# browse 2.55 s 🥇 all-time leader. (Run scripts/chk_llm_macstu.py to see what
+# is live — run-state is not tracked in docs.)
+# `lms get` mis-resolves i1-Q6_K — use direct Hub download + `lms import -L`.
+# LM Studio guardrail dance only required on first load (subsequent reloads OK).
+~/.lmstudio/bin/lms load 'huihui-gemma-4-26b-a4b-it-abliterated-i1' \
+  --gpu max --context-length 65536 \
+  --identifier 'gemma4-26b-a4b-huihui-abliterated-q6k' -y
+~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
+
+# Prior main (2026-05-14): prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF (Apache 2.0,
+# dense 27B Qwen3.6 + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1
+# reasoning-trace distillation, think-on, 15.41 GiB resident, decode 31 / 30 / 29 / 27
+# tok/s @ 512/4K/8K/32K, API smoke 5/5 single-call + 3/3 multi-turn 16.88 s,
+# refusal 9/10 @ max_tokens=1024, OpenCode 1.14.50 browse 11.62 s / search 19.47 s
+# @ 2 turns + webfetch fired). Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid.
+# Tool-call + reasoning parsing built into the LM Studio runtime — no parser flags needed.
+# (Once-only) download + hard-link import:
+ssh macstudio "mkdir -p ~/.cache/hauhau-gguf; \
+  ~/comfyui/.venv/bin/hf download prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF \
+  Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf --local-dir ~/.cache/hauhau-gguf"
+ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF -y \
+  ~/.cache/hauhau-gguf/Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf"
+# Q4_K_M @ 15.41 GiB is BELOW the strict 25 % guardrail threshold (~24 GiB on 96 GB) — no dance.
+ssh macstudio "~/.lmstudio/bin/lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y"
+ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"          # default port 1234
+
+# Prior main (TrevorJS Gemma 4 31B-it Uncensored Q4_K_M) — fallback for working agent loops.
+# Reload via: lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y
+
+~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool             # health (port 1234)
+~/.lmstudio/bin/lms log stream                                                   # live request/response stream
+tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log           # daily log file
+```
+
+</details>
+
+<details>
 <summary>⚡ <strong>vllm-mlx</strong> (:8000) — fastest, single model · 3 launch variants + stop</summary>
 
 ```bash
@@ -168,54 +216,6 @@ pkill -f vmlx_engine                                                            
 # health + logs:
 curl -s http://<MAC_STUDIO_IP>:8000/v1/models | python3 -m json.tool             # health (port 8000)
 tail -f /tmp/vmlx.log                                                            # logs
-```
-
-</details>
-
-<details>
-<summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
-
-```bash
-# lm-studio (LM Studio headless, port 1234) — launch recipe for
-# `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF:i1-Q6_K`:
-# huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE
-# (~4B active) + mradermacher imatrix Q6_K GGUF. 22.64 GB on disk, 21.08 GiB
-# resident at 65 K context. 9/10 mlabonne (first Gemma 4 entry to clear 9/10),
-# browse 2.55 s 🥇 all-time leader. (Run scripts/chk_llm_macstu.py to see what
-# is live — run-state is not tracked in docs.)
-# `lms get` mis-resolves i1-Q6_K — use direct Hub download + `lms import -L`.
-# LM Studio guardrail dance only required on first load (subsequent reloads OK).
-~/.lmstudio/bin/lms load 'huihui-gemma-4-26b-a4b-it-abliterated-i1' \
-  --gpu max --context-length 65536 \
-  --identifier 'gemma4-26b-a4b-huihui-abliterated-q6k' -y
-~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors
-
-# Prior main (2026-05-14): prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF (Apache 2.0,
-# dense 27B Qwen3.6 + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1
-# reasoning-trace distillation, think-on, 15.41 GiB resident, decode 31 / 30 / 29 / 27
-# tok/s @ 512/4K/8K/32K, API smoke 5/5 single-call + 3/3 multi-turn 16.88 s,
-# refusal 9/10 @ max_tokens=1024, OpenCode 1.14.50 browse 11.62 s / search 19.47 s
-# @ 2 turns + webfetch fired). Standard MLX / GGUF only; no JANG/JANGTQ/bailing_hybrid.
-# Tool-call + reasoning parsing built into the LM Studio runtime — no parser flags needed.
-# (Once-only) download + hard-link import:
-ssh macstudio "mkdir -p ~/.cache/hauhau-gguf; \
-  ~/comfyui/.venv/bin/hf download prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF \
-  Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf --local-dir ~/.cache/hauhau-gguf"
-ssh macstudio "~/.lmstudio/bin/lms import -L --user-repo prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF -y \
-  ~/.cache/hauhau-gguf/Q3.6-27B-GLM-5.1-DA.Q4_K_M.gguf"
-# Q4_K_M @ 15.41 GiB is BELOW the strict 25 % guardrail threshold (~24 GiB on 96 GB) — no dance.
-ssh macstudio "~/.lmstudio/bin/lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y"
-ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"          # default port 1234
-
-# Prior main (TrevorJS Gemma 4 31B-it Uncensored Q4_K_M) — fallback for working agent loops.
-# Reload via: lms load 'gemma-4-31b-it-uncensored' --gpu max --context-length 65536 --identifier gemma4-31b-it-uncensored-trevorjs-q4km -y
-
-~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all              # stop lm-studio
-
-# health + logs:
-curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool             # health (port 1234)
-~/.lmstudio/bin/lms log stream                                                   # live request/response stream
-tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log           # daily log file
 ```
 
 </details>
@@ -529,20 +529,35 @@ fabric -y "https://youtube.com/watch?v=..." -p extract_wisdom -m "<general-model
 
 ## 🖥️ Servers
 
-| Server | Speed | Models | API | Best For |
-|:-------|:-----:|:------:|:----|:---------|
-| **[vllm-mlx](docs/servers/vllm-mlx/summary.md)** | ⚡ Fastest | Single | OpenAI + Anthropic | Daily use — lowest overhead on Apple Silicon |
-| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 🟢 Fast | Single (direct) / Multi (YAML) | OpenAI | Single-model direct path or YAML multi-model mode with prompt caching + speculative decoding. Launch the direct server from `/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server` (Cellar libexec, **not** `/opt/homebrew/bin/mlx_lm.server`). Benchmarked with Gemma 4 31B-it MLX 6-bit: 20.4 tok/s, browse 12.33 s (thinking ON). |
-| **[oMLX](docs/servers/omlx/summary.md)** | 🔴 Slower | 9 hot-swap | OpenAI + Anthropic | Model variety with SSD caching |
-| **[vmlx](docs/servers/vmlx/summary.md)** (MLX Studio bundled) | 🟢 Fast | JANGTQ only | OpenAI + Anthropic + Ollama | TurboQuant JANGTQ models — 64.9 tok/s on Qwen3.6-35B-A3B JANGTQ4 |
-| **[lm-studio](docs/servers/lm-studio/summary.md)** ([LM Studio](https://lmstudio.ai/) headless, :1234) | ⚡ Fastest agent loop · uncensored compliance | Standard MLX / GGUF | OpenAI | Benchmarked uncensored agent-loop leader: `mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF` `i1-Q6_K` (Apache 2.0, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B sparse MoE, 22.64 GB on disk / 21.08 GiB resident, decode 91.6 tok/s @ 512, refusal **9/10** @ 1024 tok — first Gemma 4 entry to clear 9/10, OpenCode browse **2.55 s 🥇 all-time leader** / search 19.59 s @ 2 turns, `task` subagent fired for HN scrape). Also on disk: `prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF` Q4_K_M (prior 2026-05-14 → 2026-05-15 main, dense 27B + ViT think-on, browse 11.62 s / search 19.47 s, 9/10 refusal), TrevorJS Gemma 4 26B A4B uncensored Q8_0 (prior browse leader 2.93 s, **search leader 7.35 s 🥇**, 8/10 refusal), TrevorJS Gemma 4 31B-it Uncensored Q4_K_M (browse 6.63 s warm / search 30.81 s, harness 6–7/10 / manual 10/10), lmstudio-community Gemma 4 26B A4B-it Q8_0 (prior main, MoE 4B-active 87 tok/s), unsloth Qwen3.6-35B-A3B UD-Q6, Granite 4.1 30B Q8, Gemma 4 31B-it MLX 6-bit (browse **5.11 s thinking OFF**), DavidAU Heretic family, prithivMLmods Aggressive. No JANG/JANGTQ/bailing_hybrid. |
-| **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** (provisional, :8098) | 🟢 High-decode | Single MLX + DFlash drafter | OpenAI | **DFlash speculative decoding** on Apple Silicon (`pip install dflash-mlx` from main + 3 local patches). Sustains 74-89 tok/s decode on Qwen3.6-35B-A3B-4bit, 86.7% draft acceptance. Decode-bound win; prefill-bound loses to lm-studio. See [bench](docs/models/benchmarks/logs/qwen36-35b-a3b-4bit/) |
-| **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** (provisional, :8099) | ⚡ Fastest agent loop (2026-05-06) | Single GGUF + TurboQuant / RotorQuant / PlanarQuant KV cache | OpenAI | **Two forks installed.** `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` (`turbo3` + auto-asymm `q8_0` K + 4-mag LUT + sparse V) is the runaway winner: smoke 4/5, **decode 68 tok/s @ 512 / 44 tok/s @ 32 K**, **OpenCode browse 6.47 s 🥇 / search 15.64 s 🥇 — 2.07× / 2.27× faster than Gemma 4**. `johndpope/llama-cpp-turboquant` `feature/planarquant-kv-cache` (`iso3` for RotorQuant) is documented but slower (cold prefill regression at 32 K+). See [bench](docs/models/benchmarks/logs/qwen36-35b-a3b-turboquant-turbo3/) |
-| **[llama-cpp-mtp](docs/servers/llama-cpp-mtp/summary.md)** (provisional sidecar, :8100) | 🟢 84–89 % MTP draft acceptance | Single GGUF with embedded MTP draft heads | OpenAI | **MTP-experiment sidecar:** `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — Qwen3.6 Multi-Token Prediction self-drafting speculative decoding via [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) (PR #22673, unmerged upstream). Dense 27 B + MTP heads, Unsloth Dynamic 6-bit, 26 GB. Decode 22.9 → 20.0 tok/s @ 414 → 29 128 input tokens with 84–89 % avg draft acceptance, smoke **5/5** single-call + 3-turn multi 21.92 s, OpenCode browse 35.98 s / search 35.24 s. Patch-free apart from the build; only path for Qwen3.6 MTP on Apple Silicon today. `-np > 1` and `--mmproj` unsupported with MTP active. Browse is ~14× slower than the Gemma 4 26B-A4B baseline — MTP's speedup doesn't beat a dense-27 B-Q6 weight bundle here. Port 8100 does not displace lm-studio — restartable for MTP-specific experiments. See [bench](docs/models/benchmarks/logs/qwen36-27b-mtp/) |
-| **[vmlx-swift-lm](docs/servers/vmlx-swift-lm/summary.md)** (provisional, :1337) | 🔴 HTTP path 7-8 tok/s (regression) | Single Swift-MLX (BF16 / MLX / JANG / JANGTQ2/4 / MXFP4) | OpenAI + Anthropic + Ollama | Runs `JANGQ-AI/ZAYA1-8B-JANGTQ4`. [`osaurus-ai/vmlx-swift-lm`](https://github.com/osaurus-ai/vmlx-swift-lm) engine consumed via `brew install --cask osaurus`. Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE), Hunyuan v3, and the MiniMax-M2.7 JANGTQ Hadamard kernel optimization. Built-in tool/reasoning parsers (no flags). **JANGTQ HTTP-path was regressed** at pin `b9da180` — the engine's `RunBench` reports 57.2 tok/s on M4 Max but the OpenAI HTTP path ran 7-8 tok/s because the cask was missing the `BatchEngine.generate` B=1 fast path and the JANGTQ Hadamard kernel. Fix queued in [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057). See [bench](docs/models/benchmarks/logs/zaya1-8b/) |
-| **[mlx-lm](docs/servers/mlx-lm/summary.md)** (sidecar, :8080) | ⚡ 186 tok/s | `iapp/ChindaMT-4B` MLX 4-bit (2.2 GB) | OpenAI | **Thai ↔ English translation sidecar** — dedicated 4B MT model on port 8080. Hybrid Qwen3.5 architecture with 24/32 SSM (linear-attention) layers; GGUF path not viable (llama.cpp has no SSM runtime). Use `chat_template_kwargs: {"enable_thinking": false}` or output appears in `message.reasoning`. 2.5 GB peak memory — coexists with any main model. |
-| **[qwen-asr](docs/servers/qwen-asr/summary.md)** (sidecar, no port) | 🟢 19× realtime | Single (`Qwen/Qwen3-ASR-1.7B` bf16) | Python API only | **Speech-to-text sidecar** — `~/qwen-asr-env/` (transformers + MPS). 30 langs + 22 Chinese dialects. RTF 19.06× on 15 s English clip, 0.79 s warm. No `/v1/audio/transcriptions` endpoint (CUDA-only path); call `Qwen3ASRModel.transcribe(audio=…)` directly. See [bench](docs/models/benchmarks/logs/qwen3-asr-1.7b/) |
-| **[comfyui](docs/servers/comfyui/summary.md)** (sidecar, :8188) | 🟢 18 s/img distill | `SeeSee21/Z-Anime` AIO BF16 (Distill-4-step + Base, S3-DiT 6B, Apache-2.0) | Web UI only — ComfyUI `/prompt` JSON, no OpenAI `/v1/images/generations` | **Image-generation sidecar** — `~/comfyui/` (PyTorch 2.11 + MPS, comfy-cli managed). 1024² wall time: Distill-4-step **17.75 s** / Base 28-step **235.16 s**. End-user path is the browser UI at `http://<MAC_STUDIO_IP>:8188`; chat clients can't trigger generations. See [bench](docs/models/benchmarks/logs/z-anime/wall-time-comfyui.md) |
+The four port-8000 servers are **mutually exclusive** (one at a time); `lm-studio` (:1234) and every sidecar run on their own ports and coexist. Run [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) to see what is live.
+
+<details>
+<summary>🧠 <strong>Main chat servers</strong> — full general-purpose inference</summary>
+
+| Server | Port | Speed | API | Role |
+|:-------|:----:|:-----:|:----|:-----|
+| **[vllm-mlx](docs/servers/vllm-mlx/summary.md)** | 8000 | ⚡ Fastest | OpenAI+Anthropic | Daily use — lowest overhead; best for sparse-MoE / `bailing_hybrid` |
+| **[lm-studio](docs/servers/lm-studio/summary.md)** | 1234 | ⚡ Fastest agent loop | OpenAI | Uncensored-compliance leader; built-in tool/reasoning parsers (no flags) |
+| **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 8000 | 🟢 Fast | OpenAI | Single-model direct or YAML multi-model; prompt cache + speculative decoding |
+| **[oMLX](docs/servers/omlx/summary.md)** | 8000 | 🔴 Slower | OpenAI+Anthropic | 9-model hot-swap with SSD caching |
+| **[vmlx](docs/servers/vmlx/summary.md)** | 8000 | 🟢 Fast | OpenAI+Anthropic+Ollama | TurboQuant **JANGTQ** models (bundled MLX Studio Python) |
+
+</details>
+
+<details>
+<summary>🧩 <strong>Sidecars</strong> — coexist on their own ports</summary>
+
+| Server | Port | Speed | API | Role |
+|:-------|:----:|:-----:|:----|:-----|
+| **[dflash-mlx](docs/servers/dflash-mlx/summary.md)** | 8098 | 🟢 High-decode | OpenAI | DFlash speculative decoding (74–89 tok/s, ~87% draft accept) |
+| **[llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md)** | 8099 | ⚡ Fast agent loop | OpenAI | TurboQuant / RotorQuant / PlanarQuant KV cache — two forks (TheTom `turbo3`, johndpope `iso3`) |
+| **[llama-cpp-mtp](docs/servers/llama-cpp-mtp/summary.md)** | 8100 | 🟢 84–89% MTP accept | OpenAI | Qwen3.6 Multi-Token-Prediction self-drafting (only Apple-Silicon path) |
+| **[vmlx-swift-lm](docs/servers/vmlx-swift-lm/summary.md)** | 1337 | 🔴 HTTP 7–8 tok/s\* | OpenAI+Anthropic+Ollama | MLX-Swift via Osaurus — only runtime for ZAYA1 / Hunyuan v3 (\*JANGTQ HTTP regression, [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057)) |
+| **[mlx-lm](docs/servers/mlx-lm/summary.md)** | 8080 | ⚡ 186 tok/s | OpenAI | Thai ↔ English translation (`iapp/ChindaMT-4B`, 2.5 GB) |
+| **[qwen-asr](docs/servers/qwen-asr/summary.md)** | — | 🟢 19× realtime | Python only | Speech → text (`Qwen3-ASR-1.7B`, 30 langs + 22 Chinese dialects) |
+| **[comfyui](docs/servers/comfyui/summary.md)** | 8188 | 🟢 18 s/img | Web UI only | Image generation (`SeeSee21/Z-Anime`; no OpenAI image shim) |
+
+</details>
 
 All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
@@ -633,64 +648,21 @@ Full specs and per-model details: [Model Summary](docs/models/model-summary.md)
 
 ## 📊 Benchmarks
 
-### Generation Speed (tokens/sec)
+Headline metric is **agent-loop latency** (real `opencode run`), not raw tok/s — agent workloads add 2–4k-token system prompts and multi-turn round-trips, so decode speed alone doesn't predict what a user actually waits for.
 
-**Qwen3-Coder-Next 6-bit** (dense 60GB):
+**Fastest agent loop** (medians; lm-studio unless noted · API = 3-turn `read→write→summary` · browse = single `webfetch` · search = multi-step Hackernews scrape):
 
-| Server | 512 | 8K | 32K | 64K |
-|:-------|:---:|:--:|:---:|:---:|
-| vllm-mlx | **68.8** 🥇 | **63.8** 🥇 | **56.4** 🥇 | **51.7** 🥇 |
-| mlx-lm | 68.4 🥈 | 62.7 🥈 | 54.0 🥈 | 47.7 🥈 |
-| oMLX | 66.5 | 56.9 | 40.4 | 34.8 |
+| Model | API loop | Browse | Search |
+|:------|:--------:|:------:|:------:|
+| Huihui Gemma 4 26B-A4B Abliterated i1-Q6_K | **1.93 s** 🏆 | **2.55 s** 🥇 | 19.59 s |
+| TrevorJS Gemma 4 26B-A4B Uncensored Q8_0 | 2.14 s | 2.93 s 🥈 | **7.35 s** 🥇 |
+| mlx-community Gemma 4 26B-A4B-it 4-bit MLX | — | 3.29 s | **3.23 s** 🏆 |
+| unsloth Qwen3.6-35B-A3B UD-Q6_K GGUF | 7.65 s | 4.92 s | 12.08 s |
+| Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` (`llama-cpp-turboquant`) | 5.57 s | 6.47 s | 15.64 s |
 
-**Gemma 4 26B-A4B 4-bit** (MoE, multimodal — mlx-openai-server 1.7.1, Apr 2026):
+Sparse-MoE **Gemma 4 26B-A4B** (~4 B active) on lm-studio dominates the agent loop; 30+ models across 9 servers were benchmarked, including ⛔ no-tool / timeout failures.
 
-> Tokens include both reasoning (`reasoning_content`) and output (`content`) phases. 512 warm values shown (run 1 cold-start: 59.4 tok/s / 28 tok/s prefill / 18.7s TTFT).
-
-| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
-|:--------|:---:|:---:|:---:|
-| 512 | **62.5** | 1,710 | 0.30 |
-| 4K | 54.6 | 3,117 | 1.32 |
-| 8K | **60.6** | **3,154** | 2.60 |
-| 32K | 50.6 | 2,892 | 11.34 |
-| 64K | 42.0 | 2,542 | 25.78 |
-| 128K | 27.1 | 1,995 | 65.70 |
-
-**Qwen3.6-35B-A3B 6-bit** (Hybrid MoE, multimodal — mlx-openai-server 1.7.1, Apr 2026):
-
-> Tokens include both `reasoning_content` (always-on `<think>`) and `content`. Server-validated; standalone-only Apr 17 numbers in [standalone benchmarks](docs/models/benchmarks/model-benchmark-standalone.md#qwen36-35b-a3b-6-bit-vs-qwen35-35b-a3b-jang-4k) carry a VLM double-prefill artefact and are not directly comparable.
-
-| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
-|:--------|:---:|:---:|:---:|
-| 512 | **52.5** | 1,401 | 0.34 |
-| 4K | **53.0** | **2,237** | 1.64 |
-| 8K | 51.3 | 2,197 | 3.32 |
-| 32K | 46.3 | 1,798 | 16.22 |
-| 64K | 40.3 | 1,408 | 41.40 |
-| 128K | 35.6 | 927 | 125.73 |
-
-Hybrid Gated DeltaNet pays off at long context — Qwen3.6's 35.6 tok/s @ 128K is **31% faster than Gemma 4** at the same context, despite Qwen3.6 carrying a vision encoder.
-
-**Qwen3.5-35B-A3B JANG** (MoE, primary architecture):
-
-| Server | 32K | 64K |
-|:-------|:---:|:---:|
-| vllm-mlx | **83.8** 🥇 | **71.6** 🥇 |
-| mlx-openai-server | 81.3 🥈 | 62.8 |
-| mlx-lm | 77.6 | 65.1 🥈 |
-| oMLX | 59.9 | 49.0 |
-
-**128K cross-model** (long-context comparison — all measured through-server, Apr 2026):
-
-| Model | Server | Gen tok/s | Prefill tok/s | TTFT (s) |
-|:-------|:-------|:---:|:---:|:---:|
-| Qwen3-Coder-Next 6-bit (Dense 80B) | vllm-mlx | **44.2** 🥇 | **736** 🥇 | **158** 🥇 |
-| Qwen3.6-35B-A3B 6-bit (Hybrid MoE + VL) | mlx-openai-server | 35.6 🥈 | 927 | 126 🥈 |
-| Qwen3.5-122B JANG 2S | vllm-mlx (JANG) | 34.5 | 405 | 324 |
-| Qwen3.5-35B-A3B JANG 4K | oMLX (Mar leaderboard) | 33.8 | 295 | — |
-| Gemma 4 26B-A4B 4-bit (MoE + VL) | mlx-openai-server | 27.1 | 1,995 | 66 |
-
-Full results: [Standalone](docs/models/benchmarks/model-benchmark-standalone.md) · [API Server](docs/models/benchmarks/model-benchmark-api-server.md) · [TurboQuant KV Cache](docs/models/benchmarks/model-benchmark-turboquant-jang.md) · [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call.md)
+Full results: [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call.md) · [API Server](docs/models/benchmarks/model-benchmark-api-server.md) · [Standalone](docs/models/benchmarks/model-benchmark-standalone.md) · [TurboQuant KV Cache](docs/models/benchmarks/model-benchmark-turboquant-jang.md)
 
 ---
 

@@ -16,6 +16,7 @@ Operational runbooks for inference servers on the Mac Studio. Run [`scripts/chk_
 | `llama-cpp-mtp` | [`llama-cpp-mtp/summary.md`](llama-cpp-mtp/summary.md) | Provisional MTP (Qwen3.6 self-drafting speculative decoding) sidecar on port 8100 |
 | `qwen-asr` | [`qwen-asr/summary.md`](qwen-asr/summary.md) | Speech-to-text sidecar (Qwen3-ASR, transformers + MPS, no port-bound daemon) |
 | `comfyui` | [`comfyui/summary.md`](comfyui/summary.md) | Image-generation sidecar on port 8188 (ComfyUI + Z-Anime, MPS, web UI only — no OpenAI shim) |
+| `ds4` | [`ds4/summary.md`](ds4/summary.md) | DwarfStar 4 native engine on port 8101 — only Apple-Silicon path for DeepSeek-V4-Flash (`deepseek4` arch, DSML tool calling) |
 
 ## Maintenance And Patches
 

@@ -19,6 +19,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [ChindaMT-4B (Thai ↔ English Translation)](#chindamt-4b-thai--english-translation) — **active mlx-lm sidecar on port 8080**, 186 tok/s, 2.2 GB MLX 4-bit, Apache-2.0. Qwen3.5-4B base + hybrid SSM architecture; GGUF not viable.
 - [Qwen3-ASR Family](#qwen3-asr-family) — 2 variants + forced aligner: **1.7B (active speech-to-text sidecar, MPS, 19.06× RTF on 15 s English clip)**, 0.6B, ForcedAligner-0.6B. Detail at [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)
 - [Z-Image / Z-Anime Family (Image Generation)](#z-image--z-anime-family-image-generation) — 2 variants on disk: **Z-Anime Distill-4-step AIO BF16 (active, 17.75 s @ 1024² M3 Ultra MPS)**, Z-Anime Base AIO BF16 (best-quality reference, 235.16 s @ 28 steps). S3-DiT 6B, Apache-2.0, ComfyUI on port 8188 (web UI only). [bench](benchmarks/z-anime/wall-time-comfyui.md)
+- [DeepSeek-V4-Flash (284B/13B-active MoE, ds4)](#deepseek-v4-flash-284b13b-active-moe-ds4) — 1 viable variant: **IQ2XXS-imatrix 81 GB GGUF on the `antirez/ds4` native Metal engine, port 8101 (only Apple-Silicon path for `deepseek4`; 5/5 smoke, browse 18.78 s / search 28.22 s)**. Detail at [`per-model/model-summary-deepseek-v4.md`](per-model/model-summary-deepseek-v4.md)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -423,6 +424,42 @@ Wall times measured 2026-05-08 on Mac Studio M3 Ultra, 1 warm-up + 3 timed runs 
 **Quantization decision: stay BF16 AIO.** The model is only 6B; FP8 (10.51 GiB AIO) saves ~9 GiB at noticeable quality cost on a 96 GB box. GGUF Q8_0 (7.22 GiB) and Q4_K_S (4.51 GiB) variants ship in the repo but require the `ComfyUI-GGUF` custom-node pack (`UnetLoaderGGUF` + `CLIPLoaderGGUF`) which isn't installed — they're useful on 12–16 GB consumer boxes, not here.
 
 **Doesn't compete with the chat servers for any port.** Port 8188 is collision-free against 8000 / 1234 / 8098 / 8099. ComfyUI can run alongside any port-8000 LLM with no orchestration changes.
+
+---
+
+## DeepSeek-V4-Flash (284B/13B-active MoE, ds4)
+
+**`deepseek-ai/DeepSeek-V4-Flash`** (MIT, released 2026-04-24) — 284 B-total / 13 B-active 256-expert MoE, 1 M context, reasoning model (`non-think` / `think-high` / `think-max`). Novel `deepseek4` architecture (Hybrid Compressed-Sparse + Heavily-Compressed Attention, Manifold-Constrained Hyper-Connections) — **not in upstream `llama.cpp`**; vLLM/SGLang loaders are CUDA-only. Served via the [`antirez/ds4`](https://github.com/antirez/ds4) standalone native Metal engine on sidecar port 8101 — the only Apple-Silicon path. Full per-variant detail + quant/server landscape at [`per-model/model-summary-deepseek-v4.md`](per-model/model-summary-deepseek-v4.md).
+
+| Field | Value |
+|:--|:--|
+| Base model | `deepseek-ai/DeepSeek-V4-Flash` |
+| Architecture | `deepseek4` — 256-expert MoE, 13 B active/token, Hybrid Attention (CSA + HCA) + mHC |
+| Quant | `antirez/deepseek-v4-gguf` IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-**imatrix** (2-bit routed experts, Q8 attn/shared/out) |
+| Format on disk | 81 GB GGUF at `~/ds4/gguf/` (symlinked `~/ds4/ds4flash.gguf`) |
+| Parameters / Density | 284 B total / 13 B active (256 experts) |
+| Context | 65 536 launched (model max 1 M; Think Max needs ≥ 384 K) |
+| License | MIT |
+| Server | `ds4` (DwarfStar 4) native C+Metal engine, port 8101, OpenAI + Anthropic + Responses APIs |
+| Decode | **34.6 tok/s @ 512**, ~25–27 tok/s @ 4–32 K |
+| Prefill | 4,512 tok/s @ 512; 513–864 cold @ 8–32 K; 4,851 warm @ 32 K (disk KV) |
+| Memory | 81 GB weights + 1.3 GB ctx buffers @ 65 K (fits 96 GB-class with disk-KV offload) |
+| Smoke | ✅ 5/5 single-call · multi-turn 3 turns / 8.95 s |
+| Agent (opencode) | browse 18.78 s · search 28.22 s median wall (2–3 turns, `webfetch`) |
+| API model id | `deepseek-v4-flash` |
+
+**Quant/engine lock-in:** `ds4` only loads `antirez/deepseek-v4-gguf` files. persadian IQ1_S-XL (61.5 GB, smallest) is CUDA-only via `arishma108/llama.cpp feat/v4-port-cuda` — no Metal. batiai Q3–Q8 (135–302 GB) need unmerged upstream `deepseek4` and exceed RAM. Only `q2-imatrix` fits a 96 GB-class machine.
+
+Launch / stop:
+
+```bash
+ssh macstudio "cd ~/ds4 && nohup ./ds4-server --host 0.0.0.0 --port 8101 \
+  --ctx 65536 --kv-disk-dir /tmp/ds4-kv --kv-disk-space-mb 8192 \
+  --trace /tmp/ds4-trace.txt > /tmp/ds4-server.log 2>&1 &"
+ssh macstudio "pkill -f 'ds4-server'"
+```
+
+Full runbook (build, download, tool-call internals, known limitations): [`docs/servers/ds4/summary.md`](../servers/ds4/summary.md).
 
 ---
 

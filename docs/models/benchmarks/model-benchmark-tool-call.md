@@ -51,6 +51,7 @@ Two complementary harnesses, both reported per model:
 - [prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF (Q4_K_M)](../uncen-model/qwen36-27b-glm51-da-benchmark.md) — 27 B dense Qwen3.6 + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1 reasoning-trace distillation, standard Q4_K_M GGUF (lm-studio, no patches) — **✅ 5/5 API smoke + 3/3 multi-turn; ✅ OpenCode browse 11.62 s / search 19.47 s @ 2 turns + `webfetch`** (initial 0-turns reading was a bench-rig `PWD` regression on OpenCode 1.14.50+, fixed in `scripts/bench/bench_agent_tool_call.py`) — *2026-05-14*
 - [unsloth/Qwen3.6-27B-MTP-GGUF (UD-Q6_K_XL)](../techniques/model-technique-qwen-3-6-mtp.md) — 27 B dense Qwen3.6 + MTP self-drafting heads, Unsloth Dynamic 2.0 6-bit GGUF on `llama-cpp-mtp` :8100 (`am17an/llama.cpp@mtp-clean` PR #22673, no patches apart from the build) — **✅ 5/5 API smoke + 3-turn 21.92 s · 84–89 % MTP draft acceptance · OpenCode browse 35.98 s / search 35.24 s** (deployed 2026-05-15 as provisional sidecar; slower than lm-studio Q4_K_M main — MTP speedup doesn't close the dense-27 B-Q6 weight-bundle gap) — *2026-05-15*
 - [mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF (i1-Q6_K)](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) — 26 B sparse MoE / 4B active, imatrix Q6_K GGUF, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B-it (lm-studio, no patches) — **✅ 5/5 API smoke + multi-turn 1.93 s 🏆 (new API-level leader) · 9/10 mlabonne refusal (first Gemma 4 uncensored to clear 9/10) · OpenCode browse 2.55 s 🥇 all-time leader / search 19.59 s** (`task` subagent on search) — *2026-05-15*
+- [deepseek-ai/DeepSeek-V4-Flash via antirez/deepseek-v4-gguf (IQ2XXS-imatrix)](#results-deepseek-ai-deepseek-v4-flash-ds4) — 284 B-total / 13 B-active 256-expert `deepseek4` MoE, 2-bit routed-expert imatrix GGUF on the `antirez/ds4` native Metal engine (port 8101) — **✅ 5/5 API smoke + multi-turn 8.95 s · OpenCode browse 18.78 s / search 28.22 s @ 2–3 turns + `webfetch`** (only Apple-Silicon path for `deepseek4`; persadian IQ1_S/arishma108 fork is CUDA-only, batiai Q3–Q8 exceed 96 GB RAM) — *2026-05-18*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -91,6 +92,7 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 0.90 - 9.72 s | 0.90 - 1.64 s | 6.73 s (dense 31B no-think · 30 tok/s · webfetch 2/2 in OpenCode) |
 | **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | ⚠ 4/5 | 1.59 - 1.86 s | 1.52 - 3.26 s | **7.65 s** (length cap on agentic-reasoning at harness's 1024-tok max; 5/5 with bumped budget — multi-turn loop is clean) |
 | Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV | `llama-cpp-turboquant` :8099 (johndpope) | ✅ **5/5** | 2.00 - 16.91 s | 2.48 - 4.93 s | 8.48 s (decode strong but cold prefill timeout @ 32K) |
+| **DeepSeek-V4-Flash IQ2XXS-imatrix (284B/13B-active)** | `ds4` :8101 | ✅ **5/5** | 2.21 - 5.41 s | 3.13 - 4.22 s | **8.95 s** (`deepseek4` MoE 284B/13B-act 2-bit · **only Apple-Silicon path** · native DSML↔OpenAI · think-on · 25–35 tok/s · OpenCode browse 18.78 s / search 28.22 s · [per-model](../per-model/model-summary-deepseek-v4.md)) |
 
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **lm-studio** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | IBM Granite 4.1 30B Q8_0 | **lm-studio** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
@@ -152,6 +154,7 @@ Rows ordered by browse wall time (ascending).
 | Hermes 4 70B MLX-6bit | **lm-studio** | 15.63 s / 14.39 s | 79.98 s / 78.74 s | 3/6t · `webfetch`+`bash` · dense 70B Llama · search bash-loops (8 calls) · [results](#results-lmstudio-communityhermes-4-70b-mlx-6bit) |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | 15.72 s / 14.49 s | 21.38 s / 20.16 s | 2/2t · `webfetch` · MoE 35B/3B, no think prelude · [results](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx) |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2/3t · `webfetch` · dense 40B, think-on (Deckard/PDK) · [writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md) |
+| **DeepSeek-V4-Flash IQ2XXS-imatrix (284B/13B-active)** | `ds4` :8101 | **18.78 s** / 17.96 s | **28.22 s** / 27.39 s | 2/3t · `webfetch` · `deepseek4` 256-expert MoE 284B/13B-act, 2-bit q2-imatrix, think-on · 25–35 tok/s decode · disk-KV warm-prefill (38 s cold → 6.8 s warm @ 32 K) · **only Apple-Silicon path for DeepSeek-V4** · [per-model](../per-model/model-summary-deepseek-v4.md) · [runbook](../../servers/ds4/summary.md) |
 | Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2/2t · `webfetch` (one search → `skill`) · 7.4B active dominated by MLA cost |
 | Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2/3t · `webfetch` · 87% draft accept · **search 2.1× slower than lm-studio** (prefill bound) |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **lm-studio** | 31.96 s / 30.74 s | 25.71 s / 24.51 s | 2/2t · `webfetch` · prefill 47K tok/s @ 32K · [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-lm-studio-vs-vllm-mlx) |
@@ -175,6 +178,7 @@ Rows ordered alphabetically by model name.
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | lm-studio | (built-in) | (built-in — `<\|channel>thought` → `reasoning_content`) | none — LM Studio Gemma 4 runtime. Guardrail override **required** before initial load (see [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)) |
 | IBM Granite 4.1 30B Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | lm-studio | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
+| DeepSeek-V4-Flash IQ2XXS-imatrix (antirez GGUF) | ds4 :8101 | (built-in — native DSML ↔ OpenAI tool-call mapping, no flag) | (built-in — DeepSeek `<think>` streamed in native API shape; `model=deepseek-chat` / `think=false` disables) | none — pure C + Metal `make` build, no cmake/Python/patches. GGUF-locked to `antirez/deepseek-v4-gguf`; `./download_model.sh q2-imatrix`. Launch with `--host 0.0.0.0 --port 8101 --kv-disk-dir` (default bind is 127.0.0.1; `--cors` does not rebind). Only `q2-imatrix` (81 GB) fits 96 GB-class RAM; persadian IQ1_S/arishma108 fork is CUDA-only. See [runbook](../../servers/ds4/summary.md) |
 | Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` (the mlx-lm `match()` patch was retired 2026-05-08, now stock in mlx-lm 0.31.3) |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | lm-studio | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | mlx-lm server (direct) | N/A (native Gemma 4 format) | N/A (thinking emitted as part of content in streaming) | none — launch via Cellar libexec binary (`/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`); the `/opt/homebrew/bin/mlx_lm.server` symlink resolves to a python3.11 mlx_lm install that lacks Gemma 4 support. Thinking mode ON by default |
@@ -1818,4 +1822,36 @@ This is the **second** head-to-head data point in the repo confirming the same p
 | Gemma-4-26B-A4B-it Q8_0 (search) | 7.35 s | 9.56 s (same) | **+30 %** |
 
 Conclusion: **for any agent-loop workload on a vanilla GGUF (no MTP, no TurboQuant KV compression, no other custom-build features), lm-studio is the right choice** — it wins by 20-30 % on the same hardware running the same Metal kernels. Use a custom `llama-server` only when you need a feature lm-studio's bundled runtime lacks (MTP self-drafting, TurboQuant/RotorQuant KV cache, an upstream PR not yet released).
+
+---
+
+## 🤖 Results: deepseek-ai/DeepSeek-V4-Flash on ds4 {#results-deepseek-ai-deepseek-v4-flash-ds4}
+
+**Model:** `deepseek-ai/DeepSeek-V4-Flash` via `antirez/deepseek-v4-gguf` `IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix` (284 B-total / 13 B-active 256-expert `deepseek4` MoE, 2-bit routed experts + Q8 attn/shared/out, 81 GB GGUF, MIT). **Server:** `ds4` ("DwarfStar 4", [`antirez/ds4`](https://github.com/antirez/ds4)) — standalone native C + Metal engine on sidecar port 8101, `--ctx 65536` with disk-KV offload. Benchmarked 2026-05-18, Mac Studio M3 Ultra 96 GB-class, pre-bench hygiene applied (all other LLM servers stopped, 97 % memory free).
+
+### Why this is the only viable combo
+
+The `deepseek4` architecture (Hybrid Compressed-Sparse + Heavily-Compressed Attention, Manifold-Constrained Hyper-Connections) is **not in upstream `llama.cpp`** ([issue #22319](https://github.com/ggml-org/llama.cpp/issues/22319)), so lm-studio / llama-cpp-turboquant / llama-cpp-mtp cannot load it. The model card's recommended loaders (vLLM, SGLang) are CUDA-only. Of the published quants:
+
+- **persadian IQ1_S-XL (61.5 GB, smallest)** — only runs on `arishma108/llama.cpp feat/v4-port-cuda`, which is **CUDA-only, no Metal backend** → dead on Apple Silicon.
+- **batiai Q3_K_M…Q8_0 (135–302 GB)** — assume unmerged upstream `deepseek4` *and* exceed 96 GB-class RAM.
+- **antirez Q4KExperts (153–165 GB) / DeepSeek-V4-Pro IQ2XXS (465 GB)** — exceed RAM.
+- **antirez `q2-imatrix` (81 GB)** — author-matched quant on antirez's own `ds4` engine; the only RAM-fitting + Apple-Silicon + tool-call-capable pairing.
+
+So "try all quant × server combinations" collapses to exactly one runnable combo: **antirez q2-imatrix on ds4**. It passes.
+
+### Smoke (`bench_api_tool_call.py`)
+
+✅ **5/5 single-call** — `read_file` (5.41 s), `run_command` (2.21 s), `search_web`+`read_file` (4.22 s), `list_directory` (3.13 s), `run_command` (2.95 s), every one `finish_reason=tool_calls`. Multi-turn loop: 3 turns / 8.95 s clean (`read_file → write_file → stop`). Tool calls work end-to-end via `ds4`'s native DSML ↔ OpenAI mapping (no parser flags; exact-sampled-DSML replay map keeps multi-turn KV prefixes byte-aligned).
+
+### OpenCode end-to-end (`bench_agent_tool_call.py`, opencode, 1 warmup + 3 measured)
+
+| Scenario | Wall median | LLM median | Turns | Tools | Variance (p5–p95) |
+|:--|:--:|:--:|:--:|:--|:--|
+| Browse www.example.com | **18.78 s** | 17.96 s | 2 | `webfetch` | 11.24 – 21.69 s |
+| Browse Hackernews latest topic | **28.22 s** | 27.39 s | 3 | `webfetch` | 25.58 – 31.97 s |
+
+Zero errors, `webfetch` fired on every measured run, well under the 250 s p95 / 300 s OpenCode wall ceiling. Mid-pack agent-loop latency — slower than the leanest lm-studio MLX/GGUF mains, faster than several 70 B+ dense uncensored models — which is competitive for a **284 B knowledge-class model running 2-bit on a personal machine** with the 13 B-active MoE path carrying decode at a flat 25–35 tok/s. Cold long-context prefill is the cost (~860 tok/s @ 32 K), but `ds4`'s on-disk KV cache turns a 37.9 s cold 32 K prefill into a 6.8 s warm one (5.5×).
+
+Raw JSON: [`docs/models/benchmarks/deepseek-v4-flash/`](deepseek-v4-flash/). Full landscape + deployment: [`docs/models/per-model/model-summary-deepseek-v4.md`](../per-model/model-summary-deepseek-v4.md) · runbook [`docs/servers/ds4/summary.md`](../../servers/ds4/summary.md).
 

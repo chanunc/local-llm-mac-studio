@@ -18,7 +18,8 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
                                          chindamt-4b (Thai↔EN translation, sidecar) :8080
                                          qwen-asr (speech→text, no port — Python API)
                                          comfyui (image-gen, sidecar) :8188
-                                         OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus)
+                                         ds4 / DwarfStar 4 (DeepSeek-V4-Flash, sidecar) :8101
+                                         OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus; Responses for ds4)
 ```
 
 ## 🗂️ Repository Map
@@ -58,7 +59,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 ### 🚀 Start a Server
 
-Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, Osaurus `:1337`, comfyui `:8188`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
+Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
 
 <details>
 <summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
@@ -433,6 +434,34 @@ tail -f /tmp/comfyui.log                                                        
 </details>
 
 <details>
+<summary>🟢 <strong>ds4 / DwarfStar 4</strong> (:8101, sidecar) — DeepSeek-V4-Flash 284B/13B-active + stop</summary>
+
+```bash
+# ds4 — standalone native C+Metal engine for DeepSeek-V4-Flash on port 8101 (NOT
+# 8000/1234/8098/8099/8100/8188). Only Apple-Silicon path for the deepseek4 arch:
+# upstream llama.cpp doesn't implement it; vLLM/SGLang are CUDA-only; the persadian
+# IQ1_S-XL GGUF's only engine (arishma108/llama.cpp feat/v4-port-cuda) has no Metal.
+# One-time: git clone https://github.com/antirez/ds4.git && cd ds4 && make -j8;
+#           ./download_model.sh q2-imatrix  (81 GB; only tier that fits 96 GB-class).
+# Native DSML↔OpenAI tool calling (no parser flags). Default bind is 127.0.0.1 —
+# --host 0.0.0.0 is REQUIRED for LAN (--cors only adds headers, does not rebind).
+# See docs/servers/ds4/summary.md and docs/models/per-model/model-summary-deepseek-v4.md
+cd ~/ds4 && nohup ./ds4-server \
+  --host 0.0.0.0 --port 8101 \
+  --ctx 65536 --kv-disk-dir /tmp/ds4-kv --kv-disk-space-mb 8192 \
+  --trace /tmp/ds4-trace.txt \
+  > /tmp/ds4-server.log 2>&1 &
+
+pkill -f 'ds4-server'                                                            # stop ds4 / DwarfStar 4
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8101/v1/models | python3 -m json.tool             # health (port 8101; model id deepseek-v4-flash)
+tail -f /tmp/ds4-server.log                                                       # logs (port 8101, DeepSeek-V4-Flash)
+```
+
+</details>
+
+<details>
 <summary>🟢 <strong>qwen-asr</strong> (no port, sidecar) — speech→text, in-process Python API (no daemon)</summary>
 
 ```bash
@@ -556,10 +585,11 @@ The four port-8000 servers are **mutually exclusive** (one at a time); `lm-studi
 | **[mlx-lm](docs/servers/mlx-lm/summary.md)** | 8080 | ⚡ 186 tok/s | OpenAI | Thai ↔ English translation (`iapp/ChindaMT-4B`, 2.5 GB) |
 | **[qwen-asr](docs/servers/qwen-asr/summary.md)** | — | 🟢 19× realtime | Python only | Speech → text (`Qwen3-ASR-1.7B`, 30 langs + 22 Chinese dialects) |
 | **[comfyui](docs/servers/comfyui/summary.md)** | 8188 | 🟢 18 s/img | Web UI only | Image generation (`SeeSee21/Z-Anime`; no OpenAI image shim) |
+| **[ds4](docs/servers/ds4/summary.md)** | 8101 | 🟢 25–35 tok/s | OpenAI + Anthropic + Responses | DeepSeek-V4-Flash 284B/13B-active `deepseek4` MoE (only Apple-Silicon path; native DSML tool calling) |
 
 </details>
 
-All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
@@ -619,10 +649,11 @@ All models fit in **96GB unified memory**.
 </details>
 
 <details>
-<summary>🔀 <strong>MoE</strong> — 14 models</summary>
+<summary>🔀 <strong>MoE</strong> — 15 models</summary>
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--|:--|--:|--:|:--|
+| [DeepSeek-V4-Flash IQ2XXS-imatrix](docs/models/per-model/model-summary-deepseek-v4.md) | MoE 284B/13B-active (256 experts, `deepseek4`) | 81 | 65K (1M model max) | Only Apple-Silicon path for DeepSeek-V4-Flash (`ds4` :8101, MIT) — 284 B knowledge-class model at 2-bit, native DSML tool calling, 25–35 tok/s, smoke 5/5, browse 18.78 s / search 28.22 s |
 | [Gemma 4 26B-A4B (4-bit)](docs/models/per-model/model-summary-gemma.md#gemma-4-26b-a4b-4-bit) | MoE 26B/4B | 15 | 256K | Vision + video + reasoning + tool use |
 | [lmstudio-community Gemma 4 26B A4B-it Q8_0](docs/models/benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) | MoE 26B/4B active | 25 | 128K | Prior production main (2026-05-07 → 2026-05-10) — Apache 2.0, 70–86 tok/s, **API multi-turn 2.14 s 🏆**, OpenCode scaffolded browse 2.94 s 🥈 / search 7.20 s; bare prompts fail (needs "use webfetch" + literal URL) |
 | [mradermacher Huihui Gemma 4 26B A4B Abliterated i1-Q6_K](docs/models/uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) | MoE 26B/4B active | 22.64 | 65K | Apache 2.0 base, huihui-ai refusal-direction abliteration + mradermacher imatrix Q6_K GGUF (lm-studio); smoke 5/5 + multi-turn **1.93 s** (API-level leader), 91.6 / 72.2 tok/s @ 512 / 32K, **refusal 9/10** mlabonne (first Gemma 4 uncensored to clear 9/10), OpenCode browse **2.55 s 🥇** all-time leader / search 19.59 s (`task` subagent) |
@@ -689,6 +720,7 @@ Full results: [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call
 - **llama-cpp-mtp** — Custom-branch llama.cpp build (`am17an/llama.cpp@mtp-clean`, [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673) unmerged upstream). No JANG/JANGTQ/`bailing_hybrid`/MLX. `-np > 1` and `--mmproj` are unsupported with MTP active, removing the dense 27 B Qwen3.6's vision capability when on this sidecar. The flag is `--spec-type draft-mtp` (not `mtp`); default `--spec-draft-n-max` is 16, must override to 2 per the HF card. Standard `bench_api_server.py` filler prompt at temp=0 triggers a first-token EOS specific to this 6-bit MTP quant — use a real-content prompt rig for perf measurement. No Anthropic API. [Runbook](docs/servers/llama-cpp-mtp/summary.md)
 - **lm-studio** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30)
 - **comfyui** — Image-generation diffusion runtime, not a chat / agent server. No OpenAI `/v1/images/generations` API — clients can't trigger generations programmatically (web UI only at `:8188`). No JANG / JANGTQ / `bailing_hybrid` support (LLM concepts; doesn't apply to S3-DiT diffusion). Default attention backend errors on MPS — always launch with `--use-pytorch-cross-attention`. AIO checkpoint reload between Distill and Base BF16 variants takes ~25 s warm-up each swap (~19 GiB to MPS). Native MLX would beat MPS by an estimated 2–3× but Z-Anime has no MLX upload. [Runbook](docs/servers/comfyui/summary.md)
+- **ds4 (DwarfStar 4)** — Single-model standalone engine for DeepSeek-V4-Flash only (the `deepseek4` arch is unmerged in upstream `llama.cpp`; vLLM/SGLang are CUDA-only; the persadian IQ1_S-XL GGUF's only engine, `arishma108/llama.cpp feat/v4-port-cuda`, has no Metal backend). GGUF-locked to `antirez/deepseek-v4-gguf` — only `q2-imatrix` (81 GB) fits a 96 GB-class machine (`q4-imatrix` 153 GB, batiai Q3–Q8 135–302 GB do not). Default bind is `127.0.0.1`; LAN clients need `--host 0.0.0.0` (`--cors` does not rebind). Cold 32 K prefill ≈ 38 s (disk-KV cuts the warm hit to 6.8 s). Single graph worker, no batching. Alpha-quality engine (days old, GPT-5.5-assisted) — behaviour may change across `git pull`. **Never run the CPU path** (`make cpu` / `--cpu`) — documented macOS VM bug kernel-panics the machine. No JANG/JANGTQ/`bailing_hybrid`/MLX. [Runbook](docs/servers/ds4/summary.md)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/per-model/model-summary-nemotron.md#nemotron-server-compatibility)

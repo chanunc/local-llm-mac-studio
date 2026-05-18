@@ -28,6 +28,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`per-model/model-summary-granite-4.1.md`](per-model/model-summary-granite-4.1.md) | IBM Granite 4.1 30B Q8_0 GGUF — active lm-studio main (2026-05-05), Apache 2.0, 24.8 tok/s. |
 | [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md) | Qwen3-ASR family (1.7B / 0.6B / ForcedAligner-0.6B) — speech-to-text on M3 Ultra MPS, 19.06× RTF on 1.7B. |
 | [`per-model/model-summary-zaya1-8b.md`](per-model/model-summary-zaya1-8b.md) | Zyphra ZAYA1-8B (8.4B / 760M-active CCA + top-1 MoE) — Markovian RSA explanation, quant matrix, why vmlx-swift-lm via Osaurus is the only viable path. |
+| [`per-model/model-summary-deepseek-v4.md`](per-model/model-summary-deepseek-v4.md) | DeepSeek-V4-Flash (284B/13B-active `deepseek4` MoE) — quant landscape (only `antirez` q2-imatrix 81 GB fits 96 GB), why persadian IQ1_S/arishma108 is CUDA-only, why `ds4` (DwarfStar 4) is the sole Apple-Silicon path, full benchmarks. |
 
 ## Benchmarks
 

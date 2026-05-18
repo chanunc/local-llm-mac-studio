@@ -908,6 +908,30 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-05.
 
 ---
 
+## 🤖 DeepSeek-V4-Flash (284B/13B-active `deepseek4` MoE, IQ2XXS-imatrix) on ds4
+
+Model: `deepseek-v4-flash` from `antirez/deepseek-v4-gguf` `IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix` (284 B total / 13 B active, 256-expert MoE, 2-bit routed experts + Q8 attn/shared/out, 81 GB GGUF, MIT).
+
+Tested on **Mac Studio M3 Ultra (96 GB)** — 2026-05-18.
+
+**Server:** `ds4` ("DwarfStar 4", [`antirez/ds4`](https://github.com/antirez/ds4)) — standalone native C + Metal engine, sidecar port 8101, `--ctx 65536` + disk-KV offload. Only Apple-Silicon path for `deepseek4` (unmerged upstream `llama.cpp`; vLLM/SGLang CUDA-only). Raw JSON: [`deepseek-v4-flash/api-server-ds4.json`](deepseek-v4-flash/api-server-ds4.json).
+
+### Generation Speed (tok/s)
+
+| Context | Gen (tok/s) | Prefill (tok/s) | TTFT (s) |
+|:--------|------------:|----------------:|---------:|
+| 512 | **34.6** | 4,512 | 0.12 |
+| 4K | 26.9 | 737 | 5.58 |
+| 8K | 26.6 | 513 | 16.0 |
+| 32K | 25.4 | 4,851 warm / 864 cold | 6.8 warm / 37.9 cold |
+
+**Notes:**
+- 284 B total but only **13 B active/token** → flat ~25–35 tok/s decode, far above what a 284 B dense model would manage at 2-bit on Apple Silicon. The MoE sparsity path is what makes this model locally usable.
+- **Cold long-context prefill is the bottleneck** (~500–860 tok/s @ 8–32 K) — the Hybrid Compressed-Sparse + Heavily-Compressed Attention does heavy compute on first prefill. `ds4`'s SHA1-keyed **disk KV cache** turns a 37.9 s cold 32 K prefill into a **6.8 s warm** one (5.5×); this is the explicit design intent ("the KV cache is a first-class disk citizen").
+- 81 GB weights + 1.3 GB ctx buffers @ 65 K fit a 96 GB-class machine with disk-KV offload; `q4-imatrix` (153 GB) and batiai Q3–Q8 (135–302 GB) do not.
+
+---
+
 ## 128K Cross-Model Summary
 
 All models benchmarked at the 128K-context bucket (closest standard size to the 100K-class workload):

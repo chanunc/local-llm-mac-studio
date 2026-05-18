@@ -70,36 +70,19 @@ All numbers below are medians; per-model detail sections follow further down.
 
 ### API-level tool calling (direct `/v1/chat/completions`, 5-tool harness)
 
-Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
+Grouped by model type (matching the [root README](../../../README.md#-models) taxonomy: 🧱 Dense / 🧩 Hybrid MoE / 🔀 MoE). Within each group, rows are ordered by agentic loop time (ascending); 5/5 pass rate before ⚠ 4/5, ⛔ failures last. The three fastest passing models **within each group** are marked 🥇 / 🥈 / 🥉 (medals are per-group, not cross-type).
+
+#### 🧱 Dense
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
-| **Huihui Gemma 4 26B A4B Abliterated i1-Q6_K** | **lm-studio** | ✅ **5/5** | **0.30 - 0.71 s** | **0.34 - 0.35 s** | **1.93 s** 🏆 (new API-level leader; 9/10 mlabonne refusal · OpenCode browse 2.55 s 🥇 · [writeup](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md)) |
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **lm-studio** | ✅ **5/5** | **0.29 - 0.83 s** 🥈 | **0.34 - 0.35 s** 🥈 | **2.14 s** 🥈 |
-| **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | ✅ **5/5** | **0.29 - 0.68 s** | **0.34 s** | **2.14 s** 🥈 (tied with TrevorJS at API layer; OpenCode 3/3 with scaffolded prompts only — see end-to-end table) |
-| **lmstudio-community Gemma 4 26B A4B-it Q8_0** *(same GGUF, different server)* | `llama-cpp-mtp` :8100 (stock — no `--spec-type`) | ✅ **5/5** | 0.66 - 2.61 s | 0.95 - 1.34 s | **4.57 s** (~2.1× slower than lm-studio on the same blob; bare-prompt OpenCode 3/3 — see [llama-cpp-stock vs lm-studio comparison](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf)) |
-| Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
-| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | ✅ **5/5** | 1.11 - 1.61 s | 1.29 - 1.72 s | **4.94 s** |
-| Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
-| HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.43 - 1.60 s | 1.59 - 1.90 s | 5.37 s |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
-| majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit | mlx-openai-server | ⚠ 4/5 | 1.16 - 12.27 s | 1.37 - 4.28 s | **5.13 s** (text-only despite VL tag; no RotorQuant runtime; OpenCode browse 101.45 s 🐢) |
-| Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V | `llama-cpp-turboquant` :8099 (TheTom) | ⚠ 4/5 | 1.35 - 15.73 s | 1.62 - 4.67 s | **5.57 s** (auto-asymm K=q8_0; agent-loop speed leader 6.47s/15.64s) |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥉 | **1.51 - 1.53 s** 🥉 | 5.64 s |
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
-| Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
-| Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
-| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 0.90 - 9.72 s | 0.90 - 1.64 s | 6.73 s (dense 31B no-think · 30 tok/s · webfetch 2/2 in OpenCode) |
-| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | ⚠ 4/5 | 1.59 - 1.86 s | 1.52 - 3.26 s | **7.65 s** (length cap on agentic-reasoning at harness's 1024-tok max; 5/5 with bumped budget — multi-turn loop is clean) |
-| Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV | `llama-cpp-turboquant` :8099 (johndpope) | ✅ **5/5** | 2.00 - 16.91 s | 2.48 - 4.93 s | 8.48 s (decode strong but cold prefill timeout @ 32K) |
-| **DeepSeek-V4-Flash IQ2XXS-imatrix (284B/13B-active)** | `ds4` :8101 | ✅ **5/5** | 2.21 - 5.41 s | 3.13 - 4.22 s | **8.95 s** (`deepseek4` MoE 284B/13B-act 2-bit · **only Apple-Silicon path** · native DSML↔OpenAI · think-on · 25–35 tok/s · OpenCode browse 18.78 s / search 28.22 s · [per-model](../per-model/model-summary-deepseek-v4.md)) |
-
+| 🥇 Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
+| 🥈 Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
+| 🥉 TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 0.90 - 9.72 s | 0.90 - 1.64 s | 6.73 s (dense 31B no-think · 30 tok/s · webfetch 2/2 in OpenCode) |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **lm-studio** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | IBM Granite 4.1 30B Q8_0 | **lm-studio** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
 | Hermes 4 70B MLX-6bit | **lm-studio** | ✅ **5/5** | 2.26 - 7.86 s | 2.26 - 4.54 s | 13.34 s |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | ✅ **5/5** | 3.44 - 3.76 s | 4.23 - 8.13 s | 14.84 s |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | ✅ **5/5** | 1.31 - 6.63 s | 2.50 - 9.80 s | 15.48 s |
 | prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 4.19 - 6.85 s | 5.05 - 6.85 s | 16.88 s (dense 27B + think-on · 27-31 tok/s · GLM-5.1 distill long `<think>` · OpenCode end-to-end browse 11.62 s / search 19.47 s) |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | ✅ **5/5** | 4.73 - 5.75 s | 7.52 - 8.83 s | 19.31 s |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **lm-studio** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
@@ -107,9 +90,37 @@ Rows ordered by agentic loop time (ascending); 5/5 pass rate before 4/5.
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **lm-studio** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | ✅ **5/5** | 5.86 - 24.52 s | 6.31 - 11.50 s | 25.70 s |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s | 1.42 - 2.70 s | 6.99 s ⚠ |
 | magnum-v4-72b MLX-4bit | **lm-studio** | ⛔ **0/5** | N/A (no tool calls emitted) | N/A | N/A (multi-turn loop only passed) |
 | Midnight-Miqu-70B-v1.5 Q4_K_M GGUF | **lm-studio** | ⛔ **SKIP** | N/A — HTTP 400 (no system role support) | N/A | N/A |
+
+#### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
+
+| Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
+|:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
+| 🥇 HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
+| 🥈 prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
+| 🥉 Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
+| Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV | `llama-cpp-turboquant` :8099 (johndpope) | ✅ **5/5** | 2.00 - 16.91 s | 2.48 - 4.93 s | 8.48 s (decode strong but cold prefill timeout @ 32K) |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | ✅ **5/5** | 1.31 - 6.63 s | 2.50 - 9.80 s | 15.48 s |
+| majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit | mlx-openai-server | ⚠ 4/5 | 1.16 - 12.27 s | 1.37 - 4.28 s | **5.13 s** (text-only despite VL tag; no RotorQuant runtime; OpenCode browse 101.45 s 🐢) |
+| Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V | `llama-cpp-turboquant` :8099 (TheTom) | ⚠ 4/5 | 1.35 - 15.73 s | 1.62 - 4.67 s | **5.57 s** (auto-asymm K=q8_0; agent-loop speed leader 6.47s/15.64s) |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | ⚠ 4/5 | 1.42 - 1.80 s | 1.42 - 2.70 s | 6.99 s ⚠ |
+| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | ⚠ 4/5 | 1.59 - 1.86 s | 1.52 - 3.26 s | **7.65 s** (length cap on agentic-reasoning at harness's 1024-tok max; 5/5 with bumped budget — multi-turn loop is clean) |
+
+#### 🔀 MoE
+
+| Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
+|:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
+| 🥇 **Huihui Gemma 4 26B A4B Abliterated i1-Q6_K** | **lm-studio** | ✅ **5/5** | **0.30 - 0.71 s** | **0.34 - 0.35 s** | **1.93 s** 🏆 (new API-level leader; 9/10 mlabonne refusal · OpenCode browse 2.55 s 🥇 · [writeup](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md)) |
+| 🥈 TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | **lm-studio** | ✅ **5/5** | **0.29 - 0.83 s** 🥈 | **0.34 - 0.35 s** 🥈 | **2.14 s** 🥈 |
+| 🥉 **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | ✅ **5/5** | **0.29 - 0.68 s** | **0.34 s** | **2.14 s** 🥈 (tied with TrevorJS at API layer; OpenCode 3/3 with scaffolded prompts only — see end-to-end table) |
+| **lmstudio-community Gemma 4 26B A4B-it Q8_0** *(same GGUF, different server)* | `llama-cpp-mtp` :8100 (stock — no `--spec-type`) | ✅ **5/5** | 0.66 - 2.61 s | 0.95 - 1.34 s | **4.57 s** (~2.1× slower than lm-studio on the same blob; bare-prompt OpenCode 3/3 — see [llama-cpp-stock vs lm-studio comparison](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf)) |
+| Ling-2.6-flash mlx-6bit (104B/7.4B-active, bailing_hybrid) | vllm-mlx (patched) | ✅ **5/5** | 1.21 - 2.13 s | 1.61 - 1.81 s | **4.74 s** 🥈 |
+| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | ✅ **5/5** | 1.11 - 1.61 s | 1.29 - 1.72 s | **4.94 s** |
+| HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.43 - 1.60 s | 1.59 - 1.90 s | 5.37 s |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | ✅ **5/5** | **1.18 - 1.21 s** 🥉 | **1.51 - 1.53 s** 🥉 | 5.64 s |
+| **DeepSeek-V4-Flash IQ2XXS-imatrix (284B/13B-active)** | `ds4` :8101 | ✅ **5/5** | 2.21 - 5.41 s | 3.13 - 4.22 s | **8.95 s** (`deepseek4` MoE 284B/13B-act 2-bit · **only Apple-Silicon path** · native DSML↔OpenAI · think-on · 25–35 tok/s · OpenCode browse 18.78 s / search 28.22 s · [per-model](../per-model/model-summary-deepseek-v4.md)) |
 
 ⚠ Rust LoRA Agentic-reasoning prompt (`Find the largest file in /tmp`) hits the 1024-token cap because the model emits long Gemini-style chain-of-thought as `content` (no `<think>` wrapper, so the `qwen3` reasoning parser doesn't strip it). All other scenarios pass cleanly. JANGTQ4-CRACK passes 5/5 at API level — its Search-scenario hang was specific to the OpenCode end-to-end harness, not a model-level tool-call failure.
 
@@ -124,88 +135,112 @@ Two medians reported per scenario:
 - **Wall time** — full `opencode run` subprocess elapsed (bootstrap + LLM turns + tool execution + teardown). What a user waits for.
 - **LLM time** — sum of per-turn assistant `time.completed - time.created` from the session export. Matches the duration that opencode's TUI status bar displays (e.g. `▣ Build · ... · 50.8s`). Isolates model-side latency from client-side overhead.
 
-Rows ordered by browse wall time (ascending).
+Grouped by model type (matching the [root README](../../../README.md#-models) taxonomy: 🧱 Dense / 🧩 Hybrid MoE / 🔀 MoE). Within each group, rows are ordered by browse wall time (ascending); ⛔ failures last. The three fastest passing models **within each group** are marked 🥇 / 🥈 / 🥉 in the Model column (medals are per-group, not cross-type; any 🥇/🥈/🥉/🏆 inside metric cells is a legacy cross-type annotation).
+
+#### 🧱 Dense
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| **Huihui Gemma 4 26B A4B Abliterated i1-Q6_K** | **lm-studio** | **2.55 s 🥇** / 1.38 s | 19.59 s / 18.78 s | 2/2t · browse: `webfetch` · search: `task` subagent (distinct tool path from TrevorJS) · MoE 4B-act, no-think, 91.6 tok/s · **bare-prompt browse leader** · **9/10 mlabonne refusal** (first Gemma 4 uncensored to clear 9/10) · [writeup](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) |
-| **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥈** / 1.74 s | **7.35 s 🥇** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **uncensored search speed leader** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
-| **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | **2.94 s 🥉*** / ~1 s | 7.20 s* / ~5 s | 1/2t · `webfetch` · MoE 4B-act, no-think · *requires scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to browse <literal url> …`); **bare prompts hit 0/3** (RLHF refuses to guess URLs) · same speed-class as TrevorJS under scaffolding · [results](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) |
-| **mlx-community Gemma 4 26B A4B-it 4-bit MLX** | **lm-studio** | **3.29 s** / 2.02 s | **3.23 s 🏆** / 1.95 s | 2/2t · `webfetch` · MoE 4B-act, no-think, **114 tok/s** @ 512 / 77 tok/s @ 32 K · **fires bare prompts 3/3 (no scaffolding needed) — opposite of GGUF Q8_0 sibling**; search **2.2× faster** than its Q8_0 GGUF · 14.6 GiB loaded · [results](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) |
-| **lmstudio-community Gemma 4 26B A4B-it Q8_0** *(same GGUF, different server)* | `llama-cpp-mtp` :8100 (stock — no `--spec-type`) | **3.48 s** / 2.69 s | **9.56 s** / 8.76 s | 2/2t · `webfetch` · bare prompts fire **3/3** on llama.cpp (vs 0/3 on lm-studio with same Q8_0 — bare-prompt advantage); decode 87 → 73 tok/s @ 543 → 32 799 in (tied with lm-studio range); +**19 %** browse / +**30 %** search wall-time **vs lm-studio** for same model file — the delta is wrapper-layer overhead (HTTP, tool-call dispatch, chat-template), not decode · [comparison](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf) |
-| **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥉** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
-| **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
-| **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2/2t · `webfetch` · MoE 35B/3B, think-off · [results](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive) |
-| IBM Granite 4.1 30B Q8_0 | **lm-studio** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2/2t · `webfetch` · dense 30B, no-think, 24.8 tok/s · Apache 2.0 · [per-model](../per-model/model-summary-granite-4.1.md) |
-| **Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V** | `llama-cpp-turboquant` :8099 (TheTom fork) | **6.47 s** / 5.27 s | **15.64 s** / 14.38 s | 2/3t · `webfetch` · MoE 35B/3B, K=q8_0 + turbo3 V · **2.07×/2.27× vs Gemma 4 mlx-lm** · [per-model](../per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) |
-| **Dolphin Venice 24B MLX-8bit** | **lm-studio** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2/2t · `webfetch` · dense Mistral 24B, no-think · [results](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit) |
-| **TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF** | **lm-studio** | 6.63 s _(initial 10.08)_ / 5.41 s | 30.81 s _(initial 29.77)_ / 29.59 s | 2/2t · `webfetch` · dense 31B no-think · 30 tok/s · harness 6–7/10 / **manual 10/10** mlabonne (disclaimer-prefixed complies; harness varies on disclaimer wording) · [writeup](../uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
+| 🥇 IBM Granite 4.1 30B Q8_0 | **lm-studio** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2/2t · `webfetch` · dense 30B, no-think, 24.8 tok/s · Apache 2.0 · [per-model](../per-model/model-summary-granite-4.1.md) |
+| 🥈 **Dolphin Venice 24B MLX-8bit** | **lm-studio** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2/2t · `webfetch` · dense Mistral 24B, no-think · [results](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit) |
+| 🥉 **TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF** | **lm-studio** | 6.63 s _(initial 10.08)_ / 5.41 s | 30.81 s _(initial 29.77)_ / 29.59 s | 2/2t · `webfetch` · dense 31B no-think · 30 tok/s · harness 6–7/10 / **manual 10/10** mlabonne (disclaimer-prefixed complies; harness varies on disclaimer wording) · [writeup](../uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
 | **Dolphin 3.0 R1 Mistral 24B MLX-8bit** | **lm-studio** | **7.5 s** / 6.28 s | 34.52 s / 4.42 s | 2.5/7t · `webfetch`+`bash` · search variance 10–59 s, bash-loops · [results](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits) |
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2/2.5t · `webfetch` · dense 27B Q8_K_P, think-on · [results](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced) |
 | **prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF** | **lm-studio** | **11.62 s** / 10.82 s | **19.47 s** / 18.65 s | 2/2t · `webfetch` · dense 27B + VL, think-on, GLM-5.1 distilled · 48–81 reasoning tok in agent context · **search 9.4 s faster than HauhauCS Qwen3.6-27B Balanced Q8_K_P sibling** · [writeup](../uncen-model/qwen36-27b-glm51-da-benchmark.md) |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **mlx-lm** | 12.33 s / 11.12 s | 35.55 s / 34.38 s | 2/2t · `webfetch` · **think-ON** (121/124 tok) · prior lm-studio think-OFF: *5.11/6.37 s* · [results](#results-lmstudio-communitygemma-4-31b-it-mlx-6bit) |
-| Gemma 4 31B-it bf16 + MTP drafter | mlx-vlm 0.5.0 (incl. PRs #1112/#1115/#1117) | ⛔ **300 s timeout × 6** | ⛔ **300 s timeout × 6** | 0/0t · ⛔ no calls · drafter at upstream B=1 (3.07–4.29 acc, 12.3 tok/s) · 2 blockers: streaming hang on long-reasoning + bf16 8K reasoning ≈ 666 s/turn · non-stream harness 5/5 · [analysis](../per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
-| Zyphra ZAYA1-8B JANGTQ4 | vmlx-swift-lm via Osaurus 0.18.13 (pin `b9da180`) | ⛔ **300 s timeout × 1** | not run | 0/0t · ⛔ no `step_finish` · MoE 8.4B/760M-active · top-1 CCA + MoE · API-path decode 7-8 tok/s (engine missing `BatchEngine.generate` B=1 fast path + JANGTQ Hadamard kernel) · re-bench gated on Osaurus picking up [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (`cb8b3df`) · [analysis](../per-model/model-summary-zaya1-8b.md#chosen-path--vmlx-swift-lm-via-osaurus) |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2/2t · `webfetch` · sparse 3B-active MoE |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2/3t · `webfetch` · A3B sparsity · search splits top-stories + item fetches |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2/2t · `webfetch` · JANGTQ4 `mxtq` MoE 35B/3B + VL · search dominated by 8K turn-2 decode |
-| **mlx-community Qwen3.6-35B-A3B 6-bit MLX** | **lm-studio** | **14.88 s** / 13.59 s | **20.79 s** / 19.41 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on (57–68 reason tok) · gen 89 tok/s @ 512 / 76 tok/s @ 32 K · prefill 97 K tok/s @ 32 K · **3.0× slower browse / 1.7× slower search than unsloth Q6_K GGUF on same server** · [results](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) |
 | Hermes 4 70B MLX-6bit | **lm-studio** | 15.63 s / 14.39 s | 79.98 s / 78.74 s | 3/6t · `webfetch`+`bash` · dense 70B Llama · search bash-loops (8 calls) · [results](#results-lmstudio-communityhermes-4-70b-mlx-6bit) |
-| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | 15.72 s / 14.49 s | 21.38 s / 20.16 s | 2/2t · `webfetch` · MoE 35B/3B, no think prelude · [results](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx) |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | 18.73 s / 17.47 s | 71.02 s / 69.86 s | 2/3t · `webfetch` · dense 40B, think-on (Deckard/PDK) · [writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md) |
-| **DeepSeek-V4-Flash IQ2XXS-imatrix (284B/13B-active)** | `ds4` :8101 | **18.78 s** / 17.96 s | **28.22 s** / 27.39 s | 2/3t · `webfetch` · `deepseek4` 256-expert MoE 284B/13B-act, 2-bit q2-imatrix, think-on · 25–35 tok/s decode · disk-KV warm-prefill (38 s cold → 6.8 s warm @ 32 K) · **only Apple-Silicon path for DeepSeek-V4** · [per-model](../per-model/model-summary-deepseek-v4.md) · [runbook](../../servers/ds4/summary.md) |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2/2t · `webfetch` (one search → `skill`) · 7.4B active dominated by MLA cost |
-| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2/3t · `webfetch` · 87% draft accept · **search 2.1× slower than lm-studio** (prefill bound) |
 | Qwen3.6-27B 6bit (dense, mlx-community) | **lm-studio** | 31.96 s / 30.74 s | 25.71 s / 24.51 s | 2/2t · `webfetch` · prefill 47K tok/s @ 32K · [api-server bench](model-benchmark-api-server.md#qwen36-27b-6-bit-standard-mlx-on-lm-studio-vs-vllm-mlx) |
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **lm-studio** | 33.55 s / 32.21 s | 102.65 s / 101.44 s | 2–3t · `webfetch` · dense 31B **think-on** · `<\|channel>thought` consumes most of 21 tok/s · [writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
 | unsloth Qwen3.6-27B-MTP UD-Q6_K_XL + MTP self-drafting | `llama-cpp-mtp` :8100 | 35.98 s / 35.20 s | 35.24 s / 34.45 s | 2/2t · `webfetch` · dense 27B + MTP heads, think-on · 84–89 % draft acceptance · 22.9 → 20.0 tok/s decode @ 414 → 29 128 in · variance browse 24.5–48.3 / search 29.4–70.5 · slower than lm-studio Q4_K_M main · [technique](../techniques/model-technique-qwen-3-6-mtp.md) · [runbook](../../servers/llama-cpp-mtp/summary.md) |
-| magnum-v4-72b MLX-4bit | **lm-studio** | ⛔ N/A (no tools) | ⛔ N/A (no tools) | ⛔ no tools — answers from training memory · [results](#results-heni86magnum-v4-72b_mlx-4bit) |
-| MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s ⚠ / 54.29 s | ⛔ **fail** | browse 1/3 invalid + 2/3 hit 8K cap · search 0/3 zero calls · API-level single-tool *works* — OpenCode 10-tool catalog + think-on breaks it |
 | Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s / 67.93 s | 108.51 s / 107.29 s | 2/3t · `webfetch` · dense 27B + think-on adds 30+ s/turn |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2/3t · `webfetch`+`bash` · A3B but TurboQuant kernels slow under deep think |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s / 96.75 s | 127.28 s / 126.05 s | 2/2t · `webfetch` · standard 6-bit MLX, no JANG speedup · slowest browse (think-on dense) |
+| Gemma 4 31B-it bf16 + MTP drafter | mlx-vlm 0.5.0 (incl. PRs #1112/#1115/#1117) | ⛔ **300 s timeout × 6** | ⛔ **300 s timeout × 6** | 0/0t · ⛔ no calls · drafter at upstream B=1 (3.07–4.29 acc, 12.3 tok/s) · 2 blockers: streaming hang on long-reasoning + bf16 8K reasoning ≈ 666 s/turn · non-stream harness 5/5 · [analysis](../per-model/model-summary-gemma.md#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) |
+| magnum-v4-72b MLX-4bit | **lm-studio** | ⛔ N/A (no tools) | ⛔ N/A (no tools) | ⛔ no tools — answers from training memory · [results](#results-heni86magnum-v4-72b_mlx-4bit) |
+
+#### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
+
+| Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
+|:------|:-------|:-------------------:|:-------------------:|:------|
+| 🥇 **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s 🥉** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
+| 🥈 **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
+| 🥉 HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
+| **Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V** | `llama-cpp-turboquant` :8099 (TheTom fork) | **6.47 s** / 5.27 s | **15.64 s** / 14.38 s | 2/3t · `webfetch` · MoE 35B/3B, K=q8_0 + turbo3 V · **2.07×/2.27× vs Gemma 4 mlx-lm** · [per-model](../per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) |
+| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2/3t · `webfetch` · A3B sparsity · search splits top-stories + item fetches |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2/2t · `webfetch` · JANGTQ4 `mxtq` MoE 35B/3B + VL · search dominated by 8K turn-2 decode |
+| **mlx-community Qwen3.6-35B-A3B 6-bit MLX** | **lm-studio** | **14.88 s** / 13.59 s | **20.79 s** / 19.41 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on (57–68 reason tok) · gen 89 tok/s @ 512 / 76 tok/s @ 32 K · prefill 97 K tok/s @ 32 K · **3.0× slower browse / 1.7× slower search than unsloth Q6_K GGUF on same server** · [results](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) |
+| Qwen3.6-35B-A3B 4-bit + DFlash drafter | dflash-mlx | 27.59 s / 26.38 s | 54.78 s / 53.58 s | 2/3t · `webfetch` · 87% draft accept · **search 2.1× slower than lm-studio** (prefill bound) |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s / 69.88 s | 154.18 s / 152.94 s | 2/3t · `webfetch`+`bash` · A3B but TurboQuant kernels slow under deep think |
 | majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit | **mlx-openai-server** | **101.45 s 🐢** / 100.26 s | 21.25 s / 20.05 s | 2/3t · `webfetch` · **text-only despite VL tag** (no vision_tower) · turn 1: 98.87 s for 68 tok — qwen3 parser likely not stripping `<think>` · [per-model](../per-model/model-summary-qwen-3-6.md#majentik-qwen36-35b-a3b-rotorquant-mlx-6bit) |
+
+#### 🔀 MoE
+
+| Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
+|:------|:-------|:-------------------:|:-------------------:|:------|
+| 🥇 **Huihui Gemma 4 26B A4B Abliterated i1-Q6_K** | **lm-studio** | **2.55 s 🥇** / 1.38 s | 19.59 s / 18.78 s | 2/2t · browse: `webfetch` · search: `task` subagent (distinct tool path from TrevorJS) · MoE 4B-act, no-think, 91.6 tok/s · **bare-prompt browse leader** · **9/10 mlabonne refusal** (first Gemma 4 uncensored to clear 9/10) · [writeup](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) |
+| 🥈 **TrevorJS Gemma 4 26B A4B Uncensored Q8_0** | **lm-studio** | **2.93 s 🥈** / 1.74 s | **7.35 s 🥇** / 6.15 s | 2/2t · `webfetch` · MoE 4B-act, no-think, 87.6 tok/s · **uncensored search speed leader** · 8/10 mlabonne refusal · [writeup](../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
+| 🥉 **lmstudio-community Gemma 4 26B A4B-it Q8_0** | **lm-studio** | **2.94 s 🥉*** / ~1 s | 7.20 s* / ~5 s | 1/2t · `webfetch` · MoE 4B-act, no-think · *requires scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to browse <literal url> …`); **bare prompts hit 0/3** (RLHF refuses to guess URLs) · same speed-class as TrevorJS under scaffolding · [results](#results-lmstudio-community-gemma-4-26b-a4b-it-q8) |
+| **mlx-community Gemma 4 26B A4B-it 4-bit MLX** | **lm-studio** | **3.29 s** / 2.02 s | **3.23 s 🏆** / 1.95 s | 2/2t · `webfetch` · MoE 4B-act, no-think, **114 tok/s** @ 512 / 77 tok/s @ 32 K · **fires bare prompts 3/3 (no scaffolding needed) — opposite of GGUF Q8_0 sibling**; search **2.2× faster** than its Q8_0 GGUF · 14.6 GiB loaded · [results](#results-mlx-communitygemma-4-26b-a4b-it-4bit-on-lm-studio) |
+| **lmstudio-community Gemma 4 26B A4B-it Q8_0** *(same GGUF, different server)* | `llama-cpp-mtp` :8100 (stock — no `--spec-type`) | **3.48 s** / 2.69 s | **9.56 s** / 8.76 s | 2/2t · `webfetch` · bare prompts fire **3/3** on llama.cpp (vs 0/3 on lm-studio with same Q8_0 — bare-prompt advantage); decode 87 → 73 tok/s @ 543 → 32 799 in (tied with lm-studio range); +**19 %** browse / +**30 %** search wall-time **vs lm-studio** for same model file — the delta is wrapper-layer overhead (HTTP, tool-call dispatch, chat-template), not decode · [comparison](#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf) |
+| **HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | **5.21 s** / 4.0 s | 10.54 s / 9.34 s | 2/2t · `webfetch` · MoE 35B/3B, think-off · [results](#results-hauhaucsqwen35-35b-a3b-uncensored-hauhaucs-aggressive) |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s / 11.47 s | 16.28 s / 14.98 s | 2/2t · `webfetch` · sparse 3B-active MoE |
+| Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | **lm-studio** | 15.72 s / 14.49 s | 21.38 s / 20.16 s | 2/2t · `webfetch` · MoE 35B/3B, no think prelude · [results](#results-aitraderhuihui-qwen35-35b-a3b-abliterated-4bit-mlx) |
+| **DeepSeek-V4-Flash IQ2XXS-imatrix (284B/13B-active)** | `ds4` :8101 | **18.78 s** / 17.96 s | **28.22 s** / 27.39 s | 2/3t · `webfetch` · `deepseek4` 256-expert MoE 284B/13B-act, 2-bit q2-imatrix, think-on · 25–35 tok/s decode · disk-KV warm-prefill (38 s cold → 6.8 s warm @ 32 K) · **only Apple-Silicon path for DeepSeek-V4** · [per-model](../per-model/model-summary-deepseek-v4.md) · [runbook](../../servers/ds4/summary.md) |
+| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active, hybrid MLA + linear-attn) | vllm-mlx (patched) | 25.75 s / 24.50 s | 29.64 s / 28.40 s | 2/2t · `webfetch` (one search → `skill`) · 7.4B active dominated by MLA cost |
+| MiMo V2.5 4-bit, 130-expert pruned (jedisct1) | vllm-mlx (patched) | 55.51 s ⚠ / 54.29 s | ⛔ **fail** | browse 1/3 invalid + 2/3 hit 8K cap · search 0/3 zero calls · API-level single-tool *works* — OpenCode 10-tool catalog + think-on breaks it |
+| Zyphra ZAYA1-8B JANGTQ4 | vmlx-swift-lm via Osaurus 0.18.13 (pin `b9da180`) | ⛔ **300 s timeout × 1** | not run | 0/0t · ⛔ no `step_finish` · MoE 8.4B/760M-active · top-1 CCA + MoE · API-path decode 7-8 tok/s (engine missing `BatchEngine.generate` B=1 fast path + JANGTQ Hadamard kernel) · re-bench gated on Osaurus picking up [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (`cb8b3df`) · [analysis](../per-model/model-summary-zaya1-8b.md#chosen-path--vmlx-swift-lm-via-osaurus) |
 
 **2026-04-30 re-run note:** all six models re-benchmarked under a new prompt set (`Browse www.example.com` for browse, `Browse Hackernews, get the only one latest topic` for search). The old prompts (`Browse github.com` and `Search 3 latest ai agentic tools on github.com`) often elicited a clarification round instead of an immediate webfetch — adding model-side variance unrelated to inference latency. New prompts are concrete URLs / a deterministic public API, so every model fires webfetch on turn 1. **Numbers in this table are not directly comparable to the 2026-04-27 entries in `agent-bench.prev.json`** — work-per-scenario differs. JANG_4K leapfrogs Rust LoRA on search now that both run the same 2-turn webfetch path with no `task` / `bash` outliers. Per-model deep-dive sections below retain the 2026-04-27 prompt-set analysis; the new raw runs are in each model's `agent-bench.json`.
 
 ### Server / parser flag matrix
 
-Rows ordered alphabetically by model name.
+Grouped by model type (matching the [root README](../../../README.md#-models) taxonomy: 🧱 Dense / 🧩 Hybrid MoE / 🔀 MoE). Within each group, rows are ordered alphabetically by model name.
+
+#### 🧱 Dense
 
 | Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
 |:------|:-------|:---------------------|:---------------------|:--------------|
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | lm-studio | (built-in) | (built-in — `<\|channel>thought` → `reasoning_content`) | none — LM Studio Gemma 4 runtime. Guardrail override **required** before initial load (see [bench writeup](../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)) |
-| IBM Granite 4.1 30B Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix | lm-studio | (built-in) | (built-in) | none — LM Studio Qwen3 chat template + `<think>` handled natively. Guardrail override **required** before initial load (dense 40B + 131K; see [bench writeup](../uncen-model/qwen36-40b-davidau-heretic-benchmark.md)) |
-| DeepSeek-V4-Flash IQ2XXS-imatrix (antirez GGUF) | ds4 :8101 | (built-in — native DSML ↔ OpenAI tool-call mapping, no flag) | (built-in — DeepSeek `<think>` streamed in native API shape; `model=deepseek-chat` / `think=false` disables) | none — pure C + Metal `make` build, no cmake/Python/patches. GGUF-locked to `antirez/deepseek-v4-gguf`; `./download_model.sh q2-imatrix`. Launch with `--host 0.0.0.0 --port 8101 --kv-disk-dir` (default bind is 127.0.0.1; `--cors` does not rebind). Only `q2-imatrix` (81 GB) fits 96 GB-class RAM; persadian IQ1_S/arishma108 fork is CUDA-only. See [runbook](../../servers/ds4/summary.md) |
-| Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` (the mlx-lm `match()` patch was retired 2026-05-08, now stock in mlx-lm 0.31.3) |
+| Dolphin 3.0 R1 Mistral 24B MLX-8bits | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
+| Dolphin Venice 24B MLX-8bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | lm-studio | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio runtime auto-detects Gemma 4 tool-call format and routes `<think>` to `reasoning_content` |
 | Gemma 4 31B-it (lmstudio-community 6-bit) | mlx-lm server (direct) | N/A (native Gemma 4 format) | N/A (thinking emitted as part of content in streaming) | none — launch via Cellar libexec binary (`/opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server`); the `/opt/homebrew/bin/mlx_lm.server` symlink resolves to a python3.11 mlx_lm install that lacks Gemma 4 support. Thinking mode ON by default |
 | Gemma 4 31B-it bf16 + MTP drafter (gemma4_assistant) | mlx-vlm 0.5.0 (from main; incl. PRs #1112/#1115/#1117) | N/A | N/A | install mlx-vlm from `git+https://github.com/Blaizzy/mlx-vlm.git@main` (PyPI 0.4.4 lacks `mlx_vlm.speculative`). Launch with `--draft-model mlx-community/gemma-4-31B-it-assistant-bf16 --draft-kind mtp --draft-block-size 6` and **set `MLX_VLM_SPEC_BATCH_WAIT_MS=10`** (PR #1117) for concurrent agent workloads. Streaming SSE silence on first attempt likely traces to missing `chat_template.jinja` per [#941](https://github.com/Blaizzy/mlx-vlm/issues/941). Re-test pending. Cap context ≤ 16 K (32 K+ Metal-OOMs at 118 GB vs 62 GB cap) |
-| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | lm-studio | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
-| Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
-| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
+| HauhauCS Qwen3.6-27B Balanced Q8_K_P | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`. Download via `hf_hub_download` (Q8_K_P file) — `lms get` cannot resolve custom quant label. |
+| Hermes 4 70B MLX-6bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Large (53 GiB loaded) — may OOM alongside other models. |
+| IBM Granite 4.1 30B Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
+| magnum-v4-72b MLX-4bit | lm-studio | N/A (does not call tools) | N/A | none — tool calling not functional regardless of flags. Do not use for agentic tasks. |
+| Midnight-Miqu-70B-v1.5 Q4_K_M | lm-studio | N/A (HTTP 400 on tool requests) | N/A | none — chat-template only supports user/assistant roles; system-role tool definitions rejected. |
 | prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | (built-in) | (built-in) | none — LM Studio auto-detects qwen35 chat template + `<think>`. 15.4 GiB ≪ guardrail threshold so no dance. Bench-rig caveat: requires `scripts/bench/bench_agent_tool_call.py` fix that pins `env["PWD"]=cwd` on OpenCode 1.14.50+ — without it, the inherited `PWD` makes OpenCode bootstrap in the wrong project and `proc.stdout` ends up empty (false 0-turns reading) |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patches/patch_vllm_mlx_streaming_tools.py` |
-| Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as JANG 4K |
 | Qwen3.6-27B 6bit (mlx-community) | lm-studio | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
+| Qwen3.6-27B JANG 4M | vllm-mlx | `qwen3_coder` | `qwen3` | same as JANG 4K |
+
+#### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
+
+| Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
+|:------|:-------|:---------------------|:---------------------|:--------------|
+| HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P | lm-studio | (built-in) | (built-in) | none — LM Studio runtime. Custom `K_P` quant labels: use `hf_hub_download` + `lms import -L` |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
+| prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio auto-detects qwen35moe chat template. Guardrail workaround required if loading after other models (see [bench writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md)) |
+| Qwen3.6-35B-A3B 4-bit + DFlash | dflash-mlx | (built-in via `mlx_lm.server`) | (built-in — `delta.reasoning`) | `scripts/patches/patch_dflash_mlx_serve.py` (the mlx-lm `match()` patch was retired 2026-05-08, now stock in mlx-lm 0.31.3) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | `qwen3` | `qwen3` | `scripts/patches/patch_vmlx_jangtq_mllm_tools.py` |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard 8-bit MLX safetensors — `qwen3_5_moe` arch in mlx-lm 0.31.1) |
 | unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF) | lm-studio | (built-in) | (built-in — `<think>` → `reasoning_content`) | none — LM Studio Qwen3 chat template + reasoning parser handle the unsloth Dynamic 2.0 imatrix natively. Discoverability: `lms ls` does not see HF-cached blobs — use `lms import -L --user-repo unsloth/Qwen3.6-35B-A3B-GGUF -y <path-to-Qwen3.6-35B-A3B-UD-Q6_K.gguf>` to hard-link from `~/.cache/huggingface/hub/` into `~/.lmstudio/models/`. Guardrail override **required** before initial load (27.3 GiB Q6_K GGUF > 25 % of 96 GB unified memory). |
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
-| Zyphra ZAYA1-8B JANGTQ4 | vmlx-swift-lm via Osaurus | (built-in — `tool_parser=zaya_xml` per JANGTQ4 capabilities sidecar) | N/A (`supports_thinking=false`) | none on the parser side — engine ships ZAYA dispatch via `LLMTypeRegistry.types["zaya"]`. Two **operational** gotchas: (1) `osaurus pull` writes to `~/.osaurus/models/` but `osaurus serve` defaults to `~/MLXModels/` — always launch with `OSU_MODELS_DIR=$HOME/.osaurus/models`; (2) `osaurus serve --expose --yes` doesn't rebind off 127.0.0.1, so LAN benches need `ssh -L 1337:127.0.0.1:1337 macstudio`. Cask 0.18.13 (engine pin `b9da180`) is **missing the JANGTQ B=1 fast path** ([PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057), merged to main 2026-05-12 as `cb8b3df`, not yet released) — agent loops timeout at OpenCode's 300 s wall until a cask picks up the new pin. |
-| lmstudio-community Gemma 4 26B A4B-it Q8_0 (standardised) | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio runtime. **Source matters:** `unsloth/gemma-4-26B-A4B-it-GGUF`'s chat template fails LM Studio's jinja with `Cannot call something that is not a function: got UndefinedValue` (HTTP 400 on every request with `tools[]`); use `lmstudio-community/gemma-4-26B-A4B-it-GGUF` instead — same Google base, Apache 2.0, fixed template. Guardrail override required (25 GiB > 25 % of 96 GB). Two `gemma-4-26b-a4b-it`-prefix entries in `lms ls` (vs. TrevorJS's `-uncensored` suffix) — load via prefix relies on alphabetical ordering, or pass full path: `unsloth/gemma-4-26B-A4B-it-GGUF/...gguf` is rejected by `lms load` so prefix is the only route. |
+
+#### 🔀 MoE
+
+| Model | Server | `--tool-call-parser` | `--reasoning-parser` | Required patch |
+|:------|:-------|:---------------------|:---------------------|:--------------|
+| DeepSeek-V4-Flash IQ2XXS-imatrix (antirez GGUF) | ds4 :8101 | (built-in — native DSML ↔ OpenAI tool-call mapping, no flag) | (built-in — DeepSeek `<think>` streamed in native API shape; `model=deepseek-chat` / `think=false` disables) | none — pure C + Metal `make` build, no cmake/Python/patches. GGUF-locked to `antirez/deepseek-v4-gguf`; `./download_model.sh q2-imatrix`. Launch with `--host 0.0.0.0 --port 8101 --kv-disk-dir` (default bind is 127.0.0.1; `--cors` does not rebind). Only `q2-imatrix` (81 GB) fits 96 GB-class RAM; persadian IQ1_S/arishma108 fork is CUDA-only. See [runbook](../../servers/ds4/summary.md) |
 | HauhauCS Qwen3.5-35B-A3B Aggressive Q6_K | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`; default 4K too small for OpenCode system prompt. Download via `hf_hub_download` (Q6_K file) — `lms get` cannot resolve repo. |
 | Huihui Qwen3.5-35B-A3B abliterated 4bit MLX | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Download via `snapshot_download` — `lms get` cannot resolve repo. |
-| Dolphin Venice 24B MLX-8bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
-| Dolphin 3.0 R1 Mistral 24B MLX-8bits | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. |
-| HauhauCS Qwen3.6-27B Balanced Q8_K_P | lm-studio | (built-in) | (built-in) | none — LM Studio GGUF runtime. Load with `--context-length 32768`. Download via `hf_hub_download` (Q8_K_P file) — `lms get` cannot resolve custom quant label. |
-| Hermes 4 70B MLX-6bit | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio MLX runtime. Load with `--context-length 32768`. Large (53 GiB loaded) — may OOM alongside other models. |
-| magnum-v4-72b MLX-4bit | lm-studio | N/A (does not call tools) | N/A | none — tool calling not functional regardless of flags. Do not use for agentic tasks. |
-| Midnight-Miqu-70B-v1.5 Q4_K_M | lm-studio | N/A (HTTP 400 on tool requests) | N/A | none — chat-template only supports user/assistant roles; system-role tool definitions rejected. |
+| Ling-2.6-flash mlx-6bit | vllm-mlx | `hermes` | (none — model has no `<think>`) | vendored `mlx_lm/models/bailing_hybrid.py` from PR [#1227](https://github.com/ml-explore/mlx-lm/pull/1227) + `scripts/patches/patch_mlx_lm_threadlocal_stream.py` + `scripts/patches/patch_vllm_mlx_inline_gen.py` |
+| lmstudio-community Gemma 4 26B A4B-it Q8_0 (standardised) | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio runtime. **Source matters:** `unsloth/gemma-4-26B-A4B-it-GGUF`'s chat template fails LM Studio's jinja with `Cannot call something that is not a function: got UndefinedValue` (HTTP 400 on every request with `tools[]`); use `lmstudio-community/gemma-4-26B-A4B-it-GGUF` instead — same Google base, Apache 2.0, fixed template. Guardrail override required (25 GiB > 25 % of 96 GB). Two `gemma-4-26b-a4b-it`-prefix entries in `lms ls` (vs. TrevorJS's `-uncensored` suffix) — load via prefix relies on alphabetical ordering, or pass full path: `unsloth/gemma-4-26B-A4B-it-GGUF/...gguf` is rejected by `lms load` so prefix is the only route. |
+| Qwen3.5-35B-A3B JANG 4K | vllm-mlx | `qwen3_coder` | `qwen3` | `scripts/patches/patch_vllm_mlx_streaming_tools.py` |
+| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — `lms server start --bind 0.0.0.0 --cors`; LM Studio auto-detects Gemma 4 tool-call format. Guardrail override **required** before initial load (`lms guardrails set --guardrails-level off`; restore after load) |
+| Zyphra ZAYA1-8B JANGTQ4 | vmlx-swift-lm via Osaurus | (built-in — `tool_parser=zaya_xml` per JANGTQ4 capabilities sidecar) | N/A (`supports_thinking=false`) | none on the parser side — engine ships ZAYA dispatch via `LLMTypeRegistry.types["zaya"]`. Two **operational** gotchas: (1) `osaurus pull` writes to `~/.osaurus/models/` but `osaurus serve` defaults to `~/MLXModels/` — always launch with `OSU_MODELS_DIR=$HOME/.osaurus/models`; (2) `osaurus serve --expose --yes` doesn't rebind off 127.0.0.1, so LAN benches need `ssh -L 1337:127.0.0.1:1337 macstudio`. Cask 0.18.13 (engine pin `b9da180`) is **missing the JANGTQ B=1 fast path** ([PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057), merged to main 2026-05-12 as `cb8b3df`, not yet released) — agent loops timeout at OpenCode's 300 s wall until a cask picks up the new pin. |
 
 ---
 
@@ -286,20 +321,32 @@ Full agentic tool use works end-to-end through OpenCode. The 2026-04-24 re-run u
 
 Prompt: `"Browse www.example.com"`
 
-Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for all except TrevorJS (2026-05-03).
+Grouped by model type (matching the [root README](../../../README.md#-models) taxonomy: 🧱 Dense / 🧩 Hybrid MoE / 🔀 MoE). Within each group, rows are ordered by response time (ascending); the three fastest models **within each group** are marked 🥇 / 🥈 / 🥉 in the Model column (medals are per-group, not cross-type; any 🏆/🥈/🥉 inside the Response-Time cell is a legacy cross-type annotation). Date varies by model: 2026-04-30 for all except TrevorJS (2026-05-03).
+
+#### 🧱 Dense
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
-| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | **6.63 s** _(initial 10.08)_ | 2 | `webfetch` | ~10.8K in / ~12–20 out |
-| prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 11.62 s | 2 | `webfetch` | ~11.7K in / ~32 out |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥉 | 2 | `webfetch` | ~10.8K in / ~136 out |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 25.75 s | 2 | `webfetch` | ~10.8K in / ~135 out |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
+| 🥇 TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | **6.63 s** _(initial 10.08)_ | 2 | `webfetch` | ~10.8K in / ~12–20 out |
+| 🥈 prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 11.62 s | 2 | `webfetch` | ~11.7K in / ~32 out |
+| 🥉 Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s | 2 | `webfetch` | ~10.7K in / ~137 out |
+
+#### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
+
+| Model | Server | Response Time (median) | Turns | Tools | Tokens |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|
+| 🥇 Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥉 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| 🥈 Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
+| 🥉 Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
+
+#### 🔀 MoE
+
+| Model | Server | Response Time (median) | Turns | Tools | Tokens |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|
+| 🥇 TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **2.93 s 🏆** | 2 | `webfetch` | ~10.8K in / ~20–37 out |
+| 🥈 Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 12.86 s 🥈 | 2 | `webfetch` | ~10.8K in / ~136 out |
+| 🥉 Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 25.75 s | 2 | `webfetch` | ~10.8K in / ~135 out |
 
 The new prompt removes the clarification round the old `Browse github.com` triggered on every model — every model now fires `webfetch https://www.example.com` on turn 1 and emits the page summary on turn 2. Wall-time spread reflects pure inference latency (sparsity + thinking-on density), not model decision-making.
 
@@ -309,20 +356,32 @@ The new prompt removes the clarification round the old `Browse github.com` trigg
 
 Prompt: `"Browse Hackernews, get the only one latest topic"`
 
-Rows ordered by response time (ascending). Date varies by model: 2026-04-30 for all except TrevorJS (2026-05-03).
+Grouped by model type (matching the [root README](../../../README.md#-models) taxonomy: 🧱 Dense / 🧩 Hybrid MoE / 🔀 MoE). Within each group, rows are ordered by response time (ascending); the three fastest models **within each group** are marked 🥇 / 🥈 / 🥉 in the Model column (medals are per-group, not cross-type; any 🏆/🥈/🥉 inside the Response-Time cell is a legacy cross-type annotation). Date varies by model: 2026-04-30 for all except TrevorJS (2026-05-03).
+
+#### 🧱 Dense
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
-| TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **7.35 s 🏆** | 2 | `webfetch` | ~26K | ~13K/turn |
-| Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 16.28 s 🥈 | 2 | `webfetch` | ~26K | ~13K/turn |
-| prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 19.47 s | 2 | `webfetch` | ~25K | ~12K/turn |
-| Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥉 | 3 | `webfetch` | ~43K | ~13K/turn |
-| Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
-| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | 30.81 s _(initial 29.77)_ | 2 | `webfetch` | ~26.9K | ~13K/turn |
-| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
+| 🥇 prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 19.47 s | 2 | `webfetch` | ~25K | ~12K/turn |
+| 🥈 TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | 30.81 s _(initial 29.77)_ | 2 | `webfetch` | ~26.9K | ~13K/turn |
+| 🥉 Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 127.28 s | 2 | `webfetch` | ~23K | ~12K/turn |
-| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
-| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 252.67 s _(was 135.06 s on 1.3.65)_ | 2 | `webfetch` | ~13K | turn 2 = 8,192 out tokens at regressed long-context decode |
+
+#### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
+
+| Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
+| 🥇 Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥉 | 3 | `webfetch` | ~43K | ~13K/turn |
+| 🥈 Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
+| 🥉 Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 252.67 s _(was 135.06 s on 1.3.65)_ | 2 | `webfetch` | ~13K | turn 2 = 8,192 out tokens at regressed long-context decode |
+
+#### 🔀 MoE
+
+| Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
+|:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
+| 🥇 TrevorJS Gemma 4 26B A4B Uncensored Q8_0 | lm-studio | **7.35 s 🏆** | 2 | `webfetch` | ~26K | ~13K/turn |
+| 🥈 Qwen3.5-35B-A3B JANG 4K | vllm-mlx (patched) | 16.28 s 🥈 | 2 | `webfetch` | ~26K | ~13K/turn |
+| 🥉 Ling-2.6-flash mlx-6bit (sparse 104B/7.4B-active) | vllm-mlx (patched) | 29.64 s | 2 | `webfetch`, `skill` | ~23K | ~12K/turn |
 
 The Firebase top-stories API + per-item-metadata pattern resolves cleanly in 2-3 webfetch turns for every model — JANG_4K's 2-turn convergence (it inlines top-id-fetch + top-item-fetch into a single reasoned call) is what gives it the win over Rust LoRA's 3-turn approach. JANGTQ4-CRACK's outlier search wall (one run hit 297 s) is the abliterated TurboQuant kernels stalling under deep thinking, not a tool-loop problem.
 

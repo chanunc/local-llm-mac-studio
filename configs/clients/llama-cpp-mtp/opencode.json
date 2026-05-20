@@ -9,7 +9,16 @@
       },
       "models": {
         "qwen3.6-27b-mtp-ud-q6kxl": {
-          "name": "Qwen3.6-27B UD-Q6_K_XL + MTP self-drafting speculative decoding (am17an/llama.cpp@mtp-clean, PR #22673 — provisional sidecar)",
+          "name": "Qwen3.6-27B UD-Q6_K_XL + MTP self-drafting (dense 27B, am17an fork or mainline)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          }
+        },
+        "huihui-qwen36-35b-mtp-abliterated-q6k": {
+          "name": "Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K (MoE 35B/3B, mainline llama.cpp, draft-mtp n-max 2)",
           "tools": true,
           "reasoning": true,
           "limit": {

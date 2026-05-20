@@ -13,7 +13,7 @@ The value proposition is **~1.5–2× faster decode tok/s without changing outpu
 | **What it is** | Multi-Token Prediction (MTP) / Next-n: model predicts N tokens per forward pass instead of 1 |
 | **Published as** | Qwen3.6-27B native architecture feature; SGLang `--speculative-algo NEXTN`, vLLM `qwen3_next_mtp` |
 | **GGUF carrier** | `unsloth/Qwen3.6-27B-MTP-GGUF` (134 likes, 75k downloads, updated 2026-05-13) |
-| **llama.cpp support** | Requires MTP PR branch (`am17an/llama.cpp@ mtp-clean`, [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673)) — stock llama.cpp does NOT support it |
+| **llama.cpp support** | Mainline `ggml-org/llama.cpp` (merged since PR #22673). Also works on `am17an/llama.cpp@mtp-clean` fork. |
 | **TurboQuant fork compat** | Unknown — neither johndpope nor TheTom forks have merged MTP. Requires investigation. |
 
 ## How MTP works (briefly)
@@ -26,8 +26,9 @@ The key difference from DFlash or classic speculative decoding: **there is no se
 
 | Layer | What it is | Where it lives / status |
 |---|---|---|
-| **Model** | `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — Qwen3.6-27B with MTP heads, Unsloth Dynamic 2.0 6-bit GGUF | `~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/main/Qwen3.6-27B-UD-Q6_K_XL.gguf` (26 GB) — deployed 2026-05-15 |
-| **Runtime** | `am17an/llama.cpp@mtp-clean` branch (PR #22673), built with `-DGGML_METAL=ON` | `~/llama-cpp-mtp/build/bin/llama-server` (17 MB binary, b9172 build tag) |
+| **Model (dense 27B)** | `unsloth/Qwen3.6-27B-MTP-GGUF:UD-Q6_K_XL` — Qwen3.6-27B with MTP heads, Unsloth Dynamic 2.0 6-bit GGUF | `~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/main/Qwen3.6-27B-UD-Q6_K_XL.gguf` (26 GB) — deployed 2026-05-15 |
+| **Model (MoE 35B/3B)** | `huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF:Q6_K` — Qwen3.6-35B-A3B MoE + Claude-4.7-Opus reasoning distillation + huihui-ai abliteration + MTP heads | `~/.cache/huggingface/hub/models--huihui-ai--Huihui-...MTP-GGUF/snapshots/main/...Q6_K.gguf` (27 GB) — deployed 2026-05-20 |
+| **Runtime** | Mainline `ggml-org/llama.cpp` (commit `510b5c2`), built with `-DGGML_METAL=ON`. Also works on `am17an/llama.cpp@mtp-clean` fork (b9172). | `~/llama-cpp-mainline/build/bin/llama-server` (mainline) or `~/llama-cpp-mtp/build/bin/llama-server` (fork) |
 | **Server** | `llama-cpp-mtp` sidecar, OpenAI API on port 8100, OpenCode-only client template at `configs/clients/llama-cpp-mtp/opencode.json` | Live, coexists with all other Mac Studio servers |
 | **Server flags** | `--spec-type draft-mtp --spec-draft-n-max 2 -np 1 --jinja --reasoning on` (note: the flag is `draft-mtp`, not `mtp`; default `--spec-draft-n-max` is 16 — must override to 2 per HF card) | See `docs/servers/llama-cpp-mtp/summary.md` |
 | **Patches** | None — building the mtp-clean branch is the only requirement. Patch-free, unlike DFlash (3 patches) or JANG (per-server `.pth` patches). | N/A |
@@ -86,12 +87,12 @@ Notes:
 
 ## Known limitations
 
-- **Stock llama.cpp incompatible:** Must build from the MTP PR branch. No Homebrew one-liner path.
+- **~~Stock llama.cpp incompatible~~ RESOLVED:** Mainline `ggml-org/llama.cpp` now supports `--spec-type draft-mtp` (confirmed commit `510b5c2`, 2026-05-20). Both mainline and the am17an fork work.
 - **-np > 1 unsupported with MTP:** Cannot run multi-pipeline parallel with speculative decoding enabled — single pipeline only (`-np 1`).
 - **--mmproj unsupported with MTP:** The vision encoder dispatch is broken when MTP is active; multimodal input (images/video) will not work. This matters because Qwen3.6-27B is a vision-language model.
 - **TurboQuant integration unknown:** Neither johndpope nor TheTom forks have merged the MTP PR. If TurboQuant KV compression + MTP are desired, someone needs to cherry-pick or wait for upstream merge.
 - **No MLX path today:** `mlx_lm` and `vllm-mlx` do not appear to support Qwen3.6 MTP in GGUF form. The native safetensors path via SGLang/vLLM does, but those require CUDA (SGLang) or multi-GPU tensor parallelism (8× GPU recommended by Qwen).
-- **No 35B-A3B MoE MTP variant exists:** Unsloth has not released `Qwen3.6-35B-A3B-MTP-GGUF`. The 27B dense is the largest available.
+- **~~No 35B-A3B MoE MTP variant~~ RESOLVED:** `huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF` provides MoE 35B/3B with MTP heads (Q6_K = 27 GB). Deployed 2026-05-20: 83% acceptance, 78.5 tok/s decode, browse 4.74 s / search 12.11 s — 7.6× faster than the dense 27B MTP variant on agent loops.
 
 ## Performance on this Mac Studio (2026-05-15)
 
@@ -122,7 +123,7 @@ MTP draft acceptance is consistent at **84–89 %** across context sizes — exa
 | Browse `www.example.com` | **35.98 s** | 35.2 s | 2 | `webfetch` | 24.48 – 48.34 s |
 | Search Hackernews | **35.24 s** | 34.45 s | 2 | `webfetch` | 29.42 – 70.45 s |
 
-Slower than the current production main (`q3.6-27b-glm51-da-q4km` Q4_K_M on lm-studio: browse 11.62 s / search 19.47 s). The dense 27 B + 6-bit weight bundle is fundamentally heavier than the production Q4_K_M, and MTP's ~1.5–2× decode multiplier isn't enough to close the gap. The MTP heads themselves work as advertised; the model+quant combo is just not competitive with the lighter production option for agent loops.
+Slower than Q4_K_M-class builds on lm-studio (e.g. GLM-5.1-DA browse 11.62 s / search 19.47 s). The dense 27 B + 6-bit weight bundle is fundamentally heavier than Q4_K_M, and MTP's ~1.5–2× decode multiplier isn't enough to close the gap. The MTP heads work as advertised; the model+quant combo is just not competitive with lighter options for agent loops. The **MoE 35B/3B MTP variant** (huihui-ai, deployed 2026-05-20) resolves this: 78.5 tok/s, browse 4.74 s / search 12.11 s — competitive with the lm-studio MoE leaders.
 
 Bench data: [`docs/models/benchmarks/logs/qwen36-27b-mtp/`](../benchmarks/logs/qwen36-27b-mtp/).
 
@@ -138,7 +139,7 @@ MTP on Qwen3.6-27B is **deployed and operational** as a provisional sidecar, but
 2. **Pro:** Single-file 26 GB bundle, single build. No drafter file to track, no `--spec-draft-model` flag.
 3. **Con:** Requires custom llama.cpp build — adds maintenance burden when upstream llama.cpp updates. The TurboQuant fork ecosystem may fragment further if someone needs MTP + TurboQuant combined.
 4. **Con:** Vision input broken with MTP active — removes the VL advantage of Qwen3.6-27B.
-5. **Con:** Slower agent loops than the lm-studio Q4_K_M production main. The MTP speedup is real but the underlying 6-bit dense 27 B bundle is heavier than the production option.
+5. **Con:** Dense 27B: slower agent loops than lm-studio Q4_K_M-class builds (6-bit dense bundle is heavier). The MoE 35B/3B MTP variant resolves this (browse 4.74 s).
 
 The natural next experiment is the **stock-baseline comparison**: benchmark `unsloth/Qwen3.6-27B-GGUF:UD-Q6_K_XL` (no MTP) on stock llama.cpp at the same context targets to validate the MTP speedup in isolation. Queued for a follow-up plan.
 

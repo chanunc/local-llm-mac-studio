@@ -16,7 +16,12 @@
 
 ## Overview
 
-`llama-cpp-mtp` is a sidecar `llama-server` built from [`am17an/llama.cpp@mtp-clean`](https://github.com/am17an/llama.cpp/tree/mtp-clean) — the in-flight [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673) that adds **Multi-Token Prediction (MTP) self-drafting speculative decoding** to `llama.cpp`. Stock `llama.cpp` does not yet support MTP and neither LM Studio's bundled runtime nor the two `llama-cpp-turboquant` forks have merged the PR. This sidecar is the only path that runs `unsloth/Qwen3.6-27B-MTP-GGUF` on Apple Silicon Metal today.
+`llama-cpp-mtp` is a sidecar `llama-server` for **Multi-Token Prediction (MTP) self-drafting speculative decoding**. Two binaries are available:
+
+- **Mainline `ggml-org/llama.cpp`** (preferred) — MTP merged upstream. Built at `~/llama-cpp-mainline/` (commit `510b5c2`, 2026-05-20).
+- **`am17an/llama.cpp@mtp-clean`** (legacy fork) — [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673). Built at `~/llama-cpp-mtp/` (build tag `b9172`).
+
+Both support `--spec-type draft-mtp`. The mainline binary is preferred for new models (e.g., `huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF`).
 
 > **Technique reference:** for what MTP / Next-n prediction actually does at the algorithm level — extra prediction heads on the target model's hidden states, single-pass N-token drafts verified autoregressively, why acceptance rates are higher than drafter-based methods — see [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](../../models/techniques/model-technique-qwen-3-6-mtp.md). This runbook covers operational steps only.
 
@@ -30,9 +35,9 @@ Bound to port **8100**, OpenAI API only. Coexists with `vllm-mlx` / `mlx-openai-
 MacBook                       Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌────────────────┐            ┌─────────────────────────────────────────────┐
 │ Claude Code    │            │ llama-server (port 8100, sidecar)           │
-│ OpenCode       │─── LAN ───>│   ~/llama-cpp-mtp/build/bin/llama-server    │
-│ OpenClaw       │            │   model: unsloth/Qwen3.6-27B-MTP-GGUF       │
-│ Pi             │            │          UD-Q6_K_XL (~26 GB)                │
+│ OpenCode       │─── LAN ───>│   ~/llama-cpp-mainline/build/bin/llama-server│
+│ OpenClaw       │            │   models: unsloth/Qwen3.6-27B-MTP-GGUF      │
+│ Pi             │            │     OR huihui-ai/...-MTP-GGUF Q6_K (~27 GB) │
 └────────────────┘            │   --spec-type draft-mtp                     │
                               │   --spec-draft-n-max 2                      │
                               │   -ngl 99 -fa on -np 1                      │
@@ -45,11 +50,32 @@ Sidecar pattern. GGUF weight + MTP draft heads live in a single file at `~/.cach
 
 ## Installation
 
-**One-time on Mac Studio:**
+### Mainline `ggml-org/llama.cpp` (preferred)
+
+MTP support merged upstream. Built at `~/llama-cpp-mainline/` (commit `510b5c2`, 2026-05-20).
 
 ```bash
 ssh macstudio "/opt/homebrew/bin/brew install cmake"   # if missing
 
+ssh macstudio "cd ~ && git clone --depth 1 https://github.com/ggml-org/llama.cpp.git llama-cpp-mainline && \
+  cd llama-cpp-mainline && \
+  /opt/homebrew/bin/cmake -B build \
+    -DGGML_METAL=ON \
+    -DGGML_METAL_EMBED_LIBRARY=ON \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DLLAMA_BUILD_TESTS=OFF \
+    -DLLAMA_BUILD_EXAMPLES=ON \
+    -DLLAMA_BUILD_SERVER=ON && \
+  /opt/homebrew/bin/cmake --build build --config Release -j 8 --target llama-server"
+```
+
+Build time on M3 Ultra: ~30 sec. Outputs `~/llama-cpp-mainline/build/bin/llama-server` (~17 MB). Re-pull + rebuild: `cd ~/llama-cpp-mainline && git pull && cmake --build build --target llama-server`.
+
+### Legacy `am17an/llama.cpp@mtp-clean` (fallback)
+
+The original MTP fork. Built at `~/llama-cpp-mtp/` (build tag `b9172`). Preserved as fallback.
+
+```bash
 ssh macstudio "cd ~ && git clone -b mtp-clean https://github.com/am17an/llama.cpp.git llama-cpp-mtp && \
   cd llama-cpp-mtp && \
   /opt/homebrew/bin/cmake -B build \
@@ -62,9 +88,7 @@ ssh macstudio "cd ~ && git clone -b mtp-clean https://github.com/am17an/llama.cp
   /opt/homebrew/bin/cmake --build build --config Release -j 8 --target llama-server"
 ```
 
-Build time on M3 Ultra: ~30 sec. Outputs `~/llama-cpp-mtp/build/bin/llama-server` (~17 MB). Use the full `/opt/homebrew/bin/cmake` path — non-interactive SSH sessions do not inherit Homebrew's PATH.
-
-Re-pull + rebuild after upstream `llama.cpp` lands new features (`git fetch origin mtp-clean && git pull && cmake --build build --target llama-server`). There is no PyPI / Homebrew pin.
+Use the full `/opt/homebrew/bin/cmake` path — non-interactive SSH sessions do not inherit Homebrew's PATH. There is no PyPI / Homebrew pin.
 
 ## Download the MTP GGUF
 
@@ -158,7 +182,7 @@ Tested on `unsloth/Qwen3.6-27B-MTP-GGUF` `UD-Q6_K_XL` (2026-05-15). Pre-bench hy
 
 Smoke (`bench_api_tool_call.py`): **5/5 single-call**, multi-turn loop **21.92 s** across 3 turns. All probes finished with `finish_reason=tool_calls`.
 
-OpenCode end-to-end (`bench_agent_tool_call.py`, opencode 1.14.50, 1 warmup + 3 measured): **browse 35.98 s / search 35.24 s** median wall, 2 turns + `webfetch` fired on every measured run. Slower than the current production main (`q3.6-27b-glm51-da-q4km` Q4_K_M on lm-studio, browse 11.62 s / search 19.47 s) because UD-Q6_K_XL is a heavier weight bundle than Q4_K_M and the dense 27 B layer count means MTP's ~1.5–2× speedup isn't enough to close the gap with the leaner production main. The MTP heads themselves work as advertised — 84–89 % acceptance is at the upper end of Unsloth's claim.
+OpenCode end-to-end (`bench_agent_tool_call.py`, opencode 1.14.50, 1 warmup + 3 measured): **browse 35.98 s / search 35.24 s** median wall, 2 turns + `webfetch` fired on every measured run. Slower than the Q4_K_M-class builds on lm-studio (e.g. GLM-5.1-DA browse 11.62 s / search 19.47 s) because UD-Q6_K_XL is a heavier weight bundle and the dense 27 B layer count means MTP's ~1.5–2× speedup isn't enough to close the gap. The MTP heads themselves work as advertised — 84–89 % acceptance is at the upper end of Unsloth's claim.
 
 Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-27b-mtp/`](../../models/benchmarks/logs/qwen36-27b-mtp/).
 
@@ -169,7 +193,7 @@ Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-27b-mtp/`](../../models/be
 - **No multimodal.** `--mmproj` is broken with MTP active; the GGUF's `mmproj-*.gguf` companions cannot be loaded. This removes Qwen3.6-27B's vision-language capability when running on this sidecar.
 - **No `draft-mtp` + KV-cache compression combined build.** Neither `johndpope/llama-cpp-turboquant` (`feature/planarquant-kv-cache`) nor `TheTom/llama-cpp-turboquant` (`feature/turboquant-kv-cache`) has merged PR #22673. Stacking TurboQuant + MTP requires a manual cherry-pick or waiting for upstream.
 - **No MLX path.** `mlx_lm` and `vllm-mlx` do not support Qwen3.6 MTP in GGUF form. The native safetensors path via SGLang `--speculative-algo NEXTN` or vLLM `qwen3_next_mtp` requires CUDA — neither runs on Apple Silicon today.
-- **No 35B-A3B MoE MTP variant on HF.** Unsloth has not released `Qwen3.6-35B-A3B-MTP-GGUF`. The dense 27 B is the largest MTP-capable Qwen3.6 today.
+- **~~No 35B-A3B MoE MTP variant~~ RESOLVED:** `huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF` provides MoE 35B/3B with MTP heads (Q6_K = ~27 GB). Deployed 2026-05-20 on mainline binary: 83% acceptance, 78.5 tok/s, browse 4.74 s / search 12.11 s.
 - **Fork is a community port, not upstream.** The mtp-clean branch is maintained by `am17an` against PR #22673 (commit pinned to `08b147428` at deploy time, `b9172` build tag). Re-pull + rebuild after upstream `llama.cpp` lands new features.
 - **No Anthropic API.** OpenAI-compatible only. For Claude Code, route via OpenAI provider (`CLAUDE_CODE_USE_OPENAI=1` env path).
 - **GGUF only.** No MLX safetensors, no JANG, no JANGTQ, no `bailing_hybrid`.

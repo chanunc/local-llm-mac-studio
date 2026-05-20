@@ -354,14 +354,29 @@ tail -f /tmp/llama-cpp-turboquant.log                                           
 ```bash
 # llama-cpp-mtp — Qwen3.6 MTP (Multi-Token Prediction / Next-n) self-drafting
 # speculative-decoding sidecar on port 8100 (NOT 8000/1234/8098/8099).
-# Built from am17an/llama.cpp@mtp-clean (PR #22673 — unmerged upstream).
-# Single-file unsloth GGUF carries both target weights and the MTP draft heads;
-# no separate drafter file, no --spec-draft-model flag. Patch-free apart from
-# building the right branch. -np > 1 and --mmproj unsupported with MTP active.
+# Two binaries: mainline ggml-org/llama.cpp (~/llama-cpp-mainline/, preferred)
+# and legacy am17an/llama.cpp@mtp-clean (~/llama-cpp-mtp/, PR #22673).
+# Single-file GGUF carries both target weights and the MTP draft heads;
+# no separate drafter file, no --spec-draft-model flag. Patch-free.
+# -np > 1 and --mmproj unsupported with MTP active.
 # Flag is --spec-type draft-mtp (NOT just "mtp"); default --spec-draft-n-max
-# is 16, must override to 2 per HF card. Provisional, OpenCode-only client
-# template. See docs/servers/llama-cpp-mtp/summary.md and
+# is 16, must override to 2. Provisional, OpenCode-only client template.
+# See docs/servers/llama-cpp-mtp/summary.md and
 # docs/models/techniques/model-technique-qwen-3-6-mtp.md.
+
+# Recommended — huihui-ai MoE 35B/3B MTP Q6_K (mainline binary, 78.5 tok/s,
+# 83% MTP acceptance, browse 4.74 s, 10/10 mlabonne, Claude 4.7 Opus distilled)
+GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-Q6_K.gguf
+nohup ~/llama-cpp-mainline/build/bin/llama-server \
+  -m "$GGUF" \
+  -ngl 99 -fa on -np 1 -c 32768 \
+  --spec-type draft-mtp --spec-draft-n-max 2 \
+  --host 0.0.0.0 --port 8100 \
+  --alias huihui-qwen36-35b-mtp-abliterated-q6k \
+  --jinja --reasoning on \
+  > /tmp/llama-cpp-mtp.log 2>&1 &
+
+# Alternative — unsloth dense 27B MTP UD-Q6_K_XL (legacy binary, 22.9 tok/s)
 GGUF=~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/main/Qwen3.6-27B-UD-Q6_K_XL.gguf
 nohup ~/llama-cpp-mtp/build/bin/llama-server \
   -m "$GGUF" \
@@ -372,7 +387,7 @@ nohup ~/llama-cpp-mtp/build/bin/llama-server \
   --jinja --reasoning on \
   > /tmp/llama-cpp-mtp.log 2>&1 &
 
-pkill -f 'llama-cpp-mtp/build/bin/llama-server'                                  # stop llama-cpp-mtp only (does not touch the turboquant forks)
+pkill -f 'llama-cpp-mainline/build/bin/llama-server'; pkill -f 'llama-cpp-mtp/build/bin/llama-server'  # stop
 
 # health + logs:
 curl -s http://<MAC_STUDIO_IP>:8100/v1/models | python3 -m json.tool             # health (port 8100)
@@ -667,6 +682,7 @@ All models fit in **96GB unified memory**.
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
 | [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥈 (no scaffolding needed), search 7.35 s 🥇, 8/10 compliance — uncensored search speed leader |
 | [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
+| [huihui-ai Qwen3.6-35B-A3B MTP Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#huihui-ai-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) | MoE 35B/3B + MTP heads | 27 | 32K (262K train) | First MoE+MTP in lab — huihui-ai abliteration + Claude 4.7 Opus reasoning distillation + MTP self-drafting, 78.5 tok/s decode, 83% MTP acceptance, 10/10 mlabonne, browse 4.74 s / search 12.11 s on `llama-cpp-mtp` :8100 (mainline `ggml-org/llama.cpp`). [Uncen bench](docs/models/uncen-model/huihui-qwen36-35b-mtp-abliterated-benchmark.md) |
 | [Zyphra ZAYA1-8B JANGTQ4](docs/models/per-model/model-summary-zaya1-8b.md) | MoE 8.4B / 760M-active | 4.65 | 131K | Prior production main (2026-05-12 → 2026-05-14, vmlx-swift-lm :1337) — Apache 2.0, top-1 CCA + MoE, `tool_parser=zaya_xml`. HTTP-path decode 7-8 tok/s pending [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (engine's own `RunBench` reports 57.2 tok/s at the same commit; cask missing JANGTQ B=1 fast path). Also agent-broken at this pin |
 
 </details>
@@ -717,7 +733,7 @@ Full results: [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call
 - **vllm-mlx** — Single model only, no dashboard, manual start, v0.2.6 return bug needs patch. Qwen3.5 tool use requires `--tool-call-parser qwen3_coder` (not `qwen`); see [maintenance §8](docs/servers/vllm-mlx/maintenance.md#8-qwen35-tool-calling--reasoning-parsers). [Maintenance](docs/servers/vllm-mlx/maintenance.md)
 - **vmlx** — JANGTQ only (MLX Studio DMG bundled Python), no GUI but overwritten on every DMG upgrade. MLLM path drops `tools[]`, ignores `tools=` in chat template, and crashes on multi-turn tool replay — fix with [`scripts/patches/patch_vmlx_jangtq_mllm_tools.py`](scripts/patches/patch_vmlx_jangtq_mllm_tools.py) ([detail](docs/servers/vmlx/maintenance.md#tool-use-and-reasoning-mllm-models)). Requires `--enable-auto-tool-choice --tool-call-parser qwen3 --reasoning-parser qwen3 --continuous-batching` (the last flag is mandatory on vmlx 1.5.20+ — without it MLLM/VLM models crash with `Qwen2Tokenizer.stopping_criteria` and `bailing_hybrid` text models crash with `Stream(gpu, 1) not in thread`). [Maintenance](docs/servers/vmlx/maintenance.md)
 - **dflash-mlx** — Standard MLX safetensors only (no JANG/JANGTQ/`bailing_hybrid`/GGUF). PyPI 0.1.0 has no tool-calling — install 0.1.4.1+ from `git+https://github.com/bstnxbt/dflash-mlx.git`. One local patch required after install: [`patch_dflash_mlx_serve.py`](scripts/patches/patch_dflash_mlx_serve.py) (two upstream bugs in `DFlashModelProvider`). The mlx-lm tool-detection trie reset patch was retired 2026-05-08 — fix landed upstream in mlx-lm 0.31.3. Built-in `DRAFT_REGISTRY` does not include Qwen3.6 pairs — always pass `--draft-model` explicitly. OpenAI API only. [Runbook](docs/servers/dflash-mlx/summary.md)
-- **llama-cpp-mtp** — Custom-branch llama.cpp build (`am17an/llama.cpp@mtp-clean`, [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673) unmerged upstream). No JANG/JANGTQ/`bailing_hybrid`/MLX. `-np > 1` and `--mmproj` are unsupported with MTP active, removing the dense 27 B Qwen3.6's vision capability when on this sidecar. The flag is `--spec-type draft-mtp` (not `mtp`); default `--spec-draft-n-max` is 16, must override to 2 per the HF card. Standard `bench_api_server.py` filler prompt at temp=0 triggers a first-token EOS specific to this 6-bit MTP quant — use a real-content prompt rig for perf measurement. No Anthropic API. [Runbook](docs/servers/llama-cpp-mtp/summary.md)
+- **llama-cpp-mtp** — Two binaries: **mainline `ggml-org/llama.cpp`** (`~/llama-cpp-mainline/`, preferred, MTP merged upstream) and legacy `am17an/llama.cpp@mtp-clean` (`~/llama-cpp-mtp/`, [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673)). No JANG/JANGTQ/`bailing_hybrid`/MLX. `-np > 1` and `--mmproj` are unsupported with MTP active. The flag is `--spec-type draft-mtp` (not `mtp`); default `--spec-draft-n-max` is 16, must override to 2. Standard `bench_api_server.py` filler prompt at temp=0 triggers a first-token EOS on some MTP quants — use a real-content prompt rig for perf measurement. No Anthropic API. [Runbook](docs/servers/llama-cpp-mtp/summary.md)
 - **lm-studio** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30)
 - **comfyui** — Image-generation diffusion runtime, not a chat / agent server. No OpenAI `/v1/images/generations` API — clients can't trigger generations programmatically (web UI only at `:8188`). No JANG / JANGTQ / `bailing_hybrid` support (LLM concepts; doesn't apply to S3-DiT diffusion). Default attention backend errors on MPS — always launch with `--use-pytorch-cross-attention`. AIO checkpoint reload between Distill and Base BF16 variants takes ~25 s warm-up each swap (~19 GiB to MPS). Native MLX would beat MPS by an estimated 2–3× but Z-Anime has no MLX upload. [Runbook](docs/servers/comfyui/summary.md)
 - **ds4 (DwarfStar 4)** — Single-model standalone engine for DeepSeek-V4-Flash only (the `deepseek4` arch is unmerged in upstream `llama.cpp`; vLLM/SGLang are CUDA-only; the persadian IQ1_S-XL GGUF's only engine, `arishma108/llama.cpp feat/v4-port-cuda`, has no Metal backend). GGUF-locked to `antirez/deepseek-v4-gguf` — only `q2-imatrix` (81 GB) fits a 96 GB-class machine (`q4-imatrix` 153 GB, batiai Q3–Q8 135–302 GB do not). Default bind is `127.0.0.1`; LAN clients need `--host 0.0.0.0` (`--cors` does not rebind). Cold 32 K prefill ≈ 38 s (disk-KV cuts the warm hit to 6.8 s). Single graph worker, no batching. Alpha-quality engine (days old, GPT-5.5-assisted) — behaviour may change across `git pull`. **Never run the CPU path** (`make cpu` / `--cpu`) — documented macOS VM bug kernel-panics the machine. No JANG/JANGTQ/`bailing_hybrid`/MLX. [Runbook](docs/servers/ds4/summary.md)

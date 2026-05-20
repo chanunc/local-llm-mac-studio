@@ -17,7 +17,7 @@ Only one of vllm-mlx, mlx-openai-server, oMLX, or vmlx can hold **port 8000** at
 - **lm-studio** (1234, OpenAI) — closed-source MLX/GGUF, built-in parsers (no flags needed). Guardrail `"high"` blocks large loads — flip to `"off"` in `~/.lmstudio/settings.json`, load, restore immediately. No JANG/JANGTQ/`bailing_hybrid`.
 - **dflash-mlx** (8098, OpenAI) — DFlash speculative decoding sidecar. Venv `~/dflash-mlx-env/`. Needs `patch_dflash_mlx_serve.py`. `--draft-model` required for Qwen3.6 (DRAFT_REGISTRY auto-resolves Qwen3.5 only). Regresses vs baseline on M3 Ultra — upstream-tracking only. Provisional — `configs/clients/dflash-mlx/opencode.json` only.
 - **llama-cpp-turboquant** (8099, OpenAI) — two forks: johndpope (`~/llama-cpp-turboquant/`, iso3/4+turbo2-4+planar3/4) and TheTom (`~/llama-cpp-thetom/`, turbo2-4, auto-asymmetric q8_0 K). **TheTom turbo3 = agent-loop speed leader** (68 tok/s decode, browse 6.47s). johndpope iso3: cold-prefill regression at 32K+. [Runbook](docs/servers/llama-cpp-turboquant/summary.md), [technique](docs/models/techniques/model-technique-rotorquant.md).
-- **llama-cpp-mtp** (8100, OpenAI) — `am17an/llama.cpp@mtp-clean` ([PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673)) for Qwen3.6-27B MTP self-drafting. Binary at `~/llama-cpp-mtp/build/bin/llama-server`. `--spec-type draft-mtp --spec-draft-n-max 2` (not `mtp`; default 16 drops acceptance to ~50%). No `--tool-call-parser` — uses `--jinja`. 84-89% acceptance, 22.9 tok/s. Provisional. [Runbook](docs/servers/llama-cpp-mtp/summary.md), [technique](docs/models/techniques/model-technique-qwen-3-6-mtp.md).
+- **llama-cpp-mtp** (8100, OpenAI) — MTP self-drafting speculative decoding sidecar. Two binaries: **mainline `ggml-org/llama.cpp`** (`~/llama-cpp-mainline/`, preferred) and legacy `am17an/llama.cpp@mtp-clean` (`~/llama-cpp-mtp/`, [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673)). Models: unsloth Qwen3.6-27B-MTP UD-Q6_K_XL (dense 27B, 22.9 tok/s) and huihui-ai Qwen3.6-35B-A3B-MTP Q6_K (MoE 35B/3B, 78.5 tok/s, 83% MTP, browse 4.74s). `--spec-type draft-mtp --spec-draft-n-max 2`. No `--tool-call-parser` — uses `--jinja`. Provisional. [Runbook](docs/servers/llama-cpp-mtp/summary.md), [technique](docs/models/techniques/model-technique-qwen-3-6-mtp.md).
 - **mlx-lm** (8080, OpenAI) — ChindaMT-4B Thai↔EN translation sidecar. Model at `~/mlx-models/chindamt-4b-4bit/`. **Model ID must be full absolute path** in API calls (short alias → HF 404). `--chat-template-args '{"enable_thinking":false}'` required (else translation lands in `reasoning`). 186 tok/s, 2.5 GB.
 - **vmlx-swift-lm** (1337, OpenAI+Anthropic+Ollama) — MLX-Swift via Osaurus app (`brew install --cask osaurus`). Only runtime for ZAYA1 `ZayaCCACache`. `OSU_MODELS_DIR=$HOME/.osaurus/models` required (path-mismatch bug). JANGTQ HTTP speed-regressed at cask 0.18.13 (7-8 tok/s vs 57 native — fix in PR #1057). [Runbook](docs/servers/vmlx-swift-lm/summary.md).
 - **comfyui** (8188, web UI) — ComfyUI 0.20.1 + SeeSee21/Z-Anime (S3-DiT 6B). `--use-pytorch-cross-attention` required on MPS. **No OpenAI API shim** — browser UI only. [Runbook](docs/servers/comfyui/summary.md).
@@ -113,11 +113,17 @@ ssh macstudio "OSU_MODELS_DIR=\$HOME/.osaurus/models nohup /opt/homebrew/bin/osa
 ssh macstudio "/opt/homebrew/bin/osaurus stop; pkill -9 osaurus 2>/dev/null"  # stop
 
 # llama-cpp-mtp (port 8100) — spec-type is draft-mtp NOT mtp, draft-n-max must be 2
+# Mainline binary (preferred) — huihui-ai MoE 35B/3B MTP Q6_K
+ssh macstudio "GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-Q6_K.gguf; \
+  nohup ~/llama-cpp-mainline/build/bin/llama-server -m \"\$GGUF\" -ngl 99 -fa on -np 1 -c 32768 \
+    --spec-type draft-mtp --spec-draft-n-max 2 --host 0.0.0.0 --port 8100 \
+    --alias huihui-qwen36-35b-mtp-abliterated-q6k --jinja --reasoning on > /tmp/llama-cpp-mtp.log 2>&1 &"
+# Legacy binary — unsloth dense 27B MTP UD-Q6_K_XL
 ssh macstudio "GGUF=~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/main/Qwen3.6-27B-UD-Q6_K_XL.gguf; \
   nohup ~/llama-cpp-mtp/build/bin/llama-server -m \"\$GGUF\" -ngl 99 -fa on -np 1 -c 32768 \
     --spec-type draft-mtp --spec-draft-n-max 2 --host 0.0.0.0 --port 8100 \
     --alias qwen3.6-27b-mtp-ud-q6kxl --jinja --reasoning on > /tmp/llama-cpp-mtp.log 2>&1 &"
-ssh macstudio "pkill -f 'llama-cpp-mtp/build/bin/llama-server'"  # stop (don't match bare 'llama-server')
+ssh macstudio "pkill -f 'llama-cpp-mainline/build/bin/llama-server'; pkill -f 'llama-cpp-mtp/build/bin/llama-server'"  # stop
 
 # comfyui (port 8188) — --use-pytorch-cross-attention required on MPS
 ssh macstudio "nohup ~/comfyui/.venv/bin/python ~/comfyui/main.py \

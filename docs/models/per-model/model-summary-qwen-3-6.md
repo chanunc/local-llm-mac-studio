@@ -60,6 +60,7 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 - [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · benchmarked on lm-studio 2026-05-14 (browse 11.62 s / search 19.47 s)
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
 - [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · benchmarked on lm-studio 2026-05-02 · uncensored GGUF browse leader
+- [Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K](#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) — 35B/3B MoE · 27 GB · GGUF Q6_K + MTP heads · huihui-ai abliteration + lordx64 Claude reasoning distillation · llama-cpp-mainline on port 8100 · benchmarked 2026-05-20 (browse 4.74 s / search 12.11 s · 10/10 mlabonne · 83% MTP acceptance · 78.5 tok/s)
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
 
 ---
@@ -965,6 +966,79 @@ Qwen3.6-35B-A3B base with a rank-8 LoRA (alpha 16) trained on **356 K Rust commi
 - Reasoning emitted as `content` (not `<think>`) — not extracted by `--reasoning-parser qwen3`. If you need a clean reasoning/content split, prefer Qwen3.5-35B-A3B JANG 4K which uses proper `<think>` tags.
 - Rust-domain LoRA: not measured to degrade general performance, but explicitly tuned for code-diff workloads.
 - Vision encoder defined in tokenizer but vllm-mlx loads as text-only (`MLLM=False`).
+
+---
+
+## Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K
+
+First **MoE + MTP** combination deployed in this lab. Stacks four modifications on the Qwen3.6-35B-A3B base:
+
+1. **lordx64/Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled** LoRA — reasoning-trace distillation from Claude 4.7 Opus
+2. **huihui-ai abliteration** — SVD-based refusal-direction removal (`remove-refusals-with-transformers`)
+3. **MTP heads** — Multi-Token Prediction self-drafting (same as `unsloth/Qwen3.6-27B-MTP-GGUF` architecture)
+4. **GGUF Q6_K** quantization — 27 GB on disk
+
+| Field | Value |
+|-------|-------|
+| **HuggingFace** | [`huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF`](https://huggingface.co/huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF) |
+| **Base model** | `Qwen/Qwen3.6-35B-A3B` (MoE 35B total / 3B active, 256 experts, 8 routed) |
+| **Adapter** | `lordx64/Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled` |
+| **Uncensoring** | huihui-ai abliteration (SVD refusal-direction removal) |
+| **Architecture** | `qwen35moe` — Hybrid Gated DeltaNet + full Gated Attention + MTP heads |
+| **Quant** | GGUF Q6_K (27 GB) |
+| **Context** | 262,144 native (server `-c 32768` for memory) |
+| **Server** | `llama-cpp-mainline` on port 8100 (`ggml-org/llama.cpp` commit `510b5c2`) |
+| **Server flags** | `--spec-type draft-mtp --spec-draft-n-max 2 -ngl 99 -fa on -np 1 -c 32768 --jinja --reasoning on` |
+| **Alias** | `huihui-qwen36-35b-mtp-abliterated-q6k` |
+| **Deployed** | 2026-05-20 |
+
+### MTP draft-n-max tuning (2 vs 6)
+
+| n-max | Acceptance | Decode tok/s | Multi-turn loop | Winner |
+|:-----:|:----------:|:------------:|:---------------:|:------:|
+| **2** | 30/36 = **83.3%** | **86.7** | **3.83 s** | ✅ |
+| 6 | 41/60 = 68.3% | 79.9 | 4.34 s | |
+
+HF card recommends 6, but the MoE architecture drops acceptance below 70% — same pattern as the dense 27B. Stick with 2.
+
+### Performance (2026-05-20, pre-bench hygiene, mainline llama.cpp)
+
+| Context | Decode tok/s | Prefill tok/s | TTFT |
+|:-------:|:------------:|:-------------:|:----:|
+| 512 | **78.5** | 14,146 | 0.04 s |
+| 4K | 72.5 | 96,646 | 0.04 s |
+| 8K | 72.8 | 175,286 | 0.05 s |
+
+### Refusal benchmark (mlabonne 10/520, temp=1.0, max_tokens=1024)
+
+**10/10 keyword-complied.** Content channel populated on 7/10 (vs 2/10 for GLM-5.1-DA dense 27B). Claude distillation produces faster, more direct responses — avg 12.65 s vs 38.43 s for the GLM-5.1 variant.
+
+### Agent benchmark (OpenCode end-to-end, 2026-05-20)
+
+| Scenario | Wall (median) | LLM (median) | Turns | Tools |
+|:---------|:-------------:|:------------:|:-----:|:-----:|
+| Browse www.example.com | **4.74 s** | 3.19 s | 2 | `webfetch` |
+| Search Hackernews latest | **12.11 s** | 10.41 s | 2–4 | `webfetch` |
+
+**Comparison vs MTP and lab leaders:**
+
+| Model | Browse | Search | Notes |
+|:------|:------:|:------:|:------|
+| Huihui Gemma 4 26B (all-time leader) | 2.55 s | 19.59 s | lm-studio, no-think |
+| **This model** | **4.74 s** | **12.11 s** | llama-cpp-mainline, think-on, MoE+MTP |
+| TheTom turbo3 | 6.47 s | 15.64 s | llama-cpp-turboquant |
+| Dense 27B MTP | 35.98 s | 35.24 s | llama-cpp-mtp (am17an fork) |
+
+**7.6× faster** than dense 27B MTP on browse. Search at 12.11 s is best in Qwen3.6 family.
+
+### Caveats
+
+- Claude reasoning distillation is from a community LoRA (`lordx64`), not verified by Anthropic
+- No published benchmarks from the model author — all data above is from this lab
+- GGUF-only — not usable on MLX servers (vllm-mlx, oMLX, vmlx, mlx-openai-server)
+- Vision broken with MTP active (`--mmproj` unsupported)
+
+Raw logs: [`docs/models/benchmarks/logs/huihui-qwen36-35b-mtp-abliterated/`](../benchmarks/logs/huihui-qwen36-35b-mtp-abliterated/)
 
 ---
 

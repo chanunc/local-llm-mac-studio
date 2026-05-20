@@ -6,7 +6,7 @@ Google's Gemma 4 generation. Six variants currently catalogued in this stack: th
 
 - [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` / `lm-studio` (MLX-vs-GGUF data point, 2026-05-08) · 15 GB · 50–114 tok/s · **OpenCode browse 3.29 s / search 3.23 s on lm-studio (no scaffolding needed, search 2.2× faster than the Q8_0 GGUF sibling)**
 - [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · **mlx-lm server (current main 2026-05-06)** · 29 GB · 20.4 tok/s @ 512, browse 12.33 s (thinking ON) / browse 5.11 s (thinking OFF on lm-studio)
-- [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). On 0.5.0-from-main (2026-05-06): mlx-vlm emitted `delta.tool_calls` only as a final post-loop chunk → opencode hit 300 s wall (0 turns × 3). **On 0.5.0 tagged release (2026-05-08): partial fix** — browse now completes 6 webfetch turns in 300 s (model loops on the same URL but tool_calls do fire mid-conversation); search still 0 turns. API tool harness 5/5 + 12.08 s multi-turn loop (was 22.06 s, **−45 %**). Long-context decode regressed (4K/8K/16K: 13.8→4.5, 12.3→5.0, 10.7→3.7 tok/s — drafter acceptance collapses to 0.06–0.25 at long contexts). See [v0.5.0 tagged release re-test](#v050-tagged-release-re-test-2026-05-08).
+- [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). On 0.5.0-from-main (2026-05-06): mlx-vlm emitted `delta.tool_calls` only as a final post-loop chunk → opencode hit 300 s wall (0 turns × 3). **On 0.5.0 tagged release (2026-05-08): partial fix** — browse now completes 6 webfetch turns in 300 s (model loops on the same URL but tool_calls do fire mid-conversation); search still 0 turns. API tool harness 5/5 + 12.08 s multi-turn loop (was 22.06 s, **−45 %**). Long-context decode regressed (4K/8K/16K: 13.8→4.5, 12.3→5.0, 10.7→3.7 tok/s — drafter acceptance collapses to 0.06–0.25 at long contexts). **On main `45e6ece` (2026-05-20, PRs #1166/#1182/#1188): streaming SSE bug fully fixed** — opencode browse 91.47 s / 2 turns, search 189.85 s / 4 turns (both webfetch ✅, both were 300 s timeouts before); decode regression reversed (27.7/24.6/22.2/17.7 tok/s @ 512/4K/8K/16K, acceptance steady 2.79–3.00); API harness 5/5 + multi-turn 8.97 s (−26 % vs tagged). Still 5–7× slower than mlx-lm 6-bit on agent loops because mlx-vlm prefill is ~100× behind mlx-lm (195 vs 19,331 tok/s @ 8 K). Stock llama.cpp can NOT serve the `gemma4_assistant` drafter — only AtomicBot-ai fork does. See [main `45e6ece` re-test](#main-45e6ece-re-test-2026-05-20--streaming-bug-fully-fixed-but-prefill-still-57-behind-mlx-lm).
 - [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `lm-studio` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
 - [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](#trevorjs-gemma-4-26b-a4b-uncensored-q8) — MoE 26B/4B active · 65K loaded · `lm-studio` · 25.02 GiB · **87.6 tok/s** · 8/10 mlabonne · browse 2.93 s · **search 7.35 s 🥇** · [bench writeup](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
 - [Huihui-ai Gemma 4 26B A4B Abliterated i1-Q6_K](#huihui-ai-gemma-4-26b-a4b-abliterated-i1-q6_k) — MoE 26B/4B active · 65K loaded · **`lm-studio` (current main 2026-05-15)** · **21.08 GiB** · **91.6 tok/s** · **9/10 mlabonne** (first Gemma 4 to clear 9/10) · **browse 2.55 s 🥇 all-time leader** / search 19.59 s · [bench writeup](../../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md)
@@ -460,6 +460,77 @@ Disk persistence (`APC_ENABLED=1` + the disk-backed env vars from [#1114](https:
 Raw JSONs: [`gemma-4-31b-bf16-mtp/api-server-mlx-vlm-v0.5.0-apc.json`](../benchmarks/gemma-4-31b-bf16-mtp/api-server-mlx-vlm-v0.5.0-apc.json), [`gemma-4-31b-bf16-mtp/agent-bench-mlx-vlm-v0.5.0-apc.json`](../benchmarks/gemma-4-31b-bf16-mtp/agent-bench-mlx-vlm-v0.5.0-apc.json).
 
 **Implication:** APC alone does *not* close the prefill gap vs `mlx_lm.server` for the bf16 + MTP path on v0.5.0 tagged. Closing it requires either (a) an upstream way to disable continuous batching for B = 1 + drafter workloads, or (b) a future v0.5.x where APC and continuous-batched KV quant coexist. Tracked, no-action-required for production.
+
+### main `45e6ece` re-test (2026-05-20) — streaming bug fully fixed, but prefill still 5–7× behind mlx-lm
+
+Re-tested on mlx-vlm main HEAD commit [`45e6ece`](https://github.com/Blaizzy/mlx-vlm/commit/45e6ece54124e842b1f01b7d15a43c3cc98b79c8) (2026-05-20, twelve days past v0.5.0 tag) after upstream landed three Gemma-4-MTP-relevant fixes:
+
+| PR | Date | Change |
+|:--|:--|:--|
+| [#1166](https://github.com/Blaizzy/mlx-vlm/pull/1166) | 2026-05-11 | **Improve Gemma4 MTP server batching.** Adds CLI-style **unbatched MTP loop for singleton server requests** (`gemma-4-31B-it-5bit` single: 24.85 → 33.77 tok/s, **1.36×**). Fixes "batched/singleton MTP cache and mask handling around shared KV state metadata and one-row array offsets." |
+| [#1182](https://github.com/Blaizzy/mlx-vlm/pull/1182) | 2026-05-14 | Split `speculative/utils.py` into `common.py`, `mtp.py`, `dflash.py`, `eagle3.py` — facade kept. |
+| [#1188](https://github.com/Blaizzy/mlx-vlm/pull/1188) | 2026-05-20 | Adds `MLX_VLM_KV_CACHE_MATERIALIZE_INTERVAL=50` env var to bound lazy cache-update graph growth on Metal during long continuous decode paths. |
+
+Configuration (target = 6-bit because user prompted to avoid bf16's 58 GB re-download given 63 GB free disk):
+
+- Target: `mlx-community/gemma-4-31b-it-6bit` (24 GB)
+- Drafter: `mlx-community/gemma-4-31B-it-assistant-bf16` (839 MB, already cached)
+- Env: `MLX_VLM_KV_CACHE_MATERIALIZE_INTERVAL=50`
+- Flags: `--draft-block-size 3 --max-tokens 8192` (no `--draft-kind`; auto-detected `mtp`)
+
+#### API tool-call harness (non-streaming) — `api-tool-test-v0.5.0-main-45e6ece.json`
+
+| Scenario | main `45e6ece` | tagged 0.5.0 | 0.5.0-from-main | Δ vs tagged |
+|:---------|---------------:|-------------:|----------------:|:------------|
+| Single tool (file read) | **2.38 s** | 2.63 s | 5.29 s | −10 % |
+| Single tool (command) | 1.70 s | 2.41 s | 4.24 s | −29 % |
+| Multi-tool (search + read) | 2.37 s | 3.33 s | 6.54 s | −29 % |
+| Multi-tool (list + read + write) | 1.70 s | 2.69 s | 8.61 s | −37 % |
+| Agentic reasoning | 2.55 s | 4.01 s | 15.68 s | −36 % |
+| **Single-call pass rate** | **5/5** | 5/5 | 5/5 | — |
+| Multi-turn (read → write → summary) | **8.97 s** | 12.08 s | 22.06 s | **−26 %** |
+
+#### API server per-context (raw streaming, no tools) — `api-server-v0.5.0-main-45e6ece.json`
+
+| Context | main `45e6ece` | tagged 0.5.0 | 0.5.0-from-main | mlx-lm 6-bit ref |
+|:--------|---------------:|-------------:|----------------:|-----------------:|
+| 512  | **27.7 tok/s · TTFT 2.25 s · prefill 240** | 24.0 · 2.77 · 195 | 17.0 · 3.02 · 180 | 20.5 · 0.41 · 1,337 |
+| 4 K  | **24.6 tok/s · TTFT 18.23 s · prefill 226** | 4.5 · 18.04 · 229 | 13.8 · 18.14 · 228 | 20.2 · 0.41 · 9,965 |
+| 8 K  | **22.2 tok/s · TTFT 42.06 s · prefill 195** | 5.0 · 41.01 · 200 | 12.3 · 41.04 · 200 | 19.8 · 0.43 · 19,331 |
+| 16 K | **17.7 tok/s · TTFT 106.74 s · prefill 154** | 3.7 · 131.28 · 125 | 10.7 · 134.4 · 122 | (not benched) |
+
+**Decode regression fully reversed**: the tagged-0.5.0 acceptance collapse to 0.06–0.25 tok/round at 4 K + is gone. Server log shows steady `accept=2.64–3.00 rounds=14–19` across the full ctx sweep and into the agent run (longest single-turn observed: `tokens=163 accept=2.86 rounds=57`). At 6-bit + drafter the path now even **beats** the original 2026-05-06 from-main numbers it was supposed to recover to — 27.7 > 17.0 @ 512, 24.6 > 13.8 @ 4 K, 22.2 > 12.3 @ 8 K, 17.7 > 10.7 @ 16 K. Decode is back; prefill is still ~50–100× behind mlx-lm.
+
+#### Agent loop (opencode, streaming SSE with tools) — `agent-bench-v0.5.0-main-45e6ece.json`
+
+| Scenario | main `45e6ece` | tagged 0.5.0 | mlx-lm 6-bit ref |
+|:---------|:---------------|:-------------|:-----------------|
+| Browse `www.example.com` | **91.47 s wall · llm 89.79 s · 2 turns · webfetch ✅** | 300 s × 6, 6 turns (looping) | 12.33 s, 2 turns |
+| Browse Hackernews latest | **189.85 s wall · llm 187.18 s · 4 turns · webfetch ✅** | 300 s timeout × 6, **0 turns** | 35.55 s, ≈4 turns |
+
+**Streaming SSE bug fully fixed.** Both scenarios complete now; the prior tagged-0.5.0 search hang at `llm 0 s / 0 turns` is gone, and the browse run no longer loops. Per-turn breakdown for browse:
+
+| Turn | Duration | in / out tokens | Tool |
+|:-----|---------:|:----------------|:-----|
+| 1 | 45.91 s | 8,207 / 20 | `webfetch` ✅ |
+| 2 | 43.88 s | 8,273 / 20 | (completion) |
+
+And for search:
+
+| Turn | Duration | in / out tokens | Tool |
+|:-----|---------:|:----------------|:-----|
+| 1 | 46.46 s | 8,212 / 23 | `webfetch` ✅ |
+| 2 | 82.96 s | 13,475 / 26 | `webfetch` ✅ |
+| 3 | 11.92 s | 1,463 / 163 | (synthesis) |
+| 4 | 45.84 s | 8,422 / 42 | (completion) |
+
+**Per-turn TTFT 45–82 s on 8–13 K input is the dominant cost** — out-token counts are tiny (20–42), so the wall time is almost entirely prefill. mlx-vlm prefill at 8 K is ~195 tok/s vs mlx-lm 6-bit's ~19,331 tok/s; that **~100× prefill gap** is what keeps the agent loop 7.4× / 5.3× slower than mlx-lm overall, even with the MTP drafter accepting at 2.79–3.00 tok/round during decode.
+
+**Production posture (unchanged):** mlx-vlm + Gemma 4 31B + MTP is finally a **functional** streaming agent server (was a hard non-starter on 0.5.0-from-main, partially broken on tagged 0.5.0), and is now actively faster than tagged 0.5.0 on every metric we have. But it is still **not** competitive with mlx-lm 6-bit for daily agent use — the prefill ratio dominates wall time in agent loops where every turn re-issues an 8–13 K context. Keep the install warm; revisit when mlx-vlm gets either (a) APC engaged on the continuous-batching code path, or (b) a `--continuous-batching off` toggle that re-enables mlx-lm-style prompt-cache reuse.
+
+#### llama.cpp Gemma 4 MTP — stock fork **does not** support it
+
+Investigated whether stock `ggml-org/llama.cpp` with [PR #22673 "llama + spec: MTP Support"](https://github.com/ggml-org/llama.cpp/pull/22673) (2026-05-16, the same path that runs Qwen3.6-35B-A3B-MTP at 78.5 tok/s, 83 % acceptance on our `llama-cpp-mtp` :8100 sidecar) can pick up the Gemma 4 31B-it-assistant drafter. **It cannot.** The drafter uses a custom `gemma4_assistant` architecture (4-layer assistant transformer + centroid LM head); the AtomicChat GGUF README is explicit: _"These GGUFs use the custom `gemma4_assistant` architecture and **will not load in stock `llama.cpp`**. They require the [`atomic-llama-cpp-turboquant`](https://github.com/AtomicBot-ai/atomic-llama-cpp-turboquant) fork, which adds the `gemma4_assistant` MTP drafter arch (incl. the centroid LM head for E2B/E4B), TurboQuant KV-cache quantization (`-ctk turbo3 -ctv turbo3`), and the `--mtp-head` / `--spec-type mtp` runtime flags."_ Three independent GGUF uploaders ([AtomicChat](https://huggingface.co/AtomicChat/gemma-4-31B-it-assistant-GGUF), [cafkafk](https://huggingface.co/cafkafk/gemma-4-31B-it-assistant-GGUF-noimatrix), [Radamanthys11](https://huggingface.co/Radamanthys11/Gemma-4-31B-it-assistant-GGUF)) exist, all targeting that fork. The fork is separate from our existing [`johndpope` and `TheTom` TurboQuant forks](../techniques/model-technique-rotorquant.md) — a fourth build would be required to evaluate the Gemma + MTP + TurboQuant path on llama.cpp. **Not in scope for this re-bench; logged as a follow-up path.**
 
 ### Cross-source comparison: mlx-lm vs mlx-vlm + external Gemma 4 + MTP benchmarks (2026-05-08)
 

@@ -36,8 +36,9 @@ MacBook                       Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 ┌────────────────┐            ┌─────────────────────────────────────────────┐
 │ Claude Code    │            │ llama-server (port 8100, sidecar)           │
 │ OpenCode       │─── LAN ───>│   ~/llama-cpp-mainline/build/bin/llama-server│
-│ OpenClaw       │            │   models: unsloth/Qwen3.6-27B-MTP-GGUF      │
-│ Pi             │            │     OR huihui-ai/...-MTP-GGUF Q6_K (~27 GB) │
+│ OpenClaw       │            │   models: unsloth UD-Q6_K_XL (dense 27B)   │
+│ Pi             │            │     llmfan46 heretic-v2 Q6_K (dense 27B)   │
+│                │            │     huihui-ai Q6_K (MoE 35B/3B, ~27 GB)   │
 └────────────────┘            │   --spec-type draft-mtp                     │
                               │   --spec-draft-n-max 2                      │
                               │   -ngl 99 -fa on -np 1                      │

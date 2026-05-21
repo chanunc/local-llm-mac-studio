@@ -25,6 +25,15 @@
             "context": 32768,
             "output": 8192
           }
+        },
+        "qwen36-27b-heretic-v2-mtp-q6k": {
+          "name": "Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K (dense 27B, mainline llama.cpp, draft-mtp n-max 2)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         }
       }
     }

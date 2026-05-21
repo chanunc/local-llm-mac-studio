@@ -624,7 +624,7 @@ Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](d
 All models fit in **96GB unified memory**.
 
 <details>
-<summary>🧱 <strong>Dense</strong> — 11 models</summary>
+<summary>🧱 <strong>Dense</strong> — 12 models</summary>
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--|:--|--:|--:|:--|
@@ -639,6 +639,7 @@ All models fit in **96GB unified memory**.
 | [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
 | [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | Prior production main (2026-05-10 → 2026-05-12) — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
 | [unsloth Qwen3.6-27B-MTP UD-Q6_K_XL](docs/models/techniques/model-technique-qwen-3-6-mtp.md) | Dense 27B + MTP heads (vision broken under MTP) | 26 | 32K (262K train) | Prior production main (deployed 2026-05-15 on `llama-cpp-mtp` port 8100, superseded same day by lm-studio + Huihui) — Apache 2.0 base, Unsloth Dynamic 2.0 6-bit GGUF + Multi-Token Prediction self-drafting heads, **84–89 % MTP draft acceptance**, decode 22.9 / 22.3 / 22.0 / 20.0 tok/s @ 414 / 3 648 / 7 274 / 29 128 input tokens, smoke 5/5 + multi-turn 21.92 s, OpenCode browse **35.98 s** / search **35.24 s** @ 2 turns w/ `webfetch` (slower than the GLM-5.1-DA Q4_K_M build) |
+| [llmfan46 Qwen3.6-27B Heretic v2 MTP Q6_K](docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) | Dense 27B + 15 native MTP params | 22.2 | 131K | Heretic v1.3.0 MPOA abliteration (`attn.o_proj`/`mlp.down_proj`) + MTP self-drafting, ~74% MTP acceptance, 24.6 tok/s, 10/10 mlabonne, browse 38.99 s / search 40.42 s on `llama-cpp-mtp` :8100. First Heretic-abliterated + MTP in lab. [Bench](docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) |
 
 </details>
 

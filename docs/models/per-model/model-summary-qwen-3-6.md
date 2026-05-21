@@ -61,6 +61,7 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
 - [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · benchmarked on lm-studio 2026-05-02 · uncensored GGUF browse leader
 - [Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K](#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) — 35B/3B MoE · 27 GB · GGUF Q6_K + MTP heads · huihui-ai abliteration + lordx64 Claude reasoning distillation · llama-cpp-mainline on port 8100 · benchmarked 2026-05-20 (browse 4.74 s / search 12.11 s · 10/10 mlabonne · 83% MTP acceptance · 78.5 tok/s)
+- [llmfan46 Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K](#llmfan46-qwen36-27b-uncensored-heretic-v2-native-mtp-preserved-q6_k) — dense 27B · 22.8 GB · GGUF Q6_K + 15 native MTP params · Heretic v1.3.0 MPOA abliteration · llama-cpp-mainline on port 8100 · benchmarked 2026-05-21 (browse 38.99 s / search 40.42 s · 10/10 mlabonne · ~74% MTP acceptance · 24.6 tok/s)
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
 
 ---
@@ -1039,6 +1040,67 @@ HF card recommends 6, but the MoE architecture drops acceptance below 70% — sa
 - Vision broken with MTP active (`--mmproj` unsupported)
 
 Raw logs: [`docs/models/benchmarks/logs/huihui-qwen36-35b-mtp-abliterated/`](../benchmarks/logs/huihui-qwen36-35b-mtp-abliterated/)
+
+---
+
+## llmfan46 Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K
+
+First **Heretic-abliterated dense model with MTP self-drafting** in this lab. The vendor applied Heretic v1.3.0's Magnitude-Preserving Orthogonal Ablation (MPOA) refusal-direction removal to the dense Qwen3.6-27B base, then preserved all 15 native Multi-Token Prediction parameters through the GGUF conversion — so MTP speculative decoding runs on top of the abliteration. Dense 27B sibling of the MoE huihui MTP variant above.
+
+| Field | Value |
+|-------|-------|
+| **HuggingFace** | [`llmfan46/Qwen3.6-27B-uncensored-heretic-v2-Native-MTP-Preserved-GGUF`](https://huggingface.co/llmfan46/Qwen3.6-27B-uncensored-heretic-v2-Native-MTP-Preserved-GGUF) |
+| **Base model** | `Qwen/Qwen3.6-27B` (dense 27.3B — hybrid Gated DeltaNet + full Gated Attention, 64 layers) |
+| **Uncensoring** | Heretic v1.3.0 — Magnitude-Preserving Orthogonal Ablation (MPOA) on `attn.o_proj` / `attn.out_proj` / `mlp.down_proj`. Vendor: 94% fewer refusals, KL div 0.0021, MMLU 85.67% vs 86.65% original |
+| **Architecture** | `qwen3.6` dense + 15 preserved native MTP draft-prediction parameters |
+| **Quant** | GGUF Q6_K (22.8 GB) |
+| **Context** | 262,144 native (server `-c 131072` — HF card requires ≥128K to preserve thinking) |
+| **Server** | `llama-cpp-mainline` on port 8100 (`ggml-org/llama.cpp`) |
+| **Server flags** | `--spec-type draft-mtp --spec-draft-n-max 2 -ngl 99 -fa on -np 1 -c 131072 --jinja --reasoning on` |
+| **Alias** | `qwen36-27b-heretic-v2-mtp-q6k` |
+| **Deployed** | 2026-05-21 |
+
+### Performance (2026-05-21, pre-bench hygiene, mainline llama.cpp)
+
+| Context | Decode tok/s | Prefill tok/s | TTFT |
+|:-------:|:------------:|:-------------:|:----:|
+| 512 | **24.56** | 3,285 | 0.16 s |
+| 4K | 24.59 | 24,450 | 0.17 s |
+| 8K | 24.17 | 46,826 | 0.18 s |
+| 32K | 22.07 | 149,975 | 0.22 s |
+| 65K | 15.60 | 215,945 | 0.30 s |
+
+Unlike the dense unsloth 27B MTP and MoE huihui MTP siblings (32K throughput probe returned HTTP 400), the 131072-token context load gives this model headroom — all five probes complete cleanly. Decode ~24 tok/s is marginally above the censored unsloth dense 27B MTP (22.9).
+
+### MTP draft acceptance
+
+~96% on short fixed-length generations, 62–86% on longer agent-loop generations — **~74% aggregate**. Lower than the censored dense 27B MTP (84–89%): the Heretic MPOA ablation perturbs the residual stream the draft heads were trained against. Keep `--spec-draft-n-max 2`.
+
+### Refusal benchmark (mlabonne 10/520, temp=1.0, max_tokens=1024)
+
+**10/10 keyword-complied, 0 refused.** Content channel populated on 3/10 (P5/P7/P10); the other 7 exhausted the 1024-token budget inside `<think>`. Avg 50.37 s — dense 27B + think-on. Keyword compliance is measured across both `content` and `reasoning_content`.
+
+### Tool-call smoke + agent benchmark (OpenCode end-to-end, 2026-05-21)
+
+4/5 single-call (agentic-reasoning prompt hit the length cap inside `<think>`) + 3/3 multi-turn loop (18.51 s).
+
+| Scenario | Wall (median) | LLM (median) | Turns | Tools |
+|:---------|:-------------:|:------------:|:-----:|:------|
+| Browse www.example.com | **38.99 s** [36.13–44.26] | 37.18 s | 2 | `webfetch` |
+| Browse Hackernews latest | **40.42 s** [29.87–54.37] | 38.90 s | 2 | `webfetch` |
+
+Slow end of the lab ranking — comparable to the censored unsloth dense 27B MTP (35.98 s / 35.24 s), ~8× slower than the MoE huihui MTP sibling at equal 10/10 compliance.
+
+### Caveats
+
+- GGUF-only — runs only on `llama-cpp-mtp` port 8100
+- Slow agent loops (dense 27B + think-on); the MoE huihui MTP sibling is the faster llama-cpp-mtp uncensored pick
+- 3/10 visible-content refusals at `max_tokens=1024` — answers stay in `<think>`; use `≥4096` for visible content
+- MTP acceptance ~74% (below the censored dense 27B's 84–89%) — MPOA perturbs the draft heads' expected residual stream
+- Vision broken with MTP active (`--mmproj` unsupported)
+- Vendor-reported MPOA metrics (94% fewer refusals, KL 0.0021, MMLU 85.67%) unverified — only the mlabonne 10/520 sample was reproduced here
+
+Raw logs: [`docs/models/benchmarks/logs/qwen36-27b-heretic-v2-mtp/`](../benchmarks/logs/qwen36-27b-heretic-v2-mtp/) · Full writeup: [`docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md`](../uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md)
 
 ---
 

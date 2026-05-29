@@ -985,6 +985,26 @@ Raw log: [`logs/gemma4-e4b-litert-lm/api-server.json`](logs/gemma4-e4b-litert-lm
 
 ---
 
+## 🤖 LiquidAI LFM2.5-8B-A1B Q8_0 (`lfm2moe` MoE 8.3B/1.5B-active) on llama.cpp
+
+Model: `LiquidAI/LFM2.5-8B-A1B-GGUF` Q8_0 (9.01 GB), chat-template patched for the LFM2 pythonic tool parser
+Server: `llama-cpp-mainline` `--jinja` `:8100` (plain, no MTP), `-c 65536`, `-fa on`
+
+**Streaming SSE results** (bench_api_server.py, 2 runs median):
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--|:--|:--|:--|
+| 512 | 0.03 | **190.6** | 20 K |
+| 4 096 | 0.03 | 188.5 | 148 K |
+| 8 192 | 0.03 | 185.2 | 277 K |
+| 32 768 | 0.04 | 169.9 | 827 K |
+
+Very fast for a 9 GB-footprint model — the ~1.5 B active path holds decode near 170–190 tok/s and TTFT at 30–40 ms across context. lm-studio runtime is comparable for generation (197–209 tok/s ≤4 K, 166–188 @ 8–32 K), but **only llama.cpp can parse the model's pythonic tool calls** — see the [tool-call benchmark](model-benchmark-tool-call.md) and [per-model doc](../per-model/model-summary-lfm2.md). 65 536-context probe overflows the window (prompt + 50 gen tokens exceed `-c 65536`), so 32 768 is the largest measured.
+
+Raw log: [`lfm2.5-8b-a1b-q8/`](lfm2.5-8b-a1b-q8/) (also `api-server-llmster.json` for the lm-studio generation run).
+
+---
+
 ## 🩹 vllm-mlx Bug Fix
 
 vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with_fallback()` function is missing `return model, tokenizer` after a successful `mlx_lm.load()` call, causing the function to return `None`. Patched locally by adding the missing return statement.

@@ -29,6 +29,7 @@ Model catalog, deployment notes, and benchmark results for the Mac Studio stack.
 | [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md) | Qwen3-ASR family (1.7B / 0.6B / ForcedAligner-0.6B) — speech-to-text on M3 Ultra MPS, 19.06× RTF on 1.7B. |
 | [`per-model/model-summary-zaya1-8b.md`](per-model/model-summary-zaya1-8b.md) | Zyphra ZAYA1-8B (8.4B / 760M-active CCA + top-1 MoE) — Markovian RSA explanation, quant matrix, why vmlx-swift-lm via Osaurus is the only viable path. |
 | [`per-model/model-summary-deepseek-v4.md`](per-model/model-summary-deepseek-v4.md) | DeepSeek-V4-Flash (284B/13B-active `deepseek4` MoE) — quant landscape (only `antirez` q2-imatrix 81 GB fits 96 GB), why persadian IQ1_S/arishma108 is CUDA-only, why `ds4` (DwarfStar 4) is the sole Apple-Silicon path, full benchmarks. |
+| [`per-model/model-summary-lfm2.md`](per-model/model-summary-lfm2.md) | LiquidAI LFM2.5-8B-A1B Q8_0 (`lfm2moe` 8.3B/1.5B-active MoE) — why lm-studio tool calls fail (pythonic format + reasoning-only → `[TOOL_REQUEST]` buried in `<think>`), the `{# List of tools: [ #}` template-marker patch that makes llama.cpp `--jinja` parse tool calls, deployment recipe, benchmarks. |
 
 ## Benchmarks
 

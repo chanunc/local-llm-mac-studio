@@ -20,6 +20,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Qwen3-ASR Family](#qwen3-asr-family) — 2 variants + forced aligner: **1.7B (active speech-to-text sidecar, MPS, 19.06× RTF on 15 s English clip)**, 0.6B, ForcedAligner-0.6B. Detail at [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)
 - [Z-Image / Z-Anime Family (Image Generation)](#z-image--z-anime-family-image-generation) — 2 variants on disk: **Z-Anime Distill-4-step AIO BF16 (active, 17.75 s @ 1024² M3 Ultra MPS)**, Z-Anime Base AIO BF16 (best-quality reference, 235.16 s @ 28 steps). S3-DiT 6B, Apache-2.0, ComfyUI on port 8188 (web UI only). [bench](benchmarks/z-anime/wall-time-comfyui.md)
 - [DeepSeek-V4-Flash (284B/13B-active MoE, ds4)](#deepseek-v4-flash-284b13b-active-moe-ds4) — 1 viable variant: **IQ2XXS-imatrix 81 GB GGUF on the `antirez/ds4` native Metal engine, port 8101 (only Apple-Silicon path for `deepseek4`; 5/5 smoke, browse 18.78 s / search 28.22 s)**. Detail at [`per-model/model-summary-deepseek-v4.md`](per-model/model-summary-deepseek-v4.md)
+- [LFM2.5 Family (LiquidAI `lfm2moe` hybrid MoE)](#lfm25-family-liquidai-lfm2moe-hybrid-moe) — 1 variant: **LFM2.5-8B-A1B Q8_0 (8.3B/1.5B-active MoE, 190 tok/s, browse 11.1 s / search 19.72 s — `llama-cpp-mainline --jinja` only; lm-studio tool calls broken; canonical GGUF needs chat-template patch)**. Detail at [`per-model/model-summary-lfm2.md`](per-model/model-summary-lfm2.md)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
 ---
@@ -475,6 +476,18 @@ Six Google Gemma 4 variants currently catalogued in this stack — the **26B-A4B
 | DavidAU Gemma 4 31B Heretic Q6_k | Dense 31B uncensored (HERETIC+MysteryFT), vision-capable, loaded text-only | 23.47 GiB | Q6_k GGUF | lm-studio | [bench](uncen-model/gemma4-31b-davidau-heretic-benchmark.md) |
 | TrevorJS Gemma 4 26B-A4B Uncensored Q8_0 | MoE 26B/4B uncensored (EGA abliteration) | 25.02 GiB | Q8_0 GGUF | lm-studio | [bench](uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) |
 | **TrevorJS Gemma 4 31B-it Uncensored Q4_K_M** | Dense 31B uncensored (norm-preserving biprojected abliteration) | **17.40 GiB** | Q4_K_M GGUF | **lm-studio (current main 2026-05-10)** | [bench](uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
+
+---
+
+## LFM2.5 Family (LiquidAI `lfm2moe` hybrid MoE)
+
+LiquidAI's on-device hybrid MoE. The lab variant is **LFM2.5-8B-A1B Q8_0** — 8.3 B total / ~1.5 B active (`lfm2moe`, 32 × 959 M experts), reasoning-only, text-only, `lfm1.0` proprietary license. Fast for its footprint (**190 tok/s** decode, browse 11.1 s / search 19.72 s), but tool-calling support is runtime-dependent on this days-old architecture.
+
+| Variant | Type | Size | Quant | Working server | Detail |
+|:--|:--|--:|:--|:--|:--|
+| LFM2.5-8B-A1B Q8_0 | MoE 8.3B/1.5B-active, text-only, reasoning-only | 9.01 GB | Q8_0 GGUF (template-patched) | `llama-cpp-mainline` `:8100` via `--jinja` | [link](per-model/model-summary-lfm2.md) |
+
+**Headline gotcha:** the native tool format is Pythonic (`<|tool_call_start|>[func(arg="...")]<|tool_call_end|>`). **lm-studio cannot parse it** — it injects its own `[TOOL_REQUEST]` format, which the reasoning-only model buries in its `<think>` block → smoke 0/5 ([lmstudio-js #458](https://github.com/lmstudio-ai/lmstudio-js/issues/458)). **llama.cpp `--jinja` works (5/5)** but only after the GGUF chat-template carries the `{# List of tools: [ #}` marker that routes llama.cpp to the LFM2 pythonic parser — the canonical GGUF lacks it and returns HTTP 500 ([ggml-org/llama.cpp #20245](https://github.com/ggml-org/llama.cpp/issues/20245)); the community fix [`nathanrchn/LFM2.5-8B-A1B-GGUF-fixed-v2`](https://huggingface.co/nathanrchn/LFM2.5-8B-A1B-GGUF-fixed-v2) adds exactly that one line. Full deployment recipe (transplant the marker template into Q8_0), benchmarks, and the recurrent-`invalid`-tool-call caveat in [`per-model/model-summary-lfm2.md`](per-model/model-summary-lfm2.md).
 
 ---
 

@@ -1,0 +1,109 @@
+{
+  "benchmark": "api-tool-call",
+  "mode": "openai-http",
+  "model": "lfm2.5-8b-a1b-q8",
+  "base_url": "http://192.168.31.4:8105/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 0.77,
+      "output_tokens": 95,
+      "rate_tps": 123.1,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 0.53,
+      "output_tokens": 76,
+      "rate_tps": 143.8,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 0.9,
+      "output_tokens": 143,
+      "rate_tps": 158.3,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web",
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"query\":\"openai api docs\"}",
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 0.51,
+      "output_tokens": 72,
+      "rate_tps": 142.0,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 0.83,
+      "output_tokens": 131,
+      "rate_tps": 157.2,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 0.8,
+      "output_tokens": 124,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 0.84,
+      "output_tokens": 139,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 1.0,
+      "output_tokens": 168,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 2.64
+}

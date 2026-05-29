@@ -34,6 +34,15 @@
             "context": 131072,
             "output": 8192
           }
+        },
+        "lfm2.5-8b-a1b-q8": {
+          "name": "LiquidAI LFM2.5-8B-A1B Q8_0 (lfm2moe MoE 8.3B/1.5B-active, mainline llama.cpp --jinja, no MTP; chat_template patched for LFM2 pythonic tool parser)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
         }
       }
     }

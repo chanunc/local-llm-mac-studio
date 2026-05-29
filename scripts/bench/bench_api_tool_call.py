@@ -1,19 +1,28 @@
 #!/usr/bin/env python3
-"""API-level tool-call harness for OpenAI-compatible servers.
+"""Tool-call harness for OpenAI-compatible servers and native LiteRT-LM.
 
 Runs 5 single-call scenarios + a 3-turn agentic loop against
-/v1/chat/completions (non-streaming, temperature 0). Output JSON
-matches docs/models/benchmarks/logs/qwen36-27b-jang4m/api-tool-test.json.
+/v1/chat/completions (non-streaming, temperature 0) by default.
+Native LiteRT-LM mode uses the Python API and records Python tool
+invocations, because the OpenAI finish_reason/tool_calls fields do not
+exist on that path.
 
 Usage:
   ./bench_api_tool_call.py \
     --base-url http://<MAC_STUDIO_IP>:8000/v1 \
     --model JANGQ-AI/Qwen3.6-27B-JANG_4M \
     --output docs/models/benchmarks/logs/qwen36-27b-jang4m/api-tool-test.json
+
+  ./bench_api_tool_call.py \
+    --mode litert-native \
+    --native-model-path ~/.litert-lm/models/gemma4-e4b/model.litertlm \
+    --model gemma4-e4b \
+    --output docs/models/benchmarks/logs/gemma4-e4b-litert-lm/native-tool-test.json
 """
 
 import argparse
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -97,6 +106,102 @@ SINGLE_SCENARIOS = [
 ]
 
 
+FAKE_FILES = {
+    "/tmp/notes.txt": "Benchmark note: LiteRT-LM native tool call smoke test.",
+    "/tmp/app/config.json": json.dumps({"host": "0.0.0.0", "port": 8000, "debug": True}),
+    "/tmp/alpha.txt": "alpha",
+    "/tmp/beta.txt": "beta",
+}
+
+
+class ToolRecorder:
+    """In-memory tool sandbox used by native LiteRT-LM mode."""
+
+    def __init__(self):
+        self.calls = []
+        self.files = dict(FAKE_FILES)
+
+    def _record(self, name, arguments, response):
+        self.calls.append({
+            "name": name,
+            "arguments": arguments,
+            "response": response,
+        })
+        return response
+
+    def read_file(self, path: str) -> str:
+        """Read the contents of a file from disk.
+
+        Args:
+            path: Absolute path to the file.
+        """
+        return self._record(
+            "read_file",
+            {"path": path},
+            self.files.get(path, f"File not found in benchmark sandbox: {path}"),
+        )
+
+    def write_file(self, path: str, content: str) -> str:
+        """Write content to a file on disk.
+
+        Args:
+            path: Absolute path to write.
+            content: Content to write.
+        """
+        self.files[path] = content
+        return self._record(
+            "write_file",
+            {"path": path, "content": content},
+            json.dumps({"ok": True, "bytes_written": len(content)}),
+        )
+
+    def run_command(self, cmd: str) -> str:
+        """Run a shell command and return stdout.
+
+        Args:
+            cmd: Command to run.
+        """
+        return self._record(
+            "run_command",
+            {"cmd": cmd},
+            "13:37 up 10 days, 4 users, load averages: 1.23 1.10 0.98",
+        )
+
+    def search_web(self, query: str) -> str:
+        """Search the web and return results.
+
+        Args:
+            query: Search query.
+        """
+        return self._record(
+            "search_web",
+            {"query": query},
+            json.dumps([
+                {"title": "OpenAI API documentation", "url": "https://platform.openai.com/docs"},
+                {"title": "OpenAI API reference", "url": "https://platform.openai.com/docs/api-reference"},
+            ]),
+        )
+
+    def list_directory(self, path: str) -> str:
+        """List entries in a directory.
+
+        Args:
+            path: Absolute directory path.
+        """
+        entries = ["notes.txt", "alpha.txt", "beta.txt", "app"]
+        return self._record("list_directory", {"path": path}, json.dumps(entries))
+
+    @property
+    def tools(self):
+        return [
+            self.read_file,
+            self.write_file,
+            self.run_command,
+            self.search_web,
+            self.list_directory,
+        ]
+
+
 def chat(base_url, model, messages, api_key=None, max_tokens=1024, timeout=600):
     body = json.dumps({
         "model": model,
@@ -142,6 +247,49 @@ def extract(resp):
 
 def fmt_rate(tokens, secs):
     return round(tokens / secs, 1) if secs > 0 and tokens else 0.0
+
+
+def litert_response_text(response):
+    if isinstance(response, str):
+        return response
+    if not isinstance(response, dict):
+        return str(response)
+    parts = []
+    for item in response.get("content", []):
+        if isinstance(item, dict) and item.get("type") == "text":
+            parts.append(item.get("text", ""))
+    return "".join(parts)
+
+
+def import_litert_lm():
+    try:
+        import litert_lm  # type: ignore
+    except ImportError as e:
+        raise SystemExit(
+            "Native LiteRT-LM mode requires the Python API package. "
+            "Install it on the runner with: pip install litert-lm-api"
+        ) from e
+    return litert_lm
+
+
+def litert_backend(litert_lm, name):
+    backend = name.lower()
+    if backend == "cpu":
+        return litert_lm.Backend.CPU()
+    if backend == "gpu":
+        return litert_lm.Backend.GPU()
+    if backend == "npu":
+        return litert_lm.Backend.NPU()
+    raise ValueError(f"Unsupported LiteRT-LM backend: {name}")
+
+
+def create_litert_conversation(engine, recorder, system_instruction=None):
+    kwargs = {"tools": recorder.tools}
+    if system_instruction:
+        # LiteRT-LM exposes Message.system in the documented Python API.
+        litert_lm = import_litert_lm()
+        kwargs["messages"] = [litert_lm.Message.system(system_instruction)]
+    return engine.create_conversation(**kwargs)
 
 
 def run_single(base_url, model, api_key):
@@ -262,16 +410,129 @@ def run_multi_turn(base_url, model, api_key):
     }
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--base-url", required=True)
-    p.add_argument("--model", required=True)
-    p.add_argument("--api-key", default=None)
-    p.add_argument("--output", required=True)
-    args = p.parse_args()
+def run_litert_single(engine):
+    out = []
+    for scenario, prompt in SINGLE_SCENARIOS:
+        print(f"  • {scenario} ... ", end="", flush=True)
+        recorder = ToolRecorder()
+        try:
+            with create_litert_conversation(engine, recorder) as conversation:
+                t0 = time.perf_counter()
+                response = conversation.send_message(prompt)
+                dt = time.perf_counter() - t0
+        except Exception as e:
+            print(f"ERROR: {e}")
+            out.append({
+                "scenario": scenario,
+                "prompt": prompt,
+                "error": str(e),
+            })
+            continue
+        names = [call["name"] for call in recorder.calls]
+        args = [json.dumps(call["arguments"]) for call in recorder.calls]
+        rec = {
+            "scenario": scenario,
+            "prompt": prompt,
+            "time_s": round(dt, 2),
+            "output_tokens": 0,
+            "rate_tps": 0.0,
+            "finish_reason": "native_response",
+            "tool_calls": names,
+            "tool_args": args,
+            "content": litert_response_text(response),
+        }
+        out.append(rec)
+        print(f"{dt:.2f}s, native tools={names}")
+    return out
 
+
+def run_litert_multi_turn(engine):
+    print("  • Native multi-turn loop (read config → write port 8080 → summary)")
+    recorder = ToolRecorder()
+    system_instruction = (
+        "You are a config-fix assistant. Read /tmp/app/config.json, set port=8080, "
+        "write it back, then summarize."
+    )
+    prompt = "Read /tmp/app/config.json, change port to 8080, write back"
+    try:
+        with create_litert_conversation(engine, recorder, system_instruction) as conversation:
+            t0 = time.perf_counter()
+            response = conversation.send_message(prompt)
+            dt = time.perf_counter() - t0
+    except Exception as e:
+        print(f"    native turn: ERROR: {e}")
+        return {
+            "turns": [{
+                "turn": 1,
+                "error": str(e),
+                "tool_calls": [],
+            }],
+            "total_turns": 1,
+            "total_time_s": 0.0,
+            "aborted": str(e),
+        }
+
+    names = [call["name"] for call in recorder.calls]
+    print(f"    native turn: {dt:.2f}s, tools={names}")
+    return {
+        "turns": [{
+            "turn": 1,
+            "time_s": round(dt, 2),
+            "output_tokens": 0,
+            "finish_reason": "native_response",
+            "tool_calls": names,
+            "content": litert_response_text(response),
+        }],
+        "total_turns": 1,
+        "total_time_s": round(dt, 2),
+    }
+
+
+def run_litert_native(args):
+    litert_lm = import_litert_lm()
+    model_path = os.path.expanduser(args.native_model_path)
+    if not os.path.exists(model_path):
+        raise SystemExit(f"LiteRT-LM model path does not exist: {model_path}")
+
+    print(f"Model:      {args.model}")
+    print(f"Mode:       litert-native")
+    print(f"Model path: {model_path}")
+    print(f"Backend:    {args.native_backend}")
+    print()
+
+    engine_kwargs = {"backend": litert_backend(litert_lm, args.native_backend)}
+    if args.native_cache_dir:
+        engine_kwargs["cache_dir"] = os.path.expanduser(args.native_cache_dir)
+    if args.enable_speculative_decoding:
+        engine_kwargs["enable_speculative_decoding"] = True
+
+    with litert_lm.Engine(model_path, **engine_kwargs) as engine:
+        print("[1/2] Single-call scenarios")
+        singles = run_litert_single(engine)
+        print()
+        print("[2/2] Native LiteRT-LM tool loop")
+        multi = run_litert_multi_turn(engine)
+
+    payload = {
+        "benchmark": "api-tool-call",
+        "mode": "litert-native",
+        "model": args.model,
+        "model_path": model_path,
+        "backend": args.native_backend,
+        "single_calls": singles,
+        "multi_turn": multi.get("turns", []),
+        "total_turns": multi.get("total_turns", 0),
+        "total_time_s": multi.get("total_time_s", 0.0),
+    }
+    if "aborted" in multi:
+        payload["aborted"] = multi["aborted"]
+    return payload
+
+
+def run_openai_http(args):
     print(f"Model:    {args.model}")
     print(f"Base URL: {args.base_url}")
+    print(f"Mode:     openai-http")
     print()
     print("[1/2] Single-call scenarios")
     singles = run_single(args.base_url, args.model, args.api_key)
@@ -280,6 +541,8 @@ def main():
     multi = run_multi_turn(args.base_url, args.model, args.api_key)
 
     payload = {
+        "benchmark": "api-tool-call",
+        "mode": "openai-http",
         "model": args.model,
         "base_url": args.base_url,
         "single_calls": singles,
@@ -289,14 +552,42 @@ def main():
     }
     if "aborted" in multi:
         payload["aborted"] = multi["aborted"]
+    return payload
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--mode", choices=["openai-http", "litert-native"], default="openai-http")
+    p.add_argument("--base-url")
+    p.add_argument("--model", required=True)
+    p.add_argument("--api-key", default=None)
+    p.add_argument("--native-model-path", help="Path to a .litertlm bundle for --mode litert-native")
+    p.add_argument("--native-backend", default="cpu", choices=["cpu", "gpu", "npu"])
+    p.add_argument("--native-cache-dir", default=None)
+    p.add_argument("--enable-speculative-decoding", action="store_true")
+    p.add_argument("--output", required=True)
+    args = p.parse_args()
+
+    if args.mode == "openai-http":
+        if not args.base_url:
+            p.error("--base-url is required for --mode openai-http")
+        payload = run_openai_http(args)
+    else:
+        if not args.native_model_path:
+            p.error("--native-model-path is required for --mode litert-native")
+        payload = run_litert_native(args)
 
     with open(args.output, "w") as f:
         json.dump(payload, f, indent=2)
     print()
     print(f"Wrote {args.output}")
-    pass_count = sum(1 for s in singles if s.get("finish_reason") == "tool_calls")
+    singles = payload["single_calls"]
+    if payload["mode"] == "openai-http":
+        pass_count = sum(1 for s in singles if s.get("finish_reason") == "tool_calls")
+    else:
+        pass_count = sum(1 for s in singles if s.get("tool_calls"))
     print(f"Single-call pass rate: {pass_count}/{len(singles)}")
-    print(f"Multi-turn total: {multi.get('total_turns', 0)} turns, {multi.get('total_time_s', 0)}s")
+    print(f"Multi-turn total: {payload.get('total_turns', 0)} turns, {payload.get('total_time_s', 0)}s")
 
 
 if __name__ == "__main__":

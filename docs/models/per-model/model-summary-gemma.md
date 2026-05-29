@@ -1,6 +1,6 @@
 # Model Summary: Gemma 4 Family
 
-Google's Gemma 4 generation. Six variants currently catalogued in this stack: the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context, thinking mode), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode), the **DavidAU HERETIC uncensored 31B** GGUF fine-tune (128K context, Thinking variant, lm-studio), the **TrevorJS EGA uncensored 26B A4B** GGUF (65K context loaded, non-thinking sparse MoE), the **Huihui-ai abliterated 26B A4B** i1-Q6_K GGUF (65K context loaded, non-thinking sparse MoE, **current lm-studio main 2026-05-15**), and the **TrevorJS abliterated uncensored 31B-it** GGUF (65K context loaded, non-thinking dense). They share the `Gemma4ForCausalLM` / `Gemma4ForConditionalGeneration` family but use different sub-architectures.
+Google's Gemma 4 generation. Seven variants currently catalogued in this stack: the **26B-A4B** mixture-of-experts multimodal release (vision + audio + video, 256K context, thinking mode), the dense **31B-it** instruction-tuned text-only release (64K context, thinking mode), the **DavidAU HERETIC uncensored 31B** GGUF fine-tune (128K context, Thinking variant, lm-studio), the **TrevorJS EGA uncensored 26B A4B** GGUF (65K context loaded, non-thinking sparse MoE), the **Huihui-ai abliterated 26B A4B** i1-Q6_K GGUF (65K context loaded, non-thinking sparse MoE, **current lm-studio main 2026-05-15**), and the **TrevorJS abliterated uncensored 31B-it** GGUF (65K context loaded, non-thinking dense). They share the `Gemma4ForCausalLM` / `Gemma4ForConditionalGeneration` family but use different sub-architectures.
 
 ## Index
 
@@ -13,6 +13,7 @@ Google's Gemma 4 generation. Six variants currently catalogued in this stack: th
 - [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](#trevorjs-gemma-4-31b-it-uncensored-q4km) — Dense 31B no-think · 65K loaded · `lm-studio` · 17.40 GiB · 30.1 tok/s @ 512 / 24.1 tok/s @ 32K · harness 6–7/10 / **manual 10/10 mlabonne** (disclaimer-prefixed complies) · browse **6.63 s warm** _(initial 10.08)_ / search 30.81 s · [bench writeup](../../uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md)
 - [lmstudio-community Gemma 4 26B A4B-it Q8_0 (standardised)](../benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8) — MoE 26B/4B active · 65K loaded · `lm-studio` · 25.02 GiB · 70–86 tok/s · API smoke 5/5 (multi-turn 2.14 s tied 🏆 with TrevorJS) · OpenCode 3/3 under scaffolded prompts (`Browse <url> using tool you have` / `Use webfetch to fetch <literal url> …`): **browse 2.94 s 🥈 / search 7.20 s** · [bench writeup](../benchmarks/model-benchmark-tool-call.md#results-lmstudio-community-gemma-4-26b-a4b-it-q8)
 - [lmstudio-community Gemma 4 26B A4B-it Q8_0 on **stock `llama-server`** (same GGUF)](../benchmarks/model-benchmark-tool-call.md#gemma-4-26b-a4b-q8_0--stock-llama-cpp-vs-lm-studio-same-gguf) — same MoE 26B/4B Q8_0 GGUF, served via `~/llama-cpp-mtp/build/bin/llama-server` with **no `--spec-type`** (stock decoder, `am17an/llama.cpp@mtp-clean` binary) on port 8100 · **decode tied with lm-studio** (87 → 73 tok/s @ 543 → 32 799 in) but **lm-studio +19 % browse / +30 % search / +2.1× API multi-turn** on the same blob — wrapper-layer (HTTP, tool-call dispatch, chat-template hot path) is the gap, not Metal kernels · *2026-05-15*
+- [Gemma 4 E4B (LiteRT-LM)](#gemma-4-e4b-litert-lm) — Edge ~4B · ~3K context · `litert-lm` port 9379 · 3.66 GB · CPU/XNNPACK 71.5 tok/s prefill / 13.85 tok/s decode · No tool calling via HTTP (alpha serve). Evaluation-only datapoint for Google's edge runtime. *2026-05-28*
 
 ---
 
@@ -887,3 +888,50 @@ TrevorJS's norm-preserving biprojected abliteration applied to the official `goo
 - **Slower than the MoE siblings.** Even at warm-cache browse 6.63 s, dense 31B at Q4_K_M is 2.3× slower than the TrevorJS Gemma 4 26B-A4B Q8_0 sibling (2.93 s 🥇) and 1.3× slower than the standard Gemma 4 31B-it MLX 6-bit (5.11 s 🥈). MoE sparsity dominates over Q4 vs higher quant differences.
 - **modelKey collision warning** — `lms load 'gemma-4-31b-it-uncensored' -y` prints `W 2 models match the provided model key on the same device. Loading the first one.` Harmless, but pin `--identifier gemma4-31b-it-uncensored-trevorjs-q4km` to make API id deterministic.
 - **No multimodal support** — `gemma-4-31B-it` is text-only at the base; no vision in this GGUF deployment.
+
+---
+
+## Gemma 4 E4B (LiteRT-LM)
+
+Google's **edge-optimized** Gemma 4 variant (~4B effective parameters) served via Google's LiteRT-LM inference framework. The `.litertlm` format bundles quantized TFLite graphs with a tokenizer. This is the **largest pre-converted LiteRT-LM model** available as of 2026-05-28 (no 12B+ models exist in `.litertlm` format; the conversion pipeline is incomplete for larger models).
+
+### Specs
+
+| Spec | Value |
+|:-----|:------|
+| Source | [litert-community/gemma-4-E4B-it-litert-lm](https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm) |
+| Format | `.litertlm` (TFLite + tokenizer bundle) |
+| Architecture | `Gemma4ForCausalLM` (edge variant, ~4B effective) |
+| On-disk size | 3.66 GB |
+| Backend | CPU / XNNPACK (GPU produces garbage on Apple Silicon) |
+| Context | ~3072 tokens max (crashes at 4096) |
+| Server | `litert-lm` on port 9379 |
+| License | Gemma Terms of Use |
+| MTP | `--enable-speculative-decoding` available but no effect on this model file |
+
+### Performance (Mac Studio M3 Ultra 96 GB, litert-lm 0.12.0)
+
+From `litert-lm benchmark --backend cpu -p 512 -d 128`:
+
+| Metric | Value |
+|:--|:--|
+| Prefill | 71.5 tok/s |
+| Decode | 13.85 tok/s |
+| Init (cold) | 24.2 s |
+| TTFT (512 input) | 7.2 s |
+
+### Tool Calling
+
+OpenAI HTTP tool-call harness: **0/5 pass** (2026-05-28). The model itself supports function calling, but the LiteRT-LM OpenAI serve handler (v0.12.0) drops the `tools` parameter from requests and never returns structured `tool_calls` in responses.
+
+Native LiteRT-LM tool calling is a separate path: `bench_api_tool_call.py --mode litert-native` uses the documented Python API (`Engine(...).create_conversation(tools=[...])`) with sandboxed benchmark tools and records actual Python function invocations. Use this native result beside the HTTP result for LiteRT-LM model entries; it is not a drop-in proxy for Claude/OpenCode because no OpenAI `tool_calls` are surfaced.
+
+Native Python API benchmark (2026-05-28, Mac Studio CPU/XNNPACK): **5/5 single-call pass**. Latencies: file-read 7.83 s, command 8.23 s, search+read 10.68 s, list+read+write 11.71 s, agentic-reasoning 22.01 s. The native config loop completed in 11.03 s with `read_file` + `write_file`. Raw JSON: [`gemma4-e4b-litert-lm/native-tool-test.json`](../benchmarks/logs/gemma4-e4b-litert-lm/native-tool-test.json).
+
+### Known Issues
+
+- **GPU backend broken on Apple Silicon.** The `gpu_artisan` backend targets mobile GPUs / Google TPU hardware, not Metal. Produces `<pad>` garbage. Always use `cpu`.
+- **Per-character SSE chunks.** Streaming returns one character per `data:` event, inflating chunk counts vs actual token count.
+- **No `usage` stats.** `prompt_tokens` and `completion_tokens` always absent from responses.
+- **Cold start ~24 s.** XNNPACK delegate compilation on first request.
+- **No GET /v1/models.** Server only accepts POST requests.

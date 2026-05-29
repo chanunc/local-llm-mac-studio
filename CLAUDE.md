@@ -23,6 +23,7 @@ Only one of vllm-mlx, mlx-openai-server, oMLX, or vmlx can hold **port 8000** at
 - **comfyui** (8188, web UI) — ComfyUI 0.20.1 + SeeSee21/Z-Anime (S3-DiT 6B). `--use-pytorch-cross-attention` required on MPS. **No OpenAI API shim** — browser UI only. [Runbook](docs/servers/comfyui/summary.md).
 - **ds4** (8101, OpenAI+Anthropic+Responses) — DwarfStar 4, only Apple-Silicon path for DeepSeek-V4-Flash (284B/13B-active `deepseek4` MoE). Built at `~/ds4/` with `make -j8`. Only `q2-imatrix` (81 GB) fits 96 GB. `--host 0.0.0.0` required for LAN. Native DSML tool-call mapping (no parser flags). **Never run CPU path** — kernel-panics macOS. [Runbook](docs/servers/ds4/summary.md).
 - **qwen-asr** (no port, Python API) — Qwen3-ASR-1.7B speech-to-text in `~/qwen-asr-env/`. `qwen-asr-serve` is CUDA-only; use `Qwen3ASRModel.transcribe(audio=…)` with MPS. RTF 19.06×. [Runbook](docs/servers/qwen-asr/summary.md).
+- **litert-lm** (9379, OpenAI alpha) — Google LiteRT-LM edge runtime v0.12.0. Gemma 4 E4B (~4B, 3.66 GB). CPU/XNNPACK only (GPU produces garbage on Apple Silicon). 71.5 tok/s prefill, 13.85 tok/s decode. No `tools` param, no GET /v1/models, max ~3K context. Provisional. [Runbook](docs/servers/litert-lm/summary.md).
 
 **Skills:** `/deploy-run-benchmark-uncen-model` automates uncensored model deploys (HauhauCS, dealignai-CRACK, Hermes, Dolphin, abliterated, magnum) — runs Events 3+4+6. `/deploy-run-benchmark-model` handles both censored and uncensored.
 
@@ -42,6 +43,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (<MAC
                                          qwen-asr (no port)
                                          comfyui (web UI) :8188
                                          ds4 / DwarfStar 4 :8101
+                                         litert-lm (Gemma 4 E4B) :9379
 ```
 
 SSH aliases: `macstudio` (LAN), `macstudio-ts` (Tailscale), `narutaki` (Linux client). Use `macstudio-ts` when connected over Tailscale.
@@ -142,6 +144,12 @@ ssh macstudio "cd ~/ds4 && nohup ./ds4-server --host 0.0.0.0 --port 8101 \
   --trace /tmp/ds4-trace.txt > /tmp/ds4-server.log 2>&1 &"
 ssh macstudio "pkill -f 'ds4-server'"  # stop
 
+# litert-lm (port 9379) — Google edge runtime, CPU/XNNPACK only
+ssh macstudio "export PATH=\"/Users/chanunc/.local/bin:\$PATH\" && \
+  nohup litert-lm serve --api openai --host 0.0.0.0 --port 9379 --verbose \
+  > /tmp/litert-lm.log 2>&1 &"
+ssh macstudio "pkill -f 'litert-lm serve'"  # stop
+
 # View logs
 ssh macstudio "tail -20 /tmp/vllm-mlx.log"            # vllm-mlx
 ssh macstudio "tail -20 /tmp/mlx-openai-server.log"    # mlx-openai-server
@@ -153,6 +161,7 @@ ssh macstudio "tail -20 /tmp/chindamt.log"             # mlx-lm / ChindaMT
 ssh macstudio "tail -20 /tmp/comfyui.log"              # comfyui
 ssh macstudio "tail -20 /tmp/osaurus.log"              # Osaurus
 ssh macstudio "tail -20 /tmp/ds4-server.log"           # ds4
+ssh macstudio "tail -20 /tmp/litert-lm.log"            # litert-lm
 
 # Upgrades
 brew upgrade claude-code anomalyco/tap/opencode pi-coding-agent  # MacBook

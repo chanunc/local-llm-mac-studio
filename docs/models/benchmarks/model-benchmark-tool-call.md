@@ -6,7 +6,7 @@ Tested on **Mac Studio M3 Ultra (96 GB)**.
 
 Two complementary harnesses, both reported per model:
 
-1. **API-level tool-call harness** — direct `/v1/chat/completions` with a 5-tool fixture (`read_file`, `write_file`, `run_command`, `search_web`, `list_directory`). Five single-call scenarios + a 3-turn agentic loop (`read_file → write_file → final answer`, with simulated tool results between turns). Non-streaming, `temperature=0.0`, `max_tokens=1024`. Pass criterion per scenario: `finish_reason: "tool_calls"` with at least one well-formed entry in `message.tool_calls[]`.
+1. **Tool-call harness** — direct `/v1/chat/completions` by default (`bench_api_tool_call.py --mode openai-http`) with a 5-tool fixture (`read_file`, `write_file`, `run_command`, `search_web`, `list_directory`). Five single-call scenarios + a 3-turn agentic loop (`read_file → write_file → final answer`, with simulated tool results between turns). Non-streaming, `temperature=0.0`, `max_tokens=1024`. Pass criterion per HTTP scenario: `finish_reason: "tool_calls"` with at least one well-formed entry in `message.tool_calls[]`. LiteRT-LM models also get a native Python API pass (`--mode litert-native`) that records actual Python tool invocations from `Engine(...).create_conversation(tools=[...])`; keep that result beside the HTTP result because it tests the runtime's native tool loop, not OpenAI client compatibility.
    - Script: [`scripts/bench/bench_api_tool_call.py`](../../../scripts/bench/bench_api_tool_call.py)
 2. **OpenCode end-to-end harness** — real agent CLI invocation via `opencode run --format json`, measuring wall time (subprocess elapsed) and LLM time (sum of per-turn assistant durations from the session export). Captures agent system prompts, tool definitions, multi-turn loop, and reasoning overhead — the actual latency a user experiences, not raw inference tok/s.
    - Script: [`scripts/bench/bench_agent_tool_call.py`](../../../scripts/bench/bench_agent_tool_call.py)
@@ -54,6 +54,7 @@ Two complementary harnesses, both reported per model:
 - [llmfan46/Qwen3.6-27B-uncensored-heretic-v2-Native-MTP-Preserved-GGUF (Q6_K)](../uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) — 27 B dense Qwen3.6 + 15 native MTP parameters preserved, Heretic v1.3.0 MPOA abliteration (`attn.o_proj`/`mlp.down_proj`), Q6_K GGUF on `llama-cpp-mainline` :8100 (`ggml-org/llama.cpp`) — **⚠ 4/5 API smoke + 3-turn 18.51 s · ~74 % MTP acceptance · 24.6 tok/s · 10/10 mlabonne · OpenCode browse 38.99 s / search 40.42 s** (first Heretic-abliterated + MTP in lab) — *2026-05-21*
 - [mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF (i1-Q6_K)](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) — 26 B sparse MoE / 4B active, imatrix Q6_K GGUF, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B-it (lm-studio, no patches) — **✅ 5/5 API smoke + multi-turn 1.93 s 🏆 (new API-level leader) · 9/10 mlabonne refusal (first Gemma 4 uncensored to clear 9/10) · OpenCode browse 2.55 s 🥇 all-time leader / search 19.59 s** (`task` subagent on search) — *2026-05-15*
 - [deepseek-ai/DeepSeek-V4-Flash via antirez/deepseek-v4-gguf (IQ2XXS-imatrix)](#results-deepseek-ai-deepseek-v4-flash-ds4) — 284 B-total / 13 B-active 256-expert `deepseek4` MoE, 2-bit routed-expert imatrix GGUF on the `antirez/ds4` native Metal engine (port 8101) — **✅ 5/5 API smoke + multi-turn 8.95 s · OpenCode browse 18.78 s / search 28.22 s @ 2–3 turns + `webfetch`** (only Apple-Silicon path for `deepseek4`; persadian IQ1_S/arishma108 fork is CUDA-only, batiai Q3–Q8 exceed 96 GB RAM) — *2026-05-18*
+- [Gemma 4 E4B via LiteRT-LM native Python API](#results-gemma-4-e4b-litert-lm-native-python-api) — edge dense ~4 B `.litertlm`, CPU/XNNPACK — **HTTP OpenAI shim 0/5, native LiteRT-LM Python tool loop 5/5**; native single-call latencies 7.83–22.01 s, config loop 11.03 s. Not Claude/OpenCode-compatible until the OpenAI shim surfaces `tool_calls`. — *2026-05-28*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -96,6 +97,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | Qwen3.6-27B uncensored Heretic v2 MTP Q6_K GGUF + MTP self-drafting | `llama-cpp-mtp` :8100 | ⚠ **4/5** | 4.58 - 5.43 s | 5.46 - 8.97 s | 18.51 s (dense 27B + 15 native MTP params · Heretic v2 MPOA abliteration · 24.6 tok/s · ~74 % draft acceptance · 10/10 mlabonne · agentic-reasoning prompt hit 1024-tok length cap · OpenCode browse 38.99 s / search 40.42 s · [writeup](../uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md)) |
 | magnum-v4-72b MLX-4bit | **lm-studio** | ⛔ **0/5** | N/A (no tool calls emitted) | N/A | N/A (multi-turn loop only passed) |
 | Midnight-Miqu-70B-v1.5 Q4_K_M GGUF | **lm-studio** | ⛔ **SKIP** | N/A — HTTP 400 (no system role support) | N/A | N/A |
+| Gemma 4 E4B (~4B, LiteRT-LM) | `litert-lm` :9379 | ⛔ **0/5** HTTP · ✅ **5/5** native | 7.83 - 22.01 s (native) | 10.68 - 11.71 s (native) | 11.03 s native config loop (HTTP shim drops `tools` param — model calls tools correctly via native Python API only · CPU/XNNPACK 13.85 tok/s · [detail](#results-gemma-4-e4b-litert-lm-native-python-api)) |
 
 #### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
 
@@ -1920,3 +1922,28 @@ Zero errors, `webfetch` fired on every measured run, well under the 250 s p95 / 
 
 Raw JSON: [`docs/models/benchmarks/deepseek-v4-flash/`](deepseek-v4-flash/). Full landscape + deployment: [`docs/models/per-model/model-summary-deepseek-v4.md`](../per-model/model-summary-deepseek-v4.md) · runbook [`docs/servers/ds4/summary.md`](../../servers/ds4/summary.md).
 
+---
+
+## 🤖 Results: Gemma 4 E4B LiteRT-LM native Python API {#results-gemma-4-e4b-litert-lm-native-python-api}
+
+**Model:** `litert-community/gemma-4-E4B-it-litert-lm` imported as `~/.litert-lm/models/gemma4-e4b/model.litertlm` (3.66 GB `.litertlm`, dense ~4 B effective). **Runtime:** LiteRT-LM Python API 0.12.0, CPU/XNNPACK backend on Mac Studio M3 Ultra 96 GB-class. Benchmarked 2026-05-28.
+
+This entry has two separate results:
+
+- **OpenAI HTTP shim (`litert-lm serve --api openai`)**: ⛔ **0/5**. The server accepts chat completions but does not surface OpenAI `tool_calls[]`, so Claude/OpenCode-style clients cannot use it as an agent backend.
+- **Native LiteRT-LM Python API (`Engine(...).create_conversation(tools=[...])`)**: ✅ **5/5**. LiteRT-LM executes Python tools internally and returns the final model response; there is no OpenAI `finish_reason=tool_calls` on this path.
+
+### Native smoke (`bench_api_tool_call.py --mode litert-native`)
+
+| Scenario | Time | Native tool calls |
+|:--|--:|:--|
+| Single tool (file read) | 7.83 s | `read_file` |
+| Single tool (command) | 8.23 s | `run_command` |
+| Multi-tool (search + read) | 10.68 s | `search_web`, `read_file` |
+| Multi-tool (list + read + write) | 11.71 s | `list_directory`, `read_file`, `write_file` |
+| Agentic reasoning | 22.01 s | `run_command` ×3 |
+| Native config loop | 11.03 s | `read_file`, `write_file` |
+
+The agentic-reasoning scenario called tools correctly but the sandboxed `run_command` fixture returns a fixed uptime-like response, so the final content says it could not reliably identify the largest file. Count this as **tool invocation success**, not task-answer success.
+
+Raw JSON: [`logs/gemma4-e4b-litert-lm/native-tool-test.json`](logs/gemma4-e4b-litert-lm/native-tool-test.json). HTTP result: [`logs/gemma4-e4b-litert-lm/api-tool-test.json`](logs/gemma4-e4b-litert-lm/api-tool-test.json). Runbook: [`docs/servers/litert-lm/summary.md`](../../servers/litert-lm/summary.md).

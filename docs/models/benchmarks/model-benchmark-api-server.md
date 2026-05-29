@@ -954,6 +954,37 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 
 ---
 
+## 🤖 Gemma 4 E4B (~4B, LiteRT-LM) on litert-lm
+
+Model: `litert-community/gemma-4-E4B-it-litert-lm` (3.66 GB `.litertlm`)
+Server: `litert-lm serve --api openai` v0.12.0, port 9379, CPU/XNNPACK backend
+
+**Official `litert-lm benchmark` results:**
+
+| Metric | Value |
+|:--|:--|
+| Prefill | 71.5 tok/s |
+| Decode | 13.85 tok/s |
+| TTFT (512 input) | 7.2 s |
+| Init (cold) | 24.2 s |
+| Max context | ~3072 (crashes at 4096) |
+
+**Streaming SSE results** (bench_api_server.py, 2 runs median):
+
+| Context | TTFT (s) | Gen (tok/s)* | Notes |
+|:--|:--|:--|:--|
+| 512 | 5.0 | 24.4* | Warm (engine already initialized) |
+| 2048 | 10.6 | 25.1* | |
+| 4096 | — | — | Server crash: `litert_lm_conversation_send_message failed` |
+
+\* SSE gen_tps inflated — server emits per-character chunks, not per-token. True decode from official benchmark: **13.85 tok/s**.
+
+**Notes:** No `usage` stats returned (prompt_tokens/completion_tokens always 0). GPU backend (`gpu_artisan`) produces `<pad>` garbage on Apple Silicon — CPU only. Smallest model in lab (~4B effective). Tool calling not tested via this benchmark (separate API tool-call harness returned 0/5 — handler limitation, not model).
+
+Raw log: [`logs/gemma4-e4b-litert-lm/api-server.json`](logs/gemma4-e4b-litert-lm/api-server.json)
+
+---
+
 ## 🩹 vllm-mlx Bug Fix
 
 vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with_fallback()` function is missing `return model, tokenizer` after a successful `mlx_lm.load()` call, causing the function to return `None`. Patched locally by adding the missing return statement.

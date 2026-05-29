@@ -19,6 +19,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
                                          qwen-asr (speech→text, no port — Python API)
                                          comfyui (image-gen, sidecar) :8188
                                          ds4 / DwarfStar 4 (DeepSeek-V4-Flash, sidecar) :8101
+                                         litert-lm (Gemma 4 E4B, sidecar) :9379
                                          OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus; Responses for ds4)
 ```
 
@@ -59,7 +60,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 ### 🚀 Start a Server
 
-Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
+Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
 
 <details>
 <summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
@@ -511,6 +512,43 @@ curl -s http://<MAC_STUDIO_IP>:8000/v1/chat/completions \
 </details>
 
 <details>
+<summary>🧰 <strong>LiteRT-LM native tools</strong> — Gemma 4 E4B function-call smoke</summary>
+
+```bash
+# 1) Create a native LiteRT-LM tool preset on the Mac Studio.
+ssh macstudio "cat >/tmp/litert_tools_preset.py <<'PY'
+import urllib.request
+
+def web_fetch(url: str) -> str:
+    '''Fetch a web page and return the first 2000 characters of text.'''
+    if not url.startswith(('http://', 'https://')):
+        return 'blocked: URL must start with http:// or https://'
+    with urllib.request.urlopen(url, timeout=20) as response:
+        return response.read().decode('utf-8', errors='replace')[:2000]
+
+def write_file(path: str, content: str) -> str:
+    '''Write content to a local Markdown file.'''
+    if not path.endswith('.md'):
+        return 'blocked: output path must end with .md'
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    return f'wrote {len(content)} bytes to {path}'
+
+system_instruction = 'You are a helpful assistant with access to tools.'
+tools = [web_fetch, write_file]
+PY"
+
+# 2) Run Gemma 4 E4B with native LiteRT-LM tools.
+ssh macstudio "export PATH=\"\$HOME/.local/bin:\$PATH\" && \
+  litert-lm run <MODEL_PATH>/model.litertlm \
+    --backend=cpu \
+    --preset=/tmp/litert_tools_preset.py \
+    --prompt='Use tools to fetch https://news.ycombinator.com/, identify the top story, summarize it in 2 bullets, and write the result as Markdown to /tmp/hackernews-latest.md.'"
+```
+
+</details>
+
+<details>
 <summary>🔧 <strong>openai-cli</strong> — one-shot prompt test (any server, swap BASE_URL)</summary>
 
 ```bash
@@ -601,10 +639,11 @@ The four port-8000 servers are **mutually exclusive** (one at a time); `lm-studi
 | **[qwen-asr](docs/servers/qwen-asr/summary.md)** | — | 🟢 19× realtime | Python only | Speech → text (`Qwen3-ASR-1.7B`, 30 langs + 22 Chinese dialects) |
 | **[comfyui](docs/servers/comfyui/summary.md)** | 8188 | 🟢 18 s/img | Web UI only | Image generation (`SeeSee21/Z-Anime`; no OpenAI image shim) |
 | **[ds4](docs/servers/ds4/summary.md)** | 8101 | 🟢 25–35 tok/s | OpenAI + Anthropic + Responses | DeepSeek-V4-Flash 284B/13B-active `deepseek4` MoE (only Apple-Silicon path; native DSML tool calling) |
+| **[litert-lm](docs/servers/litert-lm/summary.md)** | 9379 | 🔴 13.85 tok/s | OpenAI (alpha) | Google LiteRT-LM edge runtime — Gemma 4 E4B (~4B, CPU/XNNPACK). No tool calling. Evaluation only. |
 
 </details>
 
-All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), `litert-lm`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
@@ -624,7 +663,7 @@ Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](d
 All models fit in **96GB unified memory**.
 
 <details>
-<summary>🧱 <strong>Dense</strong> — 12 models</summary>
+<summary>🧱 <strong>Dense</strong> — 13 models</summary>
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--|:--|--:|--:|:--|
@@ -640,6 +679,7 @@ All models fit in **96GB unified memory**.
 | [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | Prior production main (2026-05-10 → 2026-05-12) — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
 | [unsloth Qwen3.6-27B-MTP UD-Q6_K_XL](docs/models/techniques/model-technique-qwen-3-6-mtp.md) | Dense 27B + MTP heads (vision broken under MTP) | 26 | 32K (262K train) | Prior production main (deployed 2026-05-15 on `llama-cpp-mtp` port 8100, superseded same day by lm-studio + Huihui) — Apache 2.0 base, Unsloth Dynamic 2.0 6-bit GGUF + Multi-Token Prediction self-drafting heads, **84–89 % MTP draft acceptance**, decode 22.9 / 22.3 / 22.0 / 20.0 tok/s @ 414 / 3 648 / 7 274 / 29 128 input tokens, smoke 5/5 + multi-turn 21.92 s, OpenCode browse **35.98 s** / search **35.24 s** @ 2 turns w/ `webfetch` (slower than the GLM-5.1-DA Q4_K_M build) |
 | [llmfan46 Qwen3.6-27B Heretic v2 MTP Q6_K](docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) | Dense 27B + 15 native MTP params | 22.2 | 131K | Heretic v1.3.0 MPOA abliteration (`attn.o_proj`/`mlp.down_proj`) + MTP self-drafting, ~74% MTP acceptance, 24.6 tok/s, 10/10 mlabonne, browse 38.99 s / search 40.42 s on `llama-cpp-mtp` :8100. First Heretic-abliterated + MTP in lab. [Bench](docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) |
+| [Gemma 4 E4B (LiteRT-LM)](docs/models/per-model/model-summary-gemma.md#gemma-4-e4b-litert-lm) | Dense ~4B | 3.66 | ~3K | Google LiteRT-LM edge runtime evaluation. CPU/XNNPACK 71.5 tok/s prefill, 13.85 tok/s decode. No tool calling via HTTP (alpha serve). Smallest model in lab. [Runbook](docs/servers/litert-lm/summary.md) |
 
 </details>
 

@@ -1,0 +1,68 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-05-28T00:18:53.995725+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:9379/v1",
+    "model": "gemma4-e4b",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      2048
+    ]
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 4.92,
+          "total_s": 12.166,
+          "input_tokens": 0,
+          "output_tokens": 178,
+          "gen_tps": 24.57,
+          "prefill_tps": 0.0
+        },
+        {
+          "ttft_s": 5.066,
+          "total_s": 12.414,
+          "input_tokens": 0,
+          "output_tokens": 178,
+          "gen_tps": 24.22,
+          "prefill_tps": 0.0
+        }
+      ],
+      "median_ttft_s": 4.993,
+      "median_gen_tps": 24.395,
+      "median_prefill_tps": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 178
+    },
+    "2048": {
+      "runs": [
+        {
+          "ttft_s": 10.511,
+          "total_s": 17.391,
+          "input_tokens": 0,
+          "output_tokens": 173,
+          "gen_tps": 25.15,
+          "prefill_tps": 0.0
+        },
+        {
+          "ttft_s": 10.599,
+          "total_s": 17.511,
+          "input_tokens": 0,
+          "output_tokens": 173,
+          "gen_tps": 25.03,
+          "prefill_tps": 0.0
+        }
+      ],
+      "median_ttft_s": 10.555,
+      "median_gen_tps": 25.09,
+      "median_prefill_tps": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 173
+    }
+  }
+}

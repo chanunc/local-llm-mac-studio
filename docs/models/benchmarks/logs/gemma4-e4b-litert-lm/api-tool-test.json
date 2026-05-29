@@ -1,0 +1,68 @@
+{
+  "model": "gemma4-e4b",
+  "base_url": "http://192.168.31.4:9379/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 2.14,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 7.51,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 4.39,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 26.66,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 17.23,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 2.88,
+      "output_tokens": 0,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 1,
+  "total_time_s": 2.88,
+  "aborted": "no tool call on turn 1"
+}

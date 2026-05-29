@@ -1,0 +1,109 @@
+{
+  "benchmark": "api-tool-call",
+  "mode": "litert-native",
+  "model": "gemma4-e4b",
+  "model_path": "/Users/chanunc/.litert-lm/models/gemma4-e4b/model.litertlm",
+  "backend": "cpu",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 7.83,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "native_response",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\": \"/tmp/notes.txt\"}"
+      ],
+      "content": "The contents of `/tmp/notes.txt` are: \"Benchmark note: LiteRT-LM native tool call smoke test.\""
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 8.23,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "native_response",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\": \"uptime\"}"
+      ],
+      "content": "The system has been up for 10 days. There are 4 users currently logged in, and the load averages are 1.23, 1.10, and 0.98."
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 10.68,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "native_response",
+      "tool_calls": [
+        "search_web",
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"query\": \"openai api docs\"}",
+        "{\"path\": \"/tmp/notes.txt\"}"
+      ],
+      "content": "The web search for 'openai api docs' returned the following results:\n*   **OpenAI API documentation**: https://platform.openai.com/docs\n*   **OpenAI API reference**: https://platform.openai.com/docs/api-reference\n\nThe content of `/tmp/notes.txt` is:\n\"Benchmark note: LiteRT-LM native tool call smoke test.\""
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 11.71,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "native_response",
+      "tool_calls": [
+        "list_directory",
+        "read_file",
+        "write_file"
+      ],
+      "tool_args": [
+        "{\"path\": \"/tmp\"}",
+        "{\"path\": \"/tmp/notes.txt\"}",
+        "{\"path\": \"/tmp/summary.txt\", \"content\": \"Summary of /tmp/notes.txt: Benchmark note: LiteRT-LM native tool call smoke test.\"}"
+      ],
+      "content": "The first .txt file in /tmp was `notes.txt`. I have read its content and written a summary to `/tmp/summary.txt`."
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 22.01,
+      "output_tokens": 0,
+      "rate_tps": 0.0,
+      "finish_reason": "native_response",
+      "tool_calls": [
+        "run_command",
+        "run_command",
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\": \"ls -l /tmp | sort -rh -k5 | head -n 1\"}",
+        "{\"cmd\": \"find /tmp -type f -printf '%s\\\\t%p\\\\n' | sort -nr | head -n 1\"}",
+        "{\"cmd\": \"ls -lh /tmp\"}"
+      ],
+      "content": "It seems the environment is consistently returning the system load averages instead of the directory listing or file information. I cannot reliably execute file system commands to find the largest file in `/tmp` with the current tools/environment.\n\nIf I had access to a standard Linux shell, the command `find /tmp -type f -printf '%s\\t%p\\n' | sort -nr | head -n 1` would be the correct way to solve this.\n\n**Given the current constraints, I cannot fulfill the request.**"
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 11.03,
+      "output_tokens": 0,
+      "finish_reason": "native_response",
+      "tool_calls": [
+        "read_file",
+        "write_file"
+      ],
+      "content": "The configuration file `/tmp/app/config.json` has been successfully updated. The `port` has been changed from 8000 to 8080."
+    }
+  ],
+  "total_turns": 1,
+  "total_time_s": 11.03
+}

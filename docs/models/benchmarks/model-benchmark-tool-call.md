@@ -55,6 +55,7 @@ Two complementary harnesses, both reported per model:
 - [mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF (i1-Q6_K)](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) — 26 B sparse MoE / 4B active, imatrix Q6_K GGUF, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B-it (lm-studio, no patches) — **✅ 5/5 API smoke + multi-turn 1.93 s 🏆 (new API-level leader) · 9/10 mlabonne refusal (first Gemma 4 uncensored to clear 9/10) · OpenCode browse 2.55 s 🥇 all-time leader / search 19.59 s** (`task` subagent on search) — *2026-05-15*
 - [deepseek-ai/DeepSeek-V4-Flash via antirez/deepseek-v4-gguf (IQ2XXS-imatrix)](#results-deepseek-ai-deepseek-v4-flash-ds4) — 284 B-total / 13 B-active 256-expert `deepseek4` MoE, 2-bit routed-expert imatrix GGUF on the `antirez/ds4` native Metal engine (port 8101) — **✅ 5/5 API smoke + multi-turn 8.95 s · OpenCode browse 18.78 s / search 28.22 s @ 2–3 turns + `webfetch`** (only Apple-Silicon path for `deepseek4`; persadian IQ1_S/arishma108 fork is CUDA-only, batiai Q3–Q8 exceed 96 GB RAM) — *2026-05-18*
 - [Gemma 4 E4B via LiteRT-LM native Python API](#results-gemma-4-e4b-litert-lm-native-python-api) — edge dense ~4 B `.litertlm`, CPU/XNNPACK — **HTTP OpenAI shim 0/5, native LiteRT-LM Python tool loop 5/5**; native single-call latencies 7.83–22.01 s, config loop 11.03 s. Not Claude/OpenCode-compatible until the OpenAI shim surfaces `tool_calls`. — *2026-05-28*
+- [openbmb/MiniCPM5-1B via SGLang](#results-openbmbminicpm5-1b-via-sglang) — 1.08 B dense Llama-family checkpoint on SGLang MLX :30000 with `--tool-call-parser minicpm5` — **✅ 5/5 API smoke in No Think mode + multi-turn 0.78 s; OpenCode browse 7.28 s; search median 10.40 s but 1/3 timeout**. GGUF loads under LM Studio but does not surface OpenAI tool calls there. — *2026-05-30*
 
 **Topic index** (jump to specific concerns):
 - *Wall vs LLM time methodology* — see [OpenCode end-to-end](#opencode-end-to-end-opencode-run---format-json-real-agent-loop) intro
@@ -64,6 +65,7 @@ Two complementary harnesses, both reported per model:
 - *300 s OpenCode client timeout (search hits)* — see Qwen3.6-27B-JANG_4M / Qwen3.6-27B-6bit § Key Findings
 - *A3B sparsity (3 B active out of 35 B) speed advantage* — see Qwen3.6-35B-rust.mlx and Qwen3.5-35B-A3B § Key Findings
 - *Quality vs latency trade-offs by quantization* — see Qwen3.6-27B-6bit § Key Findings #4
+- *MiniCPM5 XML tool calls / No Think mode* — see [openbmb/MiniCPM5-1B via SGLang](#results-openbmbminicpm5-1b-via-sglang)
 
 ---
 
@@ -79,9 +81,10 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 
 | Model | Server | Pass rate | Single-tool latency | Multi-tool latency | Agentic loop (3-turn `read→write→summary`) |
 |:------|:-------|:---------:|:-------------------:|:------------------:|:------------------------------------------:|
-| 🥇 Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
-| 🥈 Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
-| 🥉 TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 0.90 - 9.72 s | 0.90 - 1.64 s | 6.73 s (dense 31B no-think · 30 tok/s · webfetch 2/2 in OpenCode) |
+| 🥇 openbmb/MiniCPM5-1B | `sglang` :30000 | ✅ **5/5** | 0.09 - 0.38 s | 0.09 s | **0.78 s** (SGLang `minicpm5` parser + `chat_template_kwargs={"enable_thinking":false}` · 246 tok/s @ 512, 85 tok/s @ 65K · OpenCode browse 7.28 s / search 10.40 s median with 1/3 timeout · [detail](#results-openbmbminicpm5-1b-via-sglang)) |
+| 🥈 Dolphin 3.0 R1 Mistral 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.27 - 3.37 s | 1.29 - 1.39 s | 5.12 s |
+| 🥉 Dolphin Venice 24B MLX-8bit | **lm-studio** | ✅ **5/5** | 1.35 - 4.51 s | 3.66 - 5.20 s | 6.55 s |
+| TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF | **lm-studio** | ✅ **5/5** | 0.90 - 9.72 s | 0.90 - 1.64 s | 6.73 s (dense 31B no-think · 30 tok/s · webfetch 2/2 in OpenCode) |
 | Gemma 4 31B-it (dense, lmstudio-community 6-bit) | **lm-studio** | ✅ **5/5** | 1.28 - 3.77 s | 1.41 - 2.41 s | 9.8 s |
 | IBM Granite 4.1 30B Q8_0 | **lm-studio** | ✅ **5/5** | 1.13 - 2.99 s | 1.13 - 1.29 s | 10.37 s |
 | Hermes 4 70B MLX-6bit | **lm-studio** | ✅ **5/5** | 2.26 - 7.86 s | 2.26 - 4.54 s | 13.34 s |
@@ -151,6 +154,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | 🥇 IBM Granite 4.1 30B Q8_0 | **lm-studio** | 6.24 s / 5.02 s | 10.51 s / 9.31 s | 2/2t · `webfetch` · dense 30B, no-think, 24.8 tok/s · Apache 2.0 · [per-model](../per-model/model-summary-granite-4.1.md) |
 | 🥈 **Dolphin Venice 24B MLX-8bit** | **lm-studio** | **6.62 s** / 5.38 s | 21.04 s / 19.8 s | 2/2t · `webfetch` · dense Mistral 24B, no-think · [results](#results-mlx-communitydolphin-mistral-24b-venice-edition-mlx-8bit) |
 | 🥉 **TrevorJS Gemma 4 31B-it Uncensored Q4_K_M GGUF** | **lm-studio** | 6.63 s _(initial 10.08)_ / 5.41 s | 30.81 s _(initial 29.77)_ / 29.59 s | 2/2t · `webfetch` · dense 31B no-think · 30 tok/s · harness 6–7/10 / **manual 10/10** mlabonne (disclaimer-prefixed complies; harness varies on disclaimer wording) · [writeup](../uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) |
+| openbmb/MiniCPM5-1B | `sglang` :30000 | 7.28 s / 3.74 s | ⚠ 10.40 s / 6.66 s (p95 300.03 s; 1/3 timeout) | 2/2t median · browse `read`, search `webfetch` · dense 1.08B, No Think, SGLang `minicpm5` parser · temporary OpenCode config restored after run · [detail](#results-openbmbminicpm5-1b-via-sglang) |
 | **Dolphin 3.0 R1 Mistral 24B MLX-8bit** | **lm-studio** | **7.5 s** / 6.28 s | 34.52 s / 4.42 s | 2.5/7t · `webfetch`+`bash` · search variance 10–59 s, bash-loops · [results](#results-moot20dolphin30-r1-mistral-24b-mlx-8bits) |
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | 11.16 s / 9.94 s | 28.91 s / 27.68 s | 2/2.5t · `webfetch` · dense 27B Q8_K_P, think-on · [results](#results-hauhaucsqwen36-27b-uncensored-hauhaucs-balanced) |
 | **prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M GGUF** | **lm-studio** | **11.62 s** / 10.82 s | **19.47 s** / 18.65 s | 2/2t · `webfetch` · dense 27B + VL, think-on, GLM-5.1 distilled · 48–81 reasoning tok in agent context · **search 9.4 s faster than HauhauCS Qwen3.6-27B Balanced Q8_K_P sibling** · [writeup](../uncen-model/qwen36-27b-glm51-da-benchmark.md) |
@@ -222,6 +226,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | IBM Granite 4.1 30B Q8_0 | lm-studio | (built-in) | N/A (non-thinking model) | none — LM Studio Granite runtime handles tool-call format natively. Guardrail override **required** before initial load (65K context). |
 | magnum-v4-72b MLX-4bit | lm-studio | N/A (does not call tools) | N/A | none — tool calling not functional regardless of flags. Do not use for agentic tasks. |
 | Midnight-Miqu-70B-v1.5 Q4_K_M | lm-studio | N/A (HTTP 400 on tool requests) | N/A | none — chat-template only supports user/assistant roles; system-role tool definitions rejected. |
+| openbmb/MiniCPM5-1B | sglang :30000 | `minicpm5` | N/A (pass No Think with `chat_template_kwargs={"enable_thinking":false}`) | none in repo — source install SGLang under `~/sglang` with `SGLANG_USE_MLX=1`. Use HF checkpoint `openbmb/MiniCPM5-1B`; the exact `MiniCPM5-1B-Q8_0.gguf` fails under SGLang MLX because `mlx_lm.load()` expects a model directory with `config.json`. LM Studio loads the GGUF but returns 0/5 OpenAI tool-call smoke. |
 | prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | (built-in) | (built-in) | none — LM Studio auto-detects qwen35 chat template + `<think>`. 15.4 GiB ≪ guardrail threshold so no dance. Bench-rig caveat: requires `scripts/bench/bench_agent_tool_call.py` fix that pins `env["PWD"]=cwd` on OpenCode 1.14.50+ — without it, the inherited `PWD` makes OpenCode bootstrap in the wrong project and `proc.stdout` ends up empty (false 0-turns reading) |
 | Qwen3.6-27B 6bit (mlx-community) | lm-studio | (built-in) | (built-in) | none — `lms server start --bind 0.0.0.0`; tool-call + reasoning parsing handled by LM Studio's MLX runtime out of the box |
 | Qwen3.6-27B 6bit (mlx-community) | vllm-mlx | `qwen3_coder` | `qwen3` | none (standard MLX safetensors — no wrapper) |
@@ -339,8 +344,9 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | Model | Server | Response Time (median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
 | 🥇 TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | **6.63 s** _(initial 10.08)_ | 2 | `webfetch` | ~10.8K in / ~12–20 out |
-| 🥈 prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 11.62 s | 2 | `webfetch` | ~11.7K in / ~32 out |
-| 🥉 Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
+| 🥈 openbmb/MiniCPM5-1B | sglang :30000 | 7.28 s | 2 | `read` | 18.1K in / 156 out |
+| 🥉 prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 11.62 s | 2 | `webfetch` | ~11.7K in / ~32 out |
+| Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 69.14 s | 2 | `webfetch` | ~10.7K in / ~150 out |
 | Qwen3.6-27B 6bit (dense, mlx-community) | vllm-mlx | 97.93 s | 2 | `webfetch` | ~10.7K in / ~137 out |
 
 #### 🧩 Hybrid MoE (Qwen3.6-35B-A3B — MoE + hybrid gated-DeltaNet/linear attention + VL)
@@ -373,6 +379,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
+| ⚠ openbmb/MiniCPM5-1B | sglang :30000 | 10.40 s (p95 300.03 s; 1/3 timeout) | 2 median | `webfetch` | 22.3K | ~11K/turn |
 | 🥇 prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M | lm-studio | 19.47 s | 2 | `webfetch` | ~25K | ~12K/turn |
 | 🥈 TrevorJS Gemma 4 31B-it Uncensored Q4_K_M | lm-studio | 30.81 s _(initial 29.77)_ | 2 | `webfetch` | ~26.9K | ~13K/turn |
 | 🥉 Qwen3.6-27B JANG 4M (dense) | vllm-mlx (patched) | 108.51 s | 3 | `webfetch` | ~34K | ~12K/turn |
@@ -1950,3 +1957,62 @@ This entry has two separate results:
 The agentic-reasoning scenario called tools correctly but the sandboxed `run_command` fixture returns a fixed uptime-like response, so the final content says it could not reliably identify the largest file. Count this as **tool invocation success**, not task-answer success.
 
 Raw JSON: [`logs/gemma4-e4b-litert-lm/native-tool-test.json`](logs/gemma4-e4b-litert-lm/native-tool-test.json). HTTP result: [`logs/gemma4-e4b-litert-lm/api-tool-test.json`](logs/gemma4-e4b-litert-lm/api-tool-test.json). Runbook: [`docs/servers/litert-lm/summary.md`](../../servers/litert-lm/summary.md).
+
+---
+
+## 🤖 Results: openbmb/MiniCPM5-1B via SGLang {#results-openbmbminicpm5-1b-via-sglang}
+
+**Model:** `openbmb/MiniCPM5-1B` HF checkpoint (1.08 B dense Llama-family, 131 K context). **Runtime:** SGLang source install on Mac Studio (`~/sglang/sglang-mps`, `SGLANG_USE_MLX=1`) on sidecar port 30000 with `--tool-call-parser minicpm5`. Benchmarked 2026-05-30.
+
+This entry exists because the original `openbmb/MiniCPM5-1B-GGUF` / `MiniCPM5-1B-Q8_0.gguf` LM Studio deployment loaded but failed the OpenAI tool-call smoke (`0/5`). The model card documents MiniCPM5's XML-style tool-call format and points to SGLang's `minicpm5` parser. Under SGLang MLX, the exact GGUF path did not load (`mlx_lm.load()` expected a directory with `config.json`), so the passing route uses the HF checkpoint instead.
+
+Launch:
+
+```bash
+cd ~/sglang
+. sglang-mps/bin/activate
+SGLANG_USE_MLX=1 python -m sglang.launch_server \
+  --model-path openbmb/MiniCPM5-1B \
+  --tool-call-parser minicpm5 \
+  --host 0.0.0.0 --port 30000
+```
+
+### API smoke (`bench_api_tool_call.py`)
+
+MiniCPM5 needs No Think mode for the repo's OpenAI-compatible pass gate. The default template partially works but does not pass cleanly.
+
+| Mode | Pass rate | Single-tool latency | Multi-tool latency | Multi-turn loop |
+|:--|:--:|:--:|:--:|:--:|
+| Default template | ⚠ 3/5 | see raw | see raw | 3 turns / 1.64 s |
+| `chat_template_kwargs={"enable_thinking":false}` | ✅ **5/5** | 0.09 - 0.38 s | 0.09 s | 3 turns / 0.78 s |
+
+Raw JSON: [`logs/minicpm5-1b-sglang/api-tool-test.json`](logs/minicpm5-1b-sglang/api-tool-test.json), [`logs/minicpm5-1b-sglang/api-tool-test-no-think.json`](logs/minicpm5-1b-sglang/api-tool-test-no-think.json). LM Studio failure triage: [`logs/minicpm5-1b-q8/agent-tool-call-failure-triage.md`](logs/minicpm5-1b-q8/agent-tool-call-failure-triage.md).
+
+### Throughput (`bench_api_server.py`)
+
+| Context | TTFT | Decode tok/s | Prefill tok/s |
+|---:|---:|---:|---:|
+| 512 | 0.015 s | 246.5 | 36,426 |
+| 4K | 0.019 s | 222.0 | 210,314 |
+| 8K | 0.026 s | 203.7 | 325,601 |
+| 32K | 0.057 s | 135.1 | 574,832 |
+| 65K | 0.116 s | 85.1 | 564,587 |
+
+Raw JSON: [`logs/minicpm5-1b-sglang/api-server-sglang.json`](logs/minicpm5-1b-sglang/api-server-sglang.json).
+
+### OpenCode end-to-end (`bench_agent_tool_call.py`)
+
+OpenCode was temporarily pointed at the SGLang endpoint for this run and restored afterward.
+
+| Scenario | Wall median | LLM median | Turns | Tools | Result |
+|:--|--:|--:|:--:|:--|:--|
+| Browse `www.example.com` | 7.28 s | 3.74 s | 2 | `read` | Stable 3/3 |
+| Browse Hacker News latest topic | 10.40 s | 6.66 s | 2 median | `webfetch` | ⚠ 2/3 normal; 1/3 hit OpenCode's 300 s timeout after one `webfetch` |
+
+Raw JSON: [`logs/minicpm5-1b-sglang/agent-bench-sglang.json`](logs/minicpm5-1b-sglang/agent-bench-sglang.json). Short run summary: [`logs/minicpm5-1b-sglang/summary.md`](logs/minicpm5-1b-sglang/summary.md).
+
+### Key Findings
+
+1. **SGLang is required for usable OpenAI tool calls.** LM Studio loaded the Q8_0 GGUF but did not surface `tool_calls[]`; SGLang with `--tool-call-parser minicpm5` converts MiniCPM5's XML calls correctly.
+2. **No Think mode is the difference between partial and clean API results.** The default template scored 3/5; passing `chat_template_kwargs={"enable_thinking":false}` converted the same server/model to 5/5 with a 0.78 s three-turn loop.
+3. **Agent use is promising but not clean enough to crown.** Browse is stable and competitive for a 1 B model, but the search run had one 300 s timeout out of three. Cross-model rows keep the timeout caveat instead of treating the 10.40 s median as a clean leaderboard win.

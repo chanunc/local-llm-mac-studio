@@ -18,6 +18,7 @@ Operational runbooks for inference servers on the Mac Studio. Run [`scripts/chk_
 | `comfyui` | [`comfyui/summary.md`](comfyui/summary.md) | Image-generation sidecar on port 8188 (ComfyUI + Z-Anime, MPS, web UI only — no OpenAI shim) |
 | `ds4` | [`ds4/summary.md`](ds4/summary.md) | DwarfStar 4 native engine on port 8101 — only Apple-Silicon path for DeepSeek-V4-Flash (`deepseek4` arch, DSML tool calling) |
 | `litert-lm` | [`litert-lm/summary.md`](litert-lm/summary.md) | Provisional Google LiteRT-LM edge runtime on port 9379 — Gemma 4 E4B, CPU/XNNPACK, alpha OpenAI serve (no tool calling) |
+| `sglang` | [`sglang/summary.md`](sglang/summary.md) | Provisional SGLang MLX sidecar on port 30000 — MiniCPM5 `minicpm5` parser path |
 
 ## Maintenance And Patches
 

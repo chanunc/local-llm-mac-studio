@@ -26,6 +26,7 @@ One subdirectory per server. The contents mirror each other so you can swap serv
 | [`mlx-lm/`](mlx-lm/) | `mlx-lm` (mlx_lm.server sidecar) | `chindamt-4b` (`iapp/ChindaMT-4B` — Qwen3.5-4B Thai↔English MT, MLX 4-bit, hybrid SSM/attention) | Sidecar on port 8080. **OpenCode template only.** Requires manual MLX conversion (tied-embedding strip + `mlx_lm.convert`); started with `--chat-template-args '{"enable_thinking":false}'`. |
 | [`ds4/`](ds4/) | `ds4` (DwarfStar 4 native engine) | `deepseek-v4-flash` (`antirez/deepseek-v4-gguf` IQ2XXS-imatrix — DeepSeek-V4-Flash 284B/13B-active `deepseek4` MoE, 81 GB GGUF) | Sidecar on port 8101. **OpenCode template only.** Only Apple-Silicon path for `deepseek4` ([`antirez/ds4`](https://github.com/antirez/ds4), pure C+Metal, native DSML↔OpenAI tool calling). |
 | [`litert-lm/`](litert-lm/) | `litert-lm` (Google LiteRT-LM edge runtime) | `gemma4-e4b` (`litert-community/gemma-4-E4B-it-litert-lm` — Gemma 4 E4B ~4B effective, 3.66 GB `.litertlm`) | Sidecar on port 9379. **OpenCode template only.** Alpha OpenAI serve mode. CPU/XNNPACK only (GPU broken on Apple Silicon). No `tools` param, no structured tool_calls. |
+| [`sglang/`](sglang/) | `sglang` (SGLang MLX sidecar) | `openbmb/MiniCPM5-1B` (HF checkpoint, MiniCPM5 parser path) | Sidecar on port 30000. **OpenCode template only.** Provisional SGLang source install with `SGLANG_USE_MLX=1`; MiniCPM5 needs `--tool-call-parser minicpm5` and No Think mode for the local tool harness. |
 
 ## Files per server
 

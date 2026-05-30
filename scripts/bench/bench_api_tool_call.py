@@ -202,8 +202,8 @@ class ToolRecorder:
         ]
 
 
-def chat(base_url, model, messages, api_key=None, max_tokens=1024, timeout=600):
-    body = json.dumps({
+def chat(base_url, model, messages, api_key=None, max_tokens=1024, timeout=600, chat_template_kwargs=None):
+    body_payload = {
         "model": model,
         "messages": messages,
         "tools": TOOLS,
@@ -211,7 +211,10 @@ def chat(base_url, model, messages, api_key=None, max_tokens=1024, timeout=600):
         "max_tokens": max_tokens,
         "temperature": 0.0,
         "stream": False,
-    }).encode()
+    }
+    if chat_template_kwargs:
+        body_payload["chat_template_kwargs"] = chat_template_kwargs
+    body = json.dumps(body_payload).encode()
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -292,12 +295,18 @@ def create_litert_conversation(engine, recorder, system_instruction=None):
     return engine.create_conversation(**kwargs)
 
 
-def run_single(base_url, model, api_key):
+def run_single(base_url, model, api_key, chat_template_kwargs=None):
     out = []
     for scenario, prompt in SINGLE_SCENARIOS:
         print(f"  • {scenario} ... ", end="", flush=True)
         try:
-            resp, dt = chat(base_url, model, [{"role": "user", "content": prompt}], api_key=api_key)
+            resp, dt = chat(
+                base_url,
+                model,
+                [{"role": "user", "content": prompt}],
+                api_key=api_key,
+                chat_template_kwargs=chat_template_kwargs,
+            )
         except Exception as e:
             print(f"ERROR: {e}")
             out.append({
@@ -322,7 +331,7 @@ def run_single(base_url, model, api_key):
     return out
 
 
-def run_multi_turn(base_url, model, api_key):
+def run_multi_turn(base_url, model, api_key, chat_template_kwargs=None):
     """3-turn read→write→summary loop with simulated tool results."""
     print("  • Multi-turn loop (read config → write port 8080 → summary)")
     sysmsg = {
@@ -338,7 +347,7 @@ def run_multi_turn(base_url, model, api_key):
     total_t = 0.0
 
     # Turn 1: expect read_file
-    resp, dt = chat(base_url, model, messages, api_key=api_key)
+    resp, dt = chat(base_url, model, messages, api_key=api_key, chat_template_kwargs=chat_template_kwargs)
     info = extract(resp)
     total_t += dt
     turns.append({
@@ -365,7 +374,7 @@ def run_multi_turn(base_url, model, api_key):
     })
 
     # Turn 2: expect write_file
-    resp, dt = chat(base_url, model, messages, api_key=api_key)
+    resp, dt = chat(base_url, model, messages, api_key=api_key, chat_template_kwargs=chat_template_kwargs)
     info = extract(resp)
     total_t += dt
     turns.append({
@@ -391,7 +400,7 @@ def run_multi_turn(base_url, model, api_key):
     })
 
     # Turn 3: expect natural language summary (stop)
-    resp, dt = chat(base_url, model, messages, api_key=api_key)
+    resp, dt = chat(base_url, model, messages, api_key=api_key, chat_template_kwargs=chat_template_kwargs)
     info = extract(resp)
     total_t += dt
     turns.append({
@@ -533,12 +542,13 @@ def run_openai_http(args):
     print(f"Model:    {args.model}")
     print(f"Base URL: {args.base_url}")
     print(f"Mode:     openai-http")
+    chat_template_kwargs = json.loads(args.chat_template_kwargs) if args.chat_template_kwargs else None
     print()
     print("[1/2] Single-call scenarios")
-    singles = run_single(args.base_url, args.model, args.api_key)
+    singles = run_single(args.base_url, args.model, args.api_key, chat_template_kwargs=chat_template_kwargs)
     print()
     print("[2/2] Multi-turn agentic loop")
-    multi = run_multi_turn(args.base_url, args.model, args.api_key)
+    multi = run_multi_turn(args.base_url, args.model, args.api_key, chat_template_kwargs=chat_template_kwargs)
 
     payload = {
         "benchmark": "api-tool-call",
@@ -561,6 +571,7 @@ def main():
     p.add_argument("--base-url")
     p.add_argument("--model", required=True)
     p.add_argument("--api-key", default=None)
+    p.add_argument("--chat-template-kwargs", default=None, help="JSON object passed through as OpenAI chat_template_kwargs")
     p.add_argument("--native-model-path", help="Path to a .litertlm bundle for --mode litert-native")
     p.add_argument("--native-backend", default="cpu", choices=["cpu", "gpu", "npu"])
     p.add_argument("--native-cache-dir", default=None)

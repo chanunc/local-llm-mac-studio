@@ -1,0 +1,70 @@
+{
+  "benchmark": "api-tool-call",
+  "mode": "openai-http",
+  "model": "minicpm5-1b-q8",
+  "base_url": "http://192.168.31.4:1234/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 4.48,
+      "output_tokens": 1024,
+      "rate_tps": 228.3,
+      "finish_reason": "length",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 0.19,
+      "output_tokens": 41,
+      "rate_tps": 210.9,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 4.19,
+      "output_tokens": 1024,
+      "rate_tps": 244.5,
+      "finish_reason": "length",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 0.34,
+      "output_tokens": 76,
+      "rate_tps": 224.8,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 0.36,
+      "output_tokens": 82,
+      "rate_tps": 225.2,
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "tool_args": []
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 1.28,
+      "output_tokens": 297,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 1,
+  "total_time_s": 1.28,
+  "aborted": "no tool call on turn 1"
+}

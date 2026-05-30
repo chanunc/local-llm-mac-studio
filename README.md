@@ -20,6 +20,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
                                          comfyui (image-gen, sidecar) :8188
                                          ds4 / DwarfStar 4 (DeepSeek-V4-Flash, sidecar) :8101
                                          litert-lm (Gemma 4 E4B, sidecar) :9379
+                                         sglang (MiniCPM5 parser, sidecar) :30000
                                          OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus; Responses for ds4)
 ```
 
@@ -60,7 +61,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 ### 🚀 Start a Server
 
-Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
+Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, sglang `:30000`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
 
 <details>
 <summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
@@ -652,16 +653,17 @@ The four port-8000 servers are **mutually exclusive** (one at a time); `lm-studi
 | **[comfyui](docs/servers/comfyui/summary.md)** | 8188 | 🟢 18 s/img | Web UI only | Image generation (`SeeSee21/Z-Anime`; no OpenAI image shim) |
 | **[ds4](docs/servers/ds4/summary.md)** | 8101 | 🟢 25–35 tok/s | OpenAI + Anthropic + Responses | DeepSeek-V4-Flash 284B/13B-active `deepseek4` MoE (only Apple-Silicon path; native DSML tool calling) |
 | **[litert-lm](docs/servers/litert-lm/summary.md)** | 9379 | 🔴 13.85 tok/s | OpenAI (alpha) | Google LiteRT-LM edge runtime — Gemma 4 E4B (~4B, CPU/XNNPACK). No tool calling. Evaluation only. |
+| **[sglang](docs/servers/sglang/summary.md)** | 30000 | 🟢 246→85 tok/s | OpenAI | SGLang MLX sidecar — MiniCPM5 `minicpm5` parser path; HF checkpoint only, GGUF unsupported locally |
 
 </details>
 
-All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), `litert-lm`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), `litert-lm`, `sglang`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
 [mlx-lm](docs/servers/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) (`lm-studio`, `dflash-mlx`, and `llama-cpp-turboquant` keep install / runtime / limitations in their single `summary.md`)
+Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) · [sglang](docs/servers/sglang/summary.md) (`lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, and `sglang` keep install / runtime / limitations in their single `summary.md`)
 
 **There is no fixed "production main".** The live server/model is whatever experiment is currently loaded, and the repo deliberately does not record it — the Mac Studio is a personal machine. Run [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) to see what is live right now (it probes over SSH and can also emit the matching client config). Server capabilities are in the table above; per-model specs and benchmark numbers are in the [Models](#-models) and [Benchmarks](#-benchmarks) sections.
 
@@ -761,7 +763,7 @@ Headline metric is **agent-loop latency** (real `opencode run`), not raw tok/s �
 | unsloth Qwen3.6-35B-A3B UD-Q6_K GGUF | 7.65 s | 4.92 s | 12.08 s |
 | Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` (`llama-cpp-turboquant`) | 5.57 s | 6.47 s | 15.64 s |
 
-Sparse-MoE **Gemma 4 26B-A4B** (~4 B active) on lm-studio dominates the agent loop; 30+ models across 9 servers were benchmarked, including ⛔ no-tool / timeout failures.
+Sparse-MoE **Gemma 4 26B-A4B** (~4 B active) on lm-studio dominates the agent loop; 30+ models across 10 servers were benchmarked, including ⛔ no-tool / timeout failures.
 
 Full results: [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call.md) · [API Server](docs/models/benchmarks/model-benchmark-api-server.md) · [Standalone](docs/models/benchmarks/model-benchmark-standalone.md) · [TurboQuant KV Cache](docs/models/benchmarks/model-benchmark-turboquant-jang.md)
 
@@ -791,6 +793,7 @@ Full results: [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call
 - **lm-studio** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30)
 - **comfyui** — Image-generation diffusion runtime, not a chat / agent server. No OpenAI `/v1/images/generations` API — clients can't trigger generations programmatically (web UI only at `:8188`). No JANG / JANGTQ / `bailing_hybrid` support (LLM concepts; doesn't apply to S3-DiT diffusion). Default attention backend errors on MPS — always launch with `--use-pytorch-cross-attention`. AIO checkpoint reload between Distill and Base BF16 variants takes ~25 s warm-up each swap (~19 GiB to MPS). Native MLX would beat MPS by an estimated 2–3× but Z-Anime has no MLX upload. [Runbook](docs/servers/comfyui/summary.md)
 - **ds4 (DwarfStar 4)** — Single-model standalone engine for DeepSeek-V4-Flash only (the `deepseek4` arch is unmerged in upstream `llama.cpp`; vLLM/SGLang are CUDA-only; the persadian IQ1_S-XL GGUF's only engine, `arishma108/llama.cpp feat/v4-port-cuda`, has no Metal backend). GGUF-locked to `antirez/deepseek-v4-gguf` — only `q2-imatrix` (81 GB) fits a 96 GB-class machine (`q4-imatrix` 153 GB, batiai Q3–Q8 135–302 GB do not). Default bind is `127.0.0.1`; LAN clients need `--host 0.0.0.0` (`--cors` does not rebind). Cold 32 K prefill ≈ 38 s (disk-KV cuts the warm hit to 6.8 s). Single graph worker, no batching. Alpha-quality engine (days old, GPT-5.5-assisted) — behaviour may change across `git pull`. **Never run the CPU path** (`make cpu` / `--cpu`) — documented macOS VM bug kernel-panics the machine. No JANG/JANGTQ/`bailing_hybrid`/MLX. [Runbook](docs/servers/ds4/summary.md)
+- **sglang** — Provisional source install at `~/sglang` with Python 3.11 venv `~/sglang/sglang-mps` and `SGLANG_USE_MLX=1`. OpenAI-compatible sidecar on port `30000`, currently validated for `openbmb/MiniCPM5-1B` with `--tool-call-parser minicpm5`. The exact Q8_0 GGUF does **not** work on SGLang's Apple/MLX backend because the MLX runner expects a model directory with `config.json`; use the HF checkpoint path. MiniCPM5 needs No Think mode (`chat_template_kwargs={"enable_thinking":false}`) for the local API tool harness. OpenCode browse passed; search had one 300 s timeout in 3 measured runs. [Runbook](docs/servers/sglang/summary.md)
 
 **Model compatibility:**
 - **Nemotron family** — Only works on vllm-mlx (chat template not packaged in MLX weights). [Details](docs/models/per-model/model-summary-nemotron.md#nemotron-server-compatibility)

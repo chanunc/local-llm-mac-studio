@@ -9,7 +9,7 @@ Operational helpers split by purpose: benchmark drivers, server-package patches,
 | [`bench/`](bench/) | Benchmark drivers (run from any client; output lands under `docs/models/benchmarks/logs/<model>/`). |
 | [`patches/`](patches/) | Monkey-patches for installed server packages on the Mac Studio. Re-run after upstream upgrades. |
 | `switch_opencode_config.py` | Local-only helper that swaps OpenCode's config between server templates in `configs/clients/`. |
-| `chk_llm_macstu.py` | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on ports 8000 / 1234 / 8098. |
+| `chk_llm_macstu.py` | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on known LLM ports, including sidecars such as 1234 / 8098 / 8100 / 30000. |
 | `list_model_to_remove.py` | LLM-free port of the `/list-model-to-remove` skill — interactive Mac Studio model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf. Reuses the skill's `inventory.sh` over SSH. |
 
 ## Disk Reclaim
@@ -22,7 +22,7 @@ Operational helpers split by purpose: benchmark drivers, server-package patches,
 
 | Script | Purpose |
 |:--|:--|
-| [`chk_llm_macstu.py`](chk_llm_macstu.py) | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on ports 8000 / 1234 / 8098. Supports `--client {opencode,pi,openclaw,qwen-code,claude-code,all}` to emit the matching client config for the detected server, `--logs` to emit the per-server log-tail command, and `--all` to bundle status + all client configs + log command into one copy-friendly text block (or `--all --json` for a machine-readable object). |
+| [`chk_llm_macstu.py`](chk_llm_macstu.py) | Probes the Mac Studio over SSH and reports which LLM server + model is currently running on known LLM ports, including sidecars such as 1234 / 8098 / 8100 / 30000. Supports `--client {opencode,pi,openclaw,qwen-code,claude-code,all}` to emit the matching client config for the detected server, `--logs` to emit the per-server log-tail command, and `--all` to bundle status + all client configs + log command into one copy-friendly text block (or `--all --json` for a machine-readable object). |
 
 Useful as the **Event 4 pre-benchmark hygiene** primitive — see [the Sync Policy](../CLAUDE.md#event-4-running-a-new-benchmark) for the full clean-machine recipe.
 
@@ -31,7 +31,7 @@ Useful as the **Event 4 pre-benchmark hygiene** primitive — see [the Sync Poli
 | Script | Purpose |
 |:--|:--|
 | [`bench/bench_api_server.py`](bench/bench_api_server.py) | Streaming `/v1/chat/completions` throughput, TTFT, and prefill benchmark (recognizes `delta.content` / `delta.reasoning_content` / `delta.reasoning` for TTFT — last is mlx-lm-server naming used by dflash-mlx) |
-| [`bench/bench_api_tool_call.py`](bench/bench_api_tool_call.py) | Tool-call harness for OpenAI-compatible HTTP servers (`--mode openai-http`, default) and native LiteRT-LM Python tool loops (`--mode litert-native`) |
+| [`bench/bench_api_tool_call.py`](bench/bench_api_tool_call.py) | Tool-call harness for OpenAI-compatible HTTP servers (`--mode openai-http`, default) and native LiteRT-LM Python tool loops (`--mode litert-native`). `--chat-template-kwargs` passes template toggles through to compatible servers such as SGLang. |
 | [`bench/bench_agent_tool_call.py`](bench/bench_agent_tool_call.py) | End-to-end OpenCode/Pi-style agent loop benchmark (accepts `--base-url` to override the OpenCode-config-discovered server during health check) |
 | [`bench/bench_agent_local.py`](bench/bench_agent_local.py) | In-process agent harness via [`gary149/llama-agent`](https://github.com/gary149/llama-agent) — embeds llama.cpp inference + the agent loop in one process (no OpenAI-compatible server in the path). Drives the resident TUI over a PTY with bracketed-paste prompts, runs the same 5 single-call scenarios + 3-turn loop as `bench_api_tool_call.py` against a sandbox at the realpath of `/tmp/bench-llama-agent` (macOS `/tmp` symlink + `--yolo` external-file warning gotcha — see script header). Captures token counts and avg gen tok/s from the agent's `/stats` between turns. Posix-only; uses stdlib `pty`. |
 | [`bench/bench_asr_smoke.py`](bench/bench_asr_smoke.py) | Qwen3-ASR smoke test: loads `Qwen/Qwen3-ASR-1.7B` on MPS, transcribes Qwen's official `asr_en.wav` (URL-fetched), prints language ID + transcript + warm/timed wall times. Pulls model from HF cache on first run (~4.7 GB). Runs out of `~/qwen-asr-env/`. |

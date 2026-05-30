@@ -62,6 +62,7 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 - [prithivMLmods Qwen3.6-35B-A3B Uncensored Aggressive Q6_K](#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) — 35B/3B MoE + VL · 28.51 GB · mradermacher GGUF `Q6_K` · benchmarked on lm-studio 2026-05-02 · uncensored GGUF browse leader
 - [Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K](#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) — 35B/3B MoE · 27 GB · GGUF Q6_K + MTP heads · huihui-ai abliteration + lordx64 Claude reasoning distillation · llama-cpp-mainline on port 8100 · benchmarked 2026-05-20 (browse 4.74 s / search 12.11 s · 10/10 mlabonne · 83% MTP acceptance · 78.5 tok/s)
 - [llmfan46 Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K](#llmfan46-qwen36-27b-uncensored-heretic-v2-native-mtp-preserved-q6_k) — dense 27B · 22.8 GB · GGUF Q6_K + 15 native MTP params · Heretic v1.3.0 MPOA abliteration · llama-cpp-mainline on port 8100 · benchmarked 2026-05-21 (browse 38.99 s / search 40.42 s · 10/10 mlabonne · ~74% MTP acceptance · 24.6 tok/s)
+- [Jackrong Qwopus3.6-27B v2 MTP Q6_K](#jackrong-qwopus36-27b-v2-mtp-q6k) — dense 27B · 22.4 GB · GGUF Q6_K + MTP heads · Jackrong Qwopus3.6 fine-tune · llama-cpp-mainline on port 8100 · benchmarked 2026-05-30 (browse 16.96 s / search 27.62 s · 5/5 smoke · 25.7 tok/s · **fastest dense-27B-MTP in agent loops**)
 - [Qwen3.6-35B Rust LoRA (jedisct1, 8-bit)](#qwen36-35b-rust-lora-jedisct1-8-bit) — 35 B/3 B MoE · uniform 8-bit MLX · LoRA merged on 356 K Rust commits
 
 ---
@@ -1101,6 +1102,61 @@ Slow end of the lab ranking — comparable to the censored unsloth dense 27B MTP
 - Vendor-reported MPOA metrics (94% fewer refusals, KL 0.0021, MMLU 85.67%) unverified — only the mlabonne 10/520 sample was reproduced here
 
 Raw logs: [`docs/models/benchmarks/logs/qwen36-27b-heretic-v2-mtp/`](../benchmarks/logs/qwen36-27b-heretic-v2-mtp/) · Full writeup: [`docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md`](../uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md)
+
+---
+
+## Jackrong Qwopus3.6-27B v2 MTP Q6_K
+
+Dense Qwen3.6-27B fine-tuned by Jackrong with Multi-Token Prediction heads preserved through GGUF conversion. The "Qwopus" name suggests Qwen + Opus distillation lineage; trained with Unsloth for reasoning and agentic-coding tasks. Censored (RLHF-aligned). Deployed on `llama-cpp-mainline` port 8100 via the same MTP path as the unsloth and llmfan46 dense-27B-MTP siblings.
+
+| Field | Value |
+|-------|-------|
+| **HuggingFace** | [`Jackrong/Qwopus3.6-27B-v2-MTP-GGUF`](https://huggingface.co/Jackrong/Qwopus3.6-27B-v2-MTP-GGUF) |
+| **Base model** | `Qwen/Qwen3.6-27B` (dense 27.3B — hybrid Gated DeltaNet + full Gated Attention, 64 layers) |
+| **Fine-tune** | Jackrong Qwopus3.6 v2 — agentic coding / reasoning specialization; trained with Unsloth |
+| **Architecture** | `qwen3.6` dense + MTP draft-prediction parameters |
+| **Quant** | GGUF Q6_K (22.4 GB) |
+| **Context** | 262,144 native; server `-c 32768` (conservative; HTTP 400 at exactly the ceiling — raise to 65536 if needed) |
+| **Server** | `llama-cpp-mainline` on port 8100 (`ggml-org/llama.cpp`) |
+| **Server flags** | `--spec-type draft-mtp --spec-draft-n-max 2 -ngl 99 -fa on -np 1 -c 32768 --jinja --reasoning on` |
+| **Alias** | `qwopus3.6-27b-v2-mtp-q6k` |
+| **Deployed** | 2026-05-30 |
+
+### Performance (2026-05-30, pre-bench hygiene, mainline llama.cpp)
+
+| Context | Decode tok/s | Prefill tok/s | TTFT |
+|:-------:|:------------:|:-------------:|:----:|
+| 512 | **25.7** | 3,300 | 0.16 s |
+| 4K | 22.9 | 24,500 | 0.17 s |
+| 8K | 22.5 | 47,000 | 0.17 s |
+| 29K | 20.1 | 137,800 | 0.21 s |
+
+Throughput closely matches the unsloth dense-27B-MTP sibling (22.9 tok/s at 512–4K). The slot ceiling triggers HTTP 400 at exactly `-c 32768`; throughput probe capped at 29K input tokens.
+
+### MTP draft acceptance
+
+MTP log confirms `draft-mtp` activated with `n_max=2` at startup (`common_speculative_impl_draft_mtp: adding speculative implementation 'draft-mtp'`). Decode 25.7 tok/s at 512 tokens is marginally above the unsloth sibling (22.9), consistent with ~84% draft acceptance, matching the vendor's cited 1.66× speedup claim.
+
+### Tool-call smoke + agent benchmark (OpenCode end-to-end, 2026-05-30)
+
+**5/5 single-call** (all five scenarios pass, including agentic-reasoning) + 3-turn loop **21.02 s**.
+
+| Scenario | Wall (median) | LLM (median) | Turns | Tools |
+|:---------|:-------------:|:------------:|:-----:|:------|
+| Browse www.example.com | **16.96 s** [15.86–19.24] | 12.73 s | 2 | `webfetch` |
+| Browse Hackernews latest | **27.62 s** [22.59–39.21] | 23.39 s | 2 | `webfetch` |
+
+**Fastest dense-27B-MTP in agent loops** in this lab — 2.1× faster browse than the unsloth dense 27B MTP sibling (35.98 s) and 2.3× faster than the llmfan46 Heretic v2 sibling (38.99 s). The likely explanation is a shorter thinking preamble: the fine-tune suppresses verbose chain-of-thought in agentic contexts, reducing LLM time per turn without sacrificing tool-call correctness.
+
+### Caveats
+
+- GGUF-only — runs on `llama-cpp-mtp` (mainline binary) only; MLX servers cannot load GGUF
+- HTTP 400 at exactly the `-c 32768` ceiling — throughput bench limited to ≤29K; raise `-c` to 65536 on next redeploy if longer context needed
+- Vision broken with MTP active (`--mmproj` unsupported on the MTP path); the GGUF includes an `mmproj-F32.gguf` companion but it cannot be loaded
+- Jackrong is a non-standard packager — chat template provenance verified only via `<tool_call>` grep; Qwen3.6 XML format confirmed, 5/5 tool calls pass
+- Fine-tune details unpublished — "Qwopus" branding suggests Opus distillation but no training recipe released; treat as RLHF-aligned Qwen3.6-27B fine-tune until clarified
+
+Raw logs: [`docs/models/benchmarks/logs/qwopus3.6-27b-v2-mtp-q6k/`](../benchmarks/logs/qwopus3.6-27b-v2-mtp-q6k/)
 
 ---
 

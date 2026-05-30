@@ -35,6 +35,15 @@
             "output": 8192
           }
         },
+        "qwopus3.6-27b-v2-mtp-q6k": {
+          "name": "Qwopus3.6-27B v2 MTP Q6_K (dense 27B, Jackrong fine-tune of Qwen3.6-27B + MTP heads, mainline llama.cpp, draft-mtp n-max 2)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          }
+        },
         "lfm2.5-8b-a1b-q8": {
           "name": "LiquidAI LFM2.5-8B-A1B Q8_0 (lfm2moe MoE 8.3B/1.5B-active, mainline llama.cpp --jinja, no MTP; chat_template patched for LFM2 pythonic tool parser)",
           "tools": true,

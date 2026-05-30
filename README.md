@@ -388,6 +388,18 @@ nohup ~/llama-cpp-mtp/build/bin/llama-server \
   --jinja --reasoning on \
   > /tmp/llama-cpp-mtp.log 2>&1 &
 
+# Alternative — LiquidAI LFM2.5-8B-A1B Q8_0 (no MTP, 190 tok/s, patched template)
+# Requires the {# List of tools: [ #} chat-template patch — see
+# docs/models/per-model/model-summary-lfm2.md for the GGUF patch recipe.
+GGUF=~/.cache/hauhau-gguf/LFM2.5-8B-A1B-Q8_0-fixed.gguf
+nohup ~/llama-cpp-mainline/build/bin/llama-server \
+  -m "$GGUF" \
+  -ngl 99 -fa on -np 1 -c 65536 \
+  --host 0.0.0.0 --port 8100 \
+  --alias lfm2.5-8b-a1b-q8 \
+  --jinja --reasoning-format auto \
+  > /tmp/lfm-q8fixed.log 2>&1 &
+
 pkill -f 'llama-cpp-mainline/build/bin/llama-server'; pkill -f 'llama-cpp-mtp/build/bin/llama-server'  # stop
 
 # health + logs:

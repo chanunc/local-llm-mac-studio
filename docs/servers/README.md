@@ -10,6 +10,7 @@ Operational runbooks for inference servers on the Mac Studio. Run [`scripts/chk_
 | `mlx-openai-server` | [`mlx-openai-server/summary.md`](mlx-openai-server/summary.md) | OpenAI-only multi-model YAML server |
 | `oMLX` | [`omlx/summary.md`](omlx/summary.md) | Homebrew-managed multi-model server with dashboard |
 | `vmlx` | [`vmlx/summary.md`](vmlx/summary.md) | JANGTQ / TurboQuant path via MLX Studio bundled Python |
+| `ollama` | [`ollama/summary.md`](ollama/summary.md) | Ollama Apple-Silicon MLX sidecar on port 11434 |
 | `vmlx-swift-lm` | [`vmlx-swift-lm/summary.md`](vmlx-swift-lm/summary.md) | MLX-Swift engine via Osaurus on port 1337 — only path for ZAYA1 / Hy3 / MiniMax-M2.7 |
 | `mlx-lm` | [`mlx-lm/summary.md`](mlx-lm/summary.md) | Lightweight single-model development server |
 | `llama-cpp-turboquant` | [`llama-cpp-turboquant/summary.md`](llama-cpp-turboquant/summary.md) | Provisional RotorQuant / TurboQuant / PlanarQuant KV-cache sidecar on port 8099 |

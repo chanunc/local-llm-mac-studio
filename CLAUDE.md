@@ -15,6 +15,7 @@ Only one of vllm-mlx, mlx-openai-server, oMLX, or vmlx can hold **port 8000** at
 - **oMLX** (8000, OpenAI+Anthropic) — Homebrew + AlexTzk fork (PR #364) for JANG. Multi-model with SSD caching. Config in `~/.omlx/` on Mac Studio.
 - **vmlx** (8000, OpenAI+Anthropic+Ollama) — MLX Studio bundled Python for JANGTQ/TurboQuant CRACK models. Invoke as `$BP/bin/python3 -m vmlx_engine.cli serve` (**not** bundled `bin/vmlx` — broken shebang). `BP=/Applications/vMLX.app/Contents/Resources/bundled-python/python`. `--smelt`/`--flash-moe` incompatible with `weight_format=mxtq`.
 - **lm-studio** (1234, OpenAI) — closed-source MLX/GGUF, built-in parsers (no flags needed). Guardrail `"high"` blocks large loads — flip to `"off"` in `~/.lmstudio/settings.json`, load, restore immediately. No JANG/JANGTQ/`bailing_hybrid`.
+- **ollama** (11434, OpenAI) — Homebrew Ollama 0.24.0 + `mlx-c`, Apple-Silicon MLX backend. Start with `OLLAMA_HOST=0.0.0.0:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0`. `qwen3.6:35b-mlx` passes API tool smoke 5/5 and OpenCode browse/search with `webfetch`. [Runbook](docs/servers/ollama/summary.md).
 - **dflash-mlx** (8098, OpenAI) — DFlash speculative decoding sidecar. Venv `~/dflash-mlx-env/`. Needs `patch_dflash_mlx_serve.py`. `--draft-model` required for Qwen3.6 (DRAFT_REGISTRY auto-resolves Qwen3.5 only). Regresses vs baseline on M3 Ultra — upstream-tracking only. Provisional — `configs/clients/dflash-mlx/opencode.json` only.
 - **llama-cpp-turboquant** (8099, OpenAI) — two forks: johndpope (`~/llama-cpp-turboquant/`, iso3/4+turbo2-4+planar3/4) and TheTom (`~/llama-cpp-thetom/`, turbo2-4, auto-asymmetric q8_0 K). **TheTom turbo3 = agent-loop speed leader** (68 tok/s decode, browse 6.47s). johndpope iso3: cold-prefill regression at 32K+. [Runbook](docs/servers/llama-cpp-turboquant/summary.md), [technique](docs/models/techniques/model-technique-rotorquant.md).
 - **llama-cpp-mtp** (8100, OpenAI) — MTP self-drafting speculative decoding sidecar. Two binaries: **mainline `ggml-org/llama.cpp`** (`~/llama-cpp-mainline/`, preferred) and legacy `am17an/llama.cpp@mtp-clean` (`~/llama-cpp-mtp/`, [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673)). Models: unsloth Qwen3.6-27B-MTP UD-Q6_K_XL (dense 27B, 22.9 tok/s), llmfan46 Qwen3.6-27B Heretic v2 MTP Q6_K (dense 27B, 24.6 tok/s, ~74% MTP, Heretic v1.3.0 MPOA abliteration, browse 38.99s), Jackrong Qwopus3.6-27B v2 MTP Q6_K (dense 27B, 25.7 tok/s, browse 16.96s / search 27.62s — fastest dense-27B-MTP in agent loops), huihui-ai Qwen3.6-35B-A3B-MTP Q6_K (MoE 35B/3B, 78.5 tok/s, 83% MTP, browse 4.74s), and LiquidAI LFM2.5-8B-A1B Q8_0 (MoE 8.3B/1.5B, 190 tok/s, no MTP — plain `--jinja`, patched template required, browse 11.1s). `--spec-type draft-mtp --spec-draft-n-max 2` for MTP models. No `--tool-call-parser` — uses `--jinja`. Provisional. [Runbook](docs/servers/llama-cpp-mtp/summary.md), [technique](docs/models/techniques/model-technique-qwen-3-6-mtp.md).
@@ -36,6 +37,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (<MAC
   OpenClaw                               oMLX (multi-model) :8000 │  on port 8000
   Pi                                     vmlx (JANGTQ) :8000     ┘
                                          lm-studio :1234
+                                         ollama :11434
                                          dflash-mlx :8098
                                          llama-cpp-turboquant :8099
                                          llama-cpp-mtp :8100
@@ -104,6 +106,12 @@ ssh macstudio "python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudi
   python3 -c \"import json,pathlib; p=pathlib.Path.home()/'.lmstudio/settings.json'; d=json.loads(p.read_text()); d['modelLoadingGuardrails']['mode']='high'; p.write_text(json.dumps(d, indent=2))\"; \
   ~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"
 ssh macstudio "~/.lmstudio/bin/lms server stop && ~/.lmstudio/bin/lms unload --all"  # stop
+
+# ollama (port 11434) — Apple-Silicon MLX backend; qwen3.6:35b-mlx passes OpenCode tools
+ssh macstudio "nohup env OLLAMA_HOST=0.0.0.0:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0 \
+  /opt/homebrew/opt/ollama/bin/ollama serve > /tmp/ollama.log 2>&1 &"
+ssh macstudio "/opt/homebrew/opt/ollama/bin/ollama pull qwen3.6:35b-mlx"
+ssh macstudio "pkill -f '/opt/homebrew.*/ollama serve'; pkill -f 'ollama runner'"  # stop
 
 # dflash-mlx (port 8098) — apply patch first: ~/dflash-mlx-env/bin/python scripts/patches/patch_dflash_mlx_serve.py
 ssh macstudio "nohup ~/dflash-mlx-env/bin/dflash-serve \

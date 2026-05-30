@@ -110,6 +110,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | 🥇 HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | ✅ **5/5** | 1.54 - 2.53 s | 1.54 - 2.51 s | 5.48 s |
 | 🥈 prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF | **lm-studio** | ✅ **5/5** | 1.60 - 1.98 s | 1.60 - 4.27 s | 5.87 s |
 | 🥉 Qwen3.6-35B-A3B 4-bit + DFlash drafter | **dflash-mlx** | ✅ **5/5** | 1.84 - 1.88 s | 1.68 - 2.23 s | 5.9 s |
+| Qwen3.6-35B-A3B MLX via Ollama | `ollama` :11434 | ✅ **5/5** | 1.64 - 6.02 s | 1.64 - 2.97 s | 5.96 s (Apple-Silicon MLX backend via `mlx-c`; OpenCode browse 9.75 s / search 18.4 s; raw logs in [`logs/qwen36-35b-mlx-ollama/`](logs/qwen36-35b-mlx-ollama/)) |
 | Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV | `llama-cpp-turboquant` :8099 (johndpope) | ✅ **5/5** | 2.00 - 16.91 s | 2.48 - 4.93 s | 8.48 s (decode strong but cold prefill timeout @ 32K) |
 | Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | ✅ **5/5** | 2.47 - 5.37 s | 2.77 - 3.71 s | 11.54 s |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | ✅ **5/5** | 1.31 - 6.63 s | 2.50 - 9.80 s | 15.48 s |
@@ -181,6 +182,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | 🥉 **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
 | **Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V** | `llama-cpp-turboquant` :8099 (TheTom fork) | **6.47 s** / 5.27 s | **15.64 s** / 14.38 s | 2/3t · `webfetch` · MoE 35B/3B, K=q8_0 + turbo3 V · **2.07×/2.27× vs Gemma 4 mlx-lm** · [per-model](../per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) |
+| Qwen3.6-35B-A3B MLX via Ollama | `ollama` :11434 | 9.75 s / 8.75 s | 18.4 s / 17.42 s | 2/4t median · `webfetch` · no reasoning tokens in OpenCode export · 101.9 tok/s @ 512, 72.5 tok/s @ 65K · [runbook](../../servers/ollama/summary.md) |
 | Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s / 12.72 s | 26.31 s / 25.09 s | 2/3t · `webfetch` · A3B sparsity · search splits top-stories + item fetches |
 | Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 | 14.11 s / 12.9 s | 252.67 s / 251.46 s | 2/2t · `webfetch` · JANGTQ4 `mxtq` MoE 35B/3B + VL · search dominated by 8K turn-2 decode |
 | **mlx-community Qwen3.6-35B-A3B 6-bit MLX** | **lm-studio** | **14.88 s** / 13.59 s | **20.79 s** / 19.41 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on (57–68 reason tok) · gen 89 tok/s @ 512 / 76 tok/s @ 32 K · prefill 97 K tok/s @ 32 K · **3.0× slower browse / 1.7× slower search than unsloth Q6_K GGUF on same server** · [results](#results-mlx-communityqwen36-35b-a3b-6bit-on-lm-studio) |

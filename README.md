@@ -12,6 +12,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
   Pi                                     vmlx (JANGTQ) :8000
                                          lm-studio (LM Studio) :1234
                                          vmlx-swift-lm via Osaurus (sidecar) :1337
+                                         ollama (Apple-Silicon MLX, sidecar) :11434
                                          dflash-mlx (sidecar) :8098
                                          llama-cpp-turboquant (sidecar) :8099
                                          llama-cpp-mtp (sidecar) :8100
@@ -61,7 +62,7 @@ This repository is primarily an **operations notebook + config bundle** for the 
 
 ### 🚀 Start a Server
 
-Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, sglang `:30000`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
+Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, Ollama `:11434`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, sglang `:30000`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
 
 <details>
 <summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
@@ -107,6 +108,26 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"          
 curl -s http://<MAC_STUDIO_IP>:1234/v1/models | python3 -m json.tool             # health (port 1234)
 ~/.lmstudio/bin/lms log stream                                                   # live request/response stream
 tail -f ~/.lmstudio/server-logs/$(date +%Y-%m)/$(date +%Y-%m-%d).1.log           # daily log file
+```
+
+</details>
+
+<details>
+<summary><strong>ollama</strong> (:11434, sidecar) — Qwen3.6 35B-A3B MLX + stop</summary>
+
+```bash
+# ollama (OpenAI-compatible sidecar, port 11434) — Apple-Silicon MLX backend.
+# qwen3.6:35b-mlx passes API tool smoke 5/5 and OpenCode browse/search with webfetch.
+ssh macstudio "nohup env OLLAMA_HOST=0.0.0.0:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0 \
+  /opt/homebrew/opt/ollama/bin/ollama serve > /tmp/ollama.log 2>&1 &"
+ssh macstudio "/opt/homebrew/opt/ollama/bin/ollama pull qwen3.6:35b-mlx"
+
+# health + client template
+curl -s http://<MAC_STUDIO_IP>:11434/v1/models | python3 -m json.tool
+python3 scripts/switch_opencode_config.py --server ollama
+
+# stop ollama
+ssh macstudio "pkill -f '/opt/homebrew.*/ollama serve'; pkill -f 'ollama runner'"
 ```
 
 </details>
@@ -633,6 +654,7 @@ The four port-8000 servers are **mutually exclusive** (one at a time); `lm-studi
 |:-------|:----:|:-----:|:----|:-----|
 | **[vllm-mlx](docs/servers/vllm-mlx/summary.md)** | 8000 | ⚡ Fastest | OpenAI+Anthropic | Daily use — lowest overhead; best for sparse-MoE / `bailing_hybrid` |
 | **[lm-studio](docs/servers/lm-studio/summary.md)** | 1234 | ⚡ Fastest agent loop | OpenAI | Uncensored-compliance leader; built-in tool/reasoning parsers (no flags) |
+| **[ollama](docs/servers/ollama/summary.md)** | 11434 | 🟢 Fast | OpenAI | Apple-Silicon MLX backend; `qwen3.6:35b-mlx` passes API + OpenCode tool calls |
 | **[mlx-openai-server](docs/servers/mlx-openai-server/summary.md)** / **mlx-lm** | 8000 | 🟢 Fast | OpenAI | Single-model direct or YAML multi-model; prompt cache + speculative decoding |
 | **[oMLX](docs/servers/omlx/summary.md)** | 8000 | 🔴 Slower | OpenAI+Anthropic | 9-model hot-swap with SSD caching |
 | **[vmlx](docs/servers/vmlx/summary.md)** | 8000 | 🟢 Fast | OpenAI+Anthropic+Ollama | TurboQuant **JANGTQ** models (bundled MLX Studio Python) |
@@ -663,7 +685,7 @@ All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
 [mlx-lm](docs/servers/mlx-lm/jang-patch.md)
 
-Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) · [sglang](docs/servers/sglang/summary.md) (`lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, and `sglang` keep install / runtime / limitations in their single `summary.md`)
+Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](docs/servers/omlx/maintenance.md) · [mlx-openai-server](docs/servers/mlx-openai-server/maintenance.md) · [vmlx](docs/servers/vmlx/maintenance.md) · [lm-studio](docs/servers/lm-studio/summary.md) · [ollama](docs/servers/ollama/summary.md) · [dflash-mlx](docs/servers/dflash-mlx/summary.md) · [llama-cpp-turboquant](docs/servers/llama-cpp-turboquant/summary.md) · [sglang](docs/servers/sglang/summary.md) (`lm-studio`, `ollama`, `dflash-mlx`, `llama-cpp-turboquant`, and `sglang` keep install / runtime / limitations in their single `summary.md`)
 
 **There is no fixed "production main".** The live server/model is whatever experiment is currently loaded, and the repo deliberately does not record it — the Mac Studio is a personal machine. Run [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) to see what is live right now (it probes over SSH and can also emit the matching client config). Server capabilities are in the table above; per-model specs and benchmark numbers are in the [Models](#-models) and [Benchmarks](#-benchmarks) sections.
 
@@ -717,6 +739,7 @@ All models fit in **96GB unified memory**.
 | [prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#prithivmlmods-qwen36-35b-a3b-uncensored-aggressive-q6_k) | Hybrid MoE 35B/3B + VL | 28.5 | 65K | Prior lm-studio main (2026-05-02) — uncensored GGUF browse leader (browse 5.05 s, search 13.56 s) |
 | [Qwen3.6-35B-A3B 4-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-4-bit) | Hybrid MoE 35B/3B + VL | 22 | 262K (1M YaRN) | dflash-mlx target (74-89 tok/s + DFlash drafter) |
 | [Qwen3.6-35B-A3B 6-bit](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-6-bit) | Hybrid MoE 35B/3B + VL | 27 | 262K (1M YaRN) | Vision + hybrid linear attention |
+| [Qwen3.6-35B-A3B MLX via Ollama](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-35b-a3b-mlx-via-ollama) | Hybrid MoE 35B/3B | 21 | 65K served (256K library context) | Ollama 0.24 + `mlx-c` on port 11434; 5/5 smoke, API loop 5.96 s, browse 9.75 s, search 18.4 s |
 
 </details>
 
@@ -763,6 +786,7 @@ Headline metric is **agent-loop latency** (real `opencode run`), not raw tok/s �
 | mlx-community Gemma 4 26B-A4B-it 4-bit MLX | — | 3.29 s | **3.23 s** 🏆 |
 | unsloth Qwen3.6-35B-A3B UD-Q6_K GGUF | 7.65 s | 4.92 s | 12.08 s |
 | Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` (`llama-cpp-turboquant`) | 5.57 s | 6.47 s | 15.64 s |
+| Qwen3.6-35B-A3B MLX (`ollama`) | 5.96 s | 9.75 s | 18.4 s |
 
 Sparse-MoE **Gemma 4 26B-A4B** (~4 B active) on lm-studio dominates the agent loop; 30+ models across 10 servers were benchmarked, including ⛔ no-tool / timeout failures.
 

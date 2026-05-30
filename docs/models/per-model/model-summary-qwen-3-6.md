@@ -1,6 +1,6 @@
 # Model Summary: Qwen3.6 Family
 
-Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gated Attention** stack (linear-attention recurrence interleaved with classic attention) plus a 27-layer ViT vision tower. The same architecture appears at three model sizes (27 B dense, 35 B/3 B-active MoE) and across multiple quants (uniform 4 / 6 / 8-bit MLX, JANG 4M mixed-precision, GGUF `Q8_K_P`, JANGTQ CRACK variants — see [`uncen-model/`](../uncen-model/) for the JANGTQ CRACK entries) plus one LoRA-merged variant tuned on Rust diffs.
+Alibaba's Qwen3.6 generation, all sharing the **hybrid Gated DeltaNet + full Gated Attention** stack (linear-attention recurrence interleaved with classic attention) plus a 27-layer ViT vision tower. The same architecture appears at three model sizes (27 B dense, 35 B/3 B-active MoE) and across multiple quants / runtimes (uniform 4 / 6 / 8-bit MLX, Ollama MLX, JANG 4M mixed-precision, GGUF `Q8_K_P`, JANGTQ CRACK variants — see [`uncen-model/`](../uncen-model/) for the JANGTQ CRACK entries) plus one LoRA-merged variant tuned on Rust diffs.
 
 ## Family-wide pitfalls (read before deploying any Qwen3.6 variant)
 
@@ -50,6 +50,7 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 
 - [Qwen3.6-35B-A3B (6-bit)](#qwen36-35b-a3b-6-bit) — Hybrid Gated DeltaNet + MoE + vision · 3 B active · 262 K native (1 M YaRN)
 - [Qwen3.6-35B-A3B (4-bit)](#qwen36-35b-a3b-4-bit) — Same hybrid arch · 4-bit MLX (~22 GB) · dflash-mlx target paired with `z-lab/Qwen3.6-35B-A3B-DFlash`
+- [Qwen3.6-35B-A3B MLX via Ollama](#qwen36-35b-a3b-mlx-via-ollama) — Ollama 0.24 + `mlx-c` Apple-Silicon MLX backend · 21 GB · port 11434 · 5/5 API smoke · OpenCode browse 9.75 s / search 18.4 s
 - [Qwen3.6-35B-A3B Q6_K + RotorQuant `iso3` KV (llama-cpp-turboquant)](#qwen36-35b-a3b-q6_k--rotorquant-iso3-kv-llama-cpp-turboquant) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} iso3` via `johndpope/llama-cpp-turboquant` fork · provisional sidecar on port 8099 · decode 2.27× Gemma 4 baseline · cold-prefill regression at 32 K+
 - [Qwen3.6-35B-A3B Q6_K + TurboQuant `turbo3` V on TheTom's fork](#qwen36-35b-a3b-q6_k--turboquant-turbo3-v-on-thetoms-fork) — Same 35B/3B MoE + VL · GGUF Q6_K (~27 GB) · `--cache-type-{k,v} turbo3` (auto-asymmetric q8_0 K + turbo3 V) via `TheTom/llama-cpp-turboquant` `feature/turboquant-kv-cache` · provisional sidecar on port 8099 · **2.27× Gemma 4 on search**, browse leader candidate · 32 K cold prefill works (29.88 s)
 - [majentik Qwen3.6-35B-A3B-RotorQuant-MLX-6bit](#majentik-qwen36-35b-a3b-rotorquant-mlx-6bit) — Same 35B/3B base · MLX 6-bit (~26 GB) text-only despite `image-text-to-text` HF tag · **no RotorQuant runtime** (stock mlx-lm) · benchmarked once on mlx-openai-server (browse 101.45 s 🐢, search 21.25 s) · keeps as documented data point, not deployed
@@ -157,6 +158,44 @@ Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-35b-a3b-4bit/`](../benchma
 - PyPI 0.1.0 has no tool-calling — install dflash-mlx from `git+https://github.com/bstnxbt/dflash-mlx.git` (which currently resolves to 0.1.4.1).
 - Decode-bound win only; prefill-bound long-context multi-turn workloads lose to lm-studio.
 - **DFlash is workload-gated on M3 Ultra.** The essay-style local benchmark still regresses vs baseline at 1k-4k horizons (best-case 0.78×, worst-case 0.62×) and reaches only 1.05× at 8k with `--quantize-draft`, but the same host reproduces strong wins on high-agreement prompts: `1.61x` on the upstream math/reasoning prompt at 8192 tokens and `1.46x` on constrained JSON at 4096 tokens. See [`model-benchmark-standalone.md` § DFlash](../benchmarks/model-benchmark-standalone.md#dflash-speculative-decoding--qwen36-35b-a3b-4bit--dflash-drafter).
+
+---
+
+## Qwen3.6-35B-A3B MLX via Ollama
+
+Same 35B/3B-active Qwen3.6 MoE base as the uniform MLX entries above, served through Homebrew Ollama 0.24.0's Apple-Silicon MLX backend (`mlx-c`) on sidecar port 11434. This path is useful for validating Ollama client compatibility and OpenAI-compatible tool calls without occupying port 8000.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) |
+| Ollama tag | `qwen3.6:35b-mlx` |
+| Format | Ollama MLX package (`mlx-c` backend), text-only library entry |
+| Parameters | 35B total, ~3B active |
+| Quantization | Ollama MLX package, ~21 GB on disk |
+| Context Size | 65K in lab client template; Ollama library advertises 256K |
+| Server | `ollama` on port 11434, OpenAI-compatible `/v1` endpoint |
+| License | Apache-2.0 base |
+
+**Launch shape:** see [`docs/servers/ollama/summary.md`](../../servers/ollama/summary.md). Start with `OLLAMA_HOST=0.0.0.0:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0`, then pull `qwen3.6:35b-mlx`.
+
+**Performance** (Mac Studio M3 Ultra, Ollama 0.24.0 Homebrew formula, 2026-05-30):
+
+| Check | Result |
+|:--|:--|
+| API tool smoke | 5/5 single-call pass |
+| API multi-turn | 3 turns, 5.96 s |
+| Throughput @ 512 | 101.9 tok/s, TTFT 0.057 s |
+| Throughput @ 32K | 83.9 tok/s, TTFT 0.099 s |
+| Throughput @ 65K | 72.5 tok/s, TTFT 0.132 s |
+| OpenCode browse | 9.75 s wall / 8.75 s LLM, 2 turns, `webfetch` |
+| OpenCode search | 18.4 s wall / 17.42 s LLM, 4 turns median, `webfetch` |
+
+Raw logs: [`docs/models/benchmarks/logs/qwen36-35b-mlx-ollama/`](../benchmarks/logs/qwen36-35b-mlx-ollama/).
+
+**Caveats:**
+- Ollama exposes the OpenAI model id as `qwen3.6:35b-mlx`; preserve the colon tag in client configs.
+- The library entry is text-only here despite the Qwen3.6 base being vision-language.
+- Keep `bench_api_tool_call.py` smoke before OpenCode agent runs when testing new Ollama tags; this isolates parser/runtime issues from client harness issues.
 
 ---
 

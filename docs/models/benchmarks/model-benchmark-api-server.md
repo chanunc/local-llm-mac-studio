@@ -308,6 +308,51 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — April 18, 2026.
 
 ---
 
+## Qwen3.6-35B-A3B MLX via Ollama
+
+Model: `qwen3.6:35b-mlx`  
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 30, 2026.
+
+**Method:** Streaming `/v1/chat/completions`, 50 max tokens, temperature 0.0, 2 measured runs per context. Raw JSON: [`logs/qwen36-35b-mlx-ollama/api-server-ollama.json`](logs/qwen36-35b-mlx-ollama/api-server-ollama.json).
+
+**Server:** Homebrew Ollama 0.24.0 with `mlx-c`, launched with `OLLAMA_HOST=0.0.0.0:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0`.
+
+### Generation Speed (tok/s)
+
+| Context | Ollama MLX |
+|:--|--:|
+| 512 | 101.9 |
+| 4K | 96.0 |
+| 8K | 97.7 |
+| 32K | 83.9 |
+| 65K | 72.5 |
+
+### Prefill Speed (tok/s)
+
+| Context | Ollama MLX |
+|:--|--:|
+| 512 | 9,322 |
+| 4K | 62,210 |
+| 8K | 120,686 |
+| 32K | 330,170 |
+| 65K | 498,380 |
+
+### Time to First Token (seconds)
+
+| Context | Ollama MLX |
+|:--|--:|
+| 512 | 0.057 |
+| 4K | 0.066 |
+| 8K | 0.069 |
+| 32K | 0.099 |
+| 65K | 0.132 |
+
+**Notes:**
+- Ollama's MLX path has extremely low TTFT in this short-output throughput harness. The OpenCode agent loop still measures real multi-turn latency: browse 9.75 s and search 18.4 s with `webfetch`.
+- Tool calling passes the local API smoke 5/5; see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#opencode-end-to-end-opencode-run---format-json-real-agent-loop) and the [`ollama` runbook](../../servers/ollama/summary.md).
+
+---
+
 ## Qwen3.6-35B-A3B (4-bit) on dflash-mlx
 
 Model: `mlx-community/Qwen3.6-35B-A3B-4bit` paired with `z-lab/Qwen3.6-35B-A3B-DFlash` drafter (DFlash speculative decoding via block-diffusion).

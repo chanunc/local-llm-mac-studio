@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:11434/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "qwen3.6:35b-mlx": {
+          "name": "Qwen3.6 35B-A3B MLX via Ollama 0.24",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-ollama/qwen3.6:35b-mlx",
+  "small_model": "macstudio-ollama/qwen3.6:35b-mlx"
+}

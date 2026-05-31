@@ -16,6 +16,33 @@
             "context": 65536,
             "output": 8192
           }
+        },
+        "gemma4:26b": {
+          "name": "Gemma 4 26B-A4B via Ollama",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        },
+        "granite4.1:30b-q5_1": {
+          "name": "Granite 4.1 30B Q5_1 via Ollama",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        },
+        "gemma4:31b": {
+          "name": "Gemma 4 31B-it via Ollama",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
         }
       }
     }

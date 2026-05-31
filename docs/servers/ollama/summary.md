@@ -46,6 +46,25 @@ Raw benchmark JSONs:
 - [`api-server-ollama.json`](../../models/benchmarks/logs/qwen36-35b-mlx-ollama/api-server-ollama.json)
 - [`agent-bench-ollama.json`](../../models/benchmarks/logs/qwen36-35b-mlx-ollama/agent-bench-ollama.json)
 
+## Gemma 4 26B-A4B
+
+```bash
+ssh macstudio "/opt/homebrew/opt/ollama/bin/ollama pull gemma4:26b"
+curl -s http://<MAC_STUDIO_IP>:11434/v1/models | python3 -m json.tool
+```
+
+Validated on 2026-05-31:
+
+- API smoke: 5/5 single-call tool pass; 3-turn loop 6.11 s
+- Throughput: 77.9 tok/s at 512, 49.4 tok/s at 32K, 36.5 tok/s at 65K
+- OpenCode: browse 16.7 s median, search 26.37 s median, real `webfetch` calls
+
+Raw benchmark JSONs:
+
+- [`api-tool-test-ollama.json`](../../models/benchmarks/logs/gemma4-26b-ollama/api-tool-test-ollama.json)
+- [`api-server-ollama.json`](../../models/benchmarks/logs/gemma4-26b-ollama/api-server-ollama.json)
+- [`agent-bench-ollama.json`](../../models/benchmarks/logs/gemma4-26b-ollama/agent-bench-ollama.json)
+
 ## OpenCode
 
 Template:

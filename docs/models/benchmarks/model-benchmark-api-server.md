@@ -353,6 +353,51 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 30, 2026.
 
 ---
 
+## Gemma 4 26B-A4B via Ollama
+
+Model: `gemma4:26b`
+Tested on **Mac Studio M3 Ultra (96 GB)** — May 31, 2026.
+
+**Method:** Streaming `/v1/chat/completions`, 50 max tokens, temperature 0.0, 2 measured runs per context. Raw JSON: [`logs/gemma4-26b-ollama/api-server-ollama.json`](logs/gemma4-26b-ollama/api-server-ollama.json).
+
+**Server:** Homebrew Ollama 0.24.0 with `mlx-c`, launched with `OLLAMA_HOST=0.0.0.0:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0`.
+
+### Generation Speed (tok/s)
+
+| Context | Ollama MLX |
+|:--|--:|
+| 512 | 77.9 |
+| 4K | 70.0 |
+| 8K | 68.7 |
+| 32K | 49.4 |
+| 65K | 36.5 |
+
+### Prefill Speed (tok/s)
+
+| Context | Ollama MLX |
+|:--|--:|
+| 512 | 3,074.6 |
+| 4K | 21,208.4 |
+| 8K | 39,302.3 |
+| 32K | 99,565.2 |
+| 65K | 132,056.5 |
+
+### Time to First Token (seconds)
+
+| Context | Ollama MLX |
+|:--|--:|
+| 512 | 0.176 |
+| 4K | 0.195 |
+| 8K | 0.209 |
+| 32K | 0.33 |
+| 65K | 0.496 |
+
+**Notes:**
+- The OpenCode agent loop still measures real multi-turn latency: browse 16.7 s and search 26.37 s with `webfetch`.
+- Tool calling passes the local API smoke 5/5; see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#opencode-end-to-end-opencode-run---format-json-real-agent-loop) and the [`ollama` runbook](../../servers/ollama/summary.md).
+
+---
+
 ## Qwen3.6-35B-A3B (4-bit) on dflash-mlx
 
 Model: `mlx-community/Qwen3.6-35B-A3B-4bit` paired with `z-lab/Qwen3.6-35B-A3B-DFlash` drafter (DFlash speculative decoding via block-diffusion).

@@ -23,7 +23,6 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-deploy-run-benchmark-model-skill.md`](active/plan-deploy-run-benchmark-model-skill.md) | `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner with disk guard and censored / uncensored branching |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |
 | [`active/plan-list-model-to-remove.md`](active/plan-list-model-to-remove.md) | `/list-model-to-remove` skill — interactive model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf |
-| [`active/plan-list-model-to-remove-python.md`](active/plan-list-model-to-remove-python.md) | `scripts/list_model_to_remove.py` — LLM-free Python port of `/list-model-to-remove`, reuses the skill's `inventory.sh` over SSH |
 | [`active/plan-lm-studio-uncen-benchmark.md`](active/plan-lm-studio-uncen-benchmark.md) | lm-studio uncensored-model benchmark slate |
 | [`active/plan-lobehub-macstudio-setup.md`](active/plan-lobehub-macstudio-setup.md) | LobeHub config against Mac Studio servers |
 | [`active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Deploy Osaurus Qwen3.6-35B-A3B JANGTQ4 as main vmlx server and run OpenCode agent benchmark |
@@ -39,9 +38,11 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-dflash-mlx-deploy.md`](done/plan-dflash-mlx-deploy.md) | dflash-mlx sidecar (Qwen3.6-35B-A3B + DFlash drafter) — shipped 2026-04-30, runbook at `docs/servers/dflash-mlx/summary.md` |
 | [`done/plan-hot-cache-max-size-per-model.md`](done/plan-hot-cache-max-size-per-model.md) | oMLX per-model hot cache patch (shipped, lives in `scripts/patches/patch_omlx_cache.py`) |
 | [`done/plan-mac-studio-lmstudio-ollama-benchmark.md`](done/plan-mac-studio-lmstudio-ollama-benchmark.md) | LM Studio / Ollama benchmark — drove lm-studio adoption 2026-04-30 |
+| [`done/plan-ollama-top-benchmark-models.md`](done/plan-ollama-top-benchmark-models.md) | Ollama deployment comparison for top non-Qwen3.6-A3B benchmark models (`gemma4:26b`, Granite 4.1 30B, Gemma 4 31B) |
 | [`done/plan-rearrange-docs-organization.md`](done/plan-rearrange-docs-organization.md) | Repo structure reorganization (this layout) |
 | [`done/plan-gemma-4-31b-lm-studio.md`](done/plan-gemma-4-31b-lm-studio.md) | Deploy Gemma 4 31B-it on lm-studio + 3 benchmarks (shipped 2026-05-01) — agent-loop champion at 5–6 s wall |
 | [`done/plan-deploy-run-benchmark-uncen-model-skill.md`](done/plan-deploy-run-benchmark-uncen-model-skill.md) | `/deploy-run-benchmark-uncen-model` skill — six-phase deploy + bench + docs runner, shipped 2026-05-02 to `~/.claude/skills/deploy-run-benchmark-uncen-model/` |
+| [`done/plan-list-model-to-remove-python.md`](done/plan-list-model-to-remove-python.md) | `scripts/list_model_to_remove.py` — LLM-free Python port of `/list-model-to-remove`, verified by dry run against Mac Studio |
 
 ### Archive
 

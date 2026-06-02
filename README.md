@@ -58,6 +58,16 @@ This repository is primarily an **operations notebook + config bundle** for the 
 - [`scripts/chk_llm_macstu.py`](scripts/chk_llm_macstu.py) is the only source of truth for live run-state — it probes the Mac Studio over SSH; no doc asserts what is "current".
 - `plans/` captures ideas, experiments, and pending investigations; it is not the live runbook layer.
 
+### Disk Reclaim
+
+Use [`scripts/list_model_to_remove.py`](scripts/list_model_to_remove.py) for the LLM-free model inventory and cleanup flow. It mirrors the `/list-model-to-remove` skill and supports `--dry-run` for read-only audit:
+
+```bash
+python3 scripts/list_model_to_remove.py --dry-run
+```
+
+See [`scripts/README.md`](scripts/README.md#disk-reclaim) for the full flag set and cleanup behavior.
+
 ## ⚡ Quick Start
 
 ### 🚀 Start a Server

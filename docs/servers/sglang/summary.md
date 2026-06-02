@@ -2,6 +2,8 @@
 
 ## Index
 - [Overview](#overview)
+- [What is SGLang](#what-is-sglang)
+- [Unique features](#unique-features)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Starting the server](#starting-the-server)
@@ -26,6 +28,70 @@ The local install lives at:
 | `/tmp/sglang-minicpm5.log` | launch log for the MiniCPM5 probe |
 
 SGLang is useful here when the model emits a tool-call format that LM Studio or `llama.cpp` does not parse into OpenAI `tool_calls[]`. MiniCPM5 is the current example: LM Studio can load the Q8_0 GGUF, but it does not expose MiniCPM5 XML tool calls as structured OpenAI tool calls.
+
+## What is SGLang
+
+SGLang is a high-performance LLM serving framework developed by [LMSYS](https://lmsys.org/about/), powering production deployments across 400,000+ GPUs worldwide. It is the primary inference backend for DeepSeek's official API and is used in large-scale RL post-training pipelines.
+
+In this lab, SGLang runs on the **MLX backend** for Apple Silicon — the only production-grade inference server besides mlx-lm and vllm-mlx that supports Metal/MLX natively.
+
+## Unique features
+
+These features differentiate SGLang from the other servers in this lab (lm-studio, vllm-mlx, mlx-openai-server, llama-cpp):
+
+### RadixAttention (automatic prefix caching)
+
+SGLang uses a radix-tree data structure to automatically cache and reuse prefix computations across requests. Repeated system prompts (common in agent workloads where the 2,000–4,000 token system prompt is identical every turn) are served from cache without re-computation.
+
+**Impact in this lab:** MiniCPM5-1B shows sub-120ms TTFT even at 65K context — the prefix cache eliminates redundant prefill for multi-turn agent loops. Other servers in the lab (lm-studio, vllm-mlx) lack automatic prefix caching.
+
+### Speculative decoding (EAGLE / MTP / DFlash)
+
+Native support for draft-model speculative decoding with multiple strategies:
+- **EAGLE / EAGLE-3** — self-drafting with tree attention
+- **MTP (Multi-Token Prediction)** — `Qwen3-MoE MTP` added upstream (2026-05-29)
+- **DFlash** — draft-based speculative decoding (NPU support added 2026-05-30)
+- **SpecBundle** — bundled speculative decoding across multiple draft strategies
+- **Adaptive speculative decoding** — auto-tunes draft length at runtime
+
+**Current status on MLX:** Not yet active for Apple Silicon. The CUDA/NPU path is production-ready; MLX speculative decoding is on the roadmap.
+
+### Multi-hardware support
+
+SGLang is the only inference server in this lab that runs across all major hardware platforms:
+- **NVIDIA CUDA** (primary, with FlashInfer + Triton kernels)
+- **AMD ROCm** (MXFP4, MLA attention optimizations)
+- **Apple Silicon / Metal** (MLX backend — this lab's path)
+- **Ascend NPU** (heuristic expert parallelism)
+- **Intel Xeon CPU**, **Google TPU** (JAX backend)
+
+This makes it possible to develop and test model configurations on the Mac Studio and deploy them identically on GPU clusters.
+
+### Production infrastructure
+
+Features not available on other servers in this lab:
+
+| Feature | Description |
+|:--------|:------------|
+| **PD Disaggregation** | Prefill/decode disaggregation across GPUs for large-scale MoE deployments |
+| **Expert Parallelism** | Native MoE expert distribution (relevant for Qwen3.5-35B-A3B, DeepSeek-V4) |
+| **Pipeline Parallelism** | Long-context serving on memory-constrained setups |
+| **HiCache** | Hierarchical KV caching (GPU → CPU → disk) |
+| **HiSparse** | Hierarchical sparse attention for long-context efficiency |
+| **CUDA Graph** | Breakable/piecewise graphs for variable-length inputs |
+| **Elastic EP** | Partial failure tolerance for MoE deployments |
+
+### Tool-call parsers
+
+Per-model tool-call parsers that convert native model formats (XML, JSON) to OpenAI `tool_calls[]`:
+- `minicpm5` — MiniCPM5 XML format (this lab's use case)
+- `hermes`, `qwen3`, `llama3_json`, `internlm3`, and others
+
+On the MLX backend, only `minicpm5` is currently available. The CUDA path supports all parsers.
+
+### OpenAI-compatible API
+
+Full `/v1/chat/completions` + `/v1/completions` + `/v1/embeddings` + vision endpoints. Drop-in replacement for OpenAI API with no client-side changes needed.
 
 ## Architecture
 

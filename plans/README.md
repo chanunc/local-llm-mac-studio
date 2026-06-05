@@ -27,6 +27,8 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-lora-ops-copilot.md`](active/plan-lora-ops-copilot.md) | LoRA "Mac Studio ops copilot" — PEFT/TRL adapter on `Qwen3.5-2B` for repo-specific ops Q&A, MacBook M1 Pro 16GB inference |
 | [`active/plan-lobehub-macstudio-setup.md`](active/plan-lobehub-macstudio-setup.md) | LobeHub config against Mac Studio servers |
 | [`active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Deploy Osaurus Qwen3.6-35B-A3B JANGTQ4 as main vmlx server and run OpenCode agent benchmark |
+| [`active/plan-vlm-visual-agent-benchmark-harness.md`](active/plan-vlm-visual-agent-benchmark-harness.md) | Visual-agent benchmark harness for OCR, chart, screenshot, and video tasks with HITL fixture review |
+| [`active/plan-mlx-vlm-qwen-vl-deploy-benchmark.md`](active/plan-mlx-vlm-qwen-vl-deploy-benchmark.md) | Update `mlx-vlm`, deploy Qwen VL 4-bit sidecar, then run agent tooling and visual-agent benchmarks |
 | [`active/plan-rotorquant-apple-silicon-implementation.md`](active/plan-rotorquant-apple-silicon-implementation.md) | RotorQuant feasibility on Apple Silicon |
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |

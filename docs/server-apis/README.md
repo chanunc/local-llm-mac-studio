@@ -6,6 +6,7 @@ Wire-protocol references for the HTTP APIs that the Mac Studio servers serve and
 |:--|:--|:--|
 | OpenAI Responses API (`POST /v1/responses`) | [`openai-responses.md`](openai-responses.md) | Native only on `lm-studio:1234` (≥ v0.3.29). Six other servers are Chat-Completions-only — shim with [`chutesai/responses-proxy`](https://github.com/chutesai/responses-proxy) or LiteLLM. |
 | Agent tooling with the Responses API | [`openai-agent-tooling.md`](openai-agent-tooling.md) | Where the loop runs (client vs server vs OpenAI infra), Remote MCP browser recipes, function-calling loop, hosted tools. |
+| Anthropic tool calling (`tools`, `tool_use`, `tool_result`) | [`anthropic-tool-calling.md`](anthropic-tool-calling.md) | Manual `ant` loop, Claude Code/OpenCode executor loop, Fabric contrast, and `claude-code-router -> LM Studio` bridge notes. |
 
 ## When to add a new doc here
 

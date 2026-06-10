@@ -1,7 +1,8 @@
 # Plan: Deploy Osaurus Qwen3.6-35B-A3B JANGTQ4 as main vmlx server and run agent benchmark
 
-Status: active
+Status: done
 Created: 2026-05-01
+Completed: 2026-05-14
 Canonical: no
 
 ## Context

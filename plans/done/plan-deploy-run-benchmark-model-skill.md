@@ -1,5 +1,6 @@
-Status: active
+Status: done
 Created: 2026-05-05
+Completed: 2026-05-05
 Canonical: no
 
 # `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner

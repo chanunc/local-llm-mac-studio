@@ -1,7 +1,8 @@
 # Plan: Diagnose and fix DFlash regression on Mac Studio M3 Ultra
 
-Status: active
+Status: done
 Created: 2026-05-01
+Completed: 2026-04-30
 Canonical: no
 
 ## Context

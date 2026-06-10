@@ -1,5 +1,6 @@
-Status: active
+Status: done
 Created: 2026-05-04
+Completed: 2026-05-04
 Canonical: no
 
 # Plan: `chk_llm_macstu.py` — Mac Studio LLM server + model status probe

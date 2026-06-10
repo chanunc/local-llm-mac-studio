@@ -1,5 +1,6 @@
-Status: active
+Status: done
 Created: 2026-05-14
+Completed: 2026-05-14
 Canonical: no
 
 # Plan — Deploy `unsloth/Qwen3.6-27B-MTP-GGUF` (6-bit `UD-Q6_K_XL`) as a new `llama-cpp-mtp` sidecar

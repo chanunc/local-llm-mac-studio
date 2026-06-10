@@ -1,5 +1,6 @@
-Status: active
+Status: done
 Created: 2026-06-09
+Completed: 2026-06-10
 Canonical: no
 
 # Plan: Upgrade llama.cpp and benchmark Gemma 4 31B dense MTP

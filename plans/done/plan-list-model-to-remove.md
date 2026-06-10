@@ -1,5 +1,6 @@
-Status: active
+Status: done
 Created: 2026-05-04
+Completed: 2026-06-02
 Canonical: no
 
 # Plan: `/list-model-to-remove` skill

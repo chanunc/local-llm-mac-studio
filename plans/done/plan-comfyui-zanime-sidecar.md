@@ -1,7 +1,8 @@
 # ComfyUI sidecar for Z-Image / Z-Anime image generation
 
-Status: active
+Status: done
 Created: 2026-05-08
+Completed: 2026-05-08
 Canonical: no
 
 ## Context

@@ -85,7 +85,7 @@ ssh macstudio "nohup ~/dflash-mlx-env/bin/dflash-serve \
 
 **`--draft-model` is required** for Qwen3.6 — the built-in `DRAFT_REGISTRY` in dflash-mlx 0.1.4.1 only auto-resolves Qwen3.5 family pairs. Without an explicit `--draft-model`, the server falls back to baseline (autoregressive) generation, defeating the point of running dflash-mlx.
 
-**`--port 8098`** — explicitly avoid port 8000 (production primary on `vllm-mlx`) and port 1234 (`lm-studio`).
+**`--port 8098`** — explicitly avoid port 8000 (shared by vllm-mlx / oMLX / vmlx / mlx-openai-server) and port 1234 (`lm-studio`).
 
 **Stop:** `ssh macstudio "pkill -f dflash-serve"`.
 

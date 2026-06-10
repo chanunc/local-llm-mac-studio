@@ -43,7 +43,7 @@ MacBook                       Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
                               └─────────────────────────────────────────────┘
 ```
 
-Sidecar pattern — runs on port **8099**, alongside the production main on 8000. Does not displace `vllm-mlx` / `mlx-openai-server` / `vmlx` / `mlx_lm.server`. dflash-mlx (8098) and lm-studio (1234) can also coexist.
+Sidecar pattern — runs on port **8099**, coexisting with whatever server holds port 8000 (vllm-mlx / oMLX / vmlx / mlx-openai-server). dflash-mlx (8098) and lm-studio (1234) can also coexist.
 
 GGUF weights live in `~/.cache/huggingface/hub/`. The fork's binary is fully self-contained — no Python venv, no upstream-package patches, no PyPI dependency.
 

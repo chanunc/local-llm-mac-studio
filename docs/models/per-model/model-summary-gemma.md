@@ -131,9 +131,7 @@ Google's dense **31B instruction-tuned** text-only Gemma 4. No MoE, no vision/au
 | License | Gemma Terms of Use |
 | MTP Drafter (pending) | `mlx-community/gemma-4-31B-it-assistant-bf16` (839 MB, `gemma4_assistant` arch) — downloaded, waiting for mlx-lm 0.31.3+ arch support |
 
-**Current server: mlx-lm (direct), port 8000.** Model served by full filesystem path.
-
-**Launch shape (mlx-lm server — current production):**
+**Launch shape (mlx-lm server):**
 
 ```bash
 ssh macstudio "nohup /opt/homebrew/Cellar/mlx-lm/0.31.3/libexec/bin/mlx_lm.server \
@@ -267,7 +265,7 @@ The actual blocker — identified by source-code review on 2026-05-06 after mult
 | Pairing constraint | **Drafter is NOT bf16-locked.** HF card only documents bf16 pairings, but source has no dtype assertion (verified) and we ran 6-bit + drafter successfully (API harness 5/5, 16.54 s multi-turn). vLLM community ran `Intel/gemma-4-31B-it-int4-AutoRound` + drafter for ~2× speedup. |
 | Useful context cap | **≤16 K tokens** on M3 Ultra 96 GB for bf16 target (32 K+ OOMs on the speculative path); 6-bit target should not OOM but not benched at 32 K |
 
-### Launch shape (for reference, not currently running)
+### Launch shape (mlx-vlm drafter path)
 
 ```bash
 ssh macstudio "nohup ~/mlx-vlm-env/bin/python -m mlx_vlm.server \
@@ -711,7 +709,7 @@ Where the `gemma4_assistant` MTP drafter actually runs today, across the runtime
 
 The streaming-tool-call emission bug is server-side, so any client that consumes `/v1/chat/completions` SSE expecting incremental `delta.tool_calls` will hit the same starvation. Verified for opencode; **pi-mono (`pi-coding-agent` / `@mariozechner/pi-coding-agent`) is structurally subject to the same failure mode.**
 
-| Client | `mlx_lm.server` (current production) | `mlx_vlm.server` + drafter |
+| Client | `mlx_lm.server` | `mlx_vlm.server` + drafter |
 |:-------|:-------------------------------------|:---------------------------|
 | **opencode** (anomalyco) | ✅ 12.33 s browse, 2 turns, `webfetch` (verified) | ❌ 300 s timeout × 9 runs (verified) |
 | **pi-coding-agent** (badlogic/pi-mono) | ✅ Expected to work — same protocol path as opencode; not yet smoke-tested directly | ❌ Same hang expected — see structural reasoning below |
@@ -792,7 +790,7 @@ DavidAU's HERETIC uncensoring method applied to the Gemma 4 31B-it dense base wi
 
 - **7/10 compliance is the lowest lm-studio score in this stack** — HERETIC appears less effective on Gemma 4 than on Qwen3.6. Refused: vulnerability exploitation script (P1), detailed bomb instructions (P4), identity theft step-by-step (P5).
 - **Thinking channel not exposed as `reasoning_content`** — LM Studio's Gemma 4 runtime does not extract `<|channel>thought` blocks into `reasoning_content`; they count against the visible token budget.
-- **Not the active production main** — superseded by TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (2026-05-03). See below.
+- **Superseded** by TrevorJS Gemma 4 26B A4B Uncensored Q8_0 (2026-05-03) for uncensored use. See below.
 - **INSTRUCT variant not benchmarked** — `gemma-4-31B-Mystery-Fine-Tune-HERETIC-UNCENSORED-INSTRUCT-Q6_k.gguf` would likely be significantly faster on agent tasks (no thinking overhead). Worth benchmarking separately.
 
 ---

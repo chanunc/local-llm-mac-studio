@@ -31,6 +31,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](active/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Deploy Osaurus Qwen3.6-35B-A3B JANGTQ4 as main vmlx server and run OpenCode agent benchmark |
 | [`active/plan-vlm-visual-agent-benchmark-harness.md`](active/plan-vlm-visual-agent-benchmark-harness.md) | Visual-agent benchmark harness for OCR, chart, screenshot, and video tasks with HITL fixture review |
 | [`active/plan-mlx-vlm-qwen-vl-deploy-benchmark.md`](active/plan-mlx-vlm-qwen-vl-deploy-benchmark.md) | Update `mlx-vlm`, deploy Qwen VL 4-bit sidecar, then run agent tooling and visual-agent benchmarks |
+| [`active/plan-reorganise-repo-structure.md`](active/plan-reorganise-repo-structure.md) | Re-organise scripts, docs, and folders — fix post-April-2026 drift in 7 atomic commits ([visual HTML](active/plan-reorganise-repo-structure.html)) |
 | [`active/plan-rotorquant-apple-silicon-implementation.md`](active/plan-rotorquant-apple-silicon-implementation.md) | RotorQuant feasibility on Apple Silicon |
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |
@@ -49,6 +50,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-gemma-4-31b-lm-studio.md`](done/plan-gemma-4-31b-lm-studio.md) | Deploy Gemma 4 31B-it on lm-studio + 3 benchmarks (shipped 2026-05-01) — agent-loop champion at 5–6 s wall |
 | [`done/plan-deploy-run-benchmark-uncen-model-skill.md`](done/plan-deploy-run-benchmark-uncen-model-skill.md) | `/deploy-run-benchmark-uncen-model` skill — six-phase deploy + bench + docs runner, shipped 2026-05-02 to `~/.claude/skills/deploy-run-benchmark-uncen-model/` |
 | [`done/plan-list-model-to-remove-python.md`](done/plan-list-model-to-remove-python.md) | `scripts/list_model_to_remove.py` — LLM-free Python port of `/list-model-to-remove`, verified by dry run against Mac Studio |
+| [`done/plan-deploy-huihui-qwen36-35b-mtp-abliterated.md`](done/plan-deploy-huihui-qwen36-35b-mtp-abliterated.md) | huihui-ai Qwen3.6-35B-A3B Claude-4.7-Opus-abliterated MTP Q6_K — first MoE+MTP on llama-cpp-mtp, shipped 2026-05-20 with benchmarks |
 
 ### Archive
 

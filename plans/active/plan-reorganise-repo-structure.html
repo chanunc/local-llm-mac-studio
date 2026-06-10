@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan: Re-organise repo — setup-llm-macstu</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#1a1d27; --card2:#21252f; --ink:#e8eaf0; --mut:#9aa3b2;
+    --acc:#5eead4; --blue:#7dd3fc; --amber:#fbbf24; --red:#f87171; --green:#4ade80;
+    --purple:#c4b5fd; --line:#2e3340;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; padding:32px 16px; max-width:960px; margin:0 auto;}
+  h1{font-size:26px; margin-bottom:4px;}
+  .sub{color:var(--mut); margin-bottom:24px;}
+  h2{font-size:18px; margin:28px 0 12px; color:var(--acc);}
+  code{background:var(--card2); padding:1px 6px; border-radius:5px; font-size:13px; color:var(--blue); font-family:"SF Mono",Menlo,monospace;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+  .card h3{font-size:14px; margin-bottom:8px;}
+  .card ul{list-style:none;}
+  .card li{padding:3px 0; font-size:13.5px; color:var(--mut);}
+  .card li b{color:var(--ink); font-weight:600;}
+  .ok{color:var(--green);} .warn{color:var(--amber);} .bad{color:var(--red);}
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:99px; letter-spacing:.4px; vertical-align:middle;}
+  .b-ok{background:#16341f; color:var(--green);} .b-warn{background:#3a2e10; color:var(--amber);}
+  .b-bad{background:#3a1717; color:var(--red);} .b-info{background:#13303d; color:var(--blue);}
+  .b-skip{background:#2a2438; color:var(--purple);}
+
+  /* commit timeline */
+  .step{display:flex; gap:14px; margin-bottom:12px;}
+  .num{flex:none; width:34px; height:34px; border-radius:50%; background:var(--card2); border:2px solid var(--acc);
+       display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--acc); font-size:14px;}
+  .step .body{flex:1; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 16px;}
+  .step h3{font-size:15px; margin-bottom:4px;}
+  .step p{font-size:13.5px; color:var(--mut);}
+  .arrow{color:var(--acc); font-weight:700;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px;}
+  th{color:var(--mut); text-align:left; font-weight:600; padding:6px 8px; border-bottom:1px solid var(--line);}
+  td{padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top;}
+  td:first-child{white-space:nowrap;}
+  .small{font-size:12.5px; color:var(--mut);}
+  .flex{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+  .chip{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:3px 10px; font-size:12.5px; color:var(--mut);}
+</style>
+</head>
+<body>
+
+<h1>🗂 Re-organise <code>setup-llm-macstu</code></h1>
+<p class="sub">Fix drift since the April-2026 reorg · 7 atomic commits on <code>main</code> · <b>no push</b> (user decides)</p>
+
+<h2>📋 Health check — what's fine vs what drifted</h2>
+<div class="grid">
+  <div class="card">
+    <h3><span class="badge b-ok">✓ NO CHANGES NEEDED</span></h3>
+    <ul>
+      <li><b>scripts/</b> — all 19 correctly placed &amp; indexed</li>
+      <li><b>configs/clients/</b> — matches documented layout</li>
+      <li><b>docs/servers · clients · tuning · server-apis</b> — indexes match disk</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3><span class="badge b-warn">⚠ DRIFTED</span></h3>
+    <ul>
+      <li><b>2 benchmark log dirs</b> misplaced (not under <code>logs/</code>)</li>
+      <li><b>hypernova doc</b> orphaned — not in models index</li>
+      <li><b>2 plan files</b> still named <code>llmster</code>, index says <code>lm-studio</code></li>
+      <li><b>~8 of 20 active plans</b> actually shipped → belong in <code>done/</code></li>
+      <li><b>Root strays</b>: <code>huggingface-skills-analysis.md</code>, <code>html/</code>, <code>prompts/</code>, <code>RTK.md</code></li>
+      <li><b>Uncommitted</b> Gemma-4-MTP doc work tangled in tree</li>
+    </ul>
+  </div>
+</div>
+
+<h2>🚀 7 commits, in order</h2>
+
+<div class="step"><div class="num">1</div><div class="body">
+  <h3>Land pending Gemma-4-MTP work <span class="badge b-info">PRE-EXISTING</span></h3>
+  <p>Commit modified CLAUDE/AGENTS/docs + untracked gemma4 logs, fixtures, 3 new plans. Verify CLAUDE↔AGENTS parity. <b>Exclude</b> <code>RTK.md</code> &amp; <code>prompts/</code>.</p>
+</div></div>
+
+<div class="step"><div class="num">2</div><div class="body">
+  <h3>Gitignore <code>RTK.md</code></h3>
+  <p>Machine-local Codex-CLI instructions — add to <code>.gitignore</code>.</p>
+</div></div>
+
+<div class="step"><div class="num">3</div><div class="body">
+  <h3>Fix benchmark logs layout</h3>
+  <p><code>benchmarks/deepseek-v4-flash/</code> <span class="arrow">→</span> <code>benchmarks/logs/…</code><br>
+     <code>benchmarks/lfm2.5-8b-a1b-q8/</code> <span class="arrow">→</span> <code>benchmarks/logs/…</code><br>
+     Then grep-sweep all links. Keep historical JSON filenames.</p>
+</div></div>
+
+<div class="step"><div class="num">4</div><div class="body">
+  <h3>Index orphaned HyperNova doc</h3>
+  <p>Add <code>model-summary-hypernova.md</code> row to <code>docs/models/README.md</code> (+ master catalog if missing). Mark "analysis only" — no current/primary language.</p>
+</div></div>
+
+<div class="step"><div class="num">5</div><div class="body">
+  <h3>Rename llmster → lm-studio plan files</h3>
+  <p><code>plan-llmster-uncen-benchmark.md</code> <span class="arrow">→</span> <code>plan-lm-studio-uncen-benchmark.md</code> (active)<br>
+     <code>plan-gemma-4-31b-llmster.md</code> <span class="arrow">→</span> <code>plan-gemma-4-31b-lm-studio.md</code> (done)<br>
+     Index already expects new names. Historical "llmster" prose stays.</p>
+</div></div>
+
+<div class="step"><div class="num">6</div><div class="body">
+  <h3>Plans audit — sweep shipped plans <span class="arrow">active → done</span></h3>
+  <p>Verify artifact exists before each move; update <code>plans/README.md</code> tables; report classification first.</p>
+  <table>
+    <tr><th>Plan</th><th>Evidence it shipped</th></tr>
+    <tr><td>chk-llm-macstu</td><td>script shipped, canonical health-check</td></tr>
+    <tr><td>comfyui-zanime-sidecar</td><td>server runbook + walltime bench</td></tr>
+    <tr><td>deploy-llama-cpp-mtp-sidecar</td><td>sidecar + benchmark logs</td></tr>
+    <tr><td>list-model-to-remove</td><td>script + skill shipped</td></tr>
+    <tr><td>deploy-run-benchmark-model-skill</td><td>skill live in CLAUDE.md</td></tr>
+    <tr><td>dflash-regression-investigation</td><td>verdict recorded: "regresses, upstream-only"</td></tr>
+    <tr><td>osaurus-jangtq4-vmlx-agent-bench</td><td>runbook shipped — <span class="warn">verify bench logs</span></td></tr>
+    <tr><td>upgrade-llama-cpp-gemma4-mtp</td><td>outputs land in commit 1 — <span class="warn">verify scope</span></td></tr>
+    <tr><td>mlx-vlm-qwen-vl</td><td><span class="bad">uncertain</span> — streaming bug blocked it; move only if concluded</td></tr>
+  </table>
+  <div class="flex"><span class="chip">Stay active: bench-eval-local · holo31 · ideogram4 · lm-studio-uncen · lobehub · lora-ops · rotorquant · switch-server · turboquant · homebrew-formula · vlm-harness</span></div>
+</div></div>
+
+<div class="step"><div class="num">7</div><div class="body">
+  <h3>Relocate root strays</h3>
+  <p><code>huggingface-skills-analysis.md</code> <span class="arrow">→</span> <code>plans/done/plan-huggingface-skills-analysis.md</code><br>
+     <code>html/peft-lora….html</code> <span class="arrow">→</span> <code>docs/models/techniques/model-technique-peft-lora.html</code> (delete <code>html/</code>)<br>
+     <code>prompts/</code> <span class="arrow">→</span> <code>plans/prompts/</code> (commit; add "Prompts" section to plans README)<br>
+     Update all indexes + grep-sweep links.</p>
+</div></div>
+
+<h2>✅ Final verification</h2>
+<div class="grid">
+  <div class="card"><h3>🔍 Sweeps</h3><ul>
+    <li>CLAUDE.md drift-check grep (no "current/production" claims)</li>
+    <li>Broken-link grep for every moved path</li>
+  </ul></div>
+  <div class="card"><h3>🧾 Parity</h3><ul>
+    <li>Every README index ↔ disk match (plans, models, techniques)</li>
+    <li>CLAUDE.md ↔ AGENTS.md identical from line 4</li>
+    <li><code>git status</code> clean</li>
+  </ul></div>
+</div>
+
+<h2>🚫 Out of scope</h2>
+<div class="flex">
+  <span class="chip">scripts/ (already conformant)</span>
+  <span class="chip">provisional client-config backfill</span>
+  <span class="chip">historical "llmster" prose / JSON names</span>
+  <span class="chip">uncen-model submodule</span>
+  <span class="chip">pushing to origin</span>
+</div>
+
+</body>
+</html>

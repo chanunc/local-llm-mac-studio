@@ -6,7 +6,7 @@ Google's Gemma 4 generation. Seven variants currently catalogued in this stack: 
 
 - [Gemma 4 26B-A4B (4-bit)](#gemma-4-26b-a4b-4-bit) — MoE 26B/4B + vision + audio + video · 256K · `mlx-openai-server` / `lm-studio` (MLX-vs-GGUF data point, 2026-05-08) · 15 GB · 50–114 tok/s · **OpenCode browse 3.29 s / search 3.23 s on lm-studio (no scaffolding needed, search 2.2× faster than the Q8_0 GGUF sibling)**
 - [Gemma 4 31B-it (6-bit)](#gemma-4-31b-it-6-bit) — Dense 31B text-only · 64K loaded (256K native) · **mlx-lm server (current main 2026-05-06)** · 29 GB · 20.4 tok/s @ 512, browse 12.33 s (thinking ON) / browse 5.11 s (thinking OFF on lm-studio)
-- [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). On 0.5.0-from-main (2026-05-06): mlx-vlm emitted `delta.tool_calls` only as a final post-loop chunk → opencode hit 300 s wall (0 turns × 3). **On 0.5.0 tagged release (2026-05-08): partial fix** — browse now completes 6 webfetch turns in 300 s (model loops on the same URL but tool_calls do fire mid-conversation); search still 0 turns. API tool harness 5/5 + 12.08 s multi-turn loop (was 22.06 s, **−45 %**). Long-context decode regressed (4K/8K/16K: 13.8→4.5, 12.3→5.0, 10.7→3.7 tok/s — drafter acceptance collapses to 0.06–0.25 at long contexts). **On main `45e6ece` (2026-05-20, PRs #1166/#1182/#1188): streaming SSE bug fully fixed** — opencode browse 91.47 s / 2 turns, search 189.85 s / 4 turns (both webfetch ✅, both were 300 s timeouts before); decode regression reversed (27.7/24.6/22.2/17.7 tok/s @ 512/4K/8K/16K, acceptance steady 2.79–3.00); API harness 5/5 + multi-turn 8.97 s (−26 % vs tagged). Still 5–7× slower than mlx-lm 6-bit on agent loops because mlx-vlm prefill is ~100× behind mlx-lm (195 vs 19,331 tok/s @ 8 K). Stock llama.cpp can NOT serve the `gemma4_assistant` drafter — only AtomicBot-ai fork does. See [main `45e6ece` re-test](#main-45e6ece-re-test-2026-05-20--streaming-bug-fully-fixed-but-prefill-still-57-behind-mlx-lm).
+- [Gemma 4 31B-it bf16 + MTP drafter (mlx-vlm) — failed experiment](#gemma-4-31b-it-bf16--mtp-drafter-mlx-vlm-2026-05-06-failed-experiment) — drafter works at upstream-expected efficiency, pairs cleanly with 6-bit too (5/5 API harness, 16.54 s loop). On 0.5.0-from-main (2026-05-06): mlx-vlm emitted `delta.tool_calls` only as a final post-loop chunk → opencode hit 300 s wall (0 turns × 3). **On 0.5.0 tagged release (2026-05-08): partial fix** — browse now completes 6 webfetch turns in 300 s (model loops on the same URL but tool_calls do fire mid-conversation); search still 0 turns. API tool harness 5/5 + 12.08 s multi-turn loop (was 22.06 s, **−45 %**). Long-context decode regressed (4K/8K/16K: 13.8→4.5, 12.3→5.0, 10.7→3.7 tok/s — drafter acceptance collapses to 0.06–0.25 at long contexts). **On main `45e6ece` (2026-05-20, PRs #1166/#1182/#1188): streaming SSE bug fully fixed** — opencode browse 91.47 s / 2 turns, search 189.85 s / 4 turns (both webfetch ✅, both were 300 s timeouts before); decode regression reversed (27.7/24.6/22.2/17.7 tok/s @ 512/4K/8K/16K, acceptance steady 2.79–3.00); API harness 5/5 + multi-turn 8.97 s (−26 % vs tagged). Still 5–7× slower than mlx-lm 6-bit on agent loops because mlx-vlm prefill is ~100× behind mlx-lm (195 vs 19,331 tok/s @ 8 K). **Mainline llama.cpp gained `gemma4_assistant` support in PR #23398 on 2026-06-07**, creating a cleaner GGUF/Metal re-test path. See [main `45e6ece` re-test](#main-45e6ece-re-test-2026-05-20--streaming-bug-fully-fixed-but-prefill-still-57-behind-mlx-lm) and [llama.cpp merge assessment](#mainline-llamacpp-gemma-4-mtp-merged-2026-06-07).
 - [DavidAU Gemma 4 31B Heretic Q6_k](#davidau-gemma-4-31b-heretic-q6k) — Uncensored (HERETIC + MysteryFT) · 128K · `lm-studio` · 23.47 GiB · 24.2 tok/s · 7/10 mlabonne · [bench writeup](../../uncen-model/gemma4-31b-davidau-heretic-benchmark.md)
 - [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](#trevorjs-gemma-4-26b-a4b-uncensored-q8) — MoE 26B/4B active · 65K loaded · `lm-studio` · 25.02 GiB · **87.6 tok/s** · 8/10 mlabonne · browse 2.93 s · **search 7.35 s 🥇** · [bench writeup](../../uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md)
 - [Huihui-ai Gemma 4 26B A4B Abliterated i1-Q6_K](#huihui-ai-gemma-4-26b-a4b-abliterated-i1-q6_k) — MoE 26B/4B active · 65K loaded · **`lm-studio` (current main 2026-05-15)** · **21.08 GiB** · **91.6 tok/s** · **9/10 mlabonne** (first Gemma 4 to clear 9/10) · **browse 2.55 s 🥇 all-time leader** / search 19.59 s · [bench writeup](../../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md)
@@ -529,9 +529,80 @@ And for search:
 
 **Production posture (unchanged):** mlx-vlm + Gemma 4 31B + MTP is finally a **functional** streaming agent server (was a hard non-starter on 0.5.0-from-main, partially broken on tagged 0.5.0), and is now actively faster than tagged 0.5.0 on every metric we have. But it is still **not** competitive with mlx-lm 6-bit for daily agent use — the prefill ratio dominates wall time in agent loops where every turn re-issues an 8–13 K context. Keep the install warm; revisit when mlx-vlm gets either (a) APC engaged on the continuous-batching code path, or (b) a `--continuous-batching off` toggle that re-enables mlx-lm-style prompt-cache reuse.
 
-#### llama.cpp Gemma 4 MTP — stock fork **does not** support it
+#### Mainline llama.cpp Gemma 4 MTP — merged 2026-06-07
 
-Investigated whether stock `ggml-org/llama.cpp` with [PR #22673 "llama + spec: MTP Support"](https://github.com/ggml-org/llama.cpp/pull/22673) (2026-05-16, the same path that runs Qwen3.6-35B-A3B-MTP at 78.5 tok/s, 83 % acceptance on our `llama-cpp-mtp` :8100 sidecar) can pick up the Gemma 4 31B-it-assistant drafter. **It cannot.** The drafter uses a custom `gemma4_assistant` architecture (4-layer assistant transformer + centroid LM head); the AtomicChat GGUF README is explicit: _"These GGUFs use the custom `gemma4_assistant` architecture and **will not load in stock `llama.cpp`**. They require the [`atomic-llama-cpp-turboquant`](https://github.com/AtomicBot-ai/atomic-llama-cpp-turboquant) fork, which adds the `gemma4_assistant` MTP drafter arch (incl. the centroid LM head for E2B/E4B), TurboQuant KV-cache quantization (`-ctk turbo3 -ctv turbo3`), and the `--mtp-head` / `--spec-type mtp` runtime flags."_ Three independent GGUF uploaders ([AtomicChat](https://huggingface.co/AtomicChat/gemma-4-31B-it-assistant-GGUF), [cafkafk](https://huggingface.co/cafkafk/gemma-4-31B-it-assistant-GGUF-noimatrix), [Radamanthys11](https://huggingface.co/Radamanthys11/Gemma-4-31B-it-assistant-GGUF)) exist, all targeting that fork. The fork is separate from our existing [`johndpope` and `TheTom` TurboQuant forks](../techniques/model-technique-rotorquant.md) — a fourth build would be required to evaluate the Gemma + MTP + TurboQuant path on llama.cpp. **Not in scope for this re-bench; logged as a follow-up path.**
+The previous conclusion that stock `llama.cpp` could not load `gemma4_assistant` is obsolete. [`ggml-org/llama.cpp#23398`](https://github.com/ggml-org/llama.cpp/pull/23398) merged on **2026-06-07** (merge commit `04eb4c446`) and added the external Gemma 4 assistant architecture, shared target/draft KV-cache plumbing, conversion support, and `llama-server` integration. The PR supports **Gemma 4 31B dense** and **26B-A4B MoE**; its merge notes explicitly exclude E2B/E4B for now.
+
+The Mac Studio checkout inspected on **2026-06-09** was `510b5c2` from 2026-05-20, so that research baseline predates the merge. An upgrade is required before any Gemma 4 GGUF MTP test. Do not pin exactly to the merge commit: the initial merge introduced an expensive KV-cell copy in some configurations. Follow-up [`#24277`](https://github.com/ggml-org/llama.cpp/pull/24277), merged later on June 7 as `379ac66`, removed that copy and restored throughput in reported tests. The evaluation floor is therefore **a commit containing both `04eb4c446` and `379ac66`**.
+
+##### What the upstream evidence says
+
+| Evidence | Target | Result | Relevance to M3 Ultra |
+|:--|:--|:--|:--|
+| PR author's `mtp-bench`, DGX Spark | Gemma 4 31B dense Q8 + MTP, draft depth 4 | 290.01 → 120.65 s (**2.40×** wall-time speedup), aggregate draft acceptance 58.8 % | Strong architecture-level evidence, but not Metal |
+| PR discussion, dual RTX 3090 | Gemma 4 31B dense Q8 | 35.72 → 62.34 tok/s (**+74.5 %**), 43.9 % acceptance | Shows the dense gain survives a different backend and long 32K prompt |
+| Unsloth MTP GGUF note, B200 | Gemma 4 31B Q4_K_M + Q8 drafter | 70 → 101 tok/s (**+44 %**), 78 % acceptance | Confirms a quantized target can pair with the small Q8 drafter |
+| PR author and Google MTP docs | Gemma 4 26B-A4B MoE, batch 1 | No reliable speedup | Matches the lab's single-request agent workload; MoE is not the reason to upgrade |
+| Google architecture explanation | Dense vs MoE | Dense verification reuses the same weights; MoE verification may load different experts per drafted token | The dense 31B model is the technically correct Mac Studio candidate |
+
+No primary-source Metal benchmark for upstream PR #23398 was available at merge time. The expected benefit on M3 Ultra is therefore an informed hypothesis, not a measured claim. It is still a strong hypothesis because the 31B decode path is memory-bandwidth bound and MTP verifies several candidates per target-model weight pass, exactly the case Google identifies as favorable for dense models.
+
+##### Does it benefit the dense models already tested here?
+
+**Yes, worth a controlled A/B, with an important qualifier:** upgrading the binary alone does not speed the existing GGUF. The server must also load a Gemma 4 31B MTP assistant GGUF with `--spec-type draft-mtp`.
+
+- **Best first target: standard Gemma 4 31B-it.** Unsloth publishes a 515 MB Q8 assistant at [`unsloth/gemma-4-31B-it-GGUF/MTP`](https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/tree/main/MTP) and states that it pairs with any quant of the 31B target. This establishes the Metal implementation before adding fine-tune drift.
+- **Most relevant existing target: TrevorJS Gemma 4 31B-it Uncensored Q4_K_M.** Baseline is 30.1 tok/s at 512 and 24.1 tok/s at 32K, with 6.63 s browse / 30.81 s search. It shares the base architecture and tokenizer, so the assistant should load, but the abliteration changes target logits. Acceptance and speedup must be measured; compatibility does not guarantee the 44–140 % gains seen on standard weights.
+- **Lower-priority target: DavidAU Heretic Q6_K.** The Mystery Fine Tune plus HERETIC transformation is a larger distribution shift and the model's thinking-token overhead dominates agent latency. It is useful only after the standard and TrevorJS pairings establish that the path works.
+- **Do not lead with 26B-A4B MoE.** Both the PR author and Google describe weak batch-1 economics. The lab's 2.55–2.93 s browse results are already so short that speculative overhead can erase any decode gain.
+
+The likely payoff is highest for long generations, coding, reasoning, and the 30.81 s TrevorJS search loop. The 6.63 s browse loop emits very few tokens and includes fixed client/tool latency, so even a large decode speedup cannot translate linearly into end-to-end wall time.
+
+##### Recommended acceptance criteria
+
+Run the same post-`379ac66` binary with MTP disabled and enabled; do not compare the new binary only against old LM Studio results.
+
+| Check | Proceed criterion |
+|:--|:--|
+| Correctness | API tool smoke 5/5 and multi-turn 3/3; no parser or reasoning regression |
+| Dense decode | At least **15 %** median tok/s gain at 512, 8K, and 32K |
+| Draft quality | Acceptance stays above **40 %** on representative code/prose prompts |
+| Agent value | At least **10 %** median wall-time reduction on search or another output-heavy loop |
+| Regression guard | Existing Qwen3.6 MTP models remain within **5 %** of their recorded baseline |
+
+Test `--spec-draft-n-max 1`, `2`, and `4`. The PR's dense-31B optimum was 4 on its hardware, but post-merge reports show quantization and backend can move the optimum substantially. Keep target and draft KV cache at `f16`/default for the first pass; introduce cache quantization only after the uncompressed path is correct.
+
+##### Measured result on this Mac Studio (2026-06-09)
+
+Executed the planned A/B on **mainline `ggml-org/llama.cpp` commit `961e9a3`** after verifying that `origin/master` contained both `#23398` and the post-merge fix `#24277`. Tested target: `unsloth/gemma-4-31B-it-GGUF` `gemma-4-31B-it-Q4_K_M.gguf` (17.0 GiB). Tested assistant: `MTP/gemma-4-31B-it-MTP-Q8_0.gguf` (491 MiB). The old default binary from `510b5c2` was preserved and restored after the run.
+
+Dense decode did improve, but only the shallow depth was worthwhile:
+
+| Context | Baseline | `n=1` | `n=2` | `n=4` |
+|:--|--:|--:|--:|--:|
+| 512 | 29.89 | **33.51** | 31.85 | 23.76 |
+| 4096 | 28.61 | **32.07** | 28.81 | 20.24 |
+| 8192 | 27.84 | **32.02** | 28.98 | 21.11 |
+| 32768 | 23.75 | **25.44** | 23.39 | 17.27 |
+
+So on this M3 Ultra the best tested setting was **`--spec-draft-n-max 1`**, not the PR author's `4`. The direct completion probe on the winning config returned `draft_n=41`, `draft_n_accepted=38` (92.7% acceptance on that request), which is comfortably above the acceptance floor. Tool correctness also held: baseline and `n=1` both passed the API tool smoke **5/5**, and the multi-turn tool loop improved from **16.0 s → 14.62 s**.
+
+Agent-loop value was mixed:
+
+- **Browse improved** from **15.39 s → 13.75 s** median, a **10.7%** wall-time reduction.
+- **Search did not**: baseline **38.20 s**, `n=1` **39.45 s** median, plus one 3-turn warmup outlier at 86.2 s.
+
+That is enough to say the Gemma path is technically real and sometimes useful, but not enough to treat the upgrade as a clean operational win for all tool-heavy loops.
+
+The blocking result came from the regression guard, but the final A/B was narrower than the initial note: I compared the preserved **`510b5c2` binary directly against a fresh out-of-tree `961e9a3` build** on the same Qwen target and prompts. That direct check showed:
+
+- Tool smoke stayed correct at **5/5** on both binaries, and the candidate's tool multi-turn loop actually improved slightly: **20.91 s → 19.26 s**.
+- Real-prompt decode also improved: **26.10 → 27.17 tok/s** at ~512 tokens and **23.98 → 25.58 tok/s** at ~8K.
+- The regression was concentrated in the OpenCode browse loop. The baseline run finished in **28.38 s**, while two candidate reruns landed at **56.62 s** and **59.93 s**.
+
+The candidate browse runs were not just slower; they expanded the first-turn context dramatically. The baseline browse sample consumed **118 input tokens** total, while both candidate runs consumed about **8.9K input tokens** before `webfetch` completed. So the upgrade improved microbench throughput while making the existing Qwen browse path substantially heavier. Because of that cross-model regression, the machine's default `~/llama-cpp-mainline/build/bin/llama-server` was left on the old `510b5c2` executable. The upgraded source tree and out-of-tree candidate build remain useful for future Gemma work, but this is **not** a safe drop-in replacement yet.
+
+Raw results: [`docs/models/benchmarks/logs/gemma4-31b-mtp-llama-cpp/`](../benchmarks/logs/gemma4-31b-mtp-llama-cpp/)
 
 ### Cross-source comparison: mlx-lm vs mlx-vlm + external Gemma 4 + MTP benchmarks (2026-05-08)
 
@@ -616,7 +687,7 @@ The footprint of users running **31B dense bf16 + B = 1 + ≥ 4 K ctx** on mlx-v
 - **mlx-lm gaining `gemma4_assistant` arch support** (still **0 PRs open** as of 2026-05-08 — only matching MTP work in mlx-lm is [PR #990 "Native MTP speculative decoding (Qwen3.5/3.6 reference implementation)"](https://github.com/ml-explore/mlx-lm/pull/990), open since 2026-03-13 and Qwen-only). With mlx-lm hosting the drafter, the proven-working incremental tool-call streaming + prompt-cache reuse from the current 6-bit run would carry over, *and* mlx-lm could quantize the target so 6-bit + drafter avoids the bf16 bandwidth tax entirely. **This is the cleanest path forward.**
 - **Until either of the above lands**, keep the 6-bit main on `mlx_lm.server` and treat the mlx-vlm install as documentation-only.
 
-### Runtime support landscape (verified 2026-05-06)
+### Runtime support landscape (updated 2026-06-09)
 
 Where the `gemma4_assistant` MTP drafter actually runs today, across the runtimes this lab cares about plus references for completeness:
 
@@ -624,7 +695,8 @@ Where the `gemma4_assistant` MTP drafter actually runs today, across the runtime
 |:--------|:-------|:-----------------|
 | **mlx-lm** | ❌ Not supported | Raises `Model type gemma4_assistant not supported`. **0 PRs** open/closed in [`ml-explore/mlx-lm`](https://github.com/ml-explore/mlx-lm/pulls?q=is%3Apr+gemma4_assistant) for the drafter arch. Recent MTP work ([PR #1226](https://github.com/ml-explore/mlx-lm/pull/1226)) was Qwen 3.5/3.6 only. Active Gemma 4 PRs are sanitize/quantize/tool-parser — none touch MTP. |
 | **mlx-vlm** | ⚠ Partial — streaming usable on simple browse, broken on harder prompts | 0.5.0-from-main (2026-05-06): opencode 0 turns × 300 s. **0.5.0 tagged release (2026-05-08): browse 6 turns + webfetch; search still 0 turns**; long-context decode regressed (4 K +: −60 %). [PR #1112](https://github.com/Blaizzy/mlx-vlm/pull/1112) drafter, [PR #1125](https://github.com/Blaizzy/mlx-vlm/pull/1125) auto-detect, [PR #1037](https://github.com/Blaizzy/mlx-vlm/pull/1037) markup strip. See [v0.5.0 re-test](#v050-tagged-release-re-test-2026-05-08). |
-| **LM Studio (llama.cpp + GGUF)** | ❌ Not supported | LM Studio [speculative-decoding docs](https://lmstudio.ai/docs/app/advanced/speculative-decoding) only describe standard small-base-model drafters. No MTP / `gemma4_assistant` references in changelog through v0.4.11 (last Gemma 4 mention: "Improve Gemma 4 tool call reliability"). Underneath, [llama.cpp discussion #22735](https://github.com/ggml-org/llama.cpp/discussions/22735) (open, no maintainer engagement) reports `convert_hf_to_gguf.py` doesn't recognize `Gemma4AssistantForCausalLM` and new scaling tensors (`model.layers.0.layer_scalar`) are unmapped — **drafter weights can't even be converted to GGUF today**, let alone served. Plus the docs note "speculative decoding is problematic for MoE models like Gemma 4 26B-A4B" — even when MTP lands, 26B-A4B won't benefit. |
+| **Mainline llama.cpp (GGUF)** | ✅ Supported for 31B + 26B-A4B | [PR #23398](https://github.com/ggml-org/llama.cpp/pull/23398) merged 2026-06-07. Use a build containing follow-up [#24277](https://github.com/ggml-org/llama.cpp/pull/24277), then pair the target with an external `gemma4_assistant` GGUF via `--spec-type draft-mtp`. E2B/E4B were excluded at merge. |
+| **LM Studio** | ⚠ Bundled-runtime dependent | The underlying capability is now in mainline llama.cpp, but LM Studio must update its bundled runtime and expose the external MTP drafter path. Use the lab's source-built `~/llama-cpp-mainline/` for the first controlled test rather than assuming app-level support. |
 | **vLLM (Linux)** | ✅ Supported with quantized targets | NVIDIA Developer Forum: [`serapis`](https://forums.developer.nvidia.com/t/gemma4-draft-models-are-now-available/369114) ran `Intel/gemma-4-31B-it-int4-AutoRound` (4-bit) + `google/gemma-4-31B-it-assistant` (bf16 drafter) via `gemma4_mtp` method → **11.43 → 22.05 tok/s (~1.93×)**. Linux/server-grade; not the Mac Studio's path. |
 | **transformers / SGLang** | ✅ Official Google path | Per Google's [MTP overview](https://ai.google.dev/gemma/docs/mtp/overview). Not a Mac Studio server stack. |
 | **Ollama** | ❌ Tool parser broken as of 0.20.1 | [Paweł Huryn on X (2026-05)](https://x.com/PawelHuryn/status/2040498812318273583): "*Gemma 4 has function calling built in. Good luck actually using it … Ollama: tool parser still broken as of v0.20.1.*" Even basic Gemma 4 tool calls fail; MTP drafter not on their roadmap. |
@@ -632,7 +704,7 @@ Where the `gemma4_assistant` MTP drafter actually runs today, across the runtime
 
 **What to watch:**
 - `ml-explore/mlx-lm` — any new PR adding `gemma4_assistant` model architecture (currently 0 in queue; would unblock the cleanest path).
-- `ggml-org/llama.cpp` — [discussion #22735](https://github.com/ggml-org/llama.cpp/discussions/22735) and [issue #22337](https://github.com/ggml-org/llama.cpp/issues/22337) ("draft issue Gemma E2B") for any conversion-script PR.
+- `ggml-org/llama.cpp` — post-merge fixes after [#23398](https://github.com/ggml-org/llama.cpp/pull/23398), especially KV-cache sharing, quantized-drafter acceptance, and Metal-specific tuning. Do not evaluate a build older than [#24277](https://github.com/ggml-org/llama.cpp/pull/24277).
 - `Blaizzy/mlx-vlm` — streaming SSE tool-call structural rewrite (per-token `delta.tool_calls` emission). [PR #773](https://github.com/Blaizzy/mlx-vlm/pull/773), [#1037](https://github.com/Blaizzy/mlx-vlm/pull/1037), [#1012](https://github.com/Blaizzy/mlx-vlm/pull/1012) all explicitly preserved the post-loop pattern; no open PR proposes the change.
 
 ### Client compatibility on `mlx_vlm.server` (inferred from public reports + structural reasoning, 2026-05-06)

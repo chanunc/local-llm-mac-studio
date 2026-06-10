@@ -1,0 +1,66 @@
+{
+  "experiment": "gemma4-31b-mtp-llama-cpp",
+  "date": "2026-06-09",
+  "host": "Mac Studio M3 Ultra 96 GB",
+  "llama_cpp": {
+    "old_default_commit": "510b5c2a35652390c71327ecb29c2fb14bfe0e8c",
+    "candidate_commit": "961e9a3e46ca4cf7e6e86cfceb5b5e32084bf5f0",
+    "required_ancestors": [
+      "04eb4c446d22b63449d5dc41c038987d4d8cc3a6",
+      "379ac66"
+    ],
+    "build_flags": [
+      "-DGGML_METAL=ON",
+      "-DGGML_METAL_EMBED_LIBRARY=ON",
+      "-DBUILD_SHARED_LIBS=OFF",
+      "-DLLAMA_BUILD_TESTS=OFF",
+      "-DLLAMA_BUILD_EXAMPLES=ON",
+      "-DLLAMA_BUILD_SERVER=ON"
+    ],
+    "candidate_binary_path": "~/llama-cpp-mainline/build--clean/bin/llama-server",
+    "candidate_kept_in_source_tree": true,
+    "default_binary_restored_after_regression": true
+  },
+  "gemma_target": {
+    "repo": "unsloth/gemma-4-31B-it-GGUF",
+    "file": "/Users/chanunc/.cache/gemma4-31b-mtp-2026-06-09/gemma-4-31B-it-Q4_K_M.gguf",
+    "size_bytes": 18307897584
+  },
+  "gemma_draft": {
+    "repo": "unsloth/gemma-4-31B-it-GGUF",
+    "file": "/Users/chanunc/.cache/gemma4-31b-mtp-2026-06-09/MTP/gemma-4-31B-it-MTP-Q8_0.gguf",
+    "size_bytes": 514004992
+  },
+  "gemma_direct_completion_probe": {
+    "baseline_model": "gemma4-31b-q4km-baseline",
+    "mtp_model": "gemma4-31b-q4km-mtp-n1",
+    "prompt": "In one short sentence, what is MLX?",
+    "max_tokens": 80,
+    "baseline_predicted_tps": 28.50103102479732,
+    "mtp_predicted_tps": 31.285024562654907,
+    "mtp_draft_n": 41,
+    "mtp_draft_n_accepted": 38
+  },
+  "qwen_regression_target": {
+    "file": "/Users/chanunc/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/main/Qwen3.6-27B-UD-Q6_K_XL.gguf",
+    "alias": "qwen3.6-27b-mtp-ud-q6kxl"
+  },
+  "artifacts": [
+    "api-server-baseline.json",
+    "api-server-mtp-n1.json",
+    "api-server-mtp-n2.json",
+    "api-server-mtp-n4.json",
+    "api-tool-baseline.json",
+    "api-tool-mtp-winning.json",
+    "agent-baseline.json",
+    "agent-mtp-winning.json",
+    "qwen36-mtp-regression-tool.json",
+    "qwen36-mtp-regression-perf.json",
+    "qwen36-mtp-regression-agent.json",
+    "qwen36-mtp-regression-tool-baseline-510b5c2.json",
+    "qwen36-mtp-regression-perf-baseline-510b5c2.json",
+    "qwen36-mtp-regression-agent-baseline-510b5c2.json",
+    "qwen36-mtp-regression-agent-candidate-rerun.json",
+    "comparison.md"
+  ]
+}

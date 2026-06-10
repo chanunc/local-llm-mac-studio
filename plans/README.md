@@ -22,6 +22,8 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-chk-llm-macstu.md`](active/plan-chk-llm-macstu.md) | `scripts/chk_llm_macstu.py` — Mac Studio LLM server + model status probe with `--client` / `--logs` / `--all` emit modes |
 | [`active/plan-deploy-run-benchmark-model-skill.md`](active/plan-deploy-run-benchmark-model-skill.md) | `/deploy-run-benchmark-model` skill — universal deploy + benchmark runner with disk guard and censored / uncensored branching |
 | [`active/plan-dflash-regression-investigation.md`](active/plan-dflash-regression-investigation.md) | Diagnose and fix DFlash regression on Mac Studio M3 Ultra |
+| [`active/plan-ideogram4-macstudio-eval.md`](active/plan-ideogram4-macstudio-eval.md) | Ideogram 4 FP8 on ComfyUI/MPS plus an agent-style design-redesign benchmark |
+| [`active/plan-holo31-macstudio-computer-use-eval.md`](active/plan-holo31-macstudio-computer-use-eval.md) | Select Holo 3.1 MLX/GGUF variants for Mac Studio and build a staged computer-use benchmark |
 | [`active/plan-list-model-to-remove.md`](active/plan-list-model-to-remove.md) | `/list-model-to-remove` skill — interactive model audit + cleanup across HF / LM Studio / oMLX / hauhau-gguf |
 | [`active/plan-lm-studio-uncen-benchmark.md`](active/plan-lm-studio-uncen-benchmark.md) | lm-studio uncensored-model benchmark slate |
 | [`active/plan-lora-ops-copilot.md`](active/plan-lora-ops-copilot.md) | LoRA "Mac Studio ops copilot" — PEFT/TRL adapter on `Qwen3.5-2B` for repo-specific ops Q&A, MacBook M1 Pro 16GB inference |
@@ -32,6 +34,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-rotorquant-apple-silicon-implementation.md`](active/plan-rotorquant-apple-silicon-implementation.md) | RotorQuant feasibility on Apple Silicon |
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |
+| [`active/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md`](active/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md) | Upgrade mainline llama.cpp for PR #23398/#24277 and benchmark Gemma 4 31B dense with external MTP assistant |
 | [`active/plan-vllm-mlx-homebrew-formula.md`](active/plan-vllm-mlx-homebrew-formula.md) | vllm-mlx Homebrew formula/tap |
 
 ### Done

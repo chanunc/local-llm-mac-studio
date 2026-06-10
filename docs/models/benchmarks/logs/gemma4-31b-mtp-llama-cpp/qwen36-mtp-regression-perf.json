@@ -1,0 +1,69 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0-mtp-realprompt-ab",
+  "timestamp": "2026-06-09T13:02:49.611333+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:8100/v1",
+    "model": "qwen3.6-27b-mtp-ud-q6kxl",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      8192
+    ],
+    "prompt_methodology": "real-content repeated passage + exact-50-token summary instruction; same prompt used for both baseline and candidate binaries"
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 0.154,
+          "total_s": 1.994,
+          "input_tokens": 485,
+          "output_tokens": 50,
+          "gen_tps": 27.16,
+          "prefill_tps": 3154.4
+        },
+        {
+          "ttft_s": 0.154,
+          "total_s": 1.994,
+          "input_tokens": 485,
+          "output_tokens": 50,
+          "gen_tps": 27.17,
+          "prefill_tps": 3159.1
+        }
+      ],
+      "median_ttft_s": 0.154,
+      "median_gen_tps": 27.165,
+      "median_prefill_tps": 3156.75,
+      "input_tokens": 485,
+      "output_tokens": 50
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 0.168,
+          "total_s": 2.123,
+          "input_tokens": 7877,
+          "output_tokens": 50,
+          "gen_tps": 25.58,
+          "prefill_tps": 46885.6
+        },
+        {
+          "ttft_s": 0.167,
+          "total_s": 2.122,
+          "input_tokens": 7877,
+          "output_tokens": 50,
+          "gen_tps": 25.58,
+          "prefill_tps": 47068.0
+        }
+      ],
+      "median_ttft_s": 0.168,
+      "median_gen_tps": 25.58,
+      "median_prefill_tps": 46976.8,
+      "input_tokens": 7877,
+      "output_tokens": 50
+    }
+  }
+}

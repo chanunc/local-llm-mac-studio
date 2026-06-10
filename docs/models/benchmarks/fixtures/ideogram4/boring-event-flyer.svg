@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1280" viewBox="0 0 1024 1280">
+  <rect width="1024" height="1280" fill="#D9D9D9"/>
+  <rect x="72" y="72" width="880" height="1136" fill="#F4F4F4" stroke="#777777" stroke-width="2"/>
+
+  <text x="512" y="250" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="58" font-weight="700" fill="#222222">DESIGN SYSTEMS NIGHT</text>
+
+  <text x="512" y="390" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="32" fill="#444444">Thursday 18 June, 7:00 PM</text>
+  <text x="512" y="450" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="32" fill="#444444">North Hall, Riverside Arts Centre</text>
+
+  <text x="512" y="620" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="27" fill="#555555">Three short talks, live critique, and practical takeaways.</text>
+  <text x="512" y="680" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="27" fill="#555555">Free entry - registration required</text>
+
+  <rect x="342" y="850" width="340" height="90" fill="#222222"/>
+  <text x="512" y="907" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="30" font-weight="700" fill="#FFFFFF">REGISTER NOW</text>
+
+  <text x="512" y="1110" text-anchor="middle" font-family="Arial, sans-serif"
+        font-size="20" fill="#888888">EVENT FLYER</text>
+</svg>

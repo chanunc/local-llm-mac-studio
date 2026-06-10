@@ -162,7 +162,7 @@ Decode is a flat ~25–35 tok/s — strong for a 284 B model at 2-bit on Apple S
 
 Zero errors, `webfetch` fired on every measured run, well under the 250 s p95 / 300 s OpenCode wall. **DeepSeek-V4-Flash runs the agent tool loop end-to-end on Apple Silicon.** Mid-pack for the agent loop (slower than the leanest lm-studio MLX/GGUF mains, faster than several 70 B+ dense uncensored models) — competitive given it is a 284 B knowledge-class model running 2-bit on a personal machine.
 
-Raw bench JSONs: [`docs/models/benchmarks/deepseek-v4-flash/`](../../models/benchmarks/deepseek-v4-flash/).
+Raw bench JSONs: [`docs/models/benchmarks/logs/deepseek-v4-flash/`](../../models/benchmarks/logs/deepseek-v4-flash/).
 
 ## Known limitations
 
@@ -179,7 +179,7 @@ Raw bench JSONs: [`docs/models/benchmarks/deepseek-v4-flash/`](../../models/benc
 
 - Per-model deep dive: [`docs/models/per-model/model-summary-deepseek-v4.md`](../../models/per-model/model-summary-deepseek-v4.md)
 - Catalog entry: [`docs/models/model-summary.md`](../../models/model-summary.md#deepseek-v4-flash-284b13b-active-moe-ds4)
-- Bench data: [`docs/models/benchmarks/deepseek-v4-flash/`](../../models/benchmarks/deepseek-v4-flash/)
+- Bench data: [`docs/models/benchmarks/logs/deepseek-v4-flash/`](../../models/benchmarks/logs/deepseek-v4-flash/)
 - Engine repo: [`antirez/ds4`](https://github.com/antirez/ds4)
 - GGUF repo: [`antirez/deepseek-v4-gguf`](https://huggingface.co/antirez/deepseek-v4-gguf)
 - Official model: [`deepseek-ai/DeepSeek-V4-Flash`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash)

@@ -86,7 +86,7 @@ ssh macstudio "pkill -f 'port 8100'"  # stop
 
 ## Benchmarks
 
-All on the patched Q8_0 via `llama-cpp-mainline --jinja` `:8100`. Logs: [`benchmarks/lfm2.5-8b-a1b-q8/`](../benchmarks/lfm2.5-8b-a1b-q8/).
+All on the patched Q8_0 via `llama-cpp-mainline --jinja` `:8100`. Logs: [`benchmarks/logs/lfm2.5-8b-a1b-q8/`](../benchmarks/logs/lfm2.5-8b-a1b-q8/).
 
 **Smoke (API tool-call):** ✅ **5/5** single-call (0.51–0.90 s) · multi-turn 3-turn loop 2.64 s. (Same harness on lm-studio: **0/5** — see trap above.)
 
@@ -116,4 +116,4 @@ Mid-pack — comparable to dense 27 B GGUF agents.
 - **Recurrent `invalid` tool call in OpenCode** — the model almost always emits one `invalid` tool call (name/arg shape OpenCode's adapter rejects) before recovering with `webfetch`. One search run looped to 9 turns with 6 consecutive invalids before recovering. Tasks still complete, but turn counts and latency are noisier than mature Qwen3.6 GGUFs.
 - **Occasionally skips the tool** — one browse run answered in a single turn without calling `webfetch` (model decided it "knew" the answer).
 - **Reasoning-only** — every turn includes a `<think>` chain; no off switch. Use `--reasoning-format auto` so it lands in `reasoning_content`.
-- Full failure-investigation log: [`benchmarks/lfm2.5-8b-a1b-q8/agent-tool-call-failure-triage.md`](../benchmarks/lfm2.5-8b-a1b-q8/agent-tool-call-failure-triage.md).
+- Full failure-investigation log: [`benchmarks/logs/lfm2.5-8b-a1b-q8/agent-tool-call-failure-triage.md`](../benchmarks/logs/lfm2.5-8b-a1b-q8/agent-tool-call-failure-triage.md).

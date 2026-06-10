@@ -72,7 +72,7 @@ API model id: **`deepseek-v4-flash`** (OpenAI `/v1/chat/completions` with `tools
 
 ## Benchmarks (2026-05-18)
 
-`antirez/deepseek-v4-gguf` IQ2XXS-imatrix on `ds4` port 8101, Mac Studio M3 Ultra 96 GB-class. Pre-bench hygiene applied (all other LLM servers stopped, 97 % memory free). Raw JSON: [`docs/models/benchmarks/deepseek-v4-flash/`](../benchmarks/deepseek-v4-flash/).
+`antirez/deepseek-v4-gguf` IQ2XXS-imatrix on `ds4` port 8101, Mac Studio M3 Ultra 96 GB-class. Pre-bench hygiene applied (all other LLM servers stopped, 97 % memory free). Raw JSON: [`docs/models/benchmarks/logs/deepseek-v4-flash/`](../benchmarks/logs/deepseek-v4-flash/).
 
 **Smoke (`bench_api_tool_call.py`):** ✅ **5/5 single-call**, each `finish_reason=tool_calls` (2.2–5.4 s); multi-turn 3 turns / 8.95 s clean (`read_file → write_file → stop`).
 
@@ -110,5 +110,5 @@ Zero errors, `webfetch` fired every measured run, well under the 250 s p95 ceili
 
 - Server runbook: [`docs/servers/ds4/summary.md`](../../servers/ds4/summary.md)
 - Catalog entry: [`docs/models/model-summary.md`](../model-summary.md#deepseek-v4-flash-284b13b-active-moe-ds4)
-- Bench data: [`docs/models/benchmarks/deepseek-v4-flash/`](../benchmarks/deepseek-v4-flash/)
+- Bench data: [`docs/models/benchmarks/logs/deepseek-v4-flash/`](../benchmarks/logs/deepseek-v4-flash/)
 - Engine: [`antirez/ds4`](https://github.com/antirez/ds4) · GGUF: [`antirez/deepseek-v4-gguf`](https://huggingface.co/antirez/deepseek-v4-gguf) · Official: [`deepseek-ai/DeepSeek-V4-Flash`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash)

@@ -1939,7 +1939,7 @@ So "try all quant × server combinations" collapses to exactly one runnable comb
 
 Zero errors, `webfetch` fired on every measured run, well under the 250 s p95 / 300 s OpenCode wall ceiling. Mid-pack agent-loop latency — slower than the leanest lm-studio MLX/GGUF mains, faster than several 70 B+ dense uncensored models — which is competitive for a **284 B knowledge-class model running 2-bit on a personal machine** with the 13 B-active MoE path carrying decode at a flat 25–35 tok/s. Cold long-context prefill is the cost (~860 tok/s @ 32 K), but `ds4`'s on-disk KV cache turns a 37.9 s cold 32 K prefill into a 6.8 s warm one (5.5×).
 
-Raw JSON: [`docs/models/benchmarks/deepseek-v4-flash/`](deepseek-v4-flash/). Full landscape + deployment: [`docs/models/per-model/model-summary-deepseek-v4.md`](../per-model/model-summary-deepseek-v4.md) · runbook [`docs/servers/ds4/summary.md`](../../servers/ds4/summary.md).
+Raw JSON: [`docs/models/benchmarks/logs/deepseek-v4-flash/`](logs/deepseek-v4-flash/). Full landscape + deployment: [`docs/models/per-model/model-summary-deepseek-v4.md`](../per-model/model-summary-deepseek-v4.md) · runbook [`docs/servers/ds4/summary.md`](../../servers/ds4/summary.md).
 
 ---
 

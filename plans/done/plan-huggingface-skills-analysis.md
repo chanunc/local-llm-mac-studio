@@ -1,6 +1,9 @@
 # Hugging Face Skills Analysis
 
-Date: 2026-05-15
+Status: done
+Created: 2026-05-15
+Completed: 2026-05-15
+Canonical: no
 
 ## Summary
 

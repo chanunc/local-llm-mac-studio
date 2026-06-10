@@ -51,12 +51,22 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-dflash-regression-investigation.md`](done/plan-dflash-regression-investigation.md) | DFlash regression on M3 Ultra — concluded 2026-04-30: regresses vs baseline, upstream-tracking only |
 | [`done/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](done/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Osaurus Qwen3.6-35B-A3B JANGTQ4 via vmlx — shipped 2026-05-14 with agent benchmarks |
 | [`done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md`](done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md) | llama.cpp upgrade + Gemma 4 31B dense MTP benchmark — completed 2026-06-10 |
+| [`done/plan-huggingface-skills-analysis.md`](done/plan-huggingface-skills-analysis.md) | Hugging Face skills (hf-cli, HF datasets) fitness assessment for this repo — concluded 2026-05-15 |
 
 ### Archive
 
 | Plan | Topic |
 |:--|:--|
 | [`archive/plan-itermai-omlx-setup.md`](archive/plan-itermai-omlx-setup.md) | iTermAI to oMLX setup notes |
+
+### Prompts
+
+Reusable prompts for driving planning sessions. Not plans themselves — pass to an agent or use as a starting point.
+
+| File | Purpose |
+|:--|:--|
+| [`prompts/build-adjust-active-plans.md`](prompts/build-adjust-active-plans.md) | Prompt for creating or revising active plans under `plans/active/` |
+| [`prompts/fine-tuning-PEFT-LoRA-experiments.md`](prompts/fine-tuning-PEFT-LoRA-experiments.md) | Prompts for planning focused PEFT/LoRA experiments (behavior specialization, not compression) |
 
 ## Plan Metadata
 

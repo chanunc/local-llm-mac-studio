@@ -154,7 +154,7 @@ Stop with: `ssh macstudio "pkill -f 'llama-cpp-mainline/build/bin/llama-server';
 
 This is the main reason to upgrade the source-built mainline binary. PR #23398 does not make ordinary Gemma decoding faster automatically; the gain appears only when a compatible external assistant is loaded.
 
-Download the small Q8 assistant first. It is 515 MB and is sufficient to test any Gemma 4 31B target quant:
+Download the small Q8 assistant first. It is 491 MB and is sufficient to test any Gemma 4 31B target quant:
 
 ```bash
 ssh macstudio "~/vllm-mlx-env/bin/hf download unsloth/gemma-4-31B-it-GGUF \
@@ -162,34 +162,34 @@ ssh macstudio "~/vllm-mlx-env/bin/hf download unsloth/gemma-4-31B-it-GGUF \
   --local-dir ~/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-GGUF/snapshots/main"
 ```
 
-Use the already-downloaded TrevorJS dense Q4_K_M target for the repo-relevant A/B. Start with MTP disabled:
+The standard `unsloth/gemma-4-31B-it-GGUF Q4_K_M` (17.0 GiB) is the tested control target. Start with MTP disabled:
 
 ```bash
-ssh macstudio "TARGET=~/.lmstudio/models/TrevorJS/gemma-4-31B-it-uncensored-GGUF/gemma-4-31B-it-uncensored-Q4_K_M.gguf; \
+ssh macstudio "TARGET=~/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-GGUF/snapshots/main/gemma-4-31B-it-Q4_K_M.gguf; \
   nohup ~/llama-cpp-mainline/build/bin/llama-server \
     -m \"\$TARGET\" -ngl 99 -fa on -np 1 -c 65536 \
     --host 0.0.0.0 --port 8100 \
-    --alias gemma4-31b-trevorjs-q4km-baseline \
+    --alias gemma4-31b-q4km-baseline \
     --jinja --reasoning on > /tmp/llama-cpp-gemma4-baseline.log 2>&1 &"
 ```
 
-Then restart with the assistant:
+Then restart with the assistant using the **measured winning depth** (`n=1`):
 
 ```bash
-ssh macstudio "TARGET=~/.lmstudio/models/TrevorJS/gemma-4-31B-it-uncensored-GGUF/gemma-4-31B-it-uncensored-Q4_K_M.gguf; \
+ssh macstudio "TARGET=~/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-GGUF/snapshots/main/gemma-4-31B-it-Q4_K_M.gguf; \
   DRAFT=~/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-GGUF/snapshots/main/MTP/gemma-4-31B-it-MTP-Q8_0.gguf; \
   nohup ~/llama-cpp-mainline/build/bin/llama-server \
     -m \"\$TARGET\" -md \"\$DRAFT\" \
     -ngl 99 --spec-draft-ngl 99 -fa on -np 1 -c 65536 \
     --spec-type draft-mtp --spec-draft-n-max 1 \
     --host 0.0.0.0 --port 8100 \
-    --alias gemma4-31b-trevorjs-q4km-mtp \
+    --alias gemma4-31b-q4km-mtp-n1 \
     --jinja --reasoning on > /tmp/llama-cpp-gemma4-mtp.log 2>&1 &"
 ```
 
-Benchmark draft depths `1`, `2`, and `4` as separate launches. Use the same new binary for the no-MTP and MTP runs, and capture `draft_n`, `draft_n_accepted`, decode tok/s, tool-smoke results, and agent wall time. The acceptance target is at least 40%; below that, the assistant's standard-model predictions are diverging too far from the TrevorJS abliterated target to pay for their verification.
+`--spec-draft-n-max 1` is the measured optimum on M3 Ultra — deeper drafts (`n=2`, `n=4`) regress vs no-MTP because Q4_K_M target logits diverge enough from the Q8_0 drafter that extra candidates are rejected. Do not use the 26B-A4B MoE as the first test: upstream and Google both report weak batch-1 economics, while this lab's agent benchmark is single-request.
 
-The standard Gemma 4 31B-it target remains the clean control if TrevorJS acceptance is poor. Do not use the 26B-A4B MoE as the first test: upstream and Google both report weak batch-1 economics, while this lab's agent benchmark is single-request.
+For optional extension to TrevorJS Gemma 4 31B-it Uncensored Q4_K_M (already downloaded at `~/.lmstudio/models/TrevorJS/gemma-4-31B-it-uncensored-GGUF/`), substitute that target path — but measure acceptance separately since abliteration changes target logits and acceptance must be verified rather than assumed.
 
 ### 2026-06-09 measured result: Gemma worked, upgrade did not survive the Qwen guard
 

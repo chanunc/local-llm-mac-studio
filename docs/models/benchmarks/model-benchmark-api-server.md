@@ -868,6 +868,35 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 3, 2026.
 
 ---
 
+## Gemma 4 31B-it Q4_K_M + external MTP assistant (mainline llama.cpp, 2026-06-09)
+
+Model: `unsloth/gemma-4-31B-it-GGUF` (`gemma-4-31B-it-Q4_K_M.gguf`, 17.0 GiB) + `MTP/gemma-4-31B-it-MTP-Q8_0.gguf` (491 MiB `gemma4_assistant` external drafter). Dense 31B, Q4_K_M target with external Q8_0 MTP assistant.
+Tested on **Mac Studio M3 Ultra (96 GB)** — June 9, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 3 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSONs: [`gemma4-31b-mtp-llama-cpp/api-server-baseline.json`](gemma4-31b-mtp-llama-cpp/api-server-baseline.json) (no MTP), [`gemma4-31b-mtp-llama-cpp/api-server-mtp-n1.json`](gemma4-31b-mtp-llama-cpp/api-server-mtp-n1.json) (winning depth).
+
+**Server:** `llama-cpp-mainline` port 8100, built from `ggml-org/llama.cpp` commit `961e9a3` (contains PR [#23398](https://github.com/ggml-org/llama.cpp/pull/23398) Gemma 4 MTP support and post-merge KV fix [#24277](https://github.com/ggml-org/llama.cpp/pull/24277)). Flags: `-ngl 99 -fa on -np 1 -c 65536 --jinja --reasoning on`. MTP runs add `-md <draft.gguf> --spec-type draft-mtp --spec-draft-n-max <N>`.
+
+### Generation Speed (tok/s)
+
+| Context | Baseline (no MTP) · TTFT · prefill | MTP `n=1` (winner) · TTFT · prefill | Δ decode | MTP `n=2` | MTP `n=4` |
+|:--------|:-----------------------------------:|:------------------------------------:|:--------:|:---------:|:---------:|
+| 512 (543 in) | 29.89 · 0.29 s · 1,868 K | **33.51** · 0.31 s · 1,753 K | **+12 %** | 31.85 | 23.76 |
+| 4K (4128 in) | 28.61 · 0.16 s · 25,724 K | **32.07** · 0.18 s · 22,931 K | **+12 %** | 28.81 | 20.24 |
+| 8K (8223 in) | 27.84 · 0.17 s · 48,514 K | **32.02** · 0.19 s · 43,051 K | **+15 %** | 28.98 | 21.11 |
+| 32K (32799 in) | 23.75 · 0.23 s · 145,860 K | **25.44** · 0.26 s · 127,970 K | **+7 %** | 23.39 | 17.27 |
+
+**Direct completion probe on `n=1`** (`"In one short sentence, what is MLX?"`): `draft_n=41`, `draft_n_accepted=38` (**92.7 % acceptance** on that request). Full benchmark comparison: [`gemma4-31b-mtp-llama-cpp/comparison.md`](gemma4-31b-mtp-llama-cpp/comparison.md).
+
+### Notes
+
+- **Measured optimum on M3 Ultra: `--spec-draft-n-max 1`.** Deeper drafts (`n=2`, `n=4`) regress below baseline — the Q8_0 drafter's logits diverge enough from the Q4_K_M target that extra candidate tokens are rejected more often than accepted. The PR author's reported optimum was `n=4` on DGX Spark hardware; quantization and backend move the optimum substantially.
+- **Gain narrows at 32K (+7 %).** Dense KV bandwidth cost grows with context and the per-token drafter overhead becomes relatively more expensive as decode slows. Still a net positive at all tested contexts.
+- **TTFT adds ~20 ms vs baseline** at every context (drafter load on first token). Negligible for generation workloads.
+- **Candidate binary not adopted as default.** Post-upgrade Qwen3.6-27B-MTP browse regressed from 28.38 s to 56–60 s (OpenCode first-turn context expanded from 118 to ~8.9 K tokens). Decode microbench improved (+4–7 %) and tool smoke stayed 5/5, but the agent-loop regression makes the upgraded binary unsafe as a drop-in replacement. Source tree stays at `961e9a3`; default executable reverted to `510b5c2`.
+
+---
+
 ## DavidAU Gemma 4 31B Heretic Q6_k (GGUF, on lm-studio)
 
 Model: `DavidAU/gemma-4-31B-it-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Instruct-GGUF` (`gemma-4-31B-Mystery-Fine-Tune-HERETIC-UNCENSORED-Thinking-Q6_k.gguf`) — Thinking variant, DavidAU HERETIC + Mystery Fine Tune on Gemma 4 31B dense base. 25.20 GB on disk, 23.47 GiB resident at 131072 context.

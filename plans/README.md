@@ -52,6 +52,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](done/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Osaurus Qwen3.6-35B-A3B JANGTQ4 via vmlx — shipped 2026-05-14 with agent benchmarks |
 | [`done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md`](done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md) | llama.cpp upgrade + Gemma 4 31B dense MTP benchmark — completed 2026-06-10 |
 | [`done/plan-huggingface-skills-analysis.md`](done/plan-huggingface-skills-analysis.md) | Hugging Face skills (hf-cli, HF datasets) fitness assessment for this repo — concluded 2026-05-15 |
+| [`done/plan-switch-top-model-script.md`](done/plan-switch-top-model-script.md) | `scripts/switch_top_model.py` — benchmark-driven top-5 model switcher with OpenCode sync + tool-call smoke test, shipped 2026-06-12 ([visual HTML](done/plan-switch-top-model-script.html)) |
 
 ### Archive
 

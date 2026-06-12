@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan: --debug flag for switch_top_model.py</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --card2: #212532; --line: #2e3345;
+    --text: #d7dae3; --dim: #8a90a3; --accent: #6ea8fe; --ok: #4ade80;
+    --warn: #fbbf24; --bad: #f87171; --mono: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.55 -apple-system, "Segoe UI", sans-serif; padding: 36px 20px 64px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  h1 code { font-family: var(--mono); color: var(--accent); font-size: 24px; }
+  .sub { color: var(--dim); margin-bottom: 26px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 30px; }
+  .badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); }
+  .badge.active { background: #1e3a2f; color: var(--ok); border-color: #2f5d49; }
+  .badge.plain { background: var(--card); color: var(--dim); }
+  h2 { font-size: 18px; margin: 34px 0 14px; color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .card h3 { font-size: 14px; margin-bottom: 8px; }
+  .card p, .card li { font-size: 13px; color: var(--dim); }
+  .card .emoji { font-size: 20px; margin-bottom: 8px; display: block; }
+  .flow { display: flex; flex-direction: column; gap: 0; margin-top: 6px; }
+  .step { display: flex; gap: 14px; }
+  .step .rail { display: flex; flex-direction: column; align-items: center; width: 30px; flex-shrink: 0; }
+  .step .dot { width: 26px; height: 26px; border-radius: 50%; background: var(--card2); border: 2px solid var(--accent); color: var(--accent); font: 600 12px/22px var(--mono); text-align: center; flex-shrink: 0; }
+  .step .bar { width: 2px; flex: 1; background: var(--line); margin: 2px 0; }
+  .step:last-child .bar { display: none; }
+  .step .body { padding: 0 0 22px; }
+  .step .body b { font-size: 14px; }
+  .step .body .was { color: var(--bad); font-size: 12.5px; display: block; margin-top: 3px; }
+  .step .body .now { color: var(--ok); font-size: 12.5px; display: block; margin-top: 2px; }
+  .term { background: #0b0d12; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font: 12px/1.6 var(--mono); overflow-x: auto; white-space: pre; margin-top: 10px; }
+  .term .d { color: #5b8dd6; }
+  .term .e { color: var(--bad); }
+  .term .g { color: var(--ok); }
+  .term .m { color: var(--dim); }
+  .pill-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 13px; font-size: 12.5px; }
+  .pill b { color: var(--warn); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  .verdict { background: linear-gradient(135deg, #15241b, #16202e); border: 1px solid #2f5d49; border-radius: 12px; padding: 18px 20px; margin-top: 30px; }
+  .verdict b { color: var(--ok); }
+  .verdict p { font-size: 13.5px; color: var(--text); }
+  ul { padding-left: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1><code>--debug</code> for <code>switch_top_model.py</code></h1>
+  <div class="sub">Per-step diagnostics + remote log-tail — turn the opaque 180&thinsp;s timeout into a 3-second root cause.</div>
+  <div class="badges">
+    <span class="badge active">ACTIVE</span>
+    <span class="badge plain">Created 2026-06-12</span>
+    <span class="badge plain">extends plan-switch-top-model-script (done)</span>
+    <span class="badge plain">~30–40 lines · stdlib-only · zero behavior change when off</span>
+  </div>
+
+  <h2>Why — every failure looks the same today</h2>
+  <div class="grid">
+    <div class="card">
+      <span class="emoji">🕳️</span>
+      <h3>ssh() discards evidence</h3>
+      <p><code>capture_output=True</code> + default <code>check=False</code> at every call site — rc, stdout, stderr captured then thrown away.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">👻</span>
+      <h3>nohup lies</h3>
+      <p><code>nohup … &amp;</code> returns <code>rc=0</code> even when llama-server aborts one second later. Evidence lives only in <code>/tmp/*.log</code> on the Mac Studio.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">⏳</span>
+      <h3>wait_ready swallows all</h3>
+      <p><code>except Exception: pass</code> for 180&thinsp;s — connection-refused (dead) vs 404 (wrong id) indistinguishable.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">📜</span>
+      <h3>Not hypothetical</h3>
+      <p>2026-06-11 triage: silent crash, Gatekeeper kill, exit 137, no <code>--help</code> output — each would present as the same generic timeout.</p>
+    </div>
+  </div>
+
+  <h2>What each step shows under <code>--debug</code></h2>
+  <div class="flow">
+    <div class="step"><div class="rail"><div class="dot">1</div><div class="bar"></div></div><div class="body">
+      <b>Table parse</b>
+      <span class="was">was: silent</span>
+      <span class="now">now: section line N, column indices, per-row keep / skip + reason (⛔, short row, empty name)</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">2</div><div class="bar"></div></div><div class="body">
+      <b>Recipe match</b>
+      <span class="was">was: silent</span>
+      <span class="now">now: which recipe matched; server_match disambiguation on same-named rows</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">3</div><div class="bar"></div></div><div class="body">
+      <b>Disk guard</b>
+      <span class="was">was: pass/fail message only</span>
+      <span class="now">now: raw lms ls / test -e evidence — see <i>why</i> a key didn't match</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">4</div><div class="bar"></div></div><div class="body">
+      <b>Every ssh() call</b>
+      <span class="was">was: rc + output discarded</span>
+      <span class="now">now: command echoed, then rc / stdout / stderr (capped ~500 chars each)</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">5</div><div class="bar"></div></div><div class="body">
+      <b>Launch (remote-cmd)</b>
+      <span class="was">was: rc=0 from nohup, nothing else</span>
+      <span class="now">now: log tail ~1.5 s after launch — catches abort / Gatekeeper / OOM instantly</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">6</div><div class="bar"></div></div><div class="body">
+      <b>Readiness poll</b>
+      <span class="was">was: silent 3-minute wait</span>
+      <span class="now">now: poll#N @elapsed — connection refused / M ids, target absent / present ✓</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">7</div><div class="bar"></div></div><div class="body">
+      <b>Smoke test</b>
+      <span class="was">was: PASS/FAIL line</span>
+      <span class="now">now: payload summary, HTTP status, finish_reason; raw response JSON on FAIL — key always ***redacted***</span>
+    </div></div>
+    <div class="step"><div class="rail"><div class="dot">8</div><div class="bar"></div></div><div class="body">
+      <b>Timing summary</b>
+      <span class="was">was: none</span>
+      <span class="now">now: per-phase + total wall (stop / load / readiness / smoke)</span>
+    </div></div>
+  </div>
+
+  <h2>The payoff case — remote crash, diagnosed in seconds</h2>
+  <div class="term"><span class="m">Starting llama-cpp-mtp...</span>
+<span class="d">[debug] ssh macstudio: nohup ~/llama-cpp-mainline/build/bin/llama-server -m "$GGUF" … &amp;</span>
+<span class="d">[debug]   rc=0  (nohup detaches — exit code says nothing about the server)</span>
+<span class="d">[debug] log-tail /tmp/llama-cpp-mtp.log (last 12 lines, 1.5s after launch):</span>
+<span class="d">[debug]   | llama_model_loader: loaded meta data … Q6_K</span>
+<span class="e">[debug]   | llama_model_load: error loading model: unknown pre-tokenizer type</span>
+<span class="e">[debug]   | terminate called after throwing 'std::runtime_error'</span>
+<span class="e">[debug]   | [1]  81992 abort  llama-server -m "$GGUF"</span>
+<span class="m">Waiting for readiness...</span>
+<span class="d">[debug] wait_ready: poll#1 @0.1s — connection refused</span>
+<span class="g">^C  ← root cause already on screen; no 180 s wait, no manual SSH + tail</span></div>
+
+  <h2>Design pillars</h2>
+  <div class="two">
+    <div class="card">
+      <h3>🔇 Zero cost when off</h3>
+      <p>Module-level <code>DEBUG</code> + <code>dbg()</code> → stderr only. Without the flag: byte-identical stdout, same commands, same exit codes. No new dependencies.</p>
+    </div>
+    <div class="card">
+      <h3>🔑 Redaction by construction</h3>
+      <p>Headers / api_key never printed — always <code>***redacted***</code>. Repo is publicly mirrored; a pasted debug transcript must be safe.</p>
+    </div>
+    <div class="card">
+      <h3>🪵 No second registry</h3>
+      <p>Log path derived from the <code>&gt; /tmp/….log</code> redirect already in each recipe's <code>start_cmd</code> — nothing new to maintain.</p>
+    </div>
+    <div class="card">
+      <h3>🚨 Log-tail on timeout: always-on</h3>
+      <p>Proposed default (not debug-gated): timeout is the one place something is known-wrong; the last 12 log lines are the only evidence.</p>
+    </div>
+  </div>
+
+  <h2>Verification</h2>
+  <div class="pill-row">
+    <div class="pill"><b>1</b> · dry-run --debug: stderr trace, stdout diff-identical</div>
+    <div class="pill"><b>2</b> · no flag → byte-identical to current (regression guard)</div>
+    <div class="pill"><b>3</b> · forced failure → log tail fires on timeout</div>
+    <div class="pill"><b>4</b> · clean live run → timings + redaction + PASS trace</div>
+    <div class="pill"><b>5</b> · grep debug output for live key → must be absent</div>
+  </div>
+
+  <div class="verdict">
+    <p><b>Verdict: justified.</b> High-frequency failure class (your own 2026-06-11 triage log), all evidence currently discarded, ~30–40 lines behind a flag, one redaction rule. Completes the script's contract: <code>--dry-run</code> shows what <i>would</i> run; <code>--debug</code> shows what <i>did</i> run and what came back.</p>
+  </div>
+
+</div>
+</body>
+</html>

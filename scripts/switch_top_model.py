@@ -18,8 +18,14 @@ Usage:
     python3 scripts/switch_top_model.py                       # interactive
     python3 scripts/switch_top_model.py --pick moe:1          # non-interactive
     python3 scripts/switch_top_model.py --pick moe:1 --dry-run  # print SSH cmds only
+    python3 scripts/switch_top_model.py --pick moe:1 --debug  # per-step diagnostics on stderr
     python3 scripts/switch_top_model.py --list                # print the top-5 menus and exit
     python3 scripts/switch_top_model.py --ssh-host macstudio-ts --pick hybrid:1
+
+On a `wait_ready` timeout the last lines of the target's remote log are tailed automatically
+(even without --debug) — the timeout is the one place something is known-wrong and the log is
+the only evidence. --debug additionally traces table parse, recipe match, every SSH call's
+rc/stdout/stderr, readiness polls, and the smoke-test payload/response (API key always redacted).
 
 Exit codes:
     0  switch + smoke test ok (or --list / --dry-run)
@@ -40,6 +46,33 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 BENCH_TABLE = REPO_ROOT / "docs" / "models" / "benchmarks" / "model-benchmark-tool-call.md"
+
+# Set from --debug in main(). When False, dbg() is a no-op and stdout is byte-identical
+# to a non-debug run (debug output goes only to stderr).
+DEBUG = False
+
+
+def dbg(*parts):
+    """Print a `[debug]` line to stderr; no-op unless --debug is set."""
+    if DEBUG:
+        print("[debug]", *parts, file=sys.stderr)
+
+
+def _redact(key):
+    """Render an API key safely for debug output — never the value (public mirror)."""
+    if not key or key in ("not-needed", "<YOUR_API_KEY>"):
+        return "(none)"
+    return f"***redacted ({len(key)} chars)***"
+
+
+def _trunc(text, cap=500):
+    """Trim long captured output for debug; mark empty explicitly."""
+    if text is None:
+        return "(none)"
+    text = text.strip()
+    if not text:
+        return "(empty)"
+    return text if len(text) <= cap else text[:cap] + f"… (+{len(text) - cap} more)"
 
 # Reuse the sibling helpers (probe / config sync). Same repo, same interpreter.
 sys.path.insert(0, str(SCRIPTS_DIR))
@@ -298,12 +331,14 @@ def parse_benchmark_table():
         if lines[i].startswith("### "):
             end = i
             break
+    dbg(f"table: '### OpenCode end-to-end' at line {start + 1} (section ends line {end})")
     section = lines[start:end]
 
     groups = {}
     cur_type = None
     cols = None
-    for ln in section:
+    for off, ln in enumerate(section):
+        lineno = start + off + 1
         if ln.startswith("#### "):
             cur_type = None
             cols = None
@@ -311,6 +346,7 @@ def parse_benchmark_table():
                 if emoji in ln:
                     cur_type = tkey
                     groups.setdefault(tkey, [])
+                    dbg(f"table: group {emoji} {tkey} at line {lineno}")
                     break
             continue
         if cur_type is None or not ln.lstrip().startswith("|"):
@@ -326,24 +362,30 @@ def parse_benchmark_table():
                 print(f"Error: columns {sorted(missing)} not found in {cur_type} table header "
                       f"— update parse_benchmark_table()", file=sys.stderr)
                 sys.exit(3)
+            dbg(f"{cur_type}: columns " + " ".join(f"{k}={v}" for k, v in sorted(cols.items())))
             continue
         if set(cells[0]) <= set(":- "):  # the |:---|:---| separator
             continue
         need = max(cols.values())
         if len(cells) <= need:
+            dbg(f"{cur_type}: skip (too-few-cells: {len(cells)} ≤ {need})")
             continue
         name = _clean_model_name(cells[cols["model"]])
         if not name:
+            dbg(f"{cur_type}: skip (empty name)")
             continue
         browse = _first_seconds(cells[cols["browse"]])
         if browse is None:  # browse-⛔ → not rankable
+            dbg(f"{cur_type}: skip '{name}' (browse ⛔ / no time)")
             continue
         server_cell = cells[cols["server"]].replace("**", "").strip()
+        search = _first_seconds(cells[cols["search"]])
+        dbg(f"{cur_type}: kept '{name}' browse={browse} search={search}")
         groups[cur_type].append({
             "name": name,
             "server": server_cell,
             "browse": browse,
-            "search": _first_seconds(cells[cols["search"]]),
+            "search": search,
         })
 
     for tkey in groups:
@@ -360,7 +402,11 @@ def match_recipe(row):
             continue
         sm = rec.get("server_match")
         if sm and sm.lower() not in server_l:
+            dbg(f"match: '{row['name']}' name-matched recipe '{rec['match']}' but "
+                f"server_match '{sm}' ∉ '{row['server']}' — skipping (disambiguation)")
             continue
+        sm_note = f" [server_match '{sm}']" if sm else ""
+        dbg(f"match: '{row['name']}' → recipe '{rec['match']}' (server={rec['server']}){sm_note}")
         return rec
     return None
 
@@ -452,7 +498,11 @@ def ssh(host, cmd, dry_run, timeout=600, check=False):
     if dry_run:
         print(f"[dry-run] ssh {host} \"{cmd}\"")
         return None
+    # One-line echo (long pkill/start commands collapsed to first ~120 chars for readability).
+    echo = cmd if len(cmd) <= 120 else cmd[:117] + "..."
+    dbg(f"ssh {host}: {echo}")
     res = subprocess.run(["ssh", host, cmd], capture_output=True, text=True, timeout=timeout)
+    dbg(f"  rc={res.returncode}  stdout={_trunc(res.stdout)}  stderr={_trunc(res.stderr)}")
     if check and res.returncode != 0:
         print(f"Error: remote command failed ({res.returncode}): {cmd}\n{res.stderr.strip()}",
               file=sys.stderr)
@@ -466,11 +516,16 @@ def check_on_disk(host, rec, dry_run):
         if dry_run:
             print(f"[dry-run] ssh {host} \"~/.lmstudio/bin/lms ls\"  # expect '{rec['lms_key']}'")
             return True
+        dbg(f"check_on_disk(lms): ssh {host} \"~/.lmstudio/bin/lms ls\"")
         res = subprocess.run(["ssh", host, "~/.lmstudio/bin/lms ls"],
                              capture_output=True, text=True, timeout=30)
         key = rec["lms_key"].split("/")[-1].lower()
+        listed = sum(1 for ln in res.stdout.splitlines() if ln.strip())
         if key in res.stdout.lower():
+            dbg(f"  rc={res.returncode}  matched key '{key}' among {listed} listed lines")
             return True
+        dbg(f"  rc={res.returncode}  key '{key}' NOT among {listed} listed lines; "
+            f"lms ls=\n{_trunc(res.stdout, 800)}")
         print(f"Model not on disk in LM Studio (likely removed by storage cleanup).\n"
               f"  Expected lms key: {rec['lms_key']}\n"
               f"  Re-download, e.g.: lms get '{rec['lms_key']}'  (or hf_hub_download for custom quants)",
@@ -479,12 +534,16 @@ def check_on_disk(host, rec, dry_run):
     # remote-cmd
     gguf = rec.get("gguf_path")
     if not gguf:
+        dbg(f"check_on_disk(remote-cmd): no gguf_path for '{rec['model_id']}' — "
+            f"skipping disk check (HF checkpoint auto-resolves)")
         return True  # e.g. SGLang HF checkpoint auto-resolves; nothing to pre-check
     if dry_run:
         print(f"[dry-run] ssh {host} \"test -e {gguf}\"")
         return True
+    dbg(f"check_on_disk(remote-cmd): ssh {host} \"test -e {gguf}\"")
     res = subprocess.run(["ssh", host, f"test -e {gguf} && echo OK || echo MISSING"],
                          capture_output=True, text=True, timeout=30)
+    dbg(f"  rc={res.returncode}  → {res.stdout.strip() or '(no output)'}")
     if "OK" in res.stdout:
         return True
     print(f"Model not on disk (likely removed by storage cleanup).\n"
@@ -515,27 +574,68 @@ def start_lms(host, rec, dry_run):
     ssh(host, "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors", dry_run, timeout=120)
 
 
+def remote_log_path(rec):
+    """Derive the recipe's log file from the `> /tmp/….log` redirect in its start_cmd."""
+    m = re.search(r">\s*(/tmp/\S+\.log)", rec.get("start_cmd", ""))
+    return m.group(1) if m else None
+
+
+def tail_remote_log(host, rec, dry_run, lines=12, label="log-tail"):
+    """Tail the recipe's remote log (best-effort). Used after launch (debug) and on timeout."""
+    if dry_run:
+        return
+    log = remote_log_path(rec)
+    if not log:
+        return  # lms kind / no /tmp redirect — load errors already surface in the lms rc dump
+    res = subprocess.run(["ssh", host, f"tail -n {lines} {log} 2>/dev/null"],
+                         capture_output=True, text=True, timeout=20)
+    body = res.stdout.strip()
+    if not body:
+        print(f"{label} {log}: (empty or absent)", file=sys.stderr)
+        return
+    print(f"{label} {log} (last {lines} lines):", file=sys.stderr)
+    for ln in body.splitlines():
+        print(f"  | {ln}", file=sys.stderr)
+
+
 def start_remote_cmd(host, rec, dry_run):
     ssh(host, rec["start_cmd"], dry_run, timeout=120)
+    if DEBUG and not dry_run:
+        # nohup rc=0 says nothing — give the process a beat, then surface any immediate crash.
+        dbg("rc=0 from nohup detaches the server; tailing log for immediate-crash evidence")
+        time.sleep(1.5)
+        tail_remote_log(host, rec, dry_run)
 
 
-def wait_ready(host_ip, rec, dry_run, timeout=180):
-    """Poll http://<ip>:<port>/v1/models until model_id appears."""
+def wait_ready(host, host_ip, rec, dry_run, timeout=180):
+    """Poll http://<ip>:<port>/v1/models until model_id appears.
+
+    On timeout, tails the recipe's remote log (always-on, even without --debug) — the
+    timeout is the one place something is known-wrong and the log is the only evidence.
+    """
     if dry_run:
         print(f"[dry-run] poll http://{host_ip}:{rec['port']}/v1/models for '{rec['model_id']}'")
         return True
     url = f"http://{host_ip}:{rec['port']}/v1/models"
-    deadline = time.time() + timeout
+    start = time.time()
+    deadline = start + timeout
     want = rec["model_id"]
+    poll = 0
     while time.time() < deadline:
+        poll += 1
+        elapsed = time.time() - start
         try:
             with urllib.request.urlopen(url, timeout=3) as resp:
                 ids = [m.get("id") for m in json.loads(resp.read()).get("data", [])]
             if any(want == i or want in (i or "") or (i and i in want) for i in ids):
+                dbg(f"wait_ready: poll#{poll} @{elapsed:.1f}s — target '{want}' present ✓")
                 return True
-        except Exception:
-            pass
+            dbg(f"wait_ready: poll#{poll} @{elapsed:.1f}s — {len(ids)} ids; target absent")
+        except Exception as e:
+            dbg(f"wait_ready: poll#{poll} @{elapsed:.1f}s — {type(e).__name__}: {e}")
         time.sleep(3)
+    # Timeout — surface the remote log regardless of --debug.
+    tail_remote_log(host, rec, dry_run, label="readiness timeout — log-tail")
     return False
 
 
@@ -573,6 +673,9 @@ def smoke_test(host_ip, rec, api_key, dry_run):
     headers = {"Content-Type": "application/json"}
     if api_key and api_key not in ("not-needed", "<YOUR_API_KEY>"):
         headers["Authorization"] = f"Bearer {api_key}"
+    dbg(f"smoke: POST {url}  (Authorization: Bearer {_redact(api_key)})")
+    dbg(f"smoke: payload model={rec['model_id']} tools=[read_file] "
+        f"tool_choice=auto max_tokens=512 stream=False")
     for attempt in (1, 2):
         t0 = time.time()
         try:
@@ -592,6 +695,8 @@ def smoke_test(host_ip, rec, api_key, dry_run):
         choice = (data.get("choices") or [{}])[0]
         msg = choice.get("message", {})
         tcs = msg.get("tool_calls") or []
+        dbg(f"smoke: attempt {attempt} HTTP 200  finish_reason={choice.get('finish_reason')}  "
+            f"tool_calls={len(tcs)}  ({dt:.2f}s)")
         if tcs or choice.get("finish_reason") == "tool_calls":
             if tcs:
                 fn = tcs[0].get("function", {})
@@ -606,6 +711,7 @@ def smoke_test(host_ip, rec, api_key, dry_run):
             continue
         print(f"Smoke test FAIL: no tool_calls in response (finish_reason="
               f"{choice.get('finish_reason')})", file=sys.stderr)
+        dbg("smoke: raw response =\n" + _trunc(json.dumps(data, ensure_ascii=False), 1024))
     return False
 
 
@@ -619,8 +725,14 @@ def main():
     ap.add_argument("--list", action="store_true", help="Print the top-5 menus and exit")
     ap.add_argument("--dry-run", action="store_true",
                     help="Print every remote command instead of running it")
+    ap.add_argument("--debug", action="store_true",
+                    help="Per-step diagnostics on stderr (table parse, recipe match, every SSH "
+                         "rc/stdout/stderr, readiness polls, smoke payload/response; key redacted)")
     ap.add_argument("--no-smoke", action="store_true", help="Skip the tool-call smoke test")
     args = ap.parse_args()
+
+    global DEBUG
+    DEBUG = args.debug
 
     groups = parse_benchmark_table()
 
@@ -643,20 +755,26 @@ def main():
     live_cfg = chk.load_opencode_config()
     host_ip = chk.extract_real_ip(live_cfg) or host
     api_key = chk.extract_api_key(live_cfg)
+    dbg(f"live config: ip={host_ip}  api_key={_redact(api_key)}")
+
+    timings = {}
 
     # 1) Already up with the target model loaded? Skip straight to config sync.
     if not args.dry_run:
         probe_data = chk.probe(host)
         identified = chk.identify_servers(probe_data, [rec["port"]])
         entry = identified[0]
+        dbg(f"probe: port {rec['port']} up={entry['up']} server={entry.get('server')}")
         if entry["up"] and entry.get("server") == rec["server"]:
             avail = chk.fetch_models(f"http://{host_ip}:{rec['port']}/v1", api_key=api_key) or []
             if any(rec["model_id"] == i or rec["model_id"] in (i or "") for i in avail):
+                dbg(f"probe: target '{rec['model_id']}' already loaded → config sync only")
                 print("Target server + model already running — syncing OpenCode config only.")
                 sync_opencode(rec["server"], rec["model_id"], args.dry_run)
                 if args.no_smoke:
                     return 0
                 return 0 if smoke_test(host_ip, rec, api_key, args.dry_run) else 1
+            dbg(f"probe: {len(avail)} ids listed; target absent → full switch")
 
     # 2) Availability guard — before stopping anything.
     if not check_on_disk(host, rec, args.dry_run):
@@ -665,18 +783,28 @@ def main():
 
     # 3) Stop all LLM servers (free unified memory).
     print("Stopping all LLM servers...")
+    t = time.time()
     ssh(host, STOP_ALL_CMD, args.dry_run, timeout=120)
+    timings["stop"] = time.time() - t
+    dbg(f"phase 'stop' took {timings['stop']:.1f}s")
 
     # 4) Start the target.
     print(f"Starting {rec['server']}...")
+    t = time.time()
     if rec["kind"] == "lms":
         start_lms(host, rec, args.dry_run)
     else:
         start_remote_cmd(host, rec, args.dry_run)
+    timings["load"] = time.time() - t
+    dbg(f"phase 'load' took {timings['load']:.1f}s")
 
     # 5) Readiness.
     print("Waiting for readiness...")
-    if not wait_ready(host_ip, rec, args.dry_run):
+    t = time.time()
+    ready = wait_ready(host, host_ip, rec, args.dry_run)
+    timings["readiness"] = time.time() - t
+    dbg(f"phase 'readiness' took {timings['readiness']:.1f}s")
+    if not ready:
         print(f"Error: {rec['model_id']} did not appear on "
               f"http://{host_ip}:{rec['port']}/v1/models within 180s", file=sys.stderr)
         return 1
@@ -688,10 +816,14 @@ def main():
     # 7) Smoke test.
     if args.no_smoke:
         print("Done (smoke test skipped).")
+        dbg("total wall " + "  ".join(f"{k} {v:.1f}s" for k, v in timings.items()))
         return 0
     print("Running tool-call smoke test...")
+    t = time.time()
     ok = smoke_test(host_ip, rec, api_key, args.dry_run)
+    timings["smoke"] = time.time() - t
     print("\nDone." if ok else "\nSwitched, but smoke test did not confirm a tool call.")
+    dbg("total wall " + "  ".join(f"{k} {v:.1f}s" for k, v in timings.items()))
     return 0 if ok else 1
 
 

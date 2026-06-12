@@ -26,6 +26,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-reorganise-repo-structure.md`](active/plan-reorganise-repo-structure.md) | Re-organise scripts, docs, and folders — fix post-April-2026 drift ([visual HTML](active/plan-reorganise-repo-structure.html)) |
 | [`active/plan-rotorquant-apple-silicon-implementation.md`](active/plan-rotorquant-apple-silicon-implementation.md) | RotorQuant feasibility on Apple Silicon |
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
+| [`active/plan-switch-top-model-debug-flag.md`](active/plan-switch-top-model-debug-flag.md) | `--debug` flag for `switch_top_model.py` — per-step diagnostics + remote log-tail-on-timeout ([visual HTML](active/plan-switch-top-model-debug-flag.html)) |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |
 | [`active/plan-vlm-visual-agent-benchmark-harness.md`](active/plan-vlm-visual-agent-benchmark-harness.md) | Visual-agent benchmark harness for OCR, chart, screenshot, and video tasks with HITL fixture review |
 | [`active/plan-vllm-mlx-homebrew-formula.md`](active/plan-vllm-mlx-homebrew-formula.md) | vllm-mlx Homebrew formula/tap |

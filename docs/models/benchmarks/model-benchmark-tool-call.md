@@ -50,7 +50,7 @@ Two complementary harnesses, both reported per model:
 - [Zyphra ZAYA1-8B JANGTQ4 on vmlx-swift-lm via Osaurus](#results-zyphrazaya1-8b-jangtq4-on-vmlx-swift-lm-via-osaurus) — 8.4 B sparse MoE / 760 M active, top-1 CCA + MoE, **JANGTQ4** routed-expert quant (Osaurus 0.18.13, engine pin `b9da180`) — **⛔ 300 s OpenCode wall-time × 1 (0/0t, 0 tokens) — agent loops gated on Osaurus picking up [PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) `cb8b3df`** — *2026-05-12*
 - [prithivMLmods/Q3.6-27B-GLM-5.1-DA-GGUF (Q4_K_M)](../uncen-model/qwen36-27b-glm51-da-benchmark.md) — 27 B dense Qwen3.6 + ViT, prithivMLmods abliteration on Qwen3.6-27B + GLM-5.1 reasoning-trace distillation, standard Q4_K_M GGUF (lm-studio, no patches) — **✅ 5/5 API smoke + 3/3 multi-turn; ✅ OpenCode browse 11.62 s / search 19.47 s @ 2 turns + `webfetch`** (initial 0-turns reading was a bench-rig `PWD` regression on OpenCode 1.14.50+, fixed in `scripts/bench/bench_agent_tool_call.py`) — *2026-05-14*
 - [unsloth/Qwen3.6-27B-MTP-GGUF (UD-Q6_K_XL)](../techniques/model-technique-qwen-3-6-mtp.md) — 27 B dense Qwen3.6 + MTP self-drafting heads, Unsloth Dynamic 2.0 6-bit GGUF on `llama-cpp-mtp` :8100 (`am17an/llama.cpp@mtp-clean` PR #22673, no patches apart from the build) — **✅ 5/5 API smoke + 3-turn 21.92 s · 84–89 % MTP draft acceptance · OpenCode browse 35.98 s / search 35.24 s** (deployed 2026-05-15 as provisional sidecar; slower than lm-studio Q4_K_M main — MTP speedup doesn't close the dense-27 B-Q6 weight-bundle gap) — *2026-05-15*
-- [huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF (Q6_K)](#results-huihui-qwen36-35b-mtp-abliterated-q6k) — 35 B sparse MoE / 3 B active + MTP heads + Claude-4.7-Opus reasoning distillation + huihui-ai abliteration, Q6_K GGUF on `llama-cpp-mainline` :8100 (`ggml-org/llama.cpp` commit `510b5c2`) — **✅ 5/5 API smoke + 3-turn 3.83 s · 83 % MTP acceptance · 78.5 tok/s · 10/10 mlabonne · OpenCode browse 4.74 s / search 12.11 s** (first MoE+MTP in lab — 7.6× faster agent loops than dense 27B MTP) — *2026-05-20*
+- [huihui-ai/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF (Q6_K)](#results-huihui-qwen36-35b-mtp-abliterated-q6k) — 35 B sparse MoE / 3 B active + MTP heads + Claude-4.7-Opus reasoning distillation + huihui-ai abliteration, Q6_K GGUF on `llama-cpp-mainline` :8100 (`ggml-org/llama.cpp` commit `ac4cdde`) — **✅ 5/5 API smoke + 3-turn 3.83 s · 83 % MTP acceptance · 94.4 tok/s · 10/10 mlabonne · OpenCode browse 3.40 s / search 12.01 s** (first MoE+MTP in lab — 7.6× faster agent loops than dense 27B MTP) — *2026-05-20, re-bench 2026-06-11*
 - [unsloth/gemma-4-31B-it-GGUF + external MTP assistant (Q4_K_M + Q8_0)](logs/gemma4-31b-mtp-llama-cpp/comparison.md) — 31 B dense Gemma 4 on **mainline llama.cpp** external-drafter path (`ggml-org/llama.cpp` commit `961e9a3`, out-of-tree build containing PRs #23398 and #24277) — **✅ 5/5 API smoke + 3-turn 14.62 s · OpenCode browse 13.75 s / search 39.45 s** with winning `--spec-draft-n-max 1` (**baseline 16.0 s / 15.39 s / 38.20 s**) — technically successful Gemma MTP bring-up, but the binary was **not** adopted as default because the existing Qwen MTP browse path regressed on the same candidate build — *2026-06-09*
 - [llmfan46/Qwen3.6-27B-uncensored-heretic-v2-Native-MTP-Preserved-GGUF (Q6_K)](../uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) — 27 B dense Qwen3.6 + 15 native MTP parameters preserved, Heretic v1.3.0 MPOA abliteration (`attn.o_proj`/`mlp.down_proj`), Q6_K GGUF on `llama-cpp-mainline` :8100 (`ggml-org/llama.cpp`) — **⚠ 4/5 API smoke + 3-turn 18.51 s · ~74 % MTP acceptance · 24.6 tok/s · 10/10 mlabonne · OpenCode browse 38.99 s / search 40.42 s** (first Heretic-abliterated + MTP in lab) — *2026-05-21*
 - [mradermacher/Huihui-gemma-4-26B-A4B-it-abliterated-i1-GGUF (i1-Q6_K)](../uncen-model/gemma4-26b-a4b-huihui-abliterated-benchmark.md) — 26 B sparse MoE / 4B active, imatrix Q6_K GGUF, huihui-ai refusal-direction abliteration on Gemma 4 26B-A4B-it (lm-studio, no patches) — **✅ 5/5 API smoke + multi-turn 1.93 s 🏆 (new API-level leader) · 9/10 mlabonne refusal (first Gemma 4 uncensored to clear 9/10) · OpenCode browse 2.55 s 🥇 all-time leader / search 19.59 s** (`task` subagent on search) — *2026-05-15*
@@ -96,7 +96,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 | Qwen3.6-27B 6bit (dense, mlx-community) | **lm-studio** | ✅ **5/5** | 4.22 - 6.58 s | 5.28 - 8.86 s | 20.28 s |
 | Jackrong Qwopus3.6-27B v2 MTP Q6_K GGUF + MTP self-drafting | `llama-cpp-mtp` :8100 | ✅ **5/5** | 4.63 - 4.70 s | 5.49 - 6.70 s | 21.02 s (dense 27B + MTP heads · Jackrong fine-tune · 25.7 → 20.1 tok/s decode @ 512 → 29K in · OpenCode browse 16.96 s / search 27.62 s · **fastest dense-27B-MTP in agent loops** · [per-model](../per-model/model-summary-qwen-3-6.md#jackrong-qwopus36-27b-v2-mtp-q6k)) |
 | unsloth Qwen3.6-27B-MTP UD-Q6_K_XL GGUF + MTP self-drafting | `llama-cpp-mtp` :8100 | ✅ **5/5** | 5.03 - 16.22 s | 6.11 - 9.61 s | 21.92 s (dense 27B + MTP heads · 22.9 → 20.0 tok/s decode @ 414 → 29 128 in · 84–89 % draft acceptance · OpenCode browse 35.98 s / search 35.24 s; slower than lm-studio Q4_K_M main because 6-bit weight bundle outweighs MTP speedup) |
-| **Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K** | `llama-cpp-mainline` :8100 | ✅ **5/5** | 1.01 - 2.36 s | 1.26 - 1.49 s | **3.83 s** (MoE 35B/3B + MTP heads + Claude distill · 78.5 tok/s · 83 % draft acceptance · 10/10 mlabonne · first MoE+MTP · OpenCode browse 4.74 s / search 12.11 s · [per-model](../per-model/model-summary-qwen-3-6.md#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k)) |
+| **Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K** | `llama-cpp-mainline` :8100 | ✅ **5/5** | 1.01 - 2.36 s | 1.26 - 1.49 s | **3.83 s** (MoE 35B/3B + MTP heads + Claude distill · 94.4 tok/s · 83 % draft acceptance · 10/10 mlabonne · first MoE+MTP · OpenCode browse 3.40 s / search 12.01 s · [per-model](../per-model/model-summary-qwen-3-6.md#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k)) |
 | DavidAU Gemma 4 31B Heretic Q6_k GGUF (Thinking) | **lm-studio** | ✅ **5/5** | 2.75 - 8.48 s | 4.89 - 5.68 s | 23.68 s |
 | HauhauCS Qwen3.6-27B Balanced Q8_K_P GGUF | **lm-studio** | ✅ **5/5** | 5.86 - 24.52 s | 6.31 - 11.50 s | 25.70 s |
 | DavidAU Qwen3.6-40B Heretic Q6_K IMatrix GGUF | **lm-studio** | ✅ **5/5** | 6.39 - 15.90 s | 7.47 - 17.63 s | 30.31 s |
@@ -181,7 +181,7 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 
 | Model | Server | Browse (wall / llm) | Search (wall / llm) | Notes |
 |:------|:-------|:-------------------:|:-------------------:|:------|
-| 🥇 **Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K** | `llama-cpp-mainline` :8100 | **4.74 s** / 3.19 s | **12.11 s** / 10.41 s | 2/2–4t · `webfetch` · MoE 35B/3B + MTP + Claude distill, think-on · 78.5 tok/s · 83 % MTP accept · 10/10 mlabonne · first MoE+MTP · [per-model](../per-model/model-summary-qwen-3-6.md#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) |
+| 🥇 **Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K** | `llama-cpp-mainline` :8100 | **3.40 s** / 2.80 s | **12.01 s** / 11.41 s | 2/2t · `webfetch` · MoE 35B/3B + MTP + Claude distill, think-on · 94.4 tok/s · 83 % MTP accept · 10/10 mlabonne · mainline upgrade `ac4cdde` (+20 % MTP from PR #24086) · [per-model](../per-model/model-summary-qwen-3-6.md#huihui-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) · [re-bench log](logs/huihui-qwen36-35b-mtp-abliterated/agent-bench-llama-cpp-mainline-upgrade.json) |
 | 🥈 **unsloth Qwen3.6-35B-A3B UD-Q6_K (GGUF)** | **lm-studio** | **4.92 s** / 3.68 s | 12.08 s / 10.84 s | 2/3t · `webfetch` · MoE 35B/3B, Q6_K UD imatrix, think-on (54-66 reasoning tok) · variance 4.83-5.25 / 11.91-12.11 · [results](#results-unsloth-qwen36-35b-a3b-ud-q6) |
 | 🥉 **prithivMLmods Qwen3.6-35B-A3B Aggressive Q6_K GGUF** | **lm-studio** | 5.05 s / 3.82 s | 13.56 s / 12.35 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-prithiv-aggressive-benchmark.md) |
 | HauhauCS Qwen3.6-35B-A3B Aggressive Q6_K_P GGUF | **lm-studio** | 5.14 s / 3.94 s | 12.01 s / 10.81 s | 2/3t · `webfetch` · MoE 35B/3B + VL, think-on · [writeup](../uncen-model/qwen36-35b-a3b-hauhaucs-aggressive-benchmark.md) |
@@ -362,9 +362,10 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|
-| 🥇 Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s 🥉 | 2 | `webfetch` | ~10.8K in / ~136 out |
-| 🥈 Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
-| 🥉 Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
+| 🥇 **Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K** | `llama-cpp-mainline` :8100 | **3.40 s** | 2 | `webfetch` | ~68 in / ~152 out |
+| 🥈 Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 13.94 s | 2 | `webfetch` | ~10.8K in / ~136 out |
+| 🥉 Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 14.11 s _(was 72.75 s on 1.3.65)_ | 2 | `webfetch` | 2 in / 106 out |
+| Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 71.10 s | 2 | `webfetch` | ~10.8K in / ~119 out |
 
 #### 🔀 MoE
 
@@ -398,9 +399,10 @@ Grouped by model type (matching the [root README](../../../README.md#-models) ta
 
 | Model | Server | Response Time (median) | Turns | Tools | Tokens | Context Growth |
 |:------|:-------|:---------------------------------:|:------|:------|:-------|:---------------|
-| 🥇 Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s 🥉 | 3 | `webfetch` | ~43K | ~13K/turn |
-| 🥈 Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
-| 🥉 Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 252.67 s _(was 135.06 s on 1.3.65)_ | 2 | `webfetch` | ~13K | turn 2 = 8,192 out tokens at regressed long-context decode |
+| 🥇 **Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K** | `llama-cpp-mainline` :8100 | **12.01 s** | 2 | `webfetch` | ~4.8K in / ~492 out | ~2.4K/turn |
+| 🥈 Qwen3.6-35B-A3B Rust LoRA (jedisct1, 8-bit) | vllm-mlx | 26.31 s | 3 | `webfetch` | ~43K | ~13K/turn |
+| 🥉 Qwen3.6-35B-A3B JANGTQ4-CRACK | vmlx | 154.18 s | 3 | `webfetch`, `bash` | ~43K | ~14K/turn |
+| Osaurus Qwen3.6-35B-A3B JANGTQ4 | vmlx 1.5.20 / 1.3.65 | 252.67 s _(was 135.06 s on 1.3.65)_ | 2 | `webfetch` | ~13K | turn 2 = 8,192 out tokens at regressed long-context decode |
 
 #### 🔀 MoE
 

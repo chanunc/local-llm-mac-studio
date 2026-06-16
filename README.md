@@ -397,9 +397,9 @@ tail -f /tmp/llama-cpp-turboquant.log                                           
 # See docs/servers/llama-cpp-mtp/summary.md and
 # docs/models/techniques/model-technique-qwen-3-6-mtp.md.
 
-# Recommended — huihui-ai MoE 35B/3B MTP Q6_K (mainline binary, 78.5 tok/s,
-# 83% MTP acceptance, browse 4.74 s, 10/10 mlabonne, Claude 4.7 Opus distilled)
-GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-Q6_K.gguf
+# Recommended — huihui-ai MoE 35B/3B MTP Q6_K (mainline binary, 94.4 tok/s,
+# 83% MTP acceptance, browse 3.40 s, 10/10 mlabonne, Claude 4.7 Opus distilled)
+GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-ggml-model-Q6_K.gguf
 nohup ~/llama-cpp-mainline/build/bin/llama-server \
   -m "$GGUF" \
   -ngl 99 -fa on -np 1 -c 32768 \
@@ -772,7 +772,7 @@ All models fit in **96GB unified memory**.
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
 | [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥈 (no scaffolding needed), search 7.35 s 🥇, 8/10 compliance — uncensored search speed leader |
 | [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
-| [huihui-ai Qwen3.6-35B-A3B MTP Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#huihui-ai-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) | MoE 35B/3B + MTP heads | 27 | 32K (262K train) | First MoE+MTP in lab — huihui-ai abliteration + Claude 4.7 Opus reasoning distillation + MTP self-drafting, 78.5 tok/s decode, 83% MTP acceptance, 10/10 mlabonne, browse 4.74 s / search 12.11 s on `llama-cpp-mtp` :8100 (mainline `ggml-org/llama.cpp`). [Uncen bench](docs/models/uncen-model/huihui-qwen36-35b-mtp-abliterated-benchmark.md) |
+| [huihui-ai Qwen3.6-35B-A3B MTP Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#huihui-ai-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) | MoE 35B/3B + MTP heads | 27 | 262K | First MoE+MTP in lab — huihui-ai abliteration + Claude 4.7 Opus reasoning distillation + MTP self-drafting, 94.4 tok/s decode, 83% MTP acceptance, 10/10 mlabonne, browse 3.40 s / search 12.01 s on `llama-cpp-mtp` :8100 (mainline `ggml-org/llama.cpp` `ac4cdde`). [Uncen bench](docs/models/uncen-model/huihui-qwen36-35b-mtp-abliterated-benchmark.md) |
 | [Zyphra ZAYA1-8B JANGTQ4](docs/models/per-model/model-summary-zaya1-8b.md) | MoE 8.4B / 760M-active | 4.65 | 131K | Prior production main (2026-05-12 → 2026-05-14, vmlx-swift-lm :1337) — Apache 2.0, top-1 CCA + MoE, `tool_parser=zaya_xml`. HTTP-path decode 7-8 tok/s pending [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (engine's own `RunBench` reports 57.2 tok/s at the same commit; cask missing JANGTQ B=1 fast path). Also agent-broken at this pin |
 
 </details>

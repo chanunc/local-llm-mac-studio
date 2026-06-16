@@ -22,7 +22,7 @@
           "tools": true,
           "reasoning": true,
           "limit": {
-            "context": 32768,
+            "context": 262144,
             "output": 8192
           }
         },

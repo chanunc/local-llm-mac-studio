@@ -1123,7 +1123,7 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 ## 🤖 Qwen3.6-27B Fable-5 LoRA Q6_K on llama.cpp
 
 Model: `hotdogs/qwen3.6-27b-fable5-lora` GGUF LoRA over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf`.
-Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-c 262144`, `-ngl 99`, `-fa on`, `--jinja`, and `--reasoning on`.
+Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-ngl 99`, `-fa on`, `--jinja`, and `--reasoning on`. The cataloged alias uses 131K context; this raw exploratory run used `-c 262144` to probe the upper window.
 
 **Streaming SSE results** (bench_api_server.py, 2 runs median):
 
@@ -1138,7 +1138,7 @@ Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-c 262144`, 
 
 The server loaded `n_ctx=262144` and used about 50 GB RSS after the run. A nominal 262,144-token probe is rejected because chat-template overhead exceeds the context window; a nominal 260K probe timed out at 600 s and the server log showed cancellation at 200,212 processed tokens. Use 131K as the practical benchmarked ceiling for this runtime-LoRA deployment.
 
-Raw logs: [`logs/qwen36-27b-fable5-lora-q6k-256k/`](logs/qwen36-27b-fable5-lora-q6k-256k/)
+Raw logs: [`logs/qwen36-27b-fable5-lora-q6k-131k/`](logs/qwen36-27b-fable5-lora-q6k-131k/)
 
 ---
 

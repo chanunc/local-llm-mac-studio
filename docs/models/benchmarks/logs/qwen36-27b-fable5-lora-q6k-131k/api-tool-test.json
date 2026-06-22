@@ -1,7 +1,7 @@
 {
   "benchmark": "api-tool-call",
   "mode": "openai-http",
-  "model": "qwen36-27b-fable5-lora-q6k-256k",
+  "model": "qwen36-27b-fable5-lora-q6k-131k",
   "base_url": "http://192.168.31.4:8100/v1",
   "single_calls": [
     {

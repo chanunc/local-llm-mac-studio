@@ -57,7 +57,7 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
-- [Qwen3.6-27B Fable-5 LoRA Q6_K](#qwen36-27b-fable-5-lora-q6_k) — Same dense 27 B base · 76 MB runtime GGUF LoRA over unsloth Q6_K GGUF · llama.cpp `--lora` · 256K loaded context, 131K practical benchmark ceiling
+- [Qwen3.6-27B Fable-5 LoRA Q6_K](#qwen36-27b-fable-5-lora-q6_k) — Same dense 27 B base · 76 MB runtime GGUF LoRA over unsloth Q6_K GGUF · llama.cpp `--lora` · 131K practical context
 - [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · prior lm-studio sidecar
 - [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · benchmarked on lm-studio 2026-05-14 (browse 11.62 s / search 19.47 s)
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
@@ -537,9 +537,9 @@ Runtime LoRA adapter from `hotdogs/qwen3.6-27b-fable5-lora`, trained on `Glint-R
 | Adapter | GGUF LoRA `GGUF/qwen36-fable5-lora.gguf` |
 | Quantization | Base GGUF Q6_K, 22.5 GB; LoRA 76 MB |
 | Server | `llama-cpp-mainline` on port 8100 |
-| Server flags | `--lora <adapter.gguf> -ngl 99 -fa on -np 1 -c 262144 --jinja --reasoning on` |
-| Alias | `qwen36-27b-fable5-lora-q6k-256k` |
-| Context | `n_ctx=262144` loaded successfully; standard throughput bench stable through 131K, near-260K HTTP probe timed out |
+| Server flags | `--lora <adapter.gguf> -ngl 99 -fa on -np 1 -c 131072 --jinja --reasoning on` |
+| Alias | `qwen36-27b-fable5-lora-q6k-131k` |
+| Context | 131,072 practical context; an exploratory `n_ctx=262144` launch loaded, but the near-260K HTTP probe timed out |
 
 ### Deployment
 
@@ -547,13 +547,13 @@ Runtime LoRA adapter from `hotdogs/qwen3.6-27b-fable5-lora`, trained on `Glint-R
 ssh macstudio 'nohup ~/llama-cpp-mainline/build/bin/llama-server \
   -m ~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-GGUF/snapshots/main/Qwen3.6-27B-Q6_K.gguf \
   --lora ~/.cache/huggingface/hub/models--hotdogs--qwen3.6-27b-fable5-lora/snapshots/main/GGUF/qwen36-fable5-lora.gguf \
-  -ngl 99 -fa on -np 1 -c 262144 \
+  -ngl 99 -fa on -np 1 -c 131072 \
   --host 0.0.0.0 --port 8100 \
-  --alias qwen36-27b-fable5-lora-q6k-256k \
+  --alias qwen36-27b-fable5-lora-q6k-131k \
   --jinja --reasoning on > /tmp/llama-cpp-fable5-lora.log 2>&1 &'
 ```
 
-The 256K load succeeded and the server reported `meta.n_ctx=262144`. Resident RSS after the run was about 50 GB, leaving RAM headroom on a 96 GB Mac Studio.
+The cataloged launch uses 131,072 context because that is the stable benchmarked ceiling. An exploratory 256K load succeeded and reported `meta.n_ctx=262144`; resident RSS after that run was about 50 GB, leaving RAM headroom on a 96 GB Mac Studio.
 
 ### Performance (2026-06-22, pre-bench hygiene, mainline llama.cpp)
 
@@ -583,10 +583,10 @@ Functional but not competitive: browse is slower than Jackrong Qwopus3.6-27B v2 
 
 - LoRA path only: LM Studio does not expose a documented headless `lms load --lora` path, so this was tested on llama.cpp rather than merged/imported into LM Studio.
 - No MTP heads in this base path; plain dense 27B Q6_K decode lands around 13-22 tok/s depending context.
-- Full-window 256K requests are loadable but not practically benchmarked through the standard HTTP harness; use 65K or 131K for reliable agent work.
+- Full-window 256K launches are possible but full-window requests are not practically benchmarked through the standard HTTP harness; use 65K or 131K for reliable agent work.
 - Vision was not tested. The deployment used a text-only GGUF base without an `mmproj` companion.
 
-Raw logs: [`docs/models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-256k/`](../benchmarks/logs/qwen36-27b-fable5-lora-q6k-256k/)
+Raw logs: [`docs/models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/`](../benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/)
 
 ---
 

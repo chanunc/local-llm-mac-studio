@@ -3,7 +3,7 @@
   "timestamp": "2026-06-22T23:29:00Z",
   "config": {
     "base_url": "http://192.168.31.4:8100/v1",
-    "model": "qwen36-27b-fable5-lora-q6k-256k",
+    "model": "qwen36-27b-fable5-lora-q6k-131k",
     "requested_context": 260000,
     "loaded_context": 262144,
     "max_tokens": 50,

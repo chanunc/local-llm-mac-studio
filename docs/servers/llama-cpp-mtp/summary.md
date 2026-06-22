@@ -24,7 +24,7 @@
 
 Both support `--spec-type draft-mtp` for Qwen. Only a post-2026-06-07 mainline build supports the Gemma 4 `gemma4_assistant` external drafter. The mainline binary is preferred for new models.
 
-Runtime-LoRA note: mainline `~/llama-cpp-mainline/build/bin/llama-server` supports `--lora <adapter.gguf>`. The 2026-06-22 Fable-5 test loaded `hotdogs/qwen3.6-27b-fable5-lora` over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` with `-c 262144 --jinja --reasoning on` and no `--spec-type`. Raw benchmark logs live under [`../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-256k/`](../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-256k/).
+Runtime-LoRA note: mainline `~/llama-cpp-mainline/build/bin/llama-server` supports `--lora <adapter.gguf>`. The 2026-06-22 Fable-5 test loaded `hotdogs/qwen3.6-27b-fable5-lora` over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` with `--jinja --reasoning on` and no `--spec-type`. The catalog alias uses a 131K practical context; an exploratory `-c 262144` launch loaded but the near-260K probe timed out. Raw benchmark logs live under [`../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/`](../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/).
 
 > **Technique reference:** for what MTP / Next-n prediction actually does at the algorithm level — extra prediction heads on the target model's hidden states, single-pass N-token drafts verified autoregressively, why acceptance rates are higher than drafter-based methods — see [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](../../models/techniques/model-technique-qwen-3-6-mtp.md). This runbook covers operational steps only.
 

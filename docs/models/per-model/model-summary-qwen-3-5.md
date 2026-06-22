@@ -1,6 +1,6 @@
 # Model Summary: Qwen3.5 Family
 
-Alibaba's Qwen3.5 generation as catalogued in this stack. Four variants spanning dense 27 B distilled-reasoning, the flagship 122 B/10 B-active multimodal MoE, JANG-quantised compact-122 B, and the 35 B/3 B-active MoE in JANG mixed-precision form.
+Alibaba's Qwen3.5 generation as catalogued in this stack. Five variants spanning dense 27 B distilled-reasoning, the flagship 122 B/10 B-active multimodal MoE, JANG-quantised compact-122 B, the 35 B/3 B-active MoE in JANG mixed-precision form, and a 9 B dense GGUF marketed "uncensored" that benchmarks as aligned (negative result).
 
 ## Index
 
@@ -8,6 +8,7 @@ Alibaba's Qwen3.5 generation as catalogued in this stack. Four variants spanning
 - [Qwen3.5-122B-A10B (4-bit)](#qwen35-122b-a10b-4-bit) — Agentic reasoning
 - [Qwen3.5-122B-A10B JANG 2S](#qwen35-122b-a10b-jang-2s) — Compact 122 B · 46% smaller than MLX 4-bit
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
+- [Qwythos-9B Claude-Mythos-5-1M Q8_0](#qwythos-9b-claude-mythos-5-1m-q8_0) — ⚠ marketed uncensored, behaves aligned (negative result)
 
 ---
 
@@ -117,6 +118,29 @@ First JANG-format model on the oMLX server. Uses adaptive mixed-precision quanti
 - JANG ecosystem is early stage; no community validation of quality claims
 - Future `brew upgrade omlx` will overwrite the fork — must re-apply after upgrades
 - Detected as VLM model type (`qwen3_5_moe`) in oMLX discovery
+
+---
+
+## 🤖 Qwythos-9B Claude-Mythos-5-1M Q8_0
+
+Dense 9 B Qwen3.5 + vision GGUF from empero-ai, marketed as "uncensored" (cybersecurity / red-teaming / pharmacology framing). **Benchmarks as effectively aligned** — a documented negative result, not a usable uncensored model. Full deploy + perf + refusal writeup: [`docs/models/uncen-model/qwythos-9b-mythos5-benchmark.md`](../uncen-model/qwythos-9b-mythos5-benchmark.md).
+
+| Spec | Value |
+|:-----|:------|
+| HuggingFace | [empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF](https://huggingface.co/empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF) |
+| Architecture | `qwen35` dense 9 B + vision (`mmproj` available, skipped for benchmarks) |
+| Quantization | Q8_0 GGUF (8.87 GiB on disk / resident) |
+| Server | lm-studio (GGUF); no parser flags (LM Studio handles Qwen3 chat-template + `<think>`) |
+| Throughput | 64.7 tok/s @ 512, 52.3 @ 65K; prefill ~123K tok/s @ 65K |
+| Tool-call | API smoke **5/5**, multi-turn 3/3; OpenCode browse 9.38 s / search 18.27 s (webfetch fired) |
+| Refusal (mlabonne 10/520) | **1/10 complied (9/10 refused), ~0/10 useful** — lowest of any lm-studio entry |
+| Context | 131072 loaded (1M native via YaRN) |
+| License | Apache 2.0 |
+
+**Caveats:**
+- **Not actually uncensored** — refuses or pivots to "ethical/educational" framings on 9/10 harm prompts; do not deploy for uncensored work.
+- **Vendor identity-injection** — asserts "I'm Qwythos, an AI created by Empero AI" in ~9/10 replies; overrides system-prompt persona.
+- Tooling itself is fine — the alignment is the only disqualifier.
 
 ---
 

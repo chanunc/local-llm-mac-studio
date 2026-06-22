@@ -821,6 +821,52 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 
 ---
 
+## Qwythos-9B Claude-Mythos-5-1M Q8_0 (GGUF, on lm-studio)
+
+Model: `empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF` (`Qwythos-9B-Claude-Mythos-5-1M-Q8_0.gguf`) — Qwen3.5-9B dense + vision, empero-ai "uncensored" branding (**not borne out — 1/10 mlabonne, see [writeup](../../uncen-model/qwythos-9b-mythos5-benchmark.md)**). 8.87 GB on disk, 8.87 GiB resident at 131072 context. Smallest model in the stack.
+Tested on **Mac Studio M3 Ultra (96 GB)** — June 22, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](qwythos-9b-mythos5/api-server-llmster.json).
+
+**Server:** lm-studio, GGUF runtime. Loaded with `lms load qwythos-9b-claude-mythos-5-1m --gpu max --context-length 131072 --identifier qwythos-9b-mythos5-q8 -y`. No parser flags required — LM Studio handles the Qwen3 chat-template tool-calls and `<think>` natively. 8.87 GiB sits well below the LM Studio guardrail threshold, so no guardrail dance needed.
+
+### Generation Speed (tok/s)
+
+| Context | lm-studio |
+|:--------|:-------:|
+| 512 | **64.7** |
+| 4K | 64.0 |
+| 8K | 63.1 |
+| 32K | 57.6 |
+| 65K | 52.3 |
+
+### Prefill Speed (tok/s)
+
+| Context | lm-studio |
+|:--------|:-------:|
+| 512 | 4,795 |
+| 4K | 28,192 |
+| 8K | 48,222 |
+| 32K | 102,993 |
+| 65K | **122,873** |
+
+### Time to First Token (seconds)
+
+| Context | lm-studio |
+|:--------|:-------:|
+| 512 | **0.13** |
+| 4K | 0.15 |
+| 8K | 0.17 |
+| 32K | 0.32 |
+| 65K | 0.53 |
+
+**Notes:**
+- **Decode is slower than the larger Qwen3.6-35B-A3B MoE GGUFs** (64.7 vs 83.6 tok/s @ 512 for prithivMLmods) despite being a far smaller model — Qwythos is dense 9 B (full 9 B activated per decode step) vs the MoE's 3 B-active. Bandwidth-bound decode favours the sparse-MoE even at much larger total weights.
+- **Prefill and TTFT track the usual lm-studio GGUF profile** — sub-200 ms TTFT through 8K, ~123K tok/s prefill @ 65K.
+- **Loaded at full 131072 context**, so the 65K filler probe has headroom (unlike the prithivMLmods/HauhauCS sections capped at 65536).
+
+---
+
 ## DavidAU Qwen3.6-40B Heretic Q6_K IMatrix (GGUF, on lm-studio)
 
 Model: `DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF` (`Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf`) — DavidAU Heretic recipe (full abliteration + Deckard/PDK), IMatrix-weighted Q6_K. 30.17 GiB on disk, ~30 GiB resident at 131072 context.

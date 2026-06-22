@@ -1108,6 +1108,7 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 | **Qwen3.5-122B-A10B JANG 2S** (MoE 122B/10B) | JANG ~2.1-bit | vllm-mlx (JANG wrapper) | 34.5 | 405† | 323.9 | 2026-04-18 |
 | **Qwen3.5-35B-A3B JANG 4K** (MoE 35B/3B) | JANG ~4-bit | oMLX | 33.8 | 295.4 | — | 2026-03-24 (omlx.ai) |
 | **Gemma 4 26B-A4B** (MoE 26B/4B + VL) | 4-bit MLX | mlx-openai-server | 27.1 | 1,995 | 65.7 | 2026-04-17 |
+| **Qwen3.6-27B Fable-5 LoRA** (Dense 27B + runtime LoRA) | GGUF Q6_K + LoRA | llama-cpp-mainline | 13.0 | 293,979 | 0.45 | 2026-06-22 |
 
 \* Qwen3.6 prefill at 128K is the lowest of the 35B-class models because the hybrid stack's full-attention layers become memory-bound past 64K  
 † Qwen3.5-122B JANG 2S prefill normalised against requested 131,072; against the actual ~116,516-token filler the rate is ~360 tok/s
@@ -1116,6 +1117,28 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 - For a 100K+-class workload where you need to push generation throughput, **Qwen3-Coder-Next 6-bit on vllm-mlx wins** — 44.2 tok/s gen and 158s TTFT, both best in class. Trade-off: no vision, no thinking
 - **Qwen3.6-35B-A3B** is the pick when you also need vision or always-on thinking; the gen-speed cost is ~20% vs Coder-Next, the TTFT is actually lower (125.7 vs 158.4 s) thanks to the hybrid Gated DeltaNet at 35B activation
 - **Qwen3.5-122B JANG 2S** delivers competitive 34.5 tok/s gen at 122B parameters by activating only ~10B per token, but the JANG dequantization cost makes prefill at 128K very slow (5+ min TTFT) — choose this only when you need 122B's reasoning quality at long context and can wait for prefill
+
+---
+
+## 🤖 Qwen3.6-27B Fable-5 LoRA Q6_K on llama.cpp
+
+Model: `hotdogs/qwen3.6-27b-fable5-lora` GGUF LoRA over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf`.
+Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-c 262144`, `-ngl 99`, `-fa on`, `--jinja`, and `--reasoning on`.
+
+**Streaming SSE results** (bench_api_server.py, 2 runs median):
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--|:--:|:--:|:--:|
+| 512 | 0.16 | 21.9 | 3,377 |
+| 4K | 0.16 | 21.5 | 25,092 |
+| 8K | 0.17 | 21.2 | 48,552 |
+| 32K | 0.21 | 19.5 | 157,345 |
+| 65K | 0.28 | 17.2 | 234,125 |
+| 131K | 0.45 | 13.0 | 293,979 |
+
+The server loaded `n_ctx=262144` and used about 50 GB RSS after the run. A nominal 262,144-token probe is rejected because chat-template overhead exceeds the context window; a nominal 260K probe timed out at 600 s and the server log showed cancellation at 200,212 processed tokens. Use 131K as the practical benchmarked ceiling for this runtime-LoRA deployment.
+
+Raw logs: [`logs/qwen36-27b-fable5-lora-q6k-256k/`](logs/qwen36-27b-fable5-lora-q6k-256k/)
 
 ---
 

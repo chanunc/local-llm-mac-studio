@@ -1,0 +1,107 @@
+{
+  "benchmark": "api-tool-call",
+  "mode": "openai-http",
+  "model": "qwen36-27b-fable5-lora-q6k-256k",
+  "base_url": "http://192.168.31.4:8100/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 7.22,
+      "output_tokens": 106,
+      "rate_tps": 14.7,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 4.01,
+      "output_tokens": 80,
+      "rate_tps": 20.0,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 3.59,
+      "output_tokens": 71,
+      "rate_tps": 19.8,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web"
+      ],
+      "tool_args": [
+        "{\"query\":\"openai api docs\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 6.11,
+      "output_tokens": 125,
+      "rate_tps": 20.5,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 22.9,
+      "output_tokens": 486,
+      "rate_tps": 21.2,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"find /tmp -type f -exec ls -lS {} + 2>/dev/null | head -5\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 10.86,
+      "output_tokens": 183,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 9.97,
+      "output_tokens": 204,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 6.9,
+      "output_tokens": 140,
+      "finish_reason": "stop",
+      "tool_calls": []
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 27.73
+}

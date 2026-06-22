@@ -17,12 +17,14 @@
 
 ## Overview
 
-`llama-cpp-mtp` is a sidecar `llama-server` for **Multi-Token Prediction (MTP) speculative decoding**: self-drafting heads for Qwen3.6 and an external assistant for Gemma 4. Two binaries are available:
+`llama-cpp-mtp` is a sidecar `llama-server` for **Multi-Token Prediction (MTP) speculative decoding** and related mainline llama.cpp GGUF experiments. The common path is self-drafting heads for Qwen3.6 and an external assistant for Gemma 4; the same port also hosts runtime GGUF LoRA tests via mainline `--lora` when no MTP heads are involved. Two binaries are available:
 
 - **Mainline `ggml-org/llama.cpp`** (preferred) — Qwen MTP merged upstream in May; Gemma 4 external-drafter MTP merged in [PR #23398](https://github.com/ggml-org/llama.cpp/pull/23398) on 2026-06-07. The pre-upgrade research baseline recorded on 2026-06-09 was commit `510b5c2` (2026-05-20).
 - **`am17an/llama.cpp@mtp-clean`** (legacy fork) — [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673). Built at `~/llama-cpp-mtp/` (build tag `b9172`).
 
 Both support `--spec-type draft-mtp` for Qwen. Only a post-2026-06-07 mainline build supports the Gemma 4 `gemma4_assistant` external drafter. The mainline binary is preferred for new models.
+
+Runtime-LoRA note: mainline `~/llama-cpp-mainline/build/bin/llama-server` supports `--lora <adapter.gguf>`. The 2026-06-22 Fable-5 test loaded `hotdogs/qwen3.6-27b-fable5-lora` over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` with `-c 262144 --jinja --reasoning on` and no `--spec-type`. Raw benchmark logs live under [`../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-256k/`](../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-256k/).
 
 > **Technique reference:** for what MTP / Next-n prediction actually does at the algorithm level — extra prediction heads on the target model's hidden states, single-pass N-token drafts verified autoregressively, why acceptance rates are higher than drafter-based methods — see [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](../../models/techniques/model-technique-qwen-3-6-mtp.md). This runbook covers operational steps only.
 

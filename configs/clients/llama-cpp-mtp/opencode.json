@@ -18,7 +18,7 @@
           }
         },
         "qwen36-27b-fable5-lora-q6k-131k": {
-          "name": "Qwen3.6-27B Fable-5 Agent LoRA on unsloth Q6_K base (dense 27B, llama.cpp --lora, 131K ctx)",
+          "name": "Qwen3.6-27B Fable-5 Agent LoRA ChatML v4 on unsloth Q6_K base (dense 27B, llama.cpp --lora, 131K ctx)",
           "tools": true,
           "reasoning": true,
           "limit": {

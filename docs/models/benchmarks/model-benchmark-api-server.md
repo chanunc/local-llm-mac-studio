@@ -1108,7 +1108,7 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 | **Qwen3.5-122B-A10B JANG 2S** (MoE 122B/10B) | JANG ~2.1-bit | vllm-mlx (JANG wrapper) | 34.5 | 405† | 323.9 | 2026-04-18 |
 | **Qwen3.5-35B-A3B JANG 4K** (MoE 35B/3B) | JANG ~4-bit | oMLX | 33.8 | 295.4 | — | 2026-03-24 (omlx.ai) |
 | **Gemma 4 26B-A4B** (MoE 26B/4B + VL) | 4-bit MLX | mlx-openai-server | 27.1 | 1,995 | 65.7 | 2026-04-17 |
-| **Qwen3.6-27B Fable-5 LoRA** (Dense 27B + runtime LoRA) | GGUF Q6_K + LoRA | llama-cpp-mainline | 13.0 | 293,979 | 0.45 | 2026-06-22 |
+| **Qwen3.6-27B Fable-5 LoRA** (Dense 27B + runtime LoRA, ChatML v4) | GGUF Q6_K + LoRA | llama-cpp-mainline | 13.0 | 292,299 | 0.45 | 2026-06-28 |
 
 \* Qwen3.6 prefill at 128K is the lowest of the 35B-class models because the hybrid stack's full-attention layers become memory-bound past 64K  
 † Qwen3.5-122B JANG 2S prefill normalised against requested 131,072; against the actual ~116,516-token filler the rate is ~360 tok/s
@@ -1122,21 +1122,22 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 
 ## 🤖 Qwen3.6-27B Fable-5 LoRA Q6_K on llama.cpp
 
-Model: `hotdogs/qwen3.6-27b-fable5-lora` GGUF LoRA over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf`.
-Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-ngl 99`, `-fa on`, `--jinja`, and `--reasoning on`. The cataloged alias uses 131K context; this raw exploratory run used `-c 262144` to probe the upper window.
+Model: `hotdogs/qwen3.6-27b-fable5-lora` **ChatML v4** GGUF LoRA (`qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf`) over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf`.
+Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-ngl 99`, `-fa on`, `--jinja`, `--reasoning on`, and `-c 262144` to probe the upper window. Throughput is identical to the prior v1 adapter (same base + same 76 MB LoRA size).
 
-**Streaming SSE results** (bench_api_server.py, 2 runs median):
+**Streaming SSE results** (bench_api_server.py, 2 runs median; 256K is a single cold run):
 
 | Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
 |:--|:--:|:--:|:--:|
-| 512 | 0.16 | 21.9 | 3,377 |
-| 4K | 0.16 | 21.5 | 25,092 |
-| 8K | 0.17 | 21.2 | 48,552 |
-| 32K | 0.21 | 19.5 | 157,345 |
-| 65K | 0.28 | 17.2 | 234,125 |
-| 131K | 0.45 | 13.0 | 293,979 |
+| 512 | 0.16 | 21.9 | 3,355 |
+| 4K | 0.17 | 21.6 | 25,074 |
+| 8K | 0.17 | 21.3 | 48,400 |
+| 32K | 0.21 | 19.6 | 157,298 |
+| 65K | 0.28 | 17.2 | 231,976 |
+| 131K | 0.45 | 13.0 | 292,299 |
+| 256K (cold) | 1,245 | 8.0 | ~206 |
 
-The server loaded `n_ctx=262144` and used about 50 GB RSS after the run. A nominal 262,144-token probe is rejected because chat-template overhead exceeds the context window; a nominal 260K probe timed out at 600 s and the server log showed cancellation at 200,212 processed tokens. Use 131K as the practical benchmarked ceiling for this runtime-LoRA deployment.
+The 512–131K TTFT/prefill figures are cache-warm (warmup run primes the KV cache; measured-run prefill reuses it, hence the implausibly high "prefill tok/s"). The **256K row is a single cold run**: a 256,025-token prompt prefilled in ~1,245 s (≈206 tok/s genuine cold prefill) then decoded 50 tokens at 8.0 tok/s. This is the first completed near-260K measurement — the 2026-06-22 attempt timed out at 600 s (cancelled at ~200K tokens); a 1,200 s client timeout let it finish. A nominal 262,144-token prompt is still rejected with HTTP 400 once chat-template overhead is added. The server used about 50 GB RSS. Use 131K as the practical interactive ceiling — a 20-minute cold prefill is not usable in an agent loop.
 
 Raw logs: [`logs/qwen36-27b-fable5-lora-q6k-131k/`](logs/qwen36-27b-fable5-lora-q6k-131k/)
 

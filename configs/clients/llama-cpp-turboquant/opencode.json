@@ -25,10 +25,19 @@
             "context": 65536,
             "output": 8192
           }
+        },
+        "gemma4-12b-agentic-v2-q8-turbo3-256k": {
+          "name": "Gemma 4 12B Agentic v2 Q8_0 + TurboQuant turbo3 KV (TheTom fork, 256K context)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         }
       }
     }
   },
-  "model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-turboquant-turbo3",
-  "small_model": "macstudio-llama-cpp-turboquant/qwen3.6-35b-a3b-turboquant-turbo3"
+  "model": "macstudio-llama-cpp-turboquant/gemma4-12b-agentic-v2-q8-turbo3-256k",
+  "small_model": "macstudio-llama-cpp-turboquant/gemma4-12b-agentic-v2-q8-turbo3-256k"
 }

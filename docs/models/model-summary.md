@@ -13,7 +13,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [OmniCoder-9B (8-bit)](#omnicoder-9b-8-bit) — Coding agent (agentic trajectories)
 - [Nemotron Family (vllm-mlx only)](#nemotron-family-vllm-mlx-only) — 3 variants + server compatibility note: Nano 30B, Super 120B, Cascade-2 30B. Detail at [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md)
 - [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
-- [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 15 variants: 35B-A3B 6-bit / 4-bit / Ollama 35B MLX / Osaurus JANGTQ4 / DavidAU Heretic 40B Q6_K IMatrix GGUF, prithivMLmods 35B-A3B Aggressive Q6_K GGUF, HauhauCS Aggressive Q6_K_P, 27B JANG 4M, 27B 6-bit, **Qwen3.6-27B Fable-5 LoRA Q6_K (ChatML v4) on llama.cpp (5/5 smoke, 21.9→13.0 tok/s @ 512→131K, browse 41.66 s / search 31.0 s, 131K practical context; cold 256K probe completes ~20 min prefill)**, HauhauCS Balanced Q8_K_P GGUF, prithivMLmods Q3.6-27B GLM-5.1-DA Q4_K_M (browse 11.62 s / search 19.47 s), 35B Rust LoRA, Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K, and llmfan46 Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
+- [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 15 variants: 35B-A3B 6-bit / 4-bit / Ollama 35B MLX / Osaurus JANGTQ4 / DavidAU Heretic 40B Q6_K IMatrix GGUF, prithivMLmods 35B-A3B Aggressive Q6_K GGUF, HauhauCS Aggressive Q6_K_P, 27B JANG 4M, 27B 6-bit, **Qwen3.6-27B Fable-5 LoRA Q6_K (ChatML v4) on llama.cpp (5/5 smoke, 21.9→13.0 tok/s @ 512→131K, browse 40.35 s / search 55.59 s very high variance, 131K practical context; fully-cold 256K completes ~32 min prefill)**, HauhauCS Balanced Q8_K_P GGUF, prithivMLmods Q3.6-27B GLM-5.1-DA Q4_K_M (browse 11.62 s / search 19.47 s), 35B Rust LoRA, Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K, and llmfan46 Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
 - [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
 - [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
 - [ChindaMT-4B (Thai ↔ English Translation)](#chindamt-4b-thai--english-translation) — **active mlx-lm sidecar on port 8080**, 186 tok/s, 2.2 GB MLX 4-bit, Apache-2.0. Qwen3.5-4B base + hybrid SSM architecture; GGUF not viable.
@@ -115,7 +115,7 @@ Two Qwen3-Coder variants used here. Per-variant detail (specs, server config, ca
 
 ## Qwen3.5 Family (MoE + dense distilled + JANG)
 
-Five Qwen3.5 variants catalogued here. Per-variant detail (specs, server config, caveats, JANG fork notes) lives in the dedicated per-model file: **[`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)**.
+Six Qwen3.5 variants catalogued here. Per-variant detail (specs, server config, caveats, JANG fork notes) lives in the dedicated per-model file: **[`per-model/model-summary-qwen-3-5.md`](per-model/model-summary-qwen-3-5.md)**.
 
 | Variant | Type | Size | Quant | Best For | Detail |
 |:--------|:-----|----:|:------|:---------|:-------|
@@ -123,6 +123,7 @@ Five Qwen3.5 variants catalogued here. Per-variant detail (specs, server config,
 | Qwen3.5-122B-A10B 4-bit | MoE 122B/10B + VL | 65 GB | Uniform 4-bit MLX | Agentic reasoning, multimodal | [link](per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-4-bit) |
 | Qwen3.5-122B-A10B JANG 2S | MoE 122B/10B + SSM | 35 GB | JANG mixed 2-bit avg | Compact 122B (200K+ context) | [link](per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) |
 | Qwen3.5-35B-A3B JANG 4K | MoE 35B/3B | 19 GB | JANG mixed 4-bit avg | Fast small MoE on oMLX (JANG fork) | [link](per-model/model-summary-qwen-3-5.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) |
+| Qwen-AgentWorld-35B-A3B UD-Q6_K | MoE 35B/3B | 27.3 GiB | Unsloth Dynamic 6-bit GGUF | Language world model / environment simulator; llama.cpp 131K context | [link](per-model/model-summary-qwen-3-5.md#qwen-agentworld-35b-a3b-ud-q6_k) |
 | Qwythos-9B Claude-Mythos-5-1M Q8_0 ⚠ | Dense 9B + VL | 8.87 GiB | Q8_0 GGUF (lm-studio) | ⚠ marketed uncensored, behaves aligned (1/10 mlabonne) — negative result | [link](per-model/model-summary-qwen-3-5.md#qwythos-9b-claude-mythos-5-1m-q8_0) |
 
 ---

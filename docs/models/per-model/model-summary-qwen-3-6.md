@@ -568,27 +568,29 @@ The adapter filename contains parentheses — quote the path (`"$ADAPTER"`) so t
 | 32K | 19.6 | 157,298 | 0.21 s |
 | 65K | 17.2 | 231,976 | 0.28 s |
 | 131K | 13.0 | 292,299 | 0.45 s |
-| 256K (cold) | 8.0 | ~206 (cold) | 1,245 s |
+| 256K (fully cold) | 8.1 | ~131 (cold) | 1,950 s |
 
-Throughput matches the v1 adapter within noise (same Q6_K base + same 76 MB LoRA). The 512–131K TTFT/prefill figures are cache-warm (the bench primes the KV cache with a warmup run, so measured-run prefill reuses it). The **256K row is a single cold run** — a 256,025-token prompt prefilled in ~1,245 s (≈206 tok/s genuine cold prefill) and then decoded 50 tokens at 8.0 tok/s. This is the first time the near-260K window completed: the prior 2026-06-22 attempt timed out at 600 s (cancelled at ~200K processed tokens); raising the client timeout to 1,200 s let it finish. A nominal 262,144-token prompt is still rejected with HTTP 400 once chat-template overhead is added, so ~256K is the real ceiling. Treat 131K as the practical agent ceiling — a 20-minute cold prefill is not interactive.
+Throughput matches the v1 adapter within noise (same Q6_K base + same 76 MB LoRA). The 512–131K TTFT/prefill figures are cache-warm (the bench primes the KV cache with a warmup run, so measured-run prefill reuses it). The **256K row is a single fully-cold run** on a freshly restarted server (empty prompt cache, no co-resident models) — a 256,025-token prompt prefilled in ~1,950 s (≈131 tok/s genuine cold prefill) then decoded 50 tokens at 8.1 tok/s. This is the first time the near-260K window completed; the prior 2026-06-22 attempt timed out at 600 s (cancelled at ~200K processed tokens). An earlier 2026-06-28 probe reported a faster ~1,245 s only because it ran right after the 512–131K curve and reused the shared `Hello world.` filler prefix via context checkpoints (so it prefilled just 131K→256K); the ~1,950 s figure is the true fully-cold cost. A nominal 262,144-token prompt is still rejected with HTTP 400 once chat-template overhead is added, so ~256K is the real ceiling. Treat 131K as the practical agent ceiling — a ~30-minute cold prefill is not interactive.
 
 ### Tool-call smoke + agent benchmark (OpenCode end-to-end, 2026-06-28, ChatML v4)
 
 **5/5 single-call** and 3-turn API loop **25.19 s**. All measured OpenCode runs fired `webfetch`.
 
+Run on a freshly restarted server with no co-resident models (`lms unload --all` first):
+
 | Scenario | Wall (median) | LLM (median) | Turns | Tools |
 |:---------|:-------------:|:------------:|:-----:|:------|
-| Browse www.example.com | **41.66 s** [30.16-58.85] | 39.13 s | 2 | `webfetch` |
-| Browse Hackernews latest | **31.0 s** [29.52-87.38] | 28.48 s | 2 | `webfetch` |
+| Browse www.example.com | **40.35 s** [26.06-119.19] | 37.78 s | 2 | `webfetch` |
+| Browse Hackernews latest | **55.59 s** [34.12-66.6] | 53.08 s | 2 | `webfetch` |
 
-Functional but not competitive, and high-variance: browse landed at 41.66 s (v1: 28.27 s) while the Hackernews scenario improved to 31.0 s (v1: 50.84 s) — both well inside this model's run-to-run spread (browse 30–59 s, search 29–87 s), so the swap is throughput-neutral as expected. Still slower than Jackrong Qwopus3.6-27B v2 MTP Q6_K (browse 16.96 s) and lm-studio Q4_K_M dense-27B GLM-5.1-DA (browse 11.62 s); the dense-27B-no-MTP decode path is the bottleneck, not the adapter.
+Functional but not competitive, and **very high-variance** — the dominant signal here is run-to-run instability, not the adapter. One clean browse run spiralled to 17 turns (calling `read`/`bash`/`write` it didn't need) before answering, pulling the p95 to 119 s; search bounced between 2 and 3 turns. A first pass with an idle 23.5 GB `gemma4-26b-a4b` co-resident on LM Studio gave browse 41.66 s / search 31.0 s; after unloading it and restarting clean, browse held (40.35 s) and search rose (55.59 s) — i.e. removing the neighbour did not help, confirming the earlier run was **not** memory-contention-biased (an idle model on Apple unified memory holds RAM but not bandwidth/compute). Still slower than Jackrong Qwopus3.6-27B v2 MTP Q6_K (browse 16.96 s) and lm-studio Q4_K_M dense-27B GLM-5.1-DA (browse 11.62 s); the dense-27B-no-MTP decode path plus the loop instability are the bottleneck, not the adapter.
 
 ### Caveats
 
 - LoRA path only: LM Studio does not expose a documented headless `lms load --lora` path, so this was tested on llama.cpp rather than merged/imported into LM Studio.
 - The startup log prints no adapter-load line at default verbosity; verify the LoRA with `GET /lora-adapters` rather than grepping the launch log.
 - No MTP heads in this base path; plain dense 27B Q6_K decode lands around 13-22 tok/s depending context (8 tok/s at 256K).
-- A 256K request now completes but takes a ~20-minute cold prefill via the standard HTTP harness; use 65K or 131K for reliable interactive agent work.
+- A 256K request now completes but takes a ~32-minute fully-cold prefill via the standard HTTP harness; use 65K or 131K for reliable interactive agent work.
 - Vision was not tested. The deployment used a text-only GGUF base without an `mmproj` companion.
 
 Raw logs: [`docs/models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/`](../benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/)

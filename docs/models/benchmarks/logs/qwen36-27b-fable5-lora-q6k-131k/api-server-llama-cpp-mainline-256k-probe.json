@@ -4,8 +4,8 @@
   "status": "ok",
   "prompt_tokens": 256025,
   "completion_tokens": 50,
-  "ttft_s": 1245.12,
-  "total_s": 1251.36,
+  "ttft_s": 1949.79,
+  "total_s": 1955.95,
   "delta_tokens": 50,
-  "decode_tok_s": 8.01
+  "decode_tok_s": 8.12
 }

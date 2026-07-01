@@ -17,14 +17,16 @@
 
 ## Overview
 
-`llama-cpp-mtp` is a sidecar `llama-server` for **Multi-Token Prediction (MTP) speculative decoding** and related mainline llama.cpp GGUF experiments. The common path is self-drafting heads for Qwen3.6 and an external assistant for Gemma 4; the same port also hosts runtime GGUF LoRA tests via mainline `--lora` when no MTP heads are involved. Two binaries are available:
+`llama-cpp-mtp` is a sidecar `llama-server` for **Multi-Token Prediction (MTP) speculative decoding** and related mainline llama.cpp GGUF experiments. The common path is self-drafting heads for Qwen3.6 and an external assistant for Gemma 4; the same port also hosts plain GGUF and runtime GGUF LoRA tests when no MTP heads are involved. Two binaries are available:
 
 - **Mainline `ggml-org/llama.cpp`** (preferred) — Qwen MTP merged upstream in May; Gemma 4 external-drafter MTP merged in [PR #23398](https://github.com/ggml-org/llama.cpp/pull/23398) on 2026-06-07. The pre-upgrade research baseline recorded on 2026-06-09 was commit `510b5c2` (2026-05-20).
 - **`am17an/llama.cpp@mtp-clean`** (legacy fork) — [PR #22673](https://github.com/ggml-org/llama.cpp/pull/22673). Built at `~/llama-cpp-mtp/` (build tag `b9172`).
 
 Both support `--spec-type draft-mtp` for Qwen. Only a post-2026-06-07 mainline build supports the Gemma 4 `gemma4_assistant` external drafter. The mainline binary is preferred for new models.
 
-Runtime-LoRA note: mainline `~/llama-cpp-mainline/build/bin/llama-server` supports `--lora <adapter.gguf>`. The Fable-5 test loads `hotdogs/qwen3.6-27b-fable5-lora` over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` with `--jinja --reasoning on` and no `--spec-type`; the cataloged adapter is the **ChatML v4** variant (`qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf`, swapped in 2026-06-28 — quote the parens-containing path). The startup log prints no adapter line at default verbosity — confirm via `GET /lora-adapters`. The catalog alias uses a 131K practical context; with `-c 262144` a single cold 256K probe (256,025 prompt tokens) now completes in ~20 min of cold prefill (the prior 2026-06-22 600 s attempt timed out at ~200K tokens). Raw benchmark logs live under [`../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/`](../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/).
+Runtime-LoRA note: mainline `~/llama-cpp-mainline/build/bin/llama-server` supports `--lora <adapter.gguf>`. The Fable-5 test loads `hotdogs/qwen3.6-27b-fable5-lora` over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` with `--jinja --reasoning on` and no `--spec-type`; the cataloged adapter is the **ChatML v4** variant (`qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf`, swapped in 2026-06-28 — quote the parens-containing path). The startup log prints no adapter line at default verbosity — confirm via `GET /lora-adapters`. The catalog alias uses a 131K practical context; with `-c 262144` a single fully-cold 256K probe (256,025 prompt tokens, empty cache) now completes in ~32 min of cold prefill (~131 tok/s, decode 8.1 tok/s; the prior 2026-06-22 600 s attempt timed out at ~200K tokens). A faster ~20 min figure from an earlier probe was partially warm — it reused the `Hello world.` filler prefix left in the prompt cache by the preceding 512–131K curve. Raw benchmark logs live under [`../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/`](../../models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/).
+
+Plain-GGUF note: `unsloth/Qwen-AgentWorld-35B-A3B-GGUF` `UD-Q6_K` also runs on this sidecar with `--jinja --reasoning on` and **no** `--spec-type`. The upstream config advertises `mtp_num_hidden_layers=1`, but the clean GGUF has no MTP / next-n tensors or GGUF MTP metadata. The benchmarked shape uses `-c 131072`, alias `qwen-agentworld-35b-a3b-ud-q6k`, and raw logs under [`../../models/benchmarks/logs/qwen-agentworld-35b-a3b-ud-q6k/`](../../models/benchmarks/logs/qwen-agentworld-35b-a3b-ud-q6k/).
 
 > **Technique reference:** for what MTP / Next-n prediction actually does at the algorithm level — extra prediction heads on the target model's hidden states, single-pass N-token drafts verified autoregressively, why acceptance rates are higher than drafter-based methods — see [`docs/models/techniques/model-technique-qwen-3-6-mtp.md`](../../models/techniques/model-technique-qwen-3-6-mtp.md). This runbook covers operational steps only.
 
@@ -42,6 +44,7 @@ MacBook                       Mac Studio M3 Ultra (<MAC_STUDIO_IP>)
 │ OpenClaw       │            │   models: unsloth UD-Q6_K_XL (dense 27B)   │
 │ Pi             │            │     llmfan46 heretic-v2 Q6_K (dense 27B)   │
 │                │            │     huihui-ai Q6_K (MoE 35B/3B, ~27 GB)   │
+│                │            │     Qwen-AgentWorld UD-Q6_K (MoE 35B/3B)  │
 │                │            │     Gemma 4 31B + external assistant       │
 └────────────────┘            │   --spec-type draft-mtp                     │
                               │   --spec-draft-n-max 2                      │
@@ -151,6 +154,19 @@ Key flags:
 - **`--reasoning on`** — exposes the `<think>` block as `reasoning_content` separate from `content`. Required for agent / tool use; **see Known limitations** for a perf-bench-specific caveat.
 
 Stop with: `ssh macstudio "pkill -f 'llama-cpp-mainline/build/bin/llama-server'; pkill -f 'llama-cpp-mtp/build/bin/llama-server'"`.
+
+Plain GGUF example, AgentWorld at 131K context:
+
+```bash
+ssh macstudio 'GGUF="$HOME/.cache/huggingface/hub/models--unsloth--Qwen-AgentWorld-35B-A3B-GGUF/snapshots/3a305abf5cfd119ee999dfe929c433746edd8d63/Qwen-AgentWorld-35B-A3B-UD-Q6_K.gguf"; \
+  nohup "$HOME/llama-cpp-mainline/build/bin/llama-server" \
+    -m "$GGUF" -ngl 99 -fa on -np 1 -c 131072 \
+    --host 0.0.0.0 --port 8100 \
+    --alias qwen-agentworld-35b-a3b-ud-q6k \
+    --jinja --reasoning on > /tmp/qwen-agentworld-llama-cpp.log 2>&1 &'
+```
+
+Do not add `--spec-type draft-mtp` for this GGUF. It is a Qwen3.5 MoE world-model file, but the exported GGUF is a plain target model, not an MTP bundle.
 
 ## Gemma 4 31B external MTP drafter
 
@@ -272,6 +288,23 @@ Smoke (`bench_api_tool_call.py`): **5/5 single-call**, multi-turn loop **21.92 s
 OpenCode end-to-end (`bench_agent_tool_call.py`, opencode 1.14.50, 1 warmup + 3 measured): **browse 35.98 s / search 35.24 s** median wall, 2 turns + `webfetch` fired on every measured run. Slower than the Q4_K_M-class builds on lm-studio (e.g. GLM-5.1-DA browse 11.62 s / search 19.47 s) because UD-Q6_K_XL is a heavier weight bundle and the dense 27 B layer count means MTP's ~1.5–2× speedup isn't enough to close the gap. The MTP heads themselves work as advertised — 84–89 % acceptance is at the upper end of Unsloth's claim.
 
 Raw bench JSONs: [`docs/models/benchmarks/logs/qwen36-27b-mtp/`](../../models/benchmarks/logs/qwen36-27b-mtp/).
+
+### Plain GGUF: Qwen-AgentWorld-35B-A3B UD-Q6_K at 131K
+
+Tested on `unsloth/Qwen-AgentWorld-35B-A3B-GGUF` `UD-Q6_K` (2026-07-01) with the mainline binary, no MTP/speculative flags, `-c 131072`.
+
+| Context | Warm TTFT | Decode tok/s | Prefill tok/s |
+|:--:|:--:|:--:|:--:|
+| 512 | 0.034 s | 81.5 | 15,903 |
+| 4K | 0.038 s | 80.3 | 108,118 |
+| 8K | 0.041 s | 77.7 | 200,124 |
+| 32K | 0.066 s | 69.3 | 494,449 |
+| 65K | 0.110 s | 60.6 | 594,526 |
+| 120K nominal | 0.190 s | 49.4 | 632,798 |
+
+The prompt cache was warm from the preceding sweep, so the prefill numbers are cache-warm rather than cold-prefill measurements. Tool smoke: **4/5** at a 1024-token cap, with a clean **6.22 s** 3-turn read/write loop. OpenCode: **browse 22.52 s / search 39.47 s** median; search completed but often chose `bash` fetches rather than only `webfetch`.
+
+Raw bench JSONs: [`../../models/benchmarks/logs/qwen-agentworld-35b-a3b-ud-q6k/`](../../models/benchmarks/logs/qwen-agentworld-35b-a3b-ud-q6k/).
 
 ## Known limitations
 

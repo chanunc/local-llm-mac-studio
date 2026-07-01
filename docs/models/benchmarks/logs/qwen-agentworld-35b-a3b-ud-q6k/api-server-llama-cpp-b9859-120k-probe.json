@@ -1,0 +1,34 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-07-01T21:58:41.254638+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:8100/v1",
+    "model": "qwen-agentworld-35b-a3b-ud-q6k",
+    "max_tokens": 20,
+    "warmup": 0,
+    "runs": 1,
+    "contexts": [
+      120000
+    ]
+  },
+  "results": {
+    "120000": {
+      "runs": [
+        {
+          "ttft_s": 1.248,
+          "total_s": 1.652,
+          "input_tokens": 120026,
+          "output_tokens": 20,
+          "gen_tps": 49.4,
+          "prefill_tps": 96209.6
+        }
+      ],
+      "median_ttft_s": 1.248,
+      "median_gen_tps": 49.4,
+      "median_prefill_tps": 96209.6,
+      "input_tokens": 120026,
+      "output_tokens": 20
+    }
+  }
+}

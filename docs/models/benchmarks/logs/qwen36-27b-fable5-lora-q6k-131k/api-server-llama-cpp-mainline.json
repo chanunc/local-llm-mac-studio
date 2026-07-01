@@ -1,0 +1,172 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-06-28T16:27:20.121485+00:00",
+  "config": {
+    "base_url": "http://192.168.31.4:8100/v1",
+    "model": "qwen36-27b-fable5-lora-q6k-131k",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      4096,
+      8192,
+      32768,
+      65536,
+      131072
+    ]
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 0.16,
+          "total_s": 2.441,
+          "input_tokens": 536,
+          "output_tokens": 50,
+          "gen_tps": 21.92,
+          "prefill_tps": 3353.1
+        },
+        {
+          "ttft_s": 0.16,
+          "total_s": 2.441,
+          "input_tokens": 536,
+          "output_tokens": 50,
+          "gen_tps": 21.92,
+          "prefill_tps": 3356.6
+        }
+      ],
+      "median_ttft_s": 0.16,
+      "median_gen_tps": 21.92,
+      "median_prefill_tps": 3354.85,
+      "input_tokens": 536,
+      "output_tokens": 50
+    },
+    "4096": {
+      "runs": [
+        {
+          "ttft_s": 0.164,
+          "total_s": 2.482,
+          "input_tokens": 4121,
+          "output_tokens": 50,
+          "gen_tps": 21.57,
+          "prefill_tps": 25112.8
+        },
+        {
+          "ttft_s": 0.165,
+          "total_s": 2.481,
+          "input_tokens": 4121,
+          "output_tokens": 50,
+          "gen_tps": 21.59,
+          "prefill_tps": 25034.6
+        }
+      ],
+      "median_ttft_s": 0.165,
+      "median_gen_tps": 21.58,
+      "median_prefill_tps": 25073.7,
+      "input_tokens": 4121,
+      "output_tokens": 50
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 0.17,
+          "total_s": 2.522,
+          "input_tokens": 8216,
+          "output_tokens": 50,
+          "gen_tps": 21.25,
+          "prefill_tps": 48387.9
+        },
+        {
+          "ttft_s": 0.17,
+          "total_s": 2.522,
+          "input_tokens": 8216,
+          "output_tokens": 50,
+          "gen_tps": 21.26,
+          "prefill_tps": 48411.3
+        }
+      ],
+      "median_ttft_s": 0.17,
+      "median_gen_tps": 21.255,
+      "median_prefill_tps": 48399.6,
+      "input_tokens": 8216,
+      "output_tokens": 50
+    },
+    "32768": {
+      "runs": [
+        {
+          "ttft_s": 0.208,
+          "total_s": 2.765,
+          "input_tokens": 32792,
+          "output_tokens": 50,
+          "gen_tps": 19.55,
+          "prefill_tps": 157550.8
+        },
+        {
+          "ttft_s": 0.209,
+          "total_s": 2.765,
+          "input_tokens": 32792,
+          "output_tokens": 50,
+          "gen_tps": 19.56,
+          "prefill_tps": 157046.1
+        }
+      ],
+      "median_ttft_s": 0.208,
+      "median_gen_tps": 19.555,
+      "median_prefill_tps": 157298.45,
+      "input_tokens": 32792,
+      "output_tokens": 50
+    },
+    "65536": {
+      "runs": [
+        {
+          "ttft_s": 0.282,
+          "total_s": 3.189,
+          "input_tokens": 65561,
+          "output_tokens": 50,
+          "gen_tps": 17.2,
+          "prefill_tps": 232163.4
+        },
+        {
+          "ttft_s": 0.283,
+          "total_s": 3.19,
+          "input_tokens": 65561,
+          "output_tokens": 50,
+          "gen_tps": 17.2,
+          "prefill_tps": 231788.6
+        }
+      ],
+      "median_ttft_s": 0.282,
+      "median_gen_tps": 17.2,
+      "median_prefill_tps": 231976.0,
+      "input_tokens": 65561,
+      "output_tokens": 50
+    },
+    "131072": {
+      "runs": [
+        {
+          "ttft_s": 0.448,
+          "total_s": 4.307,
+          "input_tokens": 131096,
+          "output_tokens": 50,
+          "gen_tps": 12.96,
+          "prefill_tps": 292586.3
+        },
+        {
+          "ttft_s": 0.449,
+          "total_s": 4.306,
+          "input_tokens": 131096,
+          "output_tokens": 50,
+          "gen_tps": 12.96,
+          "prefill_tps": 292011.8
+        }
+      ],
+      "median_ttft_s": 0.449,
+      "median_gen_tps": 12.96,
+      "median_prefill_tps": 292299.05,
+      "input_tokens": 131096,
+      "output_tokens": 50
+    }
+  }
+}

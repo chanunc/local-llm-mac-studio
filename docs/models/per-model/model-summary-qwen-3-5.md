@@ -1,6 +1,6 @@
 # Model Summary: Qwen3.5 Family
 
-Alibaba's Qwen3.5 generation as catalogued in this stack. Four variants spanning dense 27 B distilled-reasoning, the flagship 122 B/10 B-active multimodal MoE, JANG-quantised compact-122 B, and the 35 B/3 B-active MoE in JANG mixed-precision form.
+Alibaba's Qwen3.5 generation as catalogued in this stack. Six variants spanning dense 27 B distilled-reasoning, the flagship 122 B/10 B-active multimodal MoE, JANG-quantised compact-122 B, the 35 B/3 B-active MoE in JANG mixed-precision form, the 35 B/3 B-active AgentWorld language world model GGUF, and a 9 B dense GGUF marketed "uncensored" that benchmarks as aligned (negative result).
 
 ## Index
 
@@ -8,6 +8,8 @@ Alibaba's Qwen3.5 generation as catalogued in this stack. Four variants spanning
 - [Qwen3.5-122B-A10B (4-bit)](#qwen35-122b-a10b-4-bit) — Agentic reasoning
 - [Qwen3.5-122B-A10B JANG 2S](#qwen35-122b-a10b-jang-2s) — Compact 122 B · 46% smaller than MLX 4-bit
 - [Qwen3.5-35B-A3B JANG 4-bit (Mixed Precision)](#qwen35-35b-a3b-jang-4-bit-mixed-precision) — JANG adaptive quantization · 48% smaller than MLX 8-bit
+- [Qwen-AgentWorld-35B-A3B UD-Q6_K](#qwen-agentworld-35b-a3b-ud-q6_k) — Language world model / environment simulator, llama.cpp GGUF
+- [Qwythos-9B Claude-Mythos-5-1M Q8_0](#qwythos-9b-claude-mythos-5-1m-q8_0) — ⚠ marketed uncensored, behaves aligned (negative result)
 
 ---
 
@@ -117,6 +119,70 @@ First JANG-format model on the oMLX server. Uses adaptive mixed-precision quanti
 - JANG ecosystem is early stage; no community validation of quality claims
 - Future `brew upgrade omlx` will overwrite the fork — must re-apply after upgrades
 - Detected as VLM model type (`qwen3_5_moe`) in oMLX discovery
+
+---
+
+## 🤖 Qwen-AgentWorld-35B-A3B UD-Q6_K
+
+Qwen-AgentWorld is a Qwen3.5 MoE language world model: it is trained to simulate agent environments and feedback across MCP, Search, Terminal, SWE, Android, Web, OS, and related tool-use tasks. Treat it as an agent-environment / world-model experiment, not a normal assistant fine-tune.
+
+| Spec | Value |
+|:-----|:------|
+| Base Model | [Qwen/Qwen-AgentWorld-35B-A3B](https://huggingface.co/Qwen/Qwen-AgentWorld-35B-A3B) |
+| GGUF | [unsloth/Qwen-AgentWorld-35B-A3B-GGUF](https://huggingface.co/unsloth/Qwen-AgentWorld-35B-A3B-GGUF) |
+| File | `Qwen-AgentWorld-35B-A3B-UD-Q6_K.gguf` |
+| Vendor | Alibaba Qwen team; GGUF quantization by Unsloth |
+| Parameters | 34.7B total, ~3B active (256 experts, 8 routed) |
+| Density | Sparse MoE (`qwen35moe`) |
+| Quantization | Unsloth Dynamic 6-bit GGUF (`UD-Q6_K`), 27.3 GiB |
+| Context Size | 262,144 train context; benchmarked at `-c 131072` |
+| Server | `llama-cpp-mainline` on port 8100, plain GGUF path, no MTP/speculative flags |
+| Tool-call | API smoke **4/5** at 1024-token cap; multi-turn loop **6.22 s** |
+| Agent loop | OpenCode browse **22.52 s** / search **39.47 s** median |
+| Throughput | 81.5 tok/s @ 512, 60.6 tok/s @ 65K, 49.4 tok/s @ 120K nominal |
+
+**Launch shape:**
+
+```bash
+ssh macstudio 'GGUF="$HOME/.cache/huggingface/hub/models--unsloth--Qwen-AgentWorld-35B-A3B-GGUF/snapshots/3a305abf5cfd119ee999dfe929c433746edd8d63/Qwen-AgentWorld-35B-A3B-UD-Q6_K.gguf"; \
+  nohup "$HOME/llama-cpp-mainline/build/bin/llama-server" \
+    -m "$GGUF" -ngl 99 -fa on -np 1 -c 131072 \
+    --host 0.0.0.0 --port 8100 \
+    --alias qwen-agentworld-35b-a3b-ud-q6k \
+    --jinja --reasoning on > /tmp/qwen-agentworld-llama-cpp.log 2>&1 &'
+```
+
+**Caveats:**
+- The upstream config advertises `mtp_num_hidden_layers=1`, but the clean GGUF has no MTP / next-n tensors or GGUF MTP metadata. Run it without `--spec-type draft-mtp`.
+- The API smoke miss is the `Find the largest file in /tmp` scenario hitting the harness's 1024-token cap (`finish_reason=length`) before a tool call. The read/write multi-turn loop completes cleanly.
+- OpenCode search worked but often chose local `bash` fetches instead of only `webfetch`; count this as tool-capable but not a drop-in replacement for the fastest assistant-tuned Qwen/Gemma agent models.
+- The perf sweep used llama.cpp prompt cache warmups; 512-120K prefill tok/s values are cache-warm and should not be read as cold-prefill throughput.
+- Text-only run. No `mmproj` was loaded.
+
+Raw logs: [`../benchmarks/logs/qwen-agentworld-35b-a3b-ud-q6k/`](../benchmarks/logs/qwen-agentworld-35b-a3b-ud-q6k/).
+
+---
+
+## 🤖 Qwythos-9B Claude-Mythos-5-1M Q8_0
+
+Dense 9 B Qwen3.5 + vision GGUF from empero-ai, marketed as "uncensored" (cybersecurity / red-teaming / pharmacology framing). **Benchmarks as effectively aligned** — a documented negative result, not a usable uncensored model. Full deploy + perf + refusal writeup: [`docs/models/uncen-model/qwythos-9b-mythos5-benchmark.md`](../uncen-model/qwythos-9b-mythos5-benchmark.md).
+
+| Spec | Value |
+|:-----|:------|
+| HuggingFace | [empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF](https://huggingface.co/empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF) |
+| Architecture | `qwen35` dense 9 B + vision (`mmproj` available, skipped for benchmarks) |
+| Quantization | Q8_0 GGUF (8.87 GiB on disk / resident) |
+| Server | lm-studio (GGUF); no parser flags (LM Studio handles Qwen3 chat-template + `<think>`) |
+| Throughput | 64.7 tok/s @ 512, 52.3 @ 65K; prefill ~123K tok/s @ 65K |
+| Tool-call | API smoke **5/5**, multi-turn 3/3; OpenCode browse 9.38 s / search 18.27 s (webfetch fired) |
+| Refusal (mlabonne 10/520) | **1/10 complied (9/10 refused), ~0/10 useful** — lowest of any lm-studio entry |
+| Context | 131072 loaded (1M native via YaRN) |
+| License | Apache 2.0 |
+
+**Caveats:**
+- **Not actually uncensored** — refuses or pivots to "ethical/educational" framings on 9/10 harm prompts; do not deploy for uncensored work.
+- **Vendor identity-injection** — asserts "I'm Qwythos, an AI created by Empero AI" in ~9/10 replies; overrides system-prompt persona.
+- Tooling itself is fine — the alignment is the only disqualifier.
 
 ---
 

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan: switch_top_model.py — benchmark-driven model switcher</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --card2: #232737; --line: #2e3347;
+    --txt: #e2e6f0; --dim: #8b93a7; --acc: #5eead4; --acc2: #818cf8;
+    --gold: #fbbf24; --green: #4ade80; --red: #f87171; --orange: #fb923c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--txt); font: 15px/1.5 -apple-system, "SF Pro Text", Segoe UI, sans-serif; padding: 32px 20px 60px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  h1 code { color: var(--acc); font-size: 24px; }
+  .sub { color: var(--dim); margin-bottom: 18px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge { padding: 3px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--line); }
+  .b-status { background: #1e3a2f; color: var(--green); border-color: #2f5a47; }
+  .b-date { background: var(--card2); color: var(--dim); }
+  .b-event { background: #2a2440; color: var(--acc2); border-color: #3d3560; }
+  .b-rel { background: #3a2a1e; color: var(--orange); border-color: #5a432f; }
+  h2 { font-size: 17px; margin: 34px 0 14px; color: var(--acc); letter-spacing: .02em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .card h3 { font-size: 14px; margin-bottom: 8px; }
+  .card p, .card li { font-size: 13px; color: var(--dim); }
+  .card ul { padding-left: 18px; }
+  code { background: var(--card2); padding: 1px 6px; border-radius: 5px; font: 12px/1.4 "SF Mono", ui-monospace, monospace; color: #c4cbe0; }
+  /* flow timeline */
+  .flow { list-style: none; counter-reset: step; }
+  .flow li { position: relative; padding: 0 0 22px 56px; counter-increment: step; }
+  .flow li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--card2); border: 2px solid var(--acc2); color: var(--acc2); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .flow li:not(:last-child)::after { content: ""; position: absolute; left: 17px; top: 40px; bottom: 4px; width: 2px; background: var(--line); }
+  .flow b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .flow span { font-size: 13px; color: var(--dim); }
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td.t { font-weight: 600; }
+  .pill { padding: 1px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .p-lms { background: #1e3a2f; color: var(--green); }
+  .p-llama { background: #2a2440; color: var(--acc2); }
+  .p-other { background: #3a2a1e; color: var(--orange); }
+  .gold { color: var(--gold); }
+  .warn { border-left: 3px solid var(--orange); }
+  .ok { border-left: 3px solid var(--green); }
+  .muted { color: var(--dim); }
+  .kbd { font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>📋 <code>scripts/switch_top_model.py</code></h1>
+<div class="sub">One command: pick model type → pick a top-5 fastest OpenCode-benchmark model → server switched, OpenCode synced, tool call smoke-tested.</div>
+<div class="badges">
+  <span class="badge b-status">● ACTIVE — awaiting execution</span>
+  <span class="badge b-date">Created 2026-06-11</span>
+  <span class="badge b-event">Event 5 · scripts helper</span>
+  <span class="badge b-rel">↔ related: plan-switch-server.md (older, generic)</span>
+</div>
+
+<h2>⚡ Flow</h2>
+<ol class="flow">
+  <li><b>Parse benchmark table</b><span>Re-parsed every run from <code>model-benchmark-tool-call.md</code> §OpenCode end-to-end · columns found by header name · fails loudly on format change</span></li>
+  <li><b>Pick model type</b><span>🧱 Dense · 🧩 Hybrid MoE · 🔀 MoE — then top 5 in group by browse wall time ↑ (skip ⛔ rows)</span></li>
+  <li><b>Availability guard</b><span><code>lms ls</code> / <code>test -e gguf</code> BEFORE stopping anything · missing → “removed by storage cleanup” + re-download hint, exit 1</span></li>
+  <li><b>Stop running servers</b><span>Detect via <code>chk_llm_macstu.probe()</code> · stop ALL LLM servers (Event-4 hygiene) · skip if target already serving model</span></li>
+  <li><b>Start target</b><span>lm-studio: guardrail off → <code>lms load</code> → guardrail high → <code>lms server start</code> · others: verbatim <code>nohup … &amp;</code> recipe · poll <code>/v1/models</code> ≤180 s</span></li>
+  <li><b>Sync OpenCode</b><span><code>switch_opencode_config.switch_server(server, model_override)</code> → <code>~/.config/opencode/opencode.json</code></span></li>
+  <li><b>Smoke test</b><span>1 tool def (<code>read_file</code> from bench fixture) → pass = <code>tool_calls</code> in response · prints args + latency · exit 0/1</span></li>
+</ol>
+
+<h2>🏁 Current top-5 per group (registry ships these 15 recipes)</h2>
+<div class="grid">
+  <div class="card">
+    <h3>🔀 MoE</h3>
+    <table>
+      <tr><td class="t gold">Huihui Gemma 26B i1-Q6_K</td><td><span class="pill p-lms">lm-studio</span></td><td>2.55s</td></tr>
+      <tr><td class="t">TrevorJS Gemma 26B Q8_0</td><td><span class="pill p-lms">lm-studio</span></td><td>2.93s</td></tr>
+      <tr><td class="t">lmstudio-comm. Gemma Q8_0</td><td><span class="pill p-lms">lm-studio</span></td><td>2.94s</td></tr>
+      <tr><td class="t">mlx-comm. Gemma 4-bit MLX</td><td><span class="pill p-lms">lm-studio</span></td><td>3.29s</td></tr>
+      <tr><td class="t">lmstudio-comm. Gemma Q8_0</td><td><span class="pill p-llama">llama-cpp :8100</span></td><td>3.48s</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>🧩 Hybrid MoE</h3>
+    <table>
+      <tr><td class="t gold">Huihui Qwen3.6-35B MTP Q6_K</td><td><span class="pill p-llama">llama-cpp :8100</span></td><td>3.40s</td></tr>
+      <tr><td class="t">unsloth Qwen3.6-35B UD-Q6_K</td><td><span class="pill p-lms">lm-studio</span></td><td>4.92s</td></tr>
+      <tr><td class="t">prithivMLmods Aggressive Q6_K</td><td><span class="pill p-lms">lm-studio</span></td><td>5.05s</td></tr>
+      <tr><td class="t">HauhauCS Aggressive Q6_K_P</td><td><span class="pill p-lms">lm-studio</span></td><td>5.14s</td></tr>
+      <tr><td class="t">TurboQuant turbo3 V (TheTom)</td><td><span class="pill p-llama">llama-cpp :8099</span></td><td>6.47s</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>🧱 Dense</h3>
+    <table>
+      <tr><td class="t gold">Granite 4.1 30B Q8_0</td><td><span class="pill p-lms">lm-studio</span></td><td>6.24s</td></tr>
+      <tr><td class="t">Dolphin Venice 24B MLX-8bit</td><td><span class="pill p-lms">lm-studio</span></td><td>6.62s</td></tr>
+      <tr><td class="t">TrevorJS Gemma 31B Q4_K_M</td><td><span class="pill p-lms">lm-studio</span></td><td>6.63s</td></tr>
+      <tr><td class="t">MiniCPM5-1B</td><td><span class="pill p-other">sglang :30000</span></td><td>7.28s</td></tr>
+      <tr><td class="t">Dolphin 3.0 R1 24B MLX-8bit</td><td><span class="pill p-lms">lm-studio</span></td><td>7.5s</td></tr>
+    </table>
+  </div>
+</div>
+<p class="muted" style="font-size:12px;margin-top:8px">Times = browse wall, table snapshot 2026-06-11 — the script re-ranks from the live table on every run.</p>
+
+<h2>🧬 Design pillars</h2>
+<div class="grid">
+  <div class="card ok">
+    <h3>Dynamic ranking, static recipes</h3>
+    <p>Top-5 always re-parsed from the markdown. <code>LAUNCH_RECIPES</code> keyed by model-name substring carries what the table can't: GGUF paths, <code>lms</code> keys, parser flags. Unknown new model → listed as <code>[no launch recipe]</code>, ~6-line dict entry to enable.</p>
+  </div>
+  <div class="card ok">
+    <h3>Maximum reuse</h3>
+    <ul>
+      <li><code>chk_llm_macstu.py</code> → probe / identify / loaded-model</li>
+      <li><code>switch_opencode_config.py</code> → IP + config write</li>
+      <li><code>bench_api_tool_call.py</code> → <code>read_file</code> tool fixture</li>
+      <li>Start/stop commands verbatim from CLAUDE.md</li>
+    </ul>
+  </div>
+  <div class="card warn">
+    <h3>Guards</h3>
+    <ul>
+      <li>Disk check <b>before</b> any server is stopped</li>
+      <li>lm-studio guardrail off→load→high dance</li>
+      <li>Key collisions pinned with <code>--identifier</code></li>
+      <li>No run-state written to any doc (Sync Policy)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>CLI</h3>
+    <p class="kbd"><code>switch_top_model.py</code> — interactive<br>
+    <code>--pick moe:1</code> — scripted<br>
+    <code>--dry-run</code> — print SSH cmds only<br>
+    <code>--ssh-host macstudio-ts</code> — Tailscale</p>
+  </div>
+</div>
+
+<h2>✅ Verification</h2>
+<div class="grid">
+  <div class="card"><h3>1 · Dry run</h3><p><code>--dry-run --pick moe:1</code> → top-5 parse correct, commands match CLAUDE.md</p></div>
+  <div class="card"><h3>2 · Real switch</h3><p>MoE → Huihui Gemma 26B · <code>lms ps</code> shows model · smoke test fires <code>read_file</code></p></div>
+  <div class="card"><h3>3 · State + client</h3><p><code>chk_llm_macstu.py</code> reports lm-studio:1234 · opencode.json points at new model</p></div>
+  <div class="card"><h3>4 · Negative path</h3><p>Bogus <code>lms_key</code> → "not on disk" message, running server untouched</p></div>
+</div>
+
+</div>
+</body>
+</html>

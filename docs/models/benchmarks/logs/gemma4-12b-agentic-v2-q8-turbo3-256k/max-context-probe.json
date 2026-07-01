@@ -1,0 +1,29 @@
+{
+  "benchmark": "near-max-context-probe",
+  "model": "gemma4-12b-agentic-v2-q8-turbo3-256k",
+  "base_url": "http://192.168.31.4:8099/v1",
+  "server": "llama-cpp-turboquant :8099 (TheTom fork 69d8e4b)",
+  "model_file": "gemma4-v2-Q8_0.gguf",
+  "server_context": 262144,
+  "target_context": 260000,
+  "observed_prompt_tokens": 260024,
+  "observed_generated_tokens": 8,
+  "truncated": false,
+  "http_status": 200,
+  "server_timing": {
+    "prompt_eval_time_ms": 1177608.16,
+    "prompt_eval_tokens": 128940,
+    "prompt_eval_ms_per_token": 9.13,
+    "prompt_eval_tps": 109.49,
+    "eval_time_ms": 624.52,
+    "eval_tokens": 8,
+    "eval_ms_per_token": 78.07,
+    "eval_tps": 12.81,
+    "total_time_ms": 1178232.68
+  },
+  "notes": [
+    "Measured from /tmp/llama-cpp-gemma4-12b-turbo3.log because the local urllib client remained blocked after the server logged HTTP 200.",
+    "A nominal 262144-token benchmark prompt was rejected before generation because chat-template overhead made the request 262176 tokens, exceeding the 262144-token slot.",
+    "The 260024-token request completed without truncation, proving practical near-256K context fit with Q8_0 and TurboQuant KV."
+  ]
+}

@@ -397,9 +397,9 @@ tail -f /tmp/llama-cpp-turboquant.log                                           
 # See docs/servers/llama-cpp-mtp/summary.md and
 # docs/models/techniques/model-technique-qwen-3-6-mtp.md.
 
-# Recommended — huihui-ai MoE 35B/3B MTP Q6_K (mainline binary, 78.5 tok/s,
-# 83% MTP acceptance, browse 4.74 s, 10/10 mlabonne, Claude 4.7 Opus distilled)
-GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-Q6_K.gguf
+# Recommended — huihui-ai MoE 35B/3B MTP Q6_K (mainline binary, 94.4 tok/s,
+# 83% MTP acceptance, browse 3.40 s, 10/10 mlabonne, Claude 4.7 Opus distilled)
+GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-ggml-model-Q6_K.gguf
 nohup ~/llama-cpp-mainline/build/bin/llama-server \
   -m "$GGUF" \
   -ngl 99 -fa on -np 1 -c 32768 \
@@ -709,7 +709,7 @@ Server maintenance: [vllm-mlx](docs/servers/vllm-mlx/maintenance.md) · [oMLX](d
 All models fit in **96GB unified memory**.
 
 <details>
-<summary>🧱 <strong>Dense</strong> — 14 models</summary>
+<summary>🧱 <strong>Dense</strong> — 15 models</summary>
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--|:--|--:|--:|:--|
@@ -722,7 +722,9 @@ All models fit in **96GB unified memory**.
 | [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](docs/models/uncen-model/qwen36-27b-glm51-da-benchmark.md) | Dense 27B + VL (think-on) | 15.41 | 65K | Prior production main (2026-05-14 → 2026-05-15 on lm-studio port 1234) — Apache 2.0, prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation, decode 31 / 30 / 29 / 27 tok/s @ 512 / 4K / 8K / 32K, smoke 5/5 + multi-turn 3/3 at API layer, refusal 9/10 @ 1024 tok, OpenCode browse **11.62 s** / search **19.47 s** @ 2 turns w/ `webfetch`. Launch recipe: `lms load 'q3.6-27b-glm-5.1-da' --gpu max --context-length 65536 --identifier 'qwen3.6-27b-glm51-da-q4km' -y; lms server start --bind 0.0.0.0 --cors` |
 | [Qwen3-Coder-Next 6-bit](docs/models/per-model/model-summary-qwen-3-coder.md#qwen3-coder-next-6-bit) | Dense 80B | 60 | 170K | Coding specialist |
 | [Qwen3.5-27B Opus Distilled](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-27b-claude-opus-distilled-qx64-hi) | Dense 27B | 19 | 128K | Reasoning / chain-of-thought |
+| [Qwythos-9B Claude-Mythos-5-1M Q8_0 ⚠](docs/models/uncen-model/qwythos-9b-mythos5-benchmark.md) | Dense 9B + VL | 8.87 | 131K (1M YaRN) | ⚠ Marketed uncensored, **behaves aligned** (1/10 mlabonne, ~0/10 useful — lowest of any lm-studio entry; injects "Qwythos/Empero AI" identity). Tooling fine (smoke 5/5, browse 9.38 s / search 18.27 s), 64.7 tok/s. Documented negative result — do not use for uncensored work |
 | [Qwen3.6-27B JANG 4M](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-jang-4m-dense--vl) | Dense 27B + VL | 17.5 | 262K (1M YaRN) | Dense Qwen3.6 hybrid; JANG 4/8-bit (vllm-mlx text-only) |
+| [Qwen3.6-27B Fable-5 LoRA Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#qwen36-27b-fable-5-lora-q6_k) | Dense 27B + runtime LoRA (ChatML v4) | 22.5 + 0.08 | 131K | Standard agent-trace LoRA (ChatML v4) over unsloth Q6_K GGUF via `llama-cpp-mainline --lora`; 5/5 smoke, 21.9→13.0 tok/s @ 512→131K, OpenCode browse 40.35 s / search 55.59 s (very high variance). Fully-cold 256K completes (~32 min prefill, 8.1 tok/s) |
 | [TrevorJS Gemma 4 31B-it Uncensored Q4_K_M](docs/models/uncen-model/gemma4-31b-it-uncensored-trevorjs-benchmark.md) | Dense 31B | 17.4 | 65K | Prior production main (2026-05-10 → 2026-05-12) — Apache 2.0, abliteration, no-think, 30 tok/s @ 512, **API multi-turn 6.73 s**, OpenCode warm-cache browse **6.63 s** _(initial 10.08 s)_ / search 30.81 s; refusal **harness 6–7/10 / manual 10/10** (disclaimer-prefixed complies) |
 | [unsloth Qwen3.6-27B-MTP UD-Q6_K_XL](docs/models/techniques/model-technique-qwen-3-6-mtp.md) | Dense 27B + MTP heads (vision broken under MTP) | 26 | 32K (262K train) | Prior production main (deployed 2026-05-15 on `llama-cpp-mtp` port 8100, superseded same day by lm-studio + Huihui) — Apache 2.0 base, Unsloth Dynamic 2.0 6-bit GGUF + Multi-Token Prediction self-drafting heads, **84–89 % MTP draft acceptance**, decode 22.9 / 22.3 / 22.0 / 20.0 tok/s @ 414 / 3 648 / 7 274 / 29 128 input tokens, smoke 5/5 + multi-turn 21.92 s, OpenCode browse **35.98 s** / search **35.24 s** @ 2 turns w/ `webfetch` (slower than the GLM-5.1-DA Q4_K_M build) |
 | [llmfan46 Qwen3.6-27B Heretic v2 MTP Q6_K](docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) | Dense 27B + 15 native MTP params | 22.2 | 131K | Heretic v1.3.0 MPOA abliteration (`attn.o_proj`/`mlp.down_proj`) + MTP self-drafting, ~74% MTP acceptance, 24.6 tok/s, 10/10 mlabonne, browse 38.99 s / search 40.42 s on `llama-cpp-mtp` :8100. First Heretic-abliterated + MTP in lab. [Bench](docs/models/uncen-model/qwen36-27b-heretic-v2-mtp-benchmark.md) |
@@ -754,7 +756,7 @@ All models fit in **96GB unified memory**.
 </details>
 
 <details>
-<summary>🔀 <strong>MoE</strong> — 15 models</summary>
+<summary>🔀 <strong>MoE</strong> — 16 models</summary>
 
 | Model | Type | Size&#124;GB | Context | Best For |
 |:--|:--|--:|--:|:--|
@@ -769,10 +771,11 @@ All models fit in **96GB unified memory**.
 | [Qwen3.5-122B-A10B 4-bit](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-4-bit) | MoE 122B/10B | 65 | 128K | Full-precision alternative |
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3.5-35B-A3B JANG 4K](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19 | 262K | Fast small MoE *(removed from disk 2026-05-05)* |
+| [Qwen-AgentWorld-35B-A3B UD-Q6_K](docs/models/per-model/model-summary-qwen-3-5.md#qwen-agentworld-35b-a3b-ud-q6_k) | MoE 35B/3B | 27.3 | 131K served (262K train) | Language world model / environment simulator on `llama-cpp-mainline`; no MTP flags, smoke 4/5, browse 22.52 s / search 39.47 s |
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
 | [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥈 (no scaffolding needed), search 7.35 s 🥇, 8/10 compliance — uncensored search speed leader |
 | [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
-| [huihui-ai Qwen3.6-35B-A3B MTP Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#huihui-ai-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) | MoE 35B/3B + MTP heads | 27 | 32K (262K train) | First MoE+MTP in lab — huihui-ai abliteration + Claude 4.7 Opus reasoning distillation + MTP self-drafting, 78.5 tok/s decode, 83% MTP acceptance, 10/10 mlabonne, browse 4.74 s / search 12.11 s on `llama-cpp-mtp` :8100 (mainline `ggml-org/llama.cpp`). [Uncen bench](docs/models/uncen-model/huihui-qwen36-35b-mtp-abliterated-benchmark.md) |
+| [huihui-ai Qwen3.6-35B-A3B MTP Q6_K](docs/models/per-model/model-summary-qwen-3-6.md#huihui-ai-qwen36-35b-a3b-claude-47-opus-abliterated-mtp-q6_k) | MoE 35B/3B + MTP heads | 27 | 262K | First MoE+MTP in lab — huihui-ai abliteration + Claude 4.7 Opus reasoning distillation + MTP self-drafting, 94.4 tok/s decode, 83% MTP acceptance, 10/10 mlabonne, browse 3.40 s / search 12.01 s on `llama-cpp-mtp` :8100 (mainline `ggml-org/llama.cpp` `ac4cdde`). [Uncen bench](docs/models/uncen-model/huihui-qwen36-35b-mtp-abliterated-benchmark.md) |
 | [Zyphra ZAYA1-8B JANGTQ4](docs/models/per-model/model-summary-zaya1-8b.md) | MoE 8.4B / 760M-active | 4.65 | 131K | Prior production main (2026-05-12 → 2026-05-14, vmlx-swift-lm :1337) — Apache 2.0, top-1 CCA + MoE, `tool_parser=zaya_xml`. HTTP-path decode 7-8 tok/s pending [Osaurus PR #1057](https://github.com/osaurus-ai/osaurus/issues/1057) (engine's own `RunBench` reports 57.2 tok/s at the same commit; cask missing JANGTQ B=1 fast path). Also agent-broken at this pin |
 
 </details>

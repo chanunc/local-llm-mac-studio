@@ -1,0 +1,36 @@
+# bench stderr capture: opencode run --format json --print-logs --log-level INFO Browse Hackernews, get the only one latest topic
+# cwd: /tmp/agent-bench
+# exit_code: 0  elapsed_s: 10.90  timed_out: False
+
+timestamp=2026-06-11T06:45:53.570Z level=INFO run=4895e983 message="creating instance" directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:53.570Z level=INFO run=4895e983 message=fromDirectory directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:53.574Z level=INFO run=4895e983 message=bootstrapping directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:53.576Z level=INFO run=4895e983 message=loading path=/Users/chanunc/.config/opencode/config.json
+timestamp=2026-06-11T06:45:53.576Z level=INFO run=4895e983 message=loading path=/Users/chanunc/.config/opencode/opencode.json
+timestamp=2026-06-11T06:45:53.578Z level=INFO run=4895e983 message=loading path=/Users/chanunc/.config/opencode/opencode.jsonc
+timestamp=2026-06-11T06:45:53.610Z level=INFO run=4895e983 message="all LSPs are disabled"
+timestamp=2026-06-11T06:45:53.610Z level=INFO run=4895e983 message="all formatters are disabled"
+timestamp=2026-06-11T06:45:53.610Z level=INFO run=4895e983 message=init
+timestamp=2026-06-11T06:45:53.638Z level=INFO run=4895e983 message=created id=ses_14a91e099ffeDIQm2s9O0pf8tf slug=kind-cactus version=1.17.0 projectID=global directory=/private/tmp/agent-bench path=private/tmp/agent-bench workspaceID=undefined parentID=undefined title="New session - 2026-06-11T06:45:53.638Z" agent=undefined model=undefined metadata=undefined permission="[{\"permission\":\"question\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_enter\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_exit\",\"pattern\":\"*\",\"action\":\"deny\"}]" cost=0 tokens.input=0 tokens.output=0 tokens.reasoning=0 tokens.cache.read=0 tokens.cache.write=0 time.created=1781160353638 time.updated=1781160353638
+timestamp=2026-06-11T06:45:53.645Z level=INFO run=4895e983 message="event connected"
+timestamp=2026-06-11T06:45:53.918Z level=INFO run=4895e983 message=loop session.id=ses_14a91e099ffeDIQm2s9O0pf8tf step=0
+timestamp=2026-06-11T06:45:53.923Z level=INFO run=4895e983 message="shell tool using shell" shell=/bin/zsh
+timestamp=2026-06-11T06:45:53.935Z level=INFO run=4895e983 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a91e099ffeDIQm2s9O0pf8tf small=true agent=title mode=primary
+timestamp=2026-06-11T06:45:53.939Z level=INFO run=4895e983 message=init count=5
+timestamp=2026-06-11T06:45:53.941Z level=INFO run=4895e983 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:53.951Z level=INFO run=4895e983 message=process session.id=ses_14a91e099ffeDIQm2s9O0pf8tf messageID=msg_eb56e207f001FzKteRZKcKdNGs
+timestamp=2026-06-11T06:45:53.952Z level=INFO run=4895e983 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a91e099ffeDIQm2s9O0pf8tf small=false agent=build mode=primary
+timestamp=2026-06-11T06:45:53.952Z level=INFO run=4895e983 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:56.756Z level=INFO run=4895e983 message=evaluated permission=webfetch pattern=https://hacker-news.firebaseio.com/v0/topstories.json action.permission=* action.action=allow action.pattern=*
+timestamp=2026-06-11T06:45:56.994Z level=INFO run=4895e983 message=loop session.id=ses_14a91e099ffeDIQm2s9O0pf8tf step=1
+timestamp=2026-06-11T06:45:57.000Z level=INFO run=4895e983 message=process session.id=ses_14a91e099ffeDIQm2s9O0pf8tf messageID=msg_eb56e2c83001TPUHmYmXVaX93o
+timestamp=2026-06-11T06:45:57.001Z level=INFO run=4895e983 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a91e099ffeDIQm2s9O0pf8tf small=false agent=build mode=primary
+timestamp=2026-06-11T06:45:57.001Z level=INFO run=4895e983 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:46:01.335Z level=INFO run=4895e983 message=evaluated permission=webfetch pattern=https://hacker-news.firebaseio.com/v0/item/48484584.json action.permission=* action.action=allow action.pattern=*
+timestamp=2026-06-11T06:46:01.448Z level=INFO run=4895e983 message=loop session.id=ses_14a91e099ffeDIQm2s9O0pf8tf step=2
+timestamp=2026-06-11T06:46:01.455Z level=INFO run=4895e983 message=process session.id=ses_14a91e099ffeDIQm2s9O0pf8tf messageID=msg_eb56e3de9001FiDafw0xlEpi5V
+timestamp=2026-06-11T06:46:01.455Z level=INFO run=4895e983 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a91e099ffeDIQm2s9O0pf8tf small=false agent=build mode=primary
+timestamp=2026-06-11T06:46:01.455Z level=INFO run=4895e983 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:46:04.191Z level=INFO run=4895e983 message=loop session.id=ses_14a91e099ffeDIQm2s9O0pf8tf step=3
+timestamp=2026-06-11T06:46:04.192Z level=INFO run=4895e983 message="exiting loop" session.id=ses_14a91e099ffeDIQm2s9O0pf8tf
+timestamp=2026-06-11T06:46:04.195Z level=INFO run=4895e983 message="disposing instance" directory=/private/tmp/agent-bench

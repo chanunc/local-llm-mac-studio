@@ -1,0 +1,31 @@
+# bench stderr capture: opencode run --format json --print-logs --log-level INFO Browse www.example.com
+# cwd: /tmp/agent-bench
+# exit_code: 0  elapsed_s: 3.40  timed_out: False
+
+timestamp=2026-06-11T06:45:14.574Z level=INFO run=2cf90a2e message="creating instance" directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:14.575Z level=INFO run=2cf90a2e message=fromDirectory directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:14.578Z level=INFO run=2cf90a2e message=bootstrapping directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:14.581Z level=INFO run=2cf90a2e message=loading path=/Users/chanunc/.config/opencode/config.json
+timestamp=2026-06-11T06:45:14.581Z level=INFO run=2cf90a2e message=loading path=/Users/chanunc/.config/opencode/opencode.json
+timestamp=2026-06-11T06:45:14.583Z level=INFO run=2cf90a2e message=loading path=/Users/chanunc/.config/opencode/opencode.jsonc
+timestamp=2026-06-11T06:45:14.614Z level=INFO run=2cf90a2e message="all LSPs are disabled"
+timestamp=2026-06-11T06:45:14.615Z level=INFO run=2cf90a2e message="all formatters are disabled"
+timestamp=2026-06-11T06:45:14.615Z level=INFO run=2cf90a2e message=init
+timestamp=2026-06-11T06:45:14.642Z level=INFO run=2cf90a2e message=created id=ses_14a9278edffejUr7SaI32InOh9 slug=curious-wizard version=1.17.0 projectID=global directory=/private/tmp/agent-bench path=private/tmp/agent-bench workspaceID=undefined parentID=undefined title="New session - 2026-06-11T06:45:14.642Z" agent=undefined model=undefined metadata=undefined permission="[{\"permission\":\"question\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_enter\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_exit\",\"pattern\":\"*\",\"action\":\"deny\"}]" cost=0 tokens.input=0 tokens.output=0 tokens.reasoning=0 tokens.cache.read=0 tokens.cache.write=0 time.created=1781160314642 time.updated=1781160314642
+timestamp=2026-06-11T06:45:14.649Z level=INFO run=2cf90a2e message="event connected"
+timestamp=2026-06-11T06:45:14.904Z level=INFO run=2cf90a2e message=loop session.id=ses_14a9278edffejUr7SaI32InOh9 step=0
+timestamp=2026-06-11T06:45:14.909Z level=INFO run=2cf90a2e message="shell tool using shell" shell=/bin/zsh
+timestamp=2026-06-11T06:45:14.921Z level=INFO run=2cf90a2e message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a9278edffejUr7SaI32InOh9 small=true agent=title mode=primary
+timestamp=2026-06-11T06:45:14.925Z level=INFO run=2cf90a2e message=init count=5
+timestamp=2026-06-11T06:45:14.926Z level=INFO run=2cf90a2e message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:14.936Z level=INFO run=2cf90a2e message=process session.id=ses_14a9278edffejUr7SaI32InOh9 messageID=msg_eb56d8819001YiWr3FLeq8GiY7
+timestamp=2026-06-11T06:45:14.936Z level=INFO run=2cf90a2e message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a9278edffejUr7SaI32InOh9 small=false agent=build mode=primary
+timestamp=2026-06-11T06:45:14.937Z level=INFO run=2cf90a2e message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:16.408Z level=INFO run=2cf90a2e message=evaluated permission=webfetch pattern=https://www.example.com action.permission=* action.action=allow action.pattern=*
+timestamp=2026-06-11T06:45:16.453Z level=INFO run=2cf90a2e message=loop session.id=ses_14a9278edffejUr7SaI32InOh9 step=1
+timestamp=2026-06-11T06:45:16.463Z level=INFO run=2cf90a2e message=process session.id=ses_14a9278edffejUr7SaI32InOh9 messageID=msg_eb56d8e26001fuw9L34WOwqdHh
+timestamp=2026-06-11T06:45:16.464Z level=INFO run=2cf90a2e message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a9278edffejUr7SaI32InOh9 small=false agent=build mode=primary
+timestamp=2026-06-11T06:45:16.464Z level=INFO run=2cf90a2e message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:17.705Z level=INFO run=2cf90a2e message=loop session.id=ses_14a9278edffejUr7SaI32InOh9 step=2
+timestamp=2026-06-11T06:45:17.705Z level=INFO run=2cf90a2e message="exiting loop" session.id=ses_14a9278edffejUr7SaI32InOh9
+timestamp=2026-06-11T06:45:17.708Z level=INFO run=2cf90a2e message="disposing instance" directory=/private/tmp/agent-bench

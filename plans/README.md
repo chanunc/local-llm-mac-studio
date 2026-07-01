@@ -26,6 +26,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`active/plan-reorganise-repo-structure.md`](active/plan-reorganise-repo-structure.md) | Re-organise scripts, docs, and folders — fix post-April-2026 drift ([visual HTML](active/plan-reorganise-repo-structure.html)) |
 | [`active/plan-rotorquant-apple-silicon-implementation.md`](active/plan-rotorquant-apple-silicon-implementation.md) | RotorQuant feasibility on Apple Silicon |
 | [`active/plan-switch-server.md`](active/plan-switch-server.md) | Server/model switcher script design |
+| [`active/plan-switch-top-model-debug-flag.md`](active/plan-switch-top-model-debug-flag.md) | `--debug` flag for `switch_top_model.py` — per-step diagnostics + remote log-tail-on-timeout ([visual HTML](active/plan-switch-top-model-debug-flag.html)) |
 | [`active/plan-turboquant-mlx-implementation.md`](active/plan-turboquant-mlx-implementation.md) | TurboQuant feasibility and implementation plan |
 | [`active/plan-vlm-visual-agent-benchmark-harness.md`](active/plan-vlm-visual-agent-benchmark-harness.md) | Visual-agent benchmark harness for OCR, chart, screenshot, and video tasks with HITL fixture review |
 | [`active/plan-vllm-mlx-homebrew-formula.md`](active/plan-vllm-mlx-homebrew-formula.md) | vllm-mlx Homebrew formula/tap |
@@ -52,6 +53,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md`](done/plan-osaurus-qwen36-jangtq4-vmlx-agent-bench.md) | Osaurus Qwen3.6-35B-A3B JANGTQ4 via vmlx — shipped 2026-05-14 with agent benchmarks |
 | [`done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md`](done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md) | llama.cpp upgrade + Gemma 4 31B dense MTP benchmark — completed 2026-06-10 |
 | [`done/plan-huggingface-skills-analysis.md`](done/plan-huggingface-skills-analysis.md) | Hugging Face skills (hf-cli, HF datasets) fitness assessment for this repo — concluded 2026-05-15 |
+| [`done/plan-switch-top-model-script.md`](done/plan-switch-top-model-script.md) | `scripts/switch_top_model.py` — benchmark-driven top-5 model switcher with OpenCode sync + tool-call smoke test, shipped 2026-06-12 ([visual HTML](done/plan-switch-top-model-script.html)) |
 
 ### Archive
 

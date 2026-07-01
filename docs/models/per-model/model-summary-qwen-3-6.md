@@ -57,6 +57,7 @@ New Qwen3.6-27B-class deploys should land in roughly the 10–30 s browse / 18�
 - [Osaurus Qwen3.6-35B-A3B JANGTQ4](#osaurus-qwen36-35b-a3b-jangtq4) — Same 35B/3B MoE + VL · JANGTQ4 / `mxtq` · current vmlx main benchmark deployment
 - [Qwen3.6-27B JANG 4M (Dense + VL)](#qwen36-27b-jang-4m-dense--vl) — Dense 27 B · ViT · 17.5 GB · JANG 4/8-bit · vllm-mlx text-only
 - [Qwen3.6-27B (6-bit Standard MLX)](#qwen36-27b-6-bit-standard-mlx) — Same dense 27 B + ViT · 22 GB · uniform 6-bit · lm-studio recommended
+- [Qwen3.6-27B Fable-5 LoRA Q6_K](#qwen36-27b-fable-5-lora-q6_k) — Same dense 27 B base · 76 MB runtime GGUF LoRA (ChatML v4) over unsloth Q6_K GGUF · llama.cpp `--lora` · 131K practical context (cold 256K probe completes)
 - [HauhauCS Qwen3.6-27B Uncensored Balanced Q8_K_P](#hauhaucs-qwen36-27b-uncensored-balanced-q8_k_p) — Same dense 27 B + ViT · 32 GB · custom GGUF `Q8_K_P` · prior lm-studio sidecar
 - [prithivMLmods Q3.6-27B-GLM-5.1-DA Q4_K_M](#prithivmlmods-q36-27b-glm-51-da-q4_k_m) — Same dense 27 B + ViT · 15.4 GB · standard GGUF Q4_K_M · prithivMLmods abliteration + GLM-5.1 reasoning-trace distillation · benchmarked on lm-studio 2026-05-14 (browse 11.62 s / search 19.47 s)
 - [HauhauCS Qwen3.6-35B-A3B Uncensored Aggressive Q6_K_P](#hauhaucs-qwen36-35b-a3b-uncensored-aggressive-q6_k_p) — 35B/3B MoE + VL · 31 GB · custom GGUF `Q6_K_P` · prior lm-studio main (superseded 2026-05-02), reloadable · uncensored search-speed leader
@@ -522,6 +523,77 @@ ssh macstudio "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors"     # por
 - **Closed-source MLX runtime** — lm-studio's prefill kernel implementation is not auditable. If a future LM Studio update changes runtime behavior, results may shift.
 
 **See also:** [`docs/servers/lm-studio/summary.md`](../../servers/lm-studio/summary.md) for the full LM Studio headless server runbook · [`docs/models/benchmarks/model-benchmark-tool-call.md` § Server comparison](../benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30) for the raw bench data.
+
+---
+
+## Qwen3.6-27B Fable-5 LoRA Q6_K
+
+Runtime LoRA adapter from `hotdogs/qwen3.6-27b-fable5-lora`, trained on `Glint-Research/Fable-5-traces` coding-agent trajectories and loaded over the standard `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` base. Classified as a standard/censored fine-tune: the card and dataset describe agent/tool-use behavior, not abliteration or refusal removal.
+
+The repo now ships four GGUF adapter variants. The cataloged adapter is the **ChatML v4** build (`qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf`), the card's latest/recommended: SFT v2 knowledge + ORPO v4 preference alignment + native Qwen chat-format support. It replaced the original v1 adapter (`qwen36-fable5-lora.gguf`) on 2026-06-28. Throughput is identical to v1 (same base + same 76 MB adapter size); the agent-loop numbers below shifted only within this dense-27B-no-MTP variance band.
+
+| Field | Value |
+|-------|-------|
+| HuggingFace | [`hotdogs/qwen3.6-27b-fable5-lora`](https://huggingface.co/hotdogs/qwen3.6-27b-fable5-lora) |
+| Base model | `Qwen/Qwen3.6-27B`; GGUF base `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf` |
+| Adapter | GGUF LoRA `GGUF/qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf` (ChatML v4; v1 `qwen36-fable5-lora.gguf` also available) |
+| Quantization | Base GGUF Q6_K, 22.5 GB; LoRA 76 MB |
+| Server | `llama-cpp-mainline` on port 8100 |
+| Server flags | `--lora <adapter.gguf> -ngl 99 -fa on -np 1 -c 262144 --jinja --reasoning on` |
+| Alias | `qwen36-27b-fable5-lora-q6k-131k` |
+| Context | 131,072 practical context for agent work; a single cold 256K probe (256,025 prompt tokens) succeeded with an extended timeout — see Performance below |
+
+### Deployment
+
+```bash
+ssh macstudio 'BASE=~/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-GGUF/snapshots/main/Qwen3.6-27B-Q6_K.gguf; \
+  ADAPTER="$HOME/.cache/huggingface/hub/models--hotdogs--qwen3.6-27b-fable5-lora/snapshots/main/GGUF/qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf"; \
+  nohup ~/llama-cpp-mainline/build/bin/llama-server \
+  -m "$BASE" --lora "$ADAPTER" \
+  -ngl 99 -fa on -np 1 -c 262144 \
+  --host 0.0.0.0 --port 8100 \
+  --alias qwen36-27b-fable5-lora-q6k-131k \
+  --jinja --reasoning on > /tmp/llama-cpp-fable5-lora.log 2>&1 &'
+```
+
+The adapter filename contains parentheses — quote the path (`"$ADAPTER"`) so the shell keeps it as a single token. The startup log at default verbosity does **not** print an adapter-load line; confirm the LoRA applied with `curl -s http://<MAC_STUDIO_IP>:8100/lora-adapters` (expects the ChatML v4 path at `scale: 1.0`). The launch uses `-c 262144` so the cold 256K probe can run; resident RSS at 256K was about 50 GB, leaving RAM headroom on a 96 GB Mac Studio. Use 131K for routine agent work.
+
+### Performance (2026-06-28, ChatML v4 adapter, pre-bench hygiene, mainline llama.cpp)
+
+| Context | Decode tok/s | Prefill tok/s | TTFT |
+|:-------:|:------------:|:-------------:|:----:|
+| 512 | 21.9 | 3,355 | 0.16 s |
+| 4K | 21.6 | 25,074 | 0.17 s |
+| 8K | 21.3 | 48,400 | 0.17 s |
+| 32K | 19.6 | 157,298 | 0.21 s |
+| 65K | 17.2 | 231,976 | 0.28 s |
+| 131K | 13.0 | 292,299 | 0.45 s |
+| 256K (fully cold) | 8.1 | ~131 (cold) | 1,950 s |
+
+Throughput matches the v1 adapter within noise (same Q6_K base + same 76 MB LoRA). The 512–131K TTFT/prefill figures are cache-warm (the bench primes the KV cache with a warmup run, so measured-run prefill reuses it). The **256K row is a single fully-cold run** on a freshly restarted server (empty prompt cache, no co-resident models) — a 256,025-token prompt prefilled in ~1,950 s (≈131 tok/s genuine cold prefill) then decoded 50 tokens at 8.1 tok/s. This is the first time the near-260K window completed; the prior 2026-06-22 attempt timed out at 600 s (cancelled at ~200K processed tokens). An earlier 2026-06-28 probe reported a faster ~1,245 s only because it ran right after the 512–131K curve and reused the shared `Hello world.` filler prefix via context checkpoints (so it prefilled just 131K→256K); the ~1,950 s figure is the true fully-cold cost. A nominal 262,144-token prompt is still rejected with HTTP 400 once chat-template overhead is added, so ~256K is the real ceiling. Treat 131K as the practical agent ceiling — a ~30-minute cold prefill is not interactive.
+
+### Tool-call smoke + agent benchmark (OpenCode end-to-end, 2026-06-28, ChatML v4)
+
+**5/5 single-call** and 3-turn API loop **25.19 s**. All measured OpenCode runs fired `webfetch`.
+
+Run on a freshly restarted server with no co-resident models (`lms unload --all` first):
+
+| Scenario | Wall (median) | LLM (median) | Turns | Tools |
+|:---------|:-------------:|:------------:|:-----:|:------|
+| Browse www.example.com | **40.35 s** [26.06-119.19] | 37.78 s | 2 | `webfetch` |
+| Browse Hackernews latest | **55.59 s** [34.12-66.6] | 53.08 s | 2 | `webfetch` |
+
+Functional but not competitive, and **very high-variance** — the dominant signal here is run-to-run instability, not the adapter. One clean browse run spiralled to 17 turns (calling `read`/`bash`/`write` it didn't need) before answering, pulling the p95 to 119 s; search bounced between 2 and 3 turns. A first pass with an idle 23.5 GB `gemma4-26b-a4b` co-resident on LM Studio gave browse 41.66 s / search 31.0 s; after unloading it and restarting clean, browse held (40.35 s) and search rose (55.59 s) — i.e. removing the neighbour did not help, confirming the earlier run was **not** memory-contention-biased (an idle model on Apple unified memory holds RAM but not bandwidth/compute). Still slower than Jackrong Qwopus3.6-27B v2 MTP Q6_K (browse 16.96 s) and lm-studio Q4_K_M dense-27B GLM-5.1-DA (browse 11.62 s); the dense-27B-no-MTP decode path plus the loop instability are the bottleneck, not the adapter.
+
+### Caveats
+
+- LoRA path only: LM Studio does not expose a documented headless `lms load --lora` path, so this was tested on llama.cpp rather than merged/imported into LM Studio.
+- The startup log prints no adapter-load line at default verbosity; verify the LoRA with `GET /lora-adapters` rather than grepping the launch log.
+- No MTP heads in this base path; plain dense 27B Q6_K decode lands around 13-22 tok/s depending context (8 tok/s at 256K).
+- A 256K request now completes but takes a ~32-minute fully-cold prefill via the standard HTTP harness; use 65K or 131K for reliable interactive agent work.
+- Vision was not tested. The deployment used a text-only GGUF base without an `mmproj` companion.
+
+Raw logs: [`docs/models/benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/`](../benchmarks/logs/qwen36-27b-fable5-lora-q6k-131k/)
 
 ---
 

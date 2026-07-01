@@ -1,0 +1,31 @@
+# bench stderr capture: opencode run --format json --print-logs --log-level INFO Browse Hackernews, get the only one latest topic
+# cwd: /tmp/agent-bench
+# exit_code: 0  elapsed_s: 12.01  timed_out: False
+
+timestamp=2026-06-11T06:45:26.663Z level=INFO run=0adc71a4 message="creating instance" directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:26.663Z level=INFO run=0adc71a4 message=fromDirectory directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:26.667Z level=INFO run=0adc71a4 message=bootstrapping directory=/private/tmp/agent-bench
+timestamp=2026-06-11T06:45:26.669Z level=INFO run=0adc71a4 message=loading path=/Users/chanunc/.config/opencode/config.json
+timestamp=2026-06-11T06:45:26.669Z level=INFO run=0adc71a4 message=loading path=/Users/chanunc/.config/opencode/opencode.json
+timestamp=2026-06-11T06:45:26.671Z level=INFO run=0adc71a4 message=loading path=/Users/chanunc/.config/opencode/opencode.jsonc
+timestamp=2026-06-11T06:45:26.702Z level=INFO run=0adc71a4 message="all LSPs are disabled"
+timestamp=2026-06-11T06:45:26.703Z level=INFO run=0adc71a4 message="all formatters are disabled"
+timestamp=2026-06-11T06:45:26.703Z level=INFO run=0adc71a4 message=init
+timestamp=2026-06-11T06:45:26.730Z level=INFO run=0adc71a4 message=created id=ses_14a9249b5ffezZZjfnUg1LiOxz slug=curious-wizard version=1.17.0 projectID=global directory=/private/tmp/agent-bench path=private/tmp/agent-bench workspaceID=undefined parentID=undefined title="New session - 2026-06-11T06:45:26.730Z" agent=undefined model=undefined metadata=undefined permission="[{\"permission\":\"question\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_enter\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_exit\",\"pattern\":\"*\",\"action\":\"deny\"}]" cost=0 tokens.input=0 tokens.output=0 tokens.reasoning=0 tokens.cache.read=0 tokens.cache.write=0 time.created=1781160326730 time.updated=1781160326730
+timestamp=2026-06-11T06:45:26.737Z level=INFO run=0adc71a4 message="event connected"
+timestamp=2026-06-11T06:45:26.987Z level=INFO run=0adc71a4 message=loop session.id=ses_14a9249b5ffezZZjfnUg1LiOxz step=0
+timestamp=2026-06-11T06:45:26.992Z level=INFO run=0adc71a4 message="shell tool using shell" shell=/bin/zsh
+timestamp=2026-06-11T06:45:27.004Z level=INFO run=0adc71a4 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a9249b5ffezZZjfnUg1LiOxz small=true agent=title mode=primary
+timestamp=2026-06-11T06:45:27.008Z level=INFO run=0adc71a4 message=init count=5
+timestamp=2026-06-11T06:45:27.009Z level=INFO run=0adc71a4 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:27.019Z level=INFO run=0adc71a4 message=process session.id=ses_14a9249b5ffezZZjfnUg1LiOxz messageID=msg_eb56db74c001mOjRBVMKKVtB46
+timestamp=2026-06-11T06:45:27.020Z level=INFO run=0adc71a4 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a9249b5ffezZZjfnUg1LiOxz small=false agent=build mode=primary
+timestamp=2026-06-11T06:45:27.020Z level=INFO run=0adc71a4 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:28.683Z level=INFO run=0adc71a4 message=evaluated permission=webfetch pattern=https://news.ycombinator.com/ action.permission=* action.action=allow action.pattern=*
+timestamp=2026-06-11T06:45:29.278Z level=INFO run=0adc71a4 message=loop session.id=ses_14a9249b5ffezZZjfnUg1LiOxz step=1
+timestamp=2026-06-11T06:45:29.283Z level=INFO run=0adc71a4 message=process session.id=ses_14a9249b5ffezZZjfnUg1LiOxz messageID=msg_eb56dc03f0017BEmSUWGGjSVBl
+timestamp=2026-06-11T06:45:29.284Z level=INFO run=0adc71a4 message=stream providerID=macstudio-llama-cpp-mtp modelID=huihui-qwen36-35b-mtp-abliterated-q6k session.id=ses_14a9249b5ffezZZjfnUg1LiOxz small=false agent=build mode=primary
+timestamp=2026-06-11T06:45:29.284Z level=INFO run=0adc71a4 message="llm runtime selected" llm.runtime=ai-sdk llm.provider=macstudio-llama-cpp-mtp llm.model=huihui-qwen36-35b-mtp-abliterated-q6k
+timestamp=2026-06-11T06:45:38.397Z level=INFO run=0adc71a4 message=loop session.id=ses_14a9249b5ffezZZjfnUg1LiOxz step=2
+timestamp=2026-06-11T06:45:38.398Z level=INFO run=0adc71a4 message="exiting loop" session.id=ses_14a9249b5ffezZZjfnUg1LiOxz
+timestamp=2026-06-11T06:45:38.401Z level=INFO run=0adc71a4 message="disposing instance" directory=/private/tmp/agent-bench

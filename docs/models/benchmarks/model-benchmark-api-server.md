@@ -398,6 +398,57 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 31, 2026.
 
 ---
 
+## Gemma4-12B Agentic v2 Q8_0 + TurboQuant turbo3 on llama-cpp-turboquant
+
+Model: `yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF` (`gemma4-v2-Q8_0.gguf`, 12.67 GB)
+Server: `llama-cpp-turboquant` :8099, TheTom fork `69d8e4b`, `--cache-type-k turbo3 --cache-type-v turbo3`, `-c 262144`, `--jinja --reasoning on`
+Tested on **Mac Studio M3 Ultra (96 GB)** — June 24, 2026.
+
+**Method:** Streaming `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Raw JSON: [`logs/gemma4-12b-agentic-v2-q8-turbo3-256k/api-server.json`](logs/gemma4-12b-agentic-v2-q8-turbo3-256k/api-server.json).
+
+### Generation Speed (tok/s)
+
+| Context | Decode tok/s |
+|:--|--:|
+| 512 | 29.7 |
+| 4K | 28.6 |
+| 8K | 27.7 |
+| 32K | 24.7 |
+| 65K | 21.7 |
+| 131K | 17.2 |
+
+### Prefill Speed (tok/s)
+
+| Context | Prefill tok/s |
+|:--|--:|
+| 512 | 2,582 |
+| 4K | 25,817 |
+| 8K | 48,159 |
+| 32K | 150,826 |
+| 65K | 231,778 |
+| 131K | 313,613 |
+
+### Time to First Token
+
+| Context | TTFT |
+|:--|--:|
+| 512 | 0.210 s |
+| 4K | 0.160 s |
+| 8K | 0.171 s |
+| 32K | 0.217 s |
+| 65K | 0.283 s |
+| 131K | 0.418 s |
+
+### Context fit
+
+Launch logs confirmed the server allocated `n_ctx = 262144`. With `turbo3` KV, the 256K KV footprint was small for this architecture: non-SWA cache `800 MiB` plus SWA cache `93.75 MiB`; Q8 weights mapped at ~12.07 GiB on Metal plus ~1.02 GiB CPU mapped.
+
+The standard benchmark's nominal `262144` prompt was rejected because chat-template overhead made the request `262176` tokens, exceeding the exact slot. A separate near-ceiling probe with `260024` prompt tokens completed without truncation and generated 8 tokens. Server-side timing: `1,177.6 s` prompt eval for the uncached 128,940-token extension (~109.5 tok/s) plus `12.8 tok/s` decode. Raw probe: [`logs/gemma4-12b-agentic-v2-q8-turbo3-256k/max-context-probe.json`](logs/gemma4-12b-agentic-v2-q8-turbo3-256k/max-context-probe.json).
+
+**Takeaway:** Q8_0 fits the full 256K context on the 96 GB Mac Studio, but uncached near-ceiling prompts are impractically slow under this TheTom build because prompt-cache checkpointing dominates. Agent workloads at normal prompt sizes are governed by model behavior, not memory; see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md#results-yuxinlu1gemma4-12b-agentic-v2-q8_0--turboquant-turbo3).
+
+---
+
 ## Qwen3.6-35B-A3B (4-bit) on dflash-mlx
 
 Model: `mlx-community/Qwen3.6-35B-A3B-4bit` paired with `z-lab/Qwen3.6-35B-A3B-DFlash` drafter (DFlash speculative decoding via block-diffusion).
@@ -821,6 +872,52 @@ Tested on **Mac Studio M3 Ultra (96 GB)** — May 2, 2026.
 
 ---
 
+## Qwythos-9B Claude-Mythos-5-1M Q8_0 (GGUF, on lm-studio)
+
+Model: `empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF` (`Qwythos-9B-Claude-Mythos-5-1M-Q8_0.gguf`) — Qwen3.5-9B dense + vision, empero-ai "uncensored" branding (**not borne out — 1/10 mlabonne, see [writeup](../../uncen-model/qwythos-9b-mythos5-benchmark.md)**). 8.87 GB on disk, 8.87 GiB resident at 131072 context. Smallest model in the stack.
+Tested on **Mac Studio M3 Ultra (96 GB)** — June 22, 2026.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context. Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [api-server-llmster.json](qwythos-9b-mythos5/api-server-llmster.json).
+
+**Server:** lm-studio, GGUF runtime. Loaded with `lms load qwythos-9b-claude-mythos-5-1m --gpu max --context-length 131072 --identifier qwythos-9b-mythos5-q8 -y`. No parser flags required — LM Studio handles the Qwen3 chat-template tool-calls and `<think>` natively. 8.87 GiB sits well below the LM Studio guardrail threshold, so no guardrail dance needed.
+
+### Generation Speed (tok/s)
+
+| Context | lm-studio |
+|:--------|:-------:|
+| 512 | **64.7** |
+| 4K | 64.0 |
+| 8K | 63.1 |
+| 32K | 57.6 |
+| 65K | 52.3 |
+
+### Prefill Speed (tok/s)
+
+| Context | lm-studio |
+|:--------|:-------:|
+| 512 | 4,795 |
+| 4K | 28,192 |
+| 8K | 48,222 |
+| 32K | 102,993 |
+| 65K | **122,873** |
+
+### Time to First Token (seconds)
+
+| Context | lm-studio |
+|:--------|:-------:|
+| 512 | **0.13** |
+| 4K | 0.15 |
+| 8K | 0.17 |
+| 32K | 0.32 |
+| 65K | 0.53 |
+
+**Notes:**
+- **Decode is slower than the larger Qwen3.6-35B-A3B MoE GGUFs** (64.7 vs 83.6 tok/s @ 512 for prithivMLmods) despite being a far smaller model — Qwythos is dense 9 B (full 9 B activated per decode step) vs the MoE's 3 B-active. Bandwidth-bound decode favours the sparse-MoE even at much larger total weights.
+- **Prefill and TTFT track the usual lm-studio GGUF profile** — sub-200 ms TTFT through 8K, ~123K tok/s prefill @ 65K.
+- **Loaded at full 131072 context**, so the 65K filler probe has headroom (unlike the prithivMLmods/HauhauCS sections capped at 65536).
+
+---
+
 ## DavidAU Qwen3.6-40B Heretic Q6_K IMatrix (GGUF, on lm-studio)
 
 Model: `DavidAU/Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF` (`Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-Q6_K.gguf`) — DavidAU Heretic recipe (full abliteration + Deckard/PDK), IMatrix-weighted Q6_K. 30.17 GiB on disk, ~30 GiB resident at 131072 context.
@@ -1058,18 +1155,65 @@ All models benchmarked at the 128K-context bucket (closest standard size to the 
 | Model | Quant | Server | Gen tok/s | Prefill tok/s | TTFT (s) | Date |
 |---|---|---:|---:|---:|---:|---|
 | **Qwen3-Coder-Next 6-bit** (Dense 80B + Gated DeltaNet) | 6-bit MLX | vllm-mlx | **44.2** 🥇 | **736** 🥇 | **158.4** 🥇 | 2026-04-18 |
+| **Qwen-AgentWorld-35B-A3B** (MoE 35B/3B world model) | GGUF UD-Q6_K | llama-cpp-mainline | 49.4‡ | 632,798‡ | 0.19‡ | 2026-07-01 |
 | **Qwen3.6-35B-A3B** (Hybrid MoE 35B/3B + VL) | 6-bit MLX | mlx-openai-server | 35.6 🥈 | 927* | 125.7 🥈 | 2026-04-18 |
 | **Qwen3.5-122B-A10B JANG 2S** (MoE 122B/10B) | JANG ~2.1-bit | vllm-mlx (JANG wrapper) | 34.5 | 405† | 323.9 | 2026-04-18 |
 | **Qwen3.5-35B-A3B JANG 4K** (MoE 35B/3B) | JANG ~4-bit | oMLX | 33.8 | 295.4 | — | 2026-03-24 (omlx.ai) |
 | **Gemma 4 26B-A4B** (MoE 26B/4B + VL) | 4-bit MLX | mlx-openai-server | 27.1 | 1,995 | 65.7 | 2026-04-17 |
+| **Qwen3.6-27B Fable-5 LoRA** (Dense 27B + runtime LoRA, ChatML v4) | GGUF Q6_K + LoRA | llama-cpp-mainline | 13.0 | 292,299 | 0.45 | 2026-06-28 |
 
 \* Qwen3.6 prefill at 128K is the lowest of the 35B-class models because the hybrid stack's full-attention layers become memory-bound past 64K  
 † Qwen3.5-122B JANG 2S prefill normalised against requested 131,072; against the actual ~116,516-token filler the rate is ~360 tok/s
+‡ AgentWorld row is a nominal 120K probe, not the exact 128K bucket. The server prompt cache was warm from the preceding 512-65K sweep, so TTFT/prefill are cache-warm and not comparable to cold-prefill MLX rows.
 
 **Takeaways:**
-- For a 100K+-class workload where you need to push generation throughput, **Qwen3-Coder-Next 6-bit on vllm-mlx wins** — 44.2 tok/s gen and 158s TTFT, both best in class. Trade-off: no vision, no thinking
+- For a 100K+-class workload where you need to push generation throughput on a normal assistant/coding model, **Qwen3-Coder-Next 6-bit on vllm-mlx remains the clean comparable winner** — 44.2 tok/s gen at the exact 128K bucket. AgentWorld's 49.4 tok/s at 120K is faster in this cache-warm llama.cpp probe, but it is a language world model rather than an assistant-tuned coder/chat model.
 - **Qwen3.6-35B-A3B** is the pick when you also need vision or always-on thinking; the gen-speed cost is ~20% vs Coder-Next, the TTFT is actually lower (125.7 vs 158.4 s) thanks to the hybrid Gated DeltaNet at 35B activation
 - **Qwen3.5-122B JANG 2S** delivers competitive 34.5 tok/s gen at 122B parameters by activating only ~10B per token, but the JANG dequantization cost makes prefill at 128K very slow (5+ min TTFT) — choose this only when you need 122B's reasoning quality at long context and can wait for prefill
+
+---
+
+## 🤖 Qwen-AgentWorld-35B-A3B UD-Q6_K on llama.cpp
+
+Model: `unsloth/Qwen-AgentWorld-35B-A3B-GGUF` (`Qwen-AgentWorld-35B-A3B-UD-Q6_K.gguf`, snapshot `3a305abf5cfd119ee999dfe929c433746edd8d63`). Server: `llama-cpp-mainline` on port 8100, launched with `-ngl 99`, `-fa on`, `--jinja`, `--reasoning on`, and `-c 131072`. No MTP/speculative flags: the clean GGUF does not carry MTP tensors/metadata even though the upstream HF config has `mtp_num_hidden_layers=1`.
+
+**Streaming SSE results** (bench_api_server.py, 2 runs median for 512-65K; 120K is a single probe):
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--|:--:|:--:|:--:|
+| 512 | 0.034 | 81.49 | 15,903 |
+| 4K | 0.038 | 80.26 | 108,118 |
+| 8K | 0.041 | 77.71 | 200,124 |
+| 32K | 0.066 | 69.34 | 494,449 |
+| 65K | 0.110 | 60.62 | 594,526 |
+| 120K nominal | 0.190 | 49.42 | 632,798 |
+
+The server prompt cache was enabled and warm after the earlier contexts, so the reported prefill/TTFT values are cache-warm. Treat decode as the useful throughput signal; cold prefill still needs a separate restarted-server measurement if it becomes a decision point.
+
+Raw logs: [`logs/qwen-agentworld-35b-a3b-ud-q6k/api-server-llama-cpp-mainline.json`](logs/qwen-agentworld-35b-a3b-ud-q6k/api-server-llama-cpp-mainline.json), [`logs/qwen-agentworld-35b-a3b-ud-q6k/api-server-llama-cpp-mainline-120k-probe.json`](logs/qwen-agentworld-35b-a3b-ud-q6k/api-server-llama-cpp-mainline-120k-probe.json)
+
+---
+
+## 🤖 Qwen3.6-27B Fable-5 LoRA Q6_K on llama.cpp
+
+Model: `hotdogs/qwen3.6-27b-fable5-lora` **ChatML v4** GGUF LoRA (`qwen36-fable5-lora-ChatML(v2+ORPO+ChatML).gguf`) over `unsloth/Qwen3.6-27B-GGUF` `Qwen3.6-27B-Q6_K.gguf`.
+Server: `llama-cpp-mainline` on port 8100, launched with `--lora`, `-ngl 99`, `-fa on`, `--jinja`, `--reasoning on`, and `-c 262144` to probe the upper window. Throughput is identical to the prior v1 adapter (same base + same 76 MB LoRA size).
+
+**Streaming SSE results** (bench_api_server.py, 2 runs median; 256K is a single cold run):
+
+| Context | TTFT (s) | Gen (tok/s) | Prefill (tok/s) |
+|:--|:--:|:--:|:--:|
+| 512 | 0.16 | 21.9 | 3,355 |
+| 4K | 0.17 | 21.6 | 25,074 |
+| 8K | 0.17 | 21.3 | 48,400 |
+| 32K | 0.21 | 19.6 | 157,298 |
+| 65K | 0.28 | 17.2 | 231,976 |
+| 131K | 0.45 | 13.0 | 292,299 |
+| 256K (fully cold) | 1,950 | 8.1 | ~131 |
+
+The 512–131K TTFT/prefill figures are cache-warm (warmup run primes the KV cache; measured-run prefill reuses it, hence the implausibly high "prefill tok/s"). The **256K row is a single fully-cold run** on a freshly restarted server (empty prompt cache, no co-resident models): a 256,025-token prompt prefilled in ~1,950 s (≈131 tok/s genuine cold prefill) then decoded 50 tokens at 8.1 tok/s. This is the first completed near-260K measurement — the 2026-06-22 attempt timed out at 600 s (cancelled at ~200K tokens). An earlier 2026-06-28 probe showed a faster ~1,245 s only because it followed the 512–131K curve and reused the shared `Hello world.` filler prefix via context checkpoints (prefilling just 131K→256K); ~1,950 s is the true fully-cold cost. A nominal 262,144-token prompt is still rejected with HTTP 400 once chat-template overhead is added. The server used about 50 GB RSS. Use 131K as the practical interactive ceiling — a ~30-minute cold prefill is not usable in an agent loop.
+
+Raw logs: [`logs/qwen36-27b-fable5-lora-q6k-131k/`](logs/qwen36-27b-fable5-lora-q6k-131k/)
 
 ---
 

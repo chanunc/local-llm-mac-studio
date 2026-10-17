@@ -20,6 +20,7 @@ Usage:
     python3 scripts/switch_top_model.py --pick moe:1 --dry-run  # print SSH cmds only
     python3 scripts/switch_top_model.py --pick moe:1 --debug  # per-step diagnostics on stderr
     python3 scripts/switch_top_model.py --list                # print the top-5 menus and exit
+    python3 scripts/switch_top_model.py --check               # recipe ctx vs OpenCode templates
     python3 scripts/switch_top_model.py --ssh-host macstudio-ts --pick hybrid:1
 
 On a `wait_ready` timeout the last lines of the target's remote log are tailed automatically
@@ -126,14 +127,14 @@ LAUNCH_RECIPES = [
         "server": "lm-studio", "port": 1234,
         "model_id": "gemma4-26b-a4b-trevorjs-uncen-q8",
         "kind": "lms", "lms_key": "gemma-4-26b-a4b-it-uncensored",
-        "context_length": 65536,
+        "context_length": 131072,
     },
     {
         "match": "lmstudio-community Gemma 4 26B A4B-it Q8_0",
         "server": "lm-studio", "port": 1234, "server_match": "lm-studio",
         "model_id": "gemma-4-26b-a4b-q8",
         "kind": "lms", "lms_key": "gemma-4-26b-a4b-it",
-        "context_length": 65536,
+        "context_length": 131072,
     },
     {
         "match": "mlx-community Gemma 4 26B A4B-it 4-bit",
@@ -164,7 +165,7 @@ LAUNCH_RECIPES = [
         "gguf_path": "~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-ggml-model-Q6_K.gguf",
         "start_cmd": (
             'GGUF=~/.cache/huggingface/hub/models--huihui-ai--Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-MTP-GGUF/snapshots/main/Huihui-Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-ggml-model-Q6_K.gguf; '
-            'nohup ~/llama-cpp-mainline/build/bin/llama-server -m "$GGUF" -ngl 99 -fa on -np 1 -c 32768 '
+            'nohup ~/llama-cpp-mainline/build/bin/llama-server -m "$GGUF" -ngl 99 -fa on -np 1 -c 262144 '
             '--spec-type draft-mtp --spec-draft-n-max 2 --host 0.0.0.0 --port 8100 '
             '--alias huihui-qwen36-35b-mtp-abliterated-q6k --jinja --reasoning on '
             '> /tmp/llama-cpp-mtp.log 2>&1 &'
@@ -259,6 +260,7 @@ STOP_ALL_CMD = (
     "pkill -f 'llama-cpp-thetom/build/bin/llama-server'; "
     "pkill -f 'mlx_lm.server'; pkill -f 'ds4-server'; pkill -f 'litert-lm serve'; "
     "pkill -f 'sglang.launch_server'; pkill -f 'sglang serve'; pkill -9 osaurus 2>/dev/null; "
+    "pkill -f '/opt/homebrew.*/ollama serve'; pkill -f 'ollama runner'; pkill -f 'comfyui/main.py'; "
     "if [ -x ~/.lmstudio/bin/lms ]; then ~/.lmstudio/bin/lms unload --all 2>/dev/null; "
     "~/.lmstudio/bin/lms server stop 2>/dev/null; fi; "
     "/opt/homebrew/bin/brew services stop omlx 2>/dev/null; sleep 3"
@@ -521,7 +523,8 @@ def check_on_disk(host, rec, dry_run):
                              capture_output=True, text=True, timeout=30)
         key = rec["lms_key"].split("/")[-1].lower()
         listed = sum(1 for ln in res.stdout.splitlines() if ln.strip())
-        if key in res.stdout.lower():
+        # Whole key only — `qwen3.6-35b-a3b` must not match `qwen3.6-35b-a3b-uncensored-…`.
+        if re.search(rf"(^\s*|/){re.escape(key)}(\s|$)", res.stdout, re.I | re.M):
             dbg(f"  rc={res.returncode}  matched key '{key}' among {listed} listed lines")
             return True
         dbg(f"  rc={res.returncode}  key '{key}' NOT among {listed} listed lines; "
@@ -563,15 +566,23 @@ def set_guardrail(host, mode, dry_run):
 
 
 def start_lms(host, rec, dry_run):
+    """Load via lms; False if the load failed (stderr already printed)."""
     guard = not rec.get("no_guardrail")
     if guard:
         set_guardrail(host, "off", dry_run)
     load = (f"~/.lmstudio/bin/lms load '{rec['lms_key']}' --gpu max "
             f"--context-length {rec['context_length']} --identifier '{rec['model_id']}' -y")
-    ssh(host, load, dry_run, timeout=600)
-    if guard:
-        set_guardrail(host, "high", dry_run)
+    try:
+        res = ssh(host, load, dry_run, timeout=600)
+    finally:  # restore even on Ctrl-C / SSH timeout — guardrail off is an OOM risk
+        if guard:
+            set_guardrail(host, "high", dry_run)
+    if res is not None and res.returncode != 0:
+        print(f"Error: lms load failed (rc={res.returncode}):\n"
+              f"{(res.stderr or res.stdout).strip()}", file=sys.stderr)
+        return False
     ssh(host, "~/.lmstudio/bin/lms server start --bind 0.0.0.0 --cors", dry_run, timeout=120)
+    return True
 
 
 def remote_log_path(rec):
@@ -715,6 +726,35 @@ def smoke_test(host_ip, rec, api_key, dry_run):
     return False
 
 
+# ---------- self-check ----------
+
+def recipe_context(rec):
+    if rec["kind"] == "lms":
+        return rec["context_length"]
+    m = re.search(r"\s-c\s+(\d+)", rec["start_cmd"])
+    return int(m.group(1)) if m else None  # e.g. SGLang: context comes from the model config
+
+
+def check_recipes():
+    """Launch context must equal the OpenCode template's limit.context, else OpenCode
+    compacts too late (server rejects) or too early. Ids absent from a template are
+    expected (templates follow the model under test) and only noted."""
+    bad = 0
+    for rec in LAUNCH_RECIPES:
+        tpl = json.loads((REPO_ROOT / "configs" / "clients" / rec["server"] / "opencode.json").read_text())
+        models = {m: v for p in tpl.get("provider", {}).values() for m, v in p.get("models", {}).items()}
+        entry = models.get(rec["model_id"])
+        if entry is None:
+            print(f"  note  {rec['server']}/{rec['model_id']}: not in template")
+            continue
+        launch, want = recipe_context(rec), entry.get("limit", {}).get("context")
+        if launch is not None and launch != want:
+            bad += 1
+            print(f"  FAIL  {rec['server']}/{rec['model_id']}: launch ctx {launch} != template {want}")
+    print("Recipes consistent." if not bad else f"{bad} recipe(s) inconsistent.")
+    return 1 if bad else 0
+
+
 # ---------- main ----------
 
 def main():
@@ -729,7 +769,12 @@ def main():
                     help="Per-step diagnostics on stderr (table parse, recipe match, every SSH "
                          "rc/stdout/stderr, readiness polls, smoke payload/response; key redacted)")
     ap.add_argument("--no-smoke", action="store_true", help="Skip the tool-call smoke test")
+    ap.add_argument("--check", action="store_true",
+                    help="Verify LAUNCH_RECIPES context sizes match configs/clients templates; exit")
     args = ap.parse_args()
+
+    if args.check:
+        return check_recipes()
 
     global DEBUG
     DEBUG = args.debug
@@ -792,7 +837,8 @@ def main():
     print(f"Starting {rec['server']}...")
     t = time.time()
     if rec["kind"] == "lms":
-        start_lms(host, rec, args.dry_run)
+        if not start_lms(host, rec, args.dry_run):
+            return 1
     else:
         start_remote_cmd(host, rec, args.dry_run)
     timings["load"] = time.time() - t

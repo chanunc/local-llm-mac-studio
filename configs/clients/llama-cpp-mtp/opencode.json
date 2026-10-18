@@ -70,6 +70,24 @@
             "context": 65536,
             "output": 8192
           }
+        },
+        "qwen3.8-27b-q8_0": {
+          "name": "unsloth Qwen3.8-27B Q8_0 MTP (llama-cpp-mtp, mainline, --spec-draft-n-max 1) — dense 27B hybrid Gated-DeltaNet, MTP heads embedded in main GGUF, think-on, 29.0 GB",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen3.8-27b-mtp-ud-q4kxl": {
+          "name": "unsloth Qwen3.8-27B UD-Q4_K_XL MTP (llama-cpp-mtp, mainline) — dense 27B hybrid Gated-DeltaNet, MTP heads embedded in main GGUF, think-on, 17.6 GB",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         }
       }
     }

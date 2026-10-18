@@ -31,6 +31,18 @@
         "name": "Qwen3.6-27B 6bit MLX",
         "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
         "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "qwen38-27b-q8_0",
+        "name": "Qwen3.8-27B Q8_0 GGUF",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
+      },
+      {
+        "id": "qwen38-27b-mlx-4bit",
+        "name": "Qwen3.8-27B 4bit MLX",
+        "baseUrl": "http://<MAC_STUDIO_IP>:1234/v1",
+        "envKey": "MACSTUDIO_API_KEY"
       }
     ]
   },

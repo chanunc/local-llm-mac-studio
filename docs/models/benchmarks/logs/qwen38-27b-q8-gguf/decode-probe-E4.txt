@@ -1,0 +1,2 @@
+decode_probe n= 300 tok/s= 31.85 draft_n= 218 draft_accepted= 143
+decode_probe n= 300 tok/s= 30.21 draft_n= 279 draft_accepted= 145

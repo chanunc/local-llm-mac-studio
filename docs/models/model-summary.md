@@ -14,6 +14,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Nemotron Family (vllm-mlx only)](#nemotron-family-vllm-mlx-only) — 3 variants + server compatibility note: Nano 30B, Super 120B, Cascade-2 30B. Detail at [`per-model/model-summary-nemotron.md`](per-model/model-summary-nemotron.md)
 - [Mistral Small 4 119B-A6B JANG 2L](#mistral-small-4-119b-a6b-jang-2l) — 119B MoE · 6B active · 30 GB · 82 tok/s · vision
 - [Qwen3.6 Family (Hybrid Gated DeltaNet + Vision)](#qwen36-family-hybrid-gated-deltanet--vision) — 15 variants: 35B-A3B 6-bit / 4-bit / Ollama 35B MLX / Osaurus JANGTQ4 / DavidAU Heretic 40B Q6_K IMatrix GGUF, prithivMLmods 35B-A3B Aggressive Q6_K GGUF, HauhauCS Aggressive Q6_K_P, 27B JANG 4M, 27B 6-bit, **Qwen3.6-27B Fable-5 LoRA Q6_K (ChatML v4) on llama.cpp (5/5 smoke, 21.9→13.0 tok/s @ 512→131K, browse 40.35 s / search 55.59 s very high variance, 131K practical context; fully-cold 256K completes ~32 min prefill)**, HauhauCS Balanced Q8_K_P GGUF, prithivMLmods Q3.6-27B GLM-5.1-DA Q4_K_M (browse 11.62 s / search 19.47 s), 35B Rust LoRA, Huihui Qwen3.6-35B-A3B Claude-4.7-Opus abliterated MTP Q6_K, and llmfan46 Qwen3.6-27B uncensored Heretic v2 Native-MTP-Preserved Q6_K. Full per-variant detail at [`per-model/model-summary-qwen-3-6.md`](per-model/model-summary-qwen-3-6.md)
+- [Qwen3.8 Family (dense hybrid Gated DeltaNet + Vision)](#qwen38-family-dense-hybrid-gated-deltanet--vision) — 4 variants: 27B 4-bit MLX (lm-studio), 27B UD-Q4_K_XL + MTP (llama-cpp-mtp), 27B Q8_0 GGUF (lm-studio), 27B Q8_0 + MTP (llama-cpp-mtp). Detail at [`per-model/model-summary-qwen-3-8.md`](per-model/model-summary-qwen-3-8.md).
 - [Ling-2.6-flash mlx-6bit (bailing_hybrid)](#ling-26-flash-mlx-6bit-bailing_hybrid) — 104B/7.4B MoE · 6-bit MLX · MLA + linear-attention SSM · vllm-mlx + 3 patches
 - [MiMo V2.5 4-bit, 130-expert pruned (jedisct1)](#mimo-v25-4-bit-130-expert-pruned-jedisct1) — 4-bit MLX · pruning calibration loss → not viable for agent workloads
 - [ChindaMT-4B (Thai ↔ English Translation)](#chindamt-4b-thai--english-translation) — **active mlx-lm sidecar on port 8080**, 186 tok/s, 2.2 GB MLX 4-bit, Apache-2.0. Qwen3.5-4B base + hybrid SSM architecture; GGUF not viable.
@@ -242,6 +243,21 @@ Fourteen Qwen3.6 variants currently catalogued in this stack — all sharing the
 | Qwen3.6-35B Rust LoRA (jedisct1) | MoE 35B/3B (LoRA-merged) | 35 GB | Uniform 8-bit MLX | vllm-mlx | [link](per-model/model-summary-qwen-3-6.md#qwen36-35b-rust-lora-jedisct1-8-bit) |
 
 The JANGTQ-CRACK Qwen3.6 variants (`dealignai/Qwen3.6-35B-A3B-JANGTQ4-CRACK` and `JANGTQ2-CRACK`) live in the private uncen-model submodule — see [`uncen-model/`](uncen-model/) and the JANGTQ deployment notes further down.
+
+---
+
+## Qwen3.8 Family (dense hybrid Gated DeltaNet + Vision)
+
+Alibaba's Qwen3.8-27B (2026-08-14, Apache-2.0) shares the `qwen3_5` architecture family with Qwen3.6 and loaded on the existing lm-studio and llama.cpp runtimes without patches. Detail, commands and caveats: [`per-model/model-summary-qwen-3-8.md`](per-model/model-summary-qwen-3-8.md).
+
+| Variant | Type | Size | Quant | Server | Detail |
+|:--------|:-----|----:|:------|:-------|:-------|
+| Qwen3.8-27B 4bit MLX (lmstudio-community) | Dense 27B + VL | 16.1 GB | Uniform 4-bit MLX | lm-studio | [link](per-model/model-summary-qwen-3-8.md#lm-studio-mlx-4-bit) |
+| unsloth Qwen3.8-27B UD-Q4_K_XL + MTP | Dense 27B + MTP heads (embedded) | 17.6 GB | GGUF Unsloth Dynamic 4-bit | llama-cpp-mtp (port 8100) | [link](per-model/model-summary-qwen-3-8.md#llamacpp-ud-q4_k_xl--mtp-port-8100) |
+| ggml-org Qwen3.8-27B Q8_0 GGUF | Dense 27B + VL (no MTP layer) | 28.6 GB | GGUF Q8_0 | lm-studio | [link](per-model/model-summary-qwen-3-8.md#lm-studio-gguf-q8_0) |
+| unsloth Qwen3.8-27B Q8_0 + MTP | Dense 27B + MTP heads (embedded) | 29.0 GB | GGUF Q8_0 | llama-cpp-mtp (port 8100) | [link](per-model/model-summary-qwen-3-8.md#llamacpp-q8_0--mtp-port-8100) |
+
+Caveats: cold prefill ≈ 260–317 tok/s on every server, so OpenCode agent loops are prefill-bound; MLX 4-bit decodes ~1.8× faster than the Q4 MTP GGUF; Q4_K_XL search had 1/3 runs hit the 300 s wall (`bash` loop). lm-studio's llama.cpp runtime 2.14.0 cannot load GGUFs that embed the MTP layer (use `ggml-org`'s file); on Q8_0 the llama.cpp sidecar's best draft depth is `--spec-draft-n-max 1`, and it ties lm-studio end to end.
 
 ---
 

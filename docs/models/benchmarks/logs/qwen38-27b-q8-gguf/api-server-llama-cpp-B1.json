@@ -1,0 +1,94 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-10-18T21:16:05.578371+00:00",
+  "config": {
+    "base_url": "http://127.0.0.1:18100/v1",
+    "model": "qwen3.8-27b-q8_0",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      8192,
+      32768
+    ]
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 0.118,
+          "total_s": 1.756,
+          "input_tokens": 578,
+          "output_tokens": 50,
+          "gen_tps": 30.51,
+          "prefill_tps": 4917.6
+        },
+        {
+          "ttft_s": 0.117,
+          "total_s": 1.754,
+          "input_tokens": 578,
+          "output_tokens": 50,
+          "gen_tps": 30.54,
+          "prefill_tps": 4935.7
+        }
+      ],
+      "median_ttft_s": 0.117,
+      "median_gen_tps": 30.525,
+      "median_prefill_tps": 4926.65,
+      "input_tokens": 578,
+      "output_tokens": 50
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 0.129,
+          "total_s": 1.928,
+          "input_tokens": 8258,
+          "output_tokens": 50,
+          "gen_tps": 27.8,
+          "prefill_tps": 63925.3
+        },
+        {
+          "ttft_s": 0.129,
+          "total_s": 1.929,
+          "input_tokens": 8258,
+          "output_tokens": 50,
+          "gen_tps": 27.79,
+          "prefill_tps": 63788.4
+        }
+      ],
+      "median_ttft_s": 0.129,
+      "median_gen_tps": 27.795,
+      "median_prefill_tps": 63856.85,
+      "input_tokens": 8258,
+      "output_tokens": 50
+    },
+    "32768": {
+      "runs": [
+        {
+          "ttft_s": 0.175,
+          "total_s": 1.983,
+          "input_tokens": 32834,
+          "output_tokens": 50,
+          "gen_tps": 27.65,
+          "prefill_tps": 187838.8
+        },
+        {
+          "ttft_s": 0.175,
+          "total_s": 1.984,
+          "input_tokens": 32834,
+          "output_tokens": 50,
+          "gen_tps": 27.63,
+          "prefill_tps": 188036.6
+        }
+      ],
+      "median_ttft_s": 0.175,
+      "median_gen_tps": 27.64,
+      "median_prefill_tps": 187937.7,
+      "input_tokens": 32834,
+      "output_tokens": 50
+    }
+  }
+}

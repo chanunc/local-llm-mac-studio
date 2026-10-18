@@ -1,0 +1,2 @@
+decode_probe n= 300 tok/s= 21.43 draft_n= None draft_accepted= None
+decode_probe n= 300 tok/s= 21.43 draft_n= None draft_accepted= None

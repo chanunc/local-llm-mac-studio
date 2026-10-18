@@ -1268,6 +1268,89 @@ Raw log: [`lfm2.5-8b-a1b-q8/`](lfm2.5-8b-a1b-q8/) (also `api-server-llmster.json
 
 ---
 
+## Qwen3.8-27B (dense, 4-bit MLX on lm-studio vs UD-Q4_K_XL GGUF + MTP on llama.cpp)
+
+Models: `lmstudio-community/Qwen3.8-27B-MLX-4bit` (15 GiB, `Qwen3_5ForConditionalGeneration`, dense 27.8B hybrid Gated-DeltaNet + ViT) and `unsloth/Qwen3.8-27B-GGUF` `UD-Q4_K_XL` (17.6 GB, MTP heads embedded — no `-md` needed).
+Tested on **Mac Studio M3 Ultra (96 GB)**, one server resident at a time.
+
+**Method:** Streaming SSE `/v1/chat/completions`, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context, via an SSH tunnel to 127.0.0.1 (macOS Local Network Privacy blocks Python to the LAN). Bench script: [`scripts/bench/bench_api_server.py`](../../../scripts/bench/bench_api_server.py). Raw JSON: [lm-studio](logs/qwen38-27b-4bit/api-server-lm-studio.json), [llama-cpp-mtp](logs/qwen38-27b-ud-q4kxl-mtp/api-server-llama-cpp-mtp.json).
+
+**Servers:** lm-studio MLX runtime `mlx-llm-mac-arm64-apple-metal-advsimd@1.13.1`, `lms load qwen3.8-27b-mlx --gpu max --context-length 131072`. llama.cpp mainline `llama-server` build 334 (`ac4cdde`), `-ngl 99 -fa on -np 1 -c 131072 --spec-type draft-mtp --spec-draft-n-max 2 --jinja --reasoning on`.
+
+### Generation Speed (tok/s)
+
+| Context | lm-studio MLX 4-bit | llama.cpp UD-Q4_K_XL + MTP |
+|:--------|:-------:|:-------:|
+| 512 | **42.2** | 22.8 |
+| 4K | **40.0** | 23.9 |
+| 8K | **38.8** | 24.0 |
+| 32K | **34.9** | 20.8 |
+| 64K | **30.1** | 15.0 |
+
+### Prefill Speed (tok/s) — cache-warm, see note
+
+| Context | lm-studio MLX 4-bit | llama.cpp UD-Q4_K_XL + MTP |
+|:--------|:-------:|:-------:|
+| 512 | 1,153 | 4,240 |
+| 4K | 7,515 | 29,486 |
+| 8K | 12,933 | 55,611 |
+| 32K | 28,596 | 169,024 |
+| 64K | 34,610 | 234,230 |
+
+### Time to First Token (seconds)
+
+| Context | lm-studio MLX 4-bit | llama.cpp UD-Q4_K_XL + MTP |
+|:--------|:-------:|:-------:|
+| 512 | 0.50 | **0.14** |
+| 4K | 0.55 | **0.14** |
+| 8K | 0.64 | **0.15** |
+| 32K | 1.15 | **0.19** |
+| 64K | 1.90 | **0.28** |
+
+**Notes:**
+- **Prefill and TTFT above are cache-warm, not cold-prefill.** The filler probe repeats the same prompt after warmup, so both servers reuse the prompt cache. Cold prefill measured with unique prompts: **lm-studio ≈ 297–317 tok/s** (18,251 tokens in 57.5 s; 36,610 in 123.2 s); **llama.cpp ≈ 258–261 tok/s** (server log, 4–5K-token chunks).
+- **Cold prefill, not decode, dominates OpenCode agent loops for this model.** Turns carry 12–24K input tokens, so a search run at ~60 s is mostly uncached prompt processing (see [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md)). llama.cpp log also shows repeated `erased invalidated context checkpoint` lines when the prefix changes between turns.
+- **MLX decodes ~1.8× faster than the MTP GGUF** at 512 tokens (42.2 vs 22.8 tok/s), and the gap narrows to 2× at 64K (30.1 vs 15.0). MTP draft acceptance was 73 % (82/112) on a single chat probe.
+- Standard `bench_api_server.py` filler padding did **not** trigger the 1-token filler-EOS seen on some Qwen3.6 MTP quants — all runs generated 46–50 tokens.
+- Tool smoke: 5/5 on both servers (3-turn loop 9.06 s MLX / 12.25 s MTP). `reasoning_effort: medium` via `chat_template_kwargs` gave an identical 9.0 s loop on lm-studio — either ignored by the MLX path or too short to matter; inconclusive.
+
+### Q8_0 GGUF: lm-studio vs llama.cpp (with and without MTP)
+
+Files: `ggml-org/Qwen3.8-27B-GGUF` `Q8_0` (28.6 GB, 64 blocks, no MTP layer) on lm-studio, and `unsloth/Qwen3.8-27B-GGUF` `Q8_0` (29.0 GB, MTP layer `blk.64.nextn.*` embedded) on llama.cpp. lm-studio's llama.cpp runtime `2.14.0` (the newest it offers) refuses the unsloth file (`missing tensor 'blk.64.ssm_conv1d.weight'`: it treats the MTP layer as a normal one), hence the different file. Same method as above. lm-studio: `lms load … --gpu max --context-length 131072` (default 4 parallel slots). llama.cpp: build 334, `-ngl 99 -fa on -np 1 -c 131072 --jinja --reasoning on`. Raw JSON and probe logs: [`logs/qwen38-27b-q8-gguf/`](logs/qwen38-27b-q8-gguf/).
+
+| Context | lm-studio Q8_0 (no MTP) | llama.cpp Q8_0, no MTP | llama.cpp Q8_0 + MTP `n=1` |
+|:--------|:-------:|:-------:|:-------:|
+| 512 gen (tok/s) | 22.7 | 21.8 | **32.0** |
+| 8K gen | 22.1 | 21.2 | **31.6** |
+| 32K gen | 20.3 | 19.5 | **28.2** |
+| 64K gen | 18.0 | not run | not run |
+| 512 TTFT (s) | 0.32 | **0.11** | 0.12 |
+| 32K TTFT (s) | 0.55 | **0.16** | 0.17 |
+| 32K prefill, cache-warm (tok/s) | 59,700 | 202,400 | 189,400 |
+
+**Draft-depth and flag matrix** (llama.cpp Q8_0, one variable per row; "probe" = one ~300-token code/explain completion at the model card's thinking sampling, median of 2 runs, so differences under about 2 tok/s are noise):
+
+| Row | Flags (on top of base) | Synthetic gen @ 512 / 8K / 32K | Real-content probe | Draft accepted | Cold prefill (6.5K tok) |
+|:--|:--|:--|:--|:--|:--|
+| B0 | no MTP | 21.8 / 21.2 / 19.5 | 21.4 | n/a | 20.9 s (310 tok/s) |
+| B1 | MTP `n=2` | 30.5 / 27.8 / 27.7 | 24.1 | 55 % | 21.4 s |
+| **B2** | **MTP `n=1`** | **32.0 / 31.6 / 28.2** | **29.3** | 69 % | 21.3 s (304 tok/s) |
+| B3 | MTP `n=3` | 26.2 / 23.7 / 24.7 | 21.7 | 50 % | 21.4 s |
+| E1 | B2 + `--spec-draft-p-min 0.5` | 30.6 / 31.9 / 27.5 | 29.7 | 84 % | 21.4 s |
+| E2 | B2 + `-ub 1024` | not run | 29.1 | 68 % | 20.7 s (313 tok/s) |
+| E3 | B2 + `-ub 2048` | not run | 31.2 | 80 % | 20.4 s (317 tok/s) |
+| E4 | `--spec-type draft-mtp,ngram-mod`, `n=1` | 31.9 / 31.7 / 28.2 | 31.0 | 58 % | 21.4 s |
+| E5 | B2 + `-ctk q8_0 -ctv q8_0` | 31.2 / 29.5 / **23.6** | 31.0 | 84 % | 21.8 s (297 tok/s) |
+
+**Notes:**
+- **MTP pays off on Q8_0 at depth 1:** +37 % on real content (29.3 vs 21.4 tok/s) and +47 % on the synthetic 512 probe. Deeper drafts lose it: `n=2` drops acceptance to 55 % and `n=3` to 50 %, where `n=3` is no better than no MTP. This matches the Gemma 4 result on this Mac (`n=1` best).
+- **No lever beats B2 beyond noise.** `--spec-draft-p-min 0.5` raises acceptance but not speed. `ngram-mod` stacked on MTP is accepted by build 334 and gives no measurable gain on these probes (not tested on repeated tool output). `-ub 2048` shortens cold prefill by about 4 % (20.4 vs 21.3 s), not agent-benched. **KV cache `q8_0` is a regression at long context** (28.2 → 23.6 tok/s @ 32K, cold prefill 21.8 s). `--fused-gdn` does not exist in build 334.
+- **Cold prefill is the same everywhere (about 300–317 tok/s),** on lm-studio (20.9 s for 6.5K tokens) and on every llama.cpp row, so OpenCode turns with 12K+ input tokens cost the same prefill on both servers. End-to-end results are in [`model-benchmark-tool-call.md`](model-benchmark-tool-call.md).
+- **No-MTP decode is equal across servers** (lm-studio 22.7 vs llama.cpp 21.8 tok/s @ 512). The roughly 3x lower cache-warm TTFT on llama.cpp (0.11 vs 0.32 s @ 512) is wrapper and cache-handling overhead, not model speed.
+- Tool smoke: 5/5 on both (3-turn loop 15.45 s lm-studio, 10.09 s llama.cpp + MTP `n=1`).
+
+---
+
 ## 🩹 vllm-mlx Bug Fix
 
 vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with_fallback()` function is missing `return model, tokenizer` after a successful `mlx_lm.load()` call, causing the function to return `None`. Patched locally by adding the missing return statement.
@@ -1287,3 +1370,4 @@ vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with
 | `~/turboquant-pcr/results/server_*.json` | Raw JSON results |
 | `~/vllm-mlx-env/` | vllm-mlx Python 3.12 venv |
 | `~/mlx-openai-server-env/` | mlx-openai-server Python 3.12 venv |
+

@@ -115,6 +115,24 @@
             "context": 65536,
             "output": 4096
           }
+        },
+        "qwen38-27b-q8_0": {
+          "name": "ggml-org Qwen3.8-27B Q8_0 GGUF (lm-studio) — dense 27B hybrid Gated-DeltaNet + ViT, Apache 2.0, think-on, 26.6 GiB, no MTP layer",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen38-27b-mlx-4bit": {
+          "name": "lmstudio-community Qwen3.8-27B 4bit MLX (lm-studio, standard MLX) — dense 27B hybrid Gated-DeltaNet + ViT, Apache 2.0, think-on, 15 GiB",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         }
       }
     }

@@ -1349,6 +1349,48 @@ Files: `ggml-org/Qwen3.8-27B-GGUF` `Q8_0` (28.6 GB, 64 blocks, no MTP layer) on 
 - **No-MTP decode is equal across servers** (lm-studio 22.7 vs llama.cpp 21.8 tok/s @ 512). The roughly 3x lower cache-warm TTFT on llama.cpp (0.11 vs 0.32 s @ 512) is wrapper and cache-handling overhead, not model speed.
 - Tool smoke: 5/5 on both (3-turn loop 15.45 s lm-studio, 10.09 s llama.cpp + MTP `n=1`).
 
+## ttindall Qwen3.8-27B Defiance Uncensored Q6_K_P (dense, embedded MTP vs external FastMTP-32K draft on llama.cpp)
+
+Model: `ttindall/Qwen3.8-27B-Defiance-Uncensored-MTP-GGUF` `Q6_K_P` (25.9 GB; HauhauCS Aggressive weights + `defiance-27b.jinja` chat template; MTP layer `blk.64.nextn.*` embedded). Tested on **Mac Studio M3 Ultra (96 GB)**, one server resident at a time. Writeup: [`qwen38-27b-defiance-mtp-benchmark.md`](../uncen-model/qwen38-27b-defiance-mtp-benchmark.md).
+
+**Method:** same as the Qwen3.8-27B section above (streaming SSE, 50 max tokens, temperature 0.0, 1 warmup + 2 measured runs per context, SSH tunnel to 127.0.0.1).
+
+**Servers:** llama.cpp mainline `llama-server` build 334 (`ac4cdde`), `-ngl 99 -fa on -np 1 -c 131072 --spec-type draft-mtp --spec-draft-n-max 1 --jinja --chat-template-file defiance-27b.jinja --reasoning on`. FastMTP arm: a separate build of upstream `4df29be` plus the HauhauCS patch, adding `-md Qwen3.8-27B-Uncensored-HauhauCS-Aggressive-FastMTP-32K.gguf -ngld 99 --spec-draft-n-max 3 --spec-draft-p-min 0`.
+
+### Generation Speed (tok/s)
+
+| Context | embedded MTP `n=1` | FastMTP-32K `n=3` (patched) | FastMTP vs embedded |
+|:--------|:-------:|:-------:|:-------:|
+| 512 | **27.8** | 21.4 | −23.0% |
+| 4K | **27.3** | 21.9 | −19.8% |
+| 8K | **26.8** | 21.6 | −19.4% |
+| 32K | **23.3** | 18.4 | −21.2% |
+| 64K | **18.8** | 14.5 | −22.6% |
+
+Embedded `n=2` probe (512 and 8K only): 23.6 and 25.9 tok/s, so `n=1` is 18% / 3% faster. Draft acceptance: 68 % (`n=1`), 70 % (`n=2`), 75 % (FastMTP `n=3`).
+
+### Prefill Speed (tok/s) — cache-warm
+
+| Context | embedded MTP `n=1` | FastMTP-32K `n=3` (patched) |
+|:--------|:-------:|:-------:|
+| 512 | 3,737 | 4,453 |
+| 4K | 24,349 | 28,704 |
+| 8K | 46,151 | 53,590 |
+| 32K | 145,955 | 159,652 |
+| 64K | 214,833 | 223,945 |
+
+### Time to First Token (seconds)
+
+| Context | embedded MTP `n=1` | FastMTP-32K `n=3` (patched) |
+|:--------|:-------:|:-------:|
+| 512 | 0.17 | 0.14 |
+| 4K | 0.17 | 0.15 |
+| 8K | 0.18 | 0.15 |
+| 32K | 0.23 | 0.21 |
+| 64K | 0.30 | 0.29 |
+
+Raw JSON: [`logs/qwen38-27b-defiance-mtp/`](logs/qwen38-27b-defiance-mtp/). FastMTP drafts better but decodes 19–23 % slower on Metal; the vendor's +11–35 % gains were measured on CUDA/Blackwell.
+
 ---
 
 ## 🩹 vllm-mlx Bug Fix

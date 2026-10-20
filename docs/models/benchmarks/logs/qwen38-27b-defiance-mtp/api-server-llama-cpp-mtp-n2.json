@@ -1,0 +1,68 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-10-20T23:13:30.459501+00:00",
+  "config": {
+    "base_url": "http://127.0.0.1:18100/v1",
+    "model": "qwen38-27b-defiance-q6kp",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      512,
+      8192
+    ]
+  },
+  "results": {
+    "512": {
+      "runs": [
+        {
+          "ttft_s": 0.169,
+          "total_s": 2.293,
+          "input_tokens": 625,
+          "output_tokens": 50,
+          "gen_tps": 23.54,
+          "prefill_tps": 3695.8
+        },
+        {
+          "ttft_s": 0.169,
+          "total_s": 2.292,
+          "input_tokens": 625,
+          "output_tokens": 50,
+          "gen_tps": 23.55,
+          "prefill_tps": 3708.3
+        }
+      ],
+      "median_ttft_s": 0.169,
+      "median_gen_tps": 23.545,
+      "median_prefill_tps": 3702.05,
+      "input_tokens": 625,
+      "output_tokens": 50
+    },
+    "8192": {
+      "runs": [
+        {
+          "ttft_s": 0.183,
+          "total_s": 2.112,
+          "input_tokens": 8305,
+          "output_tokens": 50,
+          "gen_tps": 25.93,
+          "prefill_tps": 45291.8
+        },
+        {
+          "ttft_s": 0.182,
+          "total_s": 2.111,
+          "input_tokens": 8305,
+          "output_tokens": 50,
+          "gen_tps": 25.92,
+          "prefill_tps": 45687.1
+        }
+      ],
+      "median_ttft_s": 0.182,
+      "median_gen_tps": 25.925,
+      "median_prefill_tps": 45489.45,
+      "input_tokens": 8305,
+      "output_tokens": 50
+    }
+  }
+}

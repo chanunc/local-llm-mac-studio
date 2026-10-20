@@ -7,6 +7,7 @@
 - [Download the MTP GGUF](#download-the-mtp-gguf)
 - [Starting the server](#starting-the-server)
 - [Gemma 4 31B external MTP drafter](#gemma-4-31b-external-mtp-drafter)
+- [Qwen3.8 FastMTP external draft (patched build)](#qwen38-fastmtp-external-draft-patched-build)
 - [Tool use and reasoning](#tool-use-and-reasoning)
 - [Health check](#health-check)
 - [Performance](#performance-mac-studio-m3-ultra-96-gb)
@@ -233,6 +234,29 @@ The decisive blocker was the post-upgrade Qwen regression check. The final valid
 The browse slowdown came with a much larger first-turn prompt footprint on the candidate runs: baseline browse used **118 input tokens** total, while both candidate runs expanded to about **8.9K input tokens** before `webfetch` completed. Because the existing Qwen MTP sidecar regressed materially on that real agent path, the upgraded binary was **not** kept as the default `~/llama-cpp-mainline/build/bin/llama-server`. The source tree remains at `961e9a3` for follow-up work, but the default executable stays on the old `510b5c2` build.
 
 Raw logs and summary: [`../../models/benchmarks/logs/gemma4-31b-mtp-llama-cpp/`](../../models/benchmarks/logs/gemma4-31b-mtp-llama-cpp/)
+
+## Qwen3.8 FastMTP external draft (patched build)
+
+HauhauCS ships an optional 903 MB `FastMTP-32K` draft for its Qwen3.8-27B Aggressive quants (also bundled in `ttindall/Qwen3.8-27B-Defiance-Uncensored-MTP-GGUF`). The draft has a trimmed 32K-vocab `output.weight` (`[5120, 32768]` vs the 248,320-token target vocab), which stock llama.cpp cannot load. The same GGUFs also carry the model's own MTP layer, so **embedded MTP (`--spec-type draft-mtp`, no `-md`) works on the stock mainline build and is the recommended path**.
+
+**Unpatched failure signature** (mainline build 334 `ac4cdde` and upstream master `1242be6`, 2026-10-21): `check_tensor_dims: tensor 'output.weight' has wrong shape` while loading the draft; `llama-server` exits.
+
+**Patched build** (kept separate so the mainline binary used by every other bench is untouched):
+
+```bash
+ssh macstudio "mkdir ~/llama-cpp-fastmtp && cd ~/llama-cpp-fastmtp && git init -q && \
+  git remote add origin https://github.com/ggml-org/llama.cpp.git && \
+  git fetch --depth 1 origin 4df29be4f4c3673f428170fda944a5b19f743bb8 && git checkout -q FETCH_HEAD"
+# patch: https://huggingface.co/HauhauCS/Qwen3.8-27B-Uncensored-HauhauCS-Aggressive-MTP-GGUF (HauhauCS-FastMTP-llama.cpp.patch)
+# reviewed 2026-10-21, sha256 981285400b59dc45cf99936b6ff66d4b3aa0f1b532f85fa51418cb407e51d615, touches only src/models/qwen35.cpp
+scp HauhauCS-FastMTP-llama.cpp.patch macstudio:llama-cpp-fastmtp/
+ssh macstudio "cd ~/llama-cpp-fastmtp && git apply --check HauhauCS-FastMTP-llama.cpp.patch && git apply HauhauCS-FastMTP-llama.cpp.patch && \
+  export PATH=/opt/homebrew/bin:\$PATH && cmake -B build -DGGML_METAL=ON -DCMAKE_BUILD_TYPE=Release && \
+  cmake --build build --config Release -j 20 --target llama-server"
+# run with: -md <FastMTP-32K.gguf> -ngld 99 --spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0
+```
+
+`cmake` is not on the non-interactive SSH PATH; use `/opt/homebrew/bin`. **Measured on M3 Ultra:** the patched build loads the draft and accepts ~75 % at `n=3`, but decodes 19–23 % slower than embedded MTP `n=1` at every context (21.4 vs 27.8 tok/s @ 512). OpenCode browse ties (16.07 vs 16.20 s); search is slower (75.29 vs 66.94 s). Writeup: [`qwen38-27b-defiance-mtp-benchmark.md`](../../models/uncen-model/qwen38-27b-defiance-mtp-benchmark.md).
 
 ## Tool use and reasoning
 

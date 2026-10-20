@@ -86,6 +86,10 @@ Notes:
 - **No `--tool-call-parser` / `--reasoning-parser` flags exist** on this `llama-server` build. Tool calls are dispatched from the GGUF's embedded chat template via `--jinja`; the reasoning channel is controlled with `--reasoning [on|off|auto]`. Both `tool_calls[]` parsing and `reasoning_content` separation work out of the box.
 - **The build's `cmake` may not be on PATH for non-interactive SSH.** Use `/opt/homebrew/bin/cmake` explicitly.
 
+## External FastMTP draft vs embedded MTP (Qwen3.8, HauhauCS)
+
+Some Qwen3.8 GGUFs ship both the embedded MTP layer (`blk.64.nextn.*`) and an optional external `FastMTP-32K` draft with a trimmed 32K draft vocabulary (scatter-mapped back to the full vocab by a `d2t` tensor). The external draft needs a patched llama.cpp (upstream `4df29be` + `HauhauCS-FastMTP-llama.cpp.patch`); stock mainline cannot load it. On M3 Ultra it **regresses** against embedded MTP: Defiance Q6_K_P decodes 21.4 vs 27.8 tok/s @ 512 (−23 %) and −19 to −23 % through 64K, despite higher acceptance (75 % at `n=3` vs 68 % at `n=1`). The vendor's +11–35 % gains were measured on CUDA/Blackwell. Embedded `n=1` also beat `n=2` on this quant (27.8 vs 23.6 tok/s @ 512), matching the Q8_0 result. See [`qwen38-27b-defiance-mtp-benchmark.md`](../uncen-model/qwen38-27b-defiance-mtp-benchmark.md) and the [runbook](../../servers/llama-cpp-mtp/summary.md#qwen38-fastmtp-external-draft-patched-build).
+
 ## Known limitations
 
 - **~~Stock llama.cpp incompatible~~ RESOLVED:** Mainline `ggml-org/llama.cpp` now supports `--spec-type draft-mtp` (confirmed commit `510b5c2`, 2026-05-20). Both mainline and the am17an fork work.

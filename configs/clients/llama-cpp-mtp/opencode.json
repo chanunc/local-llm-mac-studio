@@ -88,6 +88,15 @@
             "context": 131072,
             "output": 8192
           }
+        },
+        "qwen38-27b-defiance-q6kp": {
+          "name": "ttindall Qwen3.8-27B Defiance Uncensored Q6_K_P (HauhauCS Aggressive weights + Defiance jinja, dense 27B, mainline llama.cpp, embedded draft-mtp n-max 1, 25.9 GB)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         }
       }
     }

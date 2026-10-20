@@ -1,6 +1,6 @@
 # Qwen3.8-27B — per-model notes
 
-Alibaba's Qwen3.8-27B (released 2026-08-14, Apache-2.0) is a dense 27.8B multimodal model that shares the `qwen3_5` architecture family with Qwen3.6 — hybrid Gated-DeltaNet plus gated full attention, with a vision tower. It loaded on the existing runtimes here without patches. This doc records four deployments (4-bit MLX, UD-Q4_K_XL + MTP, and two 8-bit Q8_0 GGUFs on lm-studio and on llama.cpp) and what they measured; the Qwen3.6 family traps in [`model-summary-qwen-3-6.md`](model-summary-qwen-3-6.md) mostly still apply.
+Alibaba's Qwen3.8-27B (released 2026-08-14, Apache-2.0) is a dense 27.8B multimodal model that shares the `qwen3_5` architecture family with Qwen3.6 — hybrid Gated-DeltaNet plus gated full attention, with a vision tower. It loaded on the existing runtimes here without patches. This doc records five deployments (4-bit MLX, UD-Q4_K_XL + MTP, two 8-bit Q8_0 GGUFs on lm-studio and on llama.cpp, and the uncensored Defiance Q6_K_P + MTP on llama.cpp) and what they measured; the Qwen3.6 family traps in [`model-summary-qwen-3-6.md`](model-summary-qwen-3-6.md) mostly still apply.
 
 ## Overview
 
@@ -9,6 +9,7 @@ Alibaba's Qwen3.8-27B (released 2026-08-14, Apache-2.0) is a dense 27.8B multimo
 - llama.cpp UD-Q4_K_XL + MTP deployment
 - lm-studio GGUF Q8_0 deployment
 - llama.cpp Q8_0 + MTP deployment (draft-depth and flag matrix)
+- llama.cpp Defiance Q6_K_P + MTP deployment (uncensored; embedded MTP vs external FastMTP draft)
 - Results (4-bit and 8-bit) and the lm-studio-vs-llama.cpp verdict
 - Gotchas and caveats
 - Related
@@ -26,6 +27,7 @@ Alibaba's Qwen3.8-27B (released 2026-08-14, Apache-2.0) is a dense 27.8B multimo
 | MLX build | `lmstudio-community/Qwen3.8-27B-MLX-4bit` — 4-bit g64, 16.08 GB (3 shards) |
 | GGUF build | `unsloth/Qwen3.8-27B-GGUF` `UD-Q4_K_XL` — 17.56 GB; MTP heads embedded |
 | Q8_0 builds | `unsloth/…` `Q8_0` 29.05 GB (MTP layer `blk.64.nextn.*` embedded, 65 blocks) and `ggml-org/…` `Q8_0` 28.60 GB (no MTP layer, 64 blocks); unsloth/bartowski/lmstudio-community Q8_0 and `UD-Q8_K_XL` all carry the MTP layer (checked from GGUF headers) |
+| Uncensored build | `ttindall/Qwen3.8-27B-Defiance-Uncensored-MTP-GGUF` `Q6_K_P` — 25.92 GB; HauhauCS Aggressive weights, MTP layer embedded (65 blocks), plus a modified chat template and an optional 903 MB external FastMTP-32K draft |
 
 ## lm-studio MLX 4-bit
 
@@ -75,6 +77,33 @@ nohup ~/llama-cpp-mainline/build/bin/llama-server -m "$GGUF" -ngl 99 -fa on -np 
 
 Same build 334 (`ac4cdde`) as the 4-bit run. **`--spec-draft-n-max 1` is the measured best on Q8_0** (31.6 tok/s @ 8K, about 29 on real content, 69 % accepted); `n=2` and `n=3` accept less (55 % / 50 %) and `n=3` is no faster than no MTP. Full matrix with `-ub`, `--spec-draft-p-min`, `ngram-mod` and KV-cache rows: [`model-benchmark-api-server.md`](../benchmarks/model-benchmark-api-server.md#q8_0-gguf-lm-studio-vs-llamacpp-with-and-without-mtp). None of those levers beat `n=1` beyond noise; `-ctk q8_0 -ctv q8_0` is a regression at 32K.
 
+## llama.cpp Defiance Q6_K_P + MTP (port 8100)
+
+Uncensored variant: `ttindall/Qwen3.8-27B-Defiance-Uncensored-MTP-GGUF` `Q6_K_P` (25.92 GB). The weights are HauhauCS's Aggressive build; "Defiance" is `defiance-27b.jinja`, a heavily edited chat template with reasoning-effort modes and an uncensored preamble. Full writeup, refusal data and caveats: [`qwen38-27b-defiance-mtp-benchmark.md`](../uncen-model/qwen38-27b-defiance-mtp-benchmark.md).
+
+```bash
+D=~/.cache/hauhau-gguf/qwen38-defiance
+nohup ~/llama-cpp-mainline/build/bin/llama-server -m "$D/Qwen3.8-27B-Defiance-Uncensored-Q6_K_P.gguf" \
+  -ngl 99 -fa on -np 1 -c 131072 --spec-type draft-mtp --spec-draft-n-max 1 \
+  --host 0.0.0.0 --port 8100 --alias qwen38-27b-defiance-q6kp \
+  --jinja --chat-template-file "$D/defiance-27b.jinja" \
+  --reasoning on --reasoning-format deepseek --reasoning-budget 16384 \
+  --temp 0.7 --top-p 0.95 --top-k 64 --min-p 0.05 > /tmp/llama-cpp-mtp.log 2>&1 &
+```
+
+The same build 334 (`ac4cdde`) loads the embedded MTP layer; no `-md` needed. `--spec-draft-n-max 1` again beat 2 (27.8 vs 23.6 tok/s @ 512). The repo's headline external draft (`FastMTP-32K`, `-md … --spec-draft-n-max 3`) does not load on build 334 or on upstream master (`output.weight` shape error: the draft has a trimmed 32K vocab). It needs upstream commit `4df29be` plus the HauhauCS patch, built in its own directory.
+
+| Metric | Embedded MTP `n=1` (build 334) | FastMTP-32K `n=3` (patched build) |
+|:--|:--|:--|
+| API tool smoke | 5/5 · 3-turn loop 11.3 s | 5/5 · 3-turn loop 11.45 s |
+| Decode @ 512 → 64K | **27.8 → 18.8 tok/s** | 21.4 → 14.5 tok/s |
+| OpenCode browse (wall) | 16.20 s | 16.07 s |
+| OpenCode search (wall) | **66.94 s** | 75.29 s |
+| MTP draft acceptance | 68 % | 75 % |
+| mlabonne refusal (1024 tok) | 9/10 keyword, 10/10 manual | not run |
+
+Raw JSON: [`logs/qwen38-27b-defiance-mtp/`](../benchmarks/logs/qwen38-27b-defiance-mtp/).
+
 ## Results
 
 | Metric | lm-studio MLX 4-bit | llama.cpp Q4_K_XL + MTP |
@@ -115,6 +144,8 @@ Against 4-bit: MLX 4-bit remains the fastest decoder (42.2 tok/s) and the fastes
 - **MTP limits from the llama-cpp-mtp runbook still apply:** `-np 1` only, `--spec-draft-n-max 2`, and no `--mmproj` under MTP, so vision is not available on that sidecar.
 - **Python to the LAN is blocked by macOS Local Network Privacy** during these runs; benches went through `ssh -fNL` tunnels to 127.0.0.1.
 - **Skill flag trap:** `/deploy-run-benchmark-model --censored no` forces the *uncensored* branch (refusal bench, submodule). Use `--censored yes` for a standard model.
+- **FastMTP external draft is slower on M3 Ultra and needs a patched build.** Defiance Q6_K_P: 21.4 vs 27.8 tok/s @ 512 (-23 %), -19 to -23 % at every context to 64K, despite 75 % acceptance. Vendor gains (+11-35 %) were measured on CUDA/Blackwell. Use embedded MTP.
+- **Defiance template raises on non-leading system messages** (`System message must be at the beginning.`). OpenCode 1.19.1 did not trigger it; other agents may.
 - **Q8_0 + MTP depth matters:** `--spec-draft-n-max 1` beat 2 and 3 on Q8_0; the earlier Q4_K_XL run used 2 and was not re-tested at 1.
 - **`--fused-gdn` is not in build 334**, and `-ctk q8_0 -ctv q8_0` costs about 16 % decode at 32K on this model.
 - Not run: 256K context probe, vision input, quality evals (8-bit assumed better than 4-bit, not measured), memory footprint, a Q4_K_XL re-run at `n=1`, and an agent bench for the `-ub 2048`, `ngram-mod` and `p-min` rows.
@@ -124,3 +155,4 @@ Against 4-bit: MLX 4-bit remains the fastest decoder (42.2 tok/s) and the fastes
 - Decision-model peers built on Qwen3.8-27B (JEV, pplx-decider) are planned separately in [`plans/active/plan-jev-decision-models.md`](../../../plans/active/plan-jev-decision-models.md).
 - Qwen3.6 family: [`model-summary-qwen-3-6.md`](model-summary-qwen-3-6.md).
 - llama.cpp MTP runbook: [`docs/servers/llama-cpp-mtp/summary.md`](../../servers/llama-cpp-mtp/summary.md).
+- Uncensored Defiance Q6_K_P writeup: [`qwen38-27b-defiance-mtp-benchmark.md`](../uncen-model/qwen38-27b-defiance-mtp-benchmark.md).

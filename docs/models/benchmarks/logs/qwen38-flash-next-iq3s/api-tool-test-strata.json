@@ -1,0 +1,111 @@
+{
+  "benchmark": "api-tool-call",
+  "mode": "openai-http",
+  "model": "qwen3.8-flash-next-iq3_s",
+  "base_url": "http://<MAC_STUDIO_IP>:8102/v1",
+  "single_calls": [
+    {
+      "scenario": "Single tool (file read)",
+      "prompt": "Read the file /tmp/notes.txt and tell me its contents",
+      "time_s": 2.71,
+      "output_tokens": 45,
+      "rate_tps": 16.6,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Single tool (command)",
+      "prompt": "Run uptime to check system status",
+      "time_s": 1.49,
+      "output_tokens": 47,
+      "rate_tps": 31.5,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"uptime\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (search + read)",
+      "prompt": "Search the web for 'openai api docs' then read /tmp/notes.txt",
+      "time_s": 2.25,
+      "output_tokens": 95,
+      "rate_tps": 42.2,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "search_web",
+        "read_file"
+      ],
+      "tool_args": [
+        "{\"query\":\"openai api docs\"}",
+        "{\"path\":\"/tmp/notes.txt\"}"
+      ]
+    },
+    {
+      "scenario": "Multi-tool (list + read + write)",
+      "prompt": "List /tmp, then read the first .txt file, then write a summary back to /tmp/summary.txt",
+      "time_s": 1.8,
+      "output_tokens": 63,
+      "rate_tps": 35.0,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "list_directory"
+      ],
+      "tool_args": [
+        "{\"path\":\"/tmp\"}"
+      ]
+    },
+    {
+      "scenario": "Agentic reasoning",
+      "prompt": "Find the largest file in /tmp",
+      "time_s": 1.82,
+      "output_tokens": 75,
+      "rate_tps": 41.1,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ],
+      "tool_args": [
+        "{\"cmd\":\"find /tmp -type f -printf '%s\\\\t%p\\\\n' 2>/dev/null | sort -nr | head -n 10\"}"
+      ]
+    }
+  ],
+  "multi_turn": [
+    {
+      "turn": 1,
+      "time_s": 1.86,
+      "output_tokens": 63,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "read_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "time_s": 1.71,
+      "output_tokens": 99,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "time_s": 1.27,
+      "output_tokens": 73,
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        "run_command"
+      ]
+    }
+  ],
+  "total_turns": 3,
+  "total_time_s": 4.83
+}

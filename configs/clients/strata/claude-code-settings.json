@@ -1,0 +1,7 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://<MAC_STUDIO_IP>:8102",
+    "ANTHROPIC_AUTH_TOKEN": "not-needed",
+    "ANTHROPIC_MODEL": "qwen3.8-flash-next-iq3_s"
+  }
+}

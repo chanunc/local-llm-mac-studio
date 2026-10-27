@@ -21,6 +21,7 @@ Detailed specs, benchmarks, and caveats for the main model set used across the M
 - [Qwen3-ASR Family](#qwen3-asr-family) — 2 variants + forced aligner: **1.7B (active speech-to-text sidecar, MPS, 19.06× RTF on 15 s English clip)**, 0.6B, ForcedAligner-0.6B. Detail at [`per-model/model-summary-qwen3-asr.md`](per-model/model-summary-qwen3-asr.md)
 - [Z-Image / Z-Anime Family (Image Generation)](#z-image--z-anime-family-image-generation) — 2 variants on disk: **Z-Anime Distill-4-step AIO BF16 (active, 17.75 s @ 1024² M3 Ultra MPS)**, Z-Anime Base AIO BF16 (best-quality reference, 235.16 s @ 28 steps). S3-DiT 6B, Apache-2.0, ComfyUI on port 8188 (web UI only). [bench](benchmarks/z-anime/wall-time-comfyui.md)
 - [DeepSeek-V4-Flash (284B/13B-active MoE, ds4)](#deepseek-v4-flash-284b13b-active-moe-ds4) — 1 viable variant: **IQ2XXS-imatrix 81 GB GGUF on the `antirez/ds4` native Metal engine, port 8101 (only Apple-Silicon path for `deepseek4`; 5/5 smoke, browse 18.78 s / search 28.22 s)**. Detail at [`per-model/model-summary-deepseek-v4.md`](per-model/model-summary-deepseek-v4.md)
+- [Qwen3.8-Flash-Next (125B MoE, strata)](#qwen38-flash-next-125b-moe-strata) — 1 variant: **ISTA-DASLab GSQ-RCO IQ3_S on the Strata Metal engine, port 8102 (first lab path for `qwen4exp`; 5/5 smoke, 74 → 66 tok/s, browse 20.95 s / search 24.94 s; llama.cpp master on the same GGUF: 40 → 35 tok/s, browse 9.67 s / search 14.84 s)**. Detail at [`per-model/model-summary-qwen-3-8-flash-next.md`](per-model/model-summary-qwen-3-8-flash-next.md)
 - [LFM2.5 Family (LiquidAI `lfm2moe` hybrid MoE)](#lfm25-family-liquidai-lfm2moe-hybrid-moe) — 1 variant: **LFM2.5-8B-A1B Q8_0 (8.3B/1.5B-active MoE, 190 tok/s, browse 11.1 s / search 19.72 s — `llama-cpp-mainline --jinja` only; lm-studio tool calls broken; canonical GGUF needs chat-template patch)**. Detail at [`per-model/model-summary-lfm2.md`](per-model/model-summary-lfm2.md)
 - [Uncensored Models Guide](uncen-model/uncen-model-guide.md) — research, benchmarks, recommendations (private submodule)
 
@@ -482,6 +483,40 @@ ssh macstudio "pkill -f 'ds4-server'"
 ```
 
 Full runbook (build, download, tool-call internals, known limitations): [`docs/servers/ds4/summary.md`](../servers/ds4/summary.md).
+
+---
+
+## Qwen3.8-Flash-Next (125B MoE, strata)
+
+**`Qwen/Qwen3.8-Flash-Next`** (Qwen license "other") is a 125 B MoE: 48 layers × 512 routed experts with top-10 routing, Gated DeltaNet + QSA attention, hyper-connections, a 28.8 GB per-token n-gram table shard, an MTP head and vision. The GGUF arch is `qwen4exp`, which only llama.cpp master (not the lab's `ac4cdde` / `4df29be` builds) and Strata load; mlx-lm has no model class for it. It is served by the [Strata](https://github.com/Niko1221/Strata) model-specific Metal engine on sidecar port 8102. Full detail: [`per-model/model-summary-qwen-3-8-flash-next.md`](per-model/model-summary-qwen-3-8-flash-next.md).
+
+| Field | Value |
+|:--|:--|
+| Base model | `Qwen/Qwen3.8-Flash-Next` |
+| Architecture | `qwen4exp` — 125 B MoE, 48 × 512 experts, top-10 + shared, GDN + QSA, hyper-connections, n-gram table |
+| Quant | `ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` **IQ3_S** (Apache-2.0) |
+| Format on disk | 54.8 GB + 28.8 GB GGUF shards at `~/Strata-data/models/IQ3_S/`, plus pack and MTP layer in `~/Strata-data/` |
+| Context | 65 536 launched (model max 262 K; measured to 60 K) |
+| Server | `strata` v0.2.6, port 8102, OpenAI + Anthropic + Responses APIs |
+| Decode | **74.3 tok/s @ 578** → 66.3 @ 60 K with MTP `--spec 2` (llama.cpp master: 40.2 → 35.2) |
+| Prefill (cold) | 741–786 tok/s @ 4–32 K (llama.cpp: 628–676) |
+| Memory | resident, engine RSS 57.3 GB; `resident_cap` 72.2 GB leaves ~4.5 GB |
+| Smoke | ✅ 5/5 single-call · multi-turn 3 turns / 4.83 s |
+| Agent (opencode) | browse 20.95 s · search 24.94 s (llama.cpp on the same GGUF: 9.67 s · 14.84 s) |
+| API model id | `qwen3.8-flash-next-iq3_s` |
+
+**Caveat:** Strata's Metal prompt cache keeps only the live session. OpenCode's title request therefore throws away the ~11.9 K-token system prompt before every session, and llama.cpp wins the agent loop even though it decodes at about half the speed.
+
+Launch / stop:
+
+```bash
+ssh macstudio "cd ~/Strata && STRATA_ALLOWED_HOSTS=<MAC_STUDIO_IP>,macstudio,<TAILSCALE_HOST> \
+  nohup .venv/bin/python serve/server.py --engine strata --config strata-iq3_s.json --port 8102 \
+  > /tmp/strata.log 2>&1 &"
+ssh macstudio "pkill -f 'serve/server.py --engine strata'"
+```
+
+Full runbook (setup, fit math, Host guard, known limitations): [`docs/servers/strata/summary.md`](../servers/strata/summary.md).
 
 ---
 

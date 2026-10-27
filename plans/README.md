@@ -54,6 +54,7 @@ Plans are design notes and work queues. They are **not** live runbooks and shoul
 | [`done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md`](done/plan-upgrade-llama-cpp-benchmark-gemma4-31b-mtp.md) | llama.cpp upgrade + Gemma 4 31B dense MTP benchmark — completed 2026-06-10 |
 | [`done/plan-huggingface-skills-analysis.md`](done/plan-huggingface-skills-analysis.md) | Hugging Face skills (hf-cli, HF datasets) fitness assessment for this repo — concluded 2026-05-15 |
 | [`done/plan-switch-top-model-script.md`](done/plan-switch-top-model-script.md) | `scripts/switch_top_model.py` — benchmark-driven top-5 model switcher with OpenCode sync + tool-call smoke test, shipped 2026-06-12 ([visual HTML](done/plan-switch-top-model-script.html)) |
+| [`done/plan-strata-macstudio-deploy.md`](done/plan-strata-macstudio-deploy.md) | Strata sidecar (port 8102) with Qwen3.8-Flash-Next IQ3_S + same-GGUF llama.cpp `qwen4exp` baseline — shipped 2026-10-26: 1.8× decode, but llama.cpp wins OpenCode ([visual HTML](done/plan-strata-macstudio-deploy.html)) |
 
 ### Archive
 

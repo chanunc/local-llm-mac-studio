@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "macstudio-strata": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://<MAC_STUDIO_IP>:8102/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "qwen3.8-flash-next-iq3_s": {
+          "name": "Qwen3.8-Flash-Next 125B MoE IQ3_S on Strata (native Metal engine, MTP spec decode — provisional sidecar)",
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "model": "macstudio-strata/qwen3.8-flash-next-iq3_s",
+  "small_model": "macstudio-strata/qwen3.8-flash-next-iq3_s"
+}

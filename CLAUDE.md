@@ -23,6 +23,7 @@ Only one of vllm-mlx, mlx-openai-server, oMLX, or vmlx can hold **port 8000** at
 - **vmlx-swift-lm** (1337, OpenAI+Anthropic+Ollama) — MLX-Swift via Osaurus app (`brew install --cask osaurus`). Only runtime for ZAYA1 `ZayaCCACache`. `OSU_MODELS_DIR=$HOME/.osaurus/models` required (path-mismatch bug). JANGTQ HTTP speed-regressed at cask 0.18.13 (7-8 tok/s vs 57 native — fix in PR #1057). [Runbook](docs/servers/vmlx-swift-lm/summary.md).
 - **comfyui** (8188, web UI) — ComfyUI 0.20.1 + SeeSee21/Z-Anime (S3-DiT 6B). `--use-pytorch-cross-attention` required on MPS. **No OpenAI API shim** — browser UI only. [Runbook](docs/servers/comfyui/summary.md).
 - **ds4** (8101, OpenAI+Anthropic+Responses) — DwarfStar 4, only Apple-Silicon path for DeepSeek-V4-Flash (284B/13B-active `deepseek4` MoE). Built at `~/ds4/` with `make -j8`. Only `q2-imatrix` (81 GB) fits 96 GB. `--host 0.0.0.0` required for LAN. Native DSML tool-call mapping (no parser flags). **Never run CPU path** — kernel-panics macOS. [Runbook](docs/servers/ds4/summary.md).
+- **strata** (8102, OpenAI+Anthropic+Responses) — [Strata](https://github.com/Niko1221/Strata) v0.2.6 model-specific Metal engine, only lab path for Qwen3.8-Flash-Next (125B MoE, GGUF arch `qwen4exp`). Built at `~/Strata/` via `./setup.sh` (pinned Python 3.12 + venv, no brew). ISTA-DASLab IQ3_S (54.8 GB + 28.8 GB n-gram shard) stays resident under the engine's 72.2 GB cap — run nothing beside it. `--engine strata` required (server defaults to mock); LAN needs `STRATA_ALLOWED_HOSTS` (no key) else 403. 66–74 tok/s with MTP = 1.8× llama.cpp master, but the Metal prompt cache keeps only the live session, so llama.cpp wins OpenCode (browse 9.67 s vs 20.95 s). One request at a time. Provisional. [Runbook](docs/servers/strata/summary.md).
 - **qwen-asr** (no port, Python API) — Qwen3-ASR-1.7B speech-to-text in `~/qwen-asr-env/`. `qwen-asr-serve` is CUDA-only; use `Qwen3ASRModel.transcribe(audio=…)` with MPS. RTF 19.06×. [Runbook](docs/servers/qwen-asr/summary.md).
 - **litert-lm** (9379, OpenAI alpha) — Google LiteRT-LM edge runtime v0.12.0. Gemma 4 E4B (~4B, 3.66 GB). CPU/XNNPACK only (GPU produces garbage on Apple Silicon). 71.5 tok/s prefill, 13.85 tok/s decode. No `tools` param, no GET /v1/models, max ~3K context. Provisional. [Runbook](docs/servers/litert-lm/summary.md).
 - **sglang** (30000, OpenAI) — SGLang source install with Apple-Silicon / MLX backend. Venv `~/sglang/sglang-mps/`. Provisional MiniCPM5 parser path: `SGLANG_USE_MLX=1`, `--tool-call-parser minicpm5`, model `openbmb/MiniCPM5-1B` (HF checkpoint, not GGUF). Exact Q8_0 GGUF fails under MLX runner (`config.json` directory expected). No Think mode required for local tool harness. [Runbook](docs/servers/sglang/summary.md).
@@ -46,6 +47,7 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (<MAC
                                          qwen-asr (no port)
                                          comfyui (web UI) :8188
                                          ds4 / DwarfStar 4 :8101
+                                         strata (Qwen3.8-Flash-Next) :8102
                                          litert-lm (Gemma 4 E4B) :9379
                                          sglang (MiniCPM5 parser) :30000
 ```
@@ -159,6 +161,12 @@ ssh macstudio "cd ~/ds4 && nohup ./ds4-server --host 0.0.0.0 --port 8101 \
   --trace /tmp/ds4-trace.txt > /tmp/ds4-server.log 2>&1 &"
 ssh macstudio "pkill -f 'ds4-server'"  # stop
 
+# strata (port 8102) — --engine strata required; STRATA_ALLOWED_HOSTS or LAN gets 403
+ssh macstudio "cd ~/Strata && STRATA_ALLOWED_HOSTS=<MAC_STUDIO_IP>,macstudio,<TAILSCALE_HOST> \
+  nohup .venv/bin/python serve/server.py --engine strata --config strata-iq3_s.json --port 8102 \
+  > /tmp/strata.log 2>&1 &"
+ssh macstudio "pkill -f 'serve/server.py --engine strata'"  # stop
+
 # litert-lm (port 9379) — Google edge runtime, CPU/XNNPACK only
 ssh macstudio "export PATH=\"/Users/chanunc/.local/bin:\$PATH\" && \
   nohup litert-lm serve --api openai --host 0.0.0.0 --port 9379 --verbose \
@@ -184,6 +192,7 @@ ssh macstudio "tail -20 /tmp/chindamt.log"             # mlx-lm / ChindaMT
 ssh macstudio "tail -20 /tmp/comfyui.log"              # comfyui
 ssh macstudio "tail -20 /tmp/osaurus.log"              # Osaurus
 ssh macstudio "tail -20 /tmp/ds4-server.log"           # ds4
+ssh macstudio "tail -20 ~/Strata/strata-iq3_s.log"     # strata (engine; server log /tmp/strata.log)
 ssh macstudio "tail -20 /tmp/litert-lm.log"            # litert-lm
 ssh macstudio "tail -20 /tmp/sglang-minicpm5.log"       # sglang
 
@@ -252,6 +261,7 @@ No documentation cascade. Run-state is not tracked. If the model is new, catalog
 | NemotronH | [`model-summary-nemotron.md`](docs/models/per-model/model-summary-nemotron.md) |
 | ZAYA1 | [`model-summary-zaya1-8b.md`](docs/models/per-model/model-summary-zaya1-8b.md) — Osaurus only |
 | HyperNova | [`model-summary-hypernova.md`](docs/models/per-model/model-summary-hypernova.md) — analysis only |
+| Qwen3.8-Flash-Next | [`model-summary-qwen-3-8-flash-next.md`](docs/models/per-model/model-summary-qwen-3-8-flash-next.md) — `qwen4exp`, Strata :8102 or llama.cpp master only |
 
 If no family doc exists and the deploy uncovers non-trivial gotchas, create one. One-off variants go in the family doc, not their own file.
 
@@ -271,9 +281,9 @@ Technique docs → `docs/models/techniques/`; server integration steps → `docs
 **Pre-benchmark hygiene (mandatory):** stop all Mac Studio LLM servers first.
 ```bash
 ssh macstudio "pkill -f vllm-mlx; pkill -f mlx-openai-server; pkill -f vmlx_engine; \
-  pkill -f dflash-serve; pkill -f 'lms server'; pkill -f 'sglang.launch_server'; pkill -f 'sglang serve'; \
+  pkill -f dflash-serve; pkill -f 'lms server'; pkill -f 'sglang.launch_server'; pkill -f 'sglang serve'; pkill -f 'serve/server.py --engine strata'; \
   /opt/homebrew/bin/brew services stop omlx; sleep 3; \
-  ps -axo pid,rss,command | grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|lms |omlx|sglang.launch_server|sglang serve' | grep -v grep || echo 'clean'; \
+  ps -axo pid,rss,command | grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|lms |omlx|sglang.launch_server|sglang serve|engine strata' | grep -v grep || echo 'clean'; \
   memory_pressure | head -5"
 ```
 

@@ -1,0 +1,42 @@
+{
+  "benchmark": "api-server-streaming",
+  "version": "1.0",
+  "timestamp": "2026-10-26T07:20:54.351068+00:00",
+  "config": {
+    "base_url": "http://<MAC_STUDIO_IP>:8102/v1",
+    "model": "qwen3.8-flash-next-iq3_s",
+    "max_tokens": 50,
+    "warmup": 1,
+    "runs": 2,
+    "contexts": [
+      60000
+    ]
+  },
+  "results": {
+    "60000": {
+      "runs": [
+        {
+          "ttft_s": 0.077,
+          "total_s": 0.817,
+          "input_tokens": 60068,
+          "output_tokens": 50,
+          "gen_tps": 67.52,
+          "prefill_tps": 779913.6
+        },
+        {
+          "ttft_s": 0.077,
+          "total_s": 0.814,
+          "input_tokens": 60068,
+          "output_tokens": 50,
+          "gen_tps": 67.86,
+          "prefill_tps": 776674.4
+        }
+      ],
+      "median_ttft_s": 0.077,
+      "median_gen_tps": 67.69,
+      "median_prefill_tps": 778294.0,
+      "input_tokens": 60068,
+      "output_tokens": 50
+    }
+  }
+}

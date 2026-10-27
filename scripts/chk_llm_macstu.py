@@ -3,8 +3,8 @@
 
 Reports which LLM server (vllm-mlx / mlx-openai-server / oMLX / vmlx / lm-studio /
 dflash-mlx / llama-cpp-turboquant / llama-cpp-mtp / mlx-lm / vmlx-swift-lm / comfyui /
-ds4 / litert-lm / sglang) is currently running on ports 8000 / 1234 / 1337 / 8080 /
-8098 / 8099 / 8100 / 8101 / 8188 / 9379 / 30000, the loaded model, and (in --all / --client / --logs modes) the matching
+ds4 / strata / litert-lm / sglang) is currently running on ports 8000 / 1234 / 1337 / 8080 /
+8098 / 8099 / 8100 / 8101 / 8102 / 8188 / 9379 / 30000, the loaded model, and (in --all / --client / --logs modes) the matching
 client config or log-tail command for the detected server.
 
 Usage:
@@ -56,6 +56,7 @@ SERVER_PATTERNS = [
     ("osaurus",                                      "vmlx-swift-lm",       "vmlx-swift-lm",       1337),
     ("comfyui/main.py",                              "comfyui",             "comfyui",             8188),
     ("ds4-server",                                   "ds4",                 "ds4",                 8101),
+    ("serve/server.py --engine strata",              "strata",              "strata",              8102),
     ("litert-lm serve",                              "litert-lm",           "litert-lm",           9379),
     ("sglang.launch_server",                         "sglang",              "sglang",              30000),
     ("sglang serve",                                 "sglang",              "sglang",              30000),
@@ -70,6 +71,7 @@ FALLBACK_SERVER_BY_PORT = {
     8099: ("llama-cpp-turboquant", "llama-cpp-turboquant"),
     8100: ("llama-cpp-mtp", "llama-cpp-mtp"),
     8101: ("ds4", "ds4"),
+    8102: ("strata", "strata"),
     8188: ("comfyui", "comfyui"),
     9379: ("litert-lm", "litert-lm"),
     30000: ("sglang", "sglang"),
@@ -91,6 +93,7 @@ SERVER_LOGS = {
     "vmlx-swift-lm":        "tail -f /tmp/osaurus.log",
     "comfyui":              "tail -f /tmp/comfyui.log",
     "ds4":                  "tail -f /tmp/ds4-server.log",
+    "strata":               "tail -f /tmp/strata.log",
     "litert-lm":            "tail -f /tmp/litert-lm.log",
     "sglang":               "tail -f /tmp/sglang-minicpm5.log",
 }
@@ -104,11 +107,11 @@ CLIENT_FILES = {
     "claude-code":  "claude-code-settings.json",
 }
 
-DEFAULT_PORTS = [8000, 1234, 1337, 8080, 8098, 8099, 8100, 8101, 8188, 9379, 30000]
+DEFAULT_PORTS = [8000, 1234, 1337, 8080, 8098, 8099, 8100, 8101, 8102, 8188, 9379, 30000]
 
 # Servers that hold exactly one model in memory at a time → overlay rewrites the default.
 # Multi-model servers (mlx-openai-server, oMLX) only get roster-sync (append missing models).
-SINGLE_MODEL_SERVERS = {"vllm-mlx", "vmlx", "dflash-mlx", "lm-studio", "llama-cpp-turboquant", "llama-cpp-mtp", "mlx-lm", "vmlx-swift-lm", "ds4", "sglang"}
+SINGLE_MODEL_SERVERS = {"vllm-mlx", "vmlx", "dflash-mlx", "lm-studio", "llama-cpp-turboquant", "llama-cpp-mtp", "mlx-lm", "vmlx-swift-lm", "ds4", "strata", "sglang"}
 
 # Substrings (lowercase) that flip the reasoning flag on overlay stub injection.
 REASONING_KEYWORDS = ("thinking", "reasoning", "heretic-thinking", "-r1", "cot", "deepseek-r1")
@@ -126,17 +129,17 @@ def probe(host, no_ssh=False):
     sep = "---SEP---"
     cmd = (
         "ps -axo pid=,rss=,command= 2>/dev/null | "
-        "grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|\\.lmstudio|omlx|llama-server|mlx_lm.server|osaurus|comfyui|ds4-server|litert-lm|sglang.launch_server|sglang serve' | "
+        "grep -E 'vllm-mlx|mlx-openai-server|vmlx_engine|dflash-serve|\\.lmstudio|omlx|llama-server|mlx_lm.server|osaurus|comfyui|ds4-server|serve/server.py --engine strata|litert-lm|sglang.launch_server|sglang serve' | "
         "grep -v grep || true; "
         f"echo '{sep}'; "
         "lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | "
-        "grep -E ':(8000|8080|8098|8099|8100|8101|8188|9379|1234|1337|30000) \\(LISTEN\\)' || true; "
+        "grep -E ':(8000|8080|8098|8099|8100|8101|8102|8188|9379|1234|1337|30000) \\(LISTEN\\)' || true; "
         f"echo '{sep}'; "
         "if [ -x ~/.lmstudio/bin/lms ]; then ~/.lmstudio/bin/lms ps 2>/dev/null; fi; "
         f"echo '{sep}'; "
         # Enrich any lsof-detected PIDs with their RSS + full command line.
         "PIDS=$(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | "
-        "grep -E ':(8000|8080|8098|8099|8100|8101|8188|9379|1234|1337|30000) \\(LISTEN\\)' | awk '{print $2}' | sort -u); "
+        "grep -E ':(8000|8080|8098|8099|8100|8101|8102|8188|9379|1234|1337|30000) \\(LISTEN\\)' | awk '{print $2}' | sort -u); "
         "if [ -n \"$PIDS\" ]; then ps -p $(echo $PIDS | tr ' ' ',') -o pid=,rss=,command= 2>/dev/null; fi"
     )
     try:

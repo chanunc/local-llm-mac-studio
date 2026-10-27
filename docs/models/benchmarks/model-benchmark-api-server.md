@@ -1393,6 +1393,33 @@ Raw JSON: [`logs/qwen38-27b-defiance-mtp/`](logs/qwen38-27b-defiance-mtp/). Fast
 
 ---
 
+## 🤖 Qwen3.8-Flash-Next IQ3_S (125B MoE, `qwen4exp`) — Strata vs llama.cpp master on the same GGUF
+
+Model: `ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` IQ3_S (54.8 GB + 28.8 GB n-gram shard). Tested on **Mac Studio M3 Ultra (96 GB)**, 2026-10-26, one server resident at a time.
+
+**Servers:**
+- **Strata** v0.2.6 (`strata` :8102): `--spec 2` + MTP, `--max-context 65536`, vision off.
+- **llama.cpp master** `d854d98` (benchmark-only `~/llama-cpp-qwen4exp`, :8100): `-ngl 99 -fa on -np 1 -c 65536 --jinja`, no MTP.
+
+Runbook: [`strata/summary.md`](../../servers/strata/summary.md).
+
+| Context | Strata gen (tok/s) | llama.cpp gen (tok/s) | Strata cold prefill | llama.cpp cold prefill |
+|:--|--:|--:|--:|--:|
+| 578 | **74.3** | 40.2 | 304 | 459 |
+| 4K | **70.0** | 39.0 | 741 | 676 |
+| 8K | **67.5** | 38.8 | 785 | 661 (4,611 new) |
+| 32K | **70.9** | 36.9 | 786 | 653 (25,092 new) |
+| 60K | **66.3** | 35.2 | 755 (27,300 new) | 628 (27,750 new) |
+
+**Notes:**
+- **Decode: Strata is 1.74–1.92× llama.cpp**, the same ratio upstream reports on an M5 Max. MTP drafts were accepted 78–95% of the time.
+- **Cold prefill is only 1.1–1.2× llama.cpp.** Upstream's 1.6–1.8× on the M5 Max comes from Metal 4 `matmul2d` on the GPU neural accelerators, which the M3 lacks. Cold values come from the server/engine logs for the untimed probe request. The harness's timed `prefill_tps` is a prompt-cache hit on both servers (TTFT 0.05–0.10 s) and is omitted.
+- Decode is flat from 512 to 60 K (Gated DeltaNet). Strata's 578-token cold read includes first-use cost.
+
+Raw JSON: [`logs/qwen38-flash-next-iq3s/`](logs/qwen38-flash-next-iq3s/).
+
+---
+
 ## 🩹 vllm-mlx Bug Fix
 
 vllm-mlx v0.2.6 has a bug in `vllm_mlx/utils/tokenizer.py`: the `load_model_with_fallback()` function is missing `return model, tokenizer` after a successful `mlx_lm.load()` call, causing the function to return `None`. Patched locally by adding the missing return statement.

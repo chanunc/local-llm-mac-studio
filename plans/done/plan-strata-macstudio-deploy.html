@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan: Strata on the Mac Studio</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --card2: #212532; --line: #2e3345;
+    --text: #d7dae3; --dim: #8a90a3; --accent: #6ea8fe; --ok: #4ade80;
+    --warn: #fbbf24; --bad: #f87171; --mono: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.55 -apple-system, "Segoe UI", sans-serif; padding: 36px 16px 64px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  h1 code { font-family: var(--mono); color: var(--accent); font-size: 24px; }
+  .sub { color: var(--dim); margin-bottom: 26px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 30px; }
+  .badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); }
+  .badge.active { background: #1e3a2f; color: var(--ok); border-color: #2f5d49; }
+  .badge.warn { background: #3a2f12; color: var(--warn); border-color: #5d4a1f; }
+  .badge.plain { background: var(--card); color: var(--dim); }
+  h2 { font-size: 18px; margin: 34px 0 14px; color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .card h3 { font-size: 14px; margin-bottom: 8px; }
+  .card p, .card li { font-size: 13px; color: var(--dim); }
+  .card .emoji { font-size: 20px; margin-bottom: 8px; display: block; }
+  .card.bad { border-color: #5d2f2f; }
+  .card.bad h3 { color: var(--bad); }
+  .flow { display: flex; flex-direction: column; margin-top: 6px; }
+  .step { display: flex; gap: 14px; }
+  .step .rail { display: flex; flex-direction: column; align-items: center; width: 30px; flex-shrink: 0; }
+  .step .dot { width: 26px; height: 26px; border-radius: 50%; background: var(--card2); border: 2px solid var(--accent); color: var(--accent); font: 600 12px/22px var(--mono); text-align: center; flex-shrink: 0; }
+  .step .dot.pause { border-color: var(--warn); color: var(--warn); }
+  .step .bar { width: 2px; flex: 1; background: var(--line); margin: 2px 0; }
+  .step:last-child .bar { display: none; }
+  .step .body { padding: 0 0 22px; min-width: 0; }
+  .step .body b { font-size: 14px; }
+  .step .body span { color: var(--dim); font-size: 12.5px; display: block; margin-top: 3px; }
+  .step .body span.gate { color: var(--warn); }
+  code { font-family: var(--mono); font-size: 12px; }
+  .term { background: #0b0d12; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font: 12px/1.6 var(--mono); overflow-x: auto; white-space: pre; margin-top: 10px; }
+  .term .m { color: var(--dim); }
+  .term .g { color: var(--ok); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--dim); font-weight: 600; }
+  td.num { font-family: var(--mono); }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  .tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px; }
+  .verdict { background: linear-gradient(135deg, #15241b, #16202e); border: 1px solid #2f5d49; border-radius: 12px; padding: 18px 20px; margin-top: 30px; }
+  .verdict b { color: var(--ok); }
+  .verdict p { font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1><code>strata</code> sidecar on the Mac Studio</h1>
+  <div class="sub">Qwen3.8-Flash-Next (125B MoE) on Strata's Metal engine, port 8102, with llama.cpp on the same files as the baseline.</div>
+  <div class="badges">
+    <span class="badge active">DONE 2026-10-26</span>
+    <span class="badge plain">Created 2026-10-26</span>
+    <span class="badge plain">IQ3_S · fits in memory</span>
+    <span class="badge plain">allowed_hosts, no key</span>
+    <span class="badge plain">llama.cpp baseline same day</span>
+    <span class="badge plain">disk freed: 42 → 112 GiB</span>
+  </div>
+
+  <h2>Why</h2>
+  <div class="grid">
+    <div class="card"><span class="emoji">🚫</span><h3>No lab server loads it</h3><p>The lab llama.cpp builds lack <code>qwen4exp</code>, and mlx-lm 0.31.3 only has <code>qwen3_next</code>.</p></div>
+    <div class="card"><span class="emoji">⚡</span><h3>About 2× llama.cpp (vendor figure)</h3><p>IQ3_S on an M5 Max: 94.7 vs 51.1 tok/s decode, about 1,320 vs 791 tok/s on a 4K prompt.</p></div>
+    <div class="card"><span class="emoji">🧩</span><h3>Big model, small-model speed</h3><p>About 3.5× the parameters of the lab's 35B-A3B MoE, at a similar decode speed.</p></div>
+    <div class="card"><span class="emoji">🔌</span><h3>Three APIs in one</h3><p>OpenAI <code>/v1</code>, Anthropic <code>/v1/messages</code> and Responses: OpenCode, Claude Code and Codex CLI connect directly.</p></div>
+  </div>
+
+  <h2>Will it fit? (96 GB M3 Ultra)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Size</th><th>Weights mapped</th><th>+ overhead</th><th>Engine limit 72.2 GB</th><th>Download</th></tr>
+    <tr><td>Q2_0</td><td class="num">37.6 GB</td><td class="num">50.5</td><td class="ok">in memory</td><td class="num">66.4 GB</td></tr>
+    <tr><td><b>IQ3_S</b> (chosen)</td><td class="num">54.8 GB</td><td class="num">67.7</td><td class="ok">in memory, 4.5 GB spare</td><td class="num">83.6 GB</td></tr>
+    <tr><td>UD-Q4_K_XL</td><td class="num">82.6 GB</td><td class="num">95.5</td><td class="warn">streams from SSD</td><td class="num">111 GB</td></tr>
+  </table></div>
+
+  <h2>Steps</h2>
+  <div class="flow">
+    <div class="step"><div class="rail"><div class="dot">0</div><div class="bar"></div></div><div class="body">
+      <b>Plan into the repo</b><span>this page + the .md + a plans/README row</span></div></div>
+    <div class="step"><div class="rail"><div class="dot pause">1</div><div class="bar"></div></div><div class="body">
+      <b>Preflight + free disk</b><span>re-check macOS, port 8102, newest tag · <code>list_model_to_remove.py --dry-run</code></span>
+      <span class="gate">⏸ pause: you choose what to delete (about 70 GB)</span></div></div>
+    <div class="step"><div class="rail"><div class="dot">2</div><div class="bar"></div></div><div class="body">
+      <b>Build + set up from source</b><span><code>git clone --branch &lt;tag&gt;</code> · <code>./setup.sh --check</code> · <code>./setup.sh --model IQ3_S --context 65536 --port 8102 --vision no --no-start --yes</code></span></div></div>
+    <div class="step"><div class="rail"><div class="dot">3</div><div class="bar"></div></div><div class="body">
+      <b>Launch on 8102 + smoke</b><span><code>serve/server.py --engine strata --config strata-iq3_s.json</code> · <code>STRATA_ALLOWED_HOSTS</code> · /health · one tool call</span></div></div>
+    <div class="step"><div class="rail"><div class="dot">4</div><div class="bar"></div></div><div class="body">
+      <b>Clean machine, then benchmark Strata</b><span>stop all servers first (Event 4) · api-tool-test · api-server 512→32K + a 60K probe · agent browse/search</span></div></div>
+    <div class="step"><div class="rail"><div class="dot">5</div><div class="bar"></div></div><div class="body">
+      <b>llama.cpp baseline</b><span>master built in <code>~/llama-cpp-qwen4exp</code> · same GGUF · port 8100 · same three benchmarks · fallback: Strata's ggml pin <code>3cf0325</code></span></div></div>
+    <div class="step"><div class="rail"><div class="dot">6</div><div class="bar"></div></div><div class="body">
+      <b>Docs (Events 1, 3, 4)</b><span>runbook · configs/clients/strata · chk + switch scripts · README / CLAUDE / AGENTS · per-model doc · benchmark tables</span></div></div>
+    <div class="step"><div class="rail"><div class="dot pause">7</div><div class="bar"></div></div><div class="body">
+      <b>Commit, then push</b><span class="gate">⏸ confirm before committing · commit and push as separate steps</span></div></div>
+  </div>
+
+  <h2>Launch</h2>
+  <div class="term"><span class="m"># start (from ~/Strata on the Mac Studio)</span>
+STRATA_ALLOWED_HOSTS=&lt;MAC_STUDIO_IP&gt;,macstudio,&lt;TAILSCALE_HOST&gt; \
+  nohup .venv/bin/python serve/server.py --engine strata \
+  --config strata-iq3_s.json --port 8102 &gt; /tmp/strata.log 2&gt;&amp;1 &amp;
+<span class="m"># stop</span>
+pkill -f 'serve/server.py --engine strata'
+<span class="g"># check: curl -s http://&lt;MAC_STUDIO_IP&gt;:8102/v1/models</span></div>
+
+  <h2>Risks</h2>
+  <div class="grid">
+    <div class="card bad"><h3>Chip never tested by Strata</h3><p>Prompt kernels target the M5's neural accelerators. Fallback: <code>STRATA_METAL_PROMPT=window</code>.</p></div>
+    <div class="card bad"><h3>Tight memory</h3><p>4.5 GB under the limit. Nothing else may run beside it. A "stream" line in the log means stop.</p></div>
+    <div class="card"><h3>Gotchas</h3><p>403 Host check · port 8080 clash · <code>--engine mock</code> is the default · one request at a time · context measured only to 32K.</p></div>
+    <div class="card"><h3>Fast upstream</h3><p>Two releases on 2026-10-25. Pin the tag and upgrade on purpose.</p></div>
+  </div>
+
+  <div class="verdict"><p><b>Result:</b> Strata decodes 74→66 tok/s (1.8× llama.cpp), cold prefill only 1.1–1.2×, and OpenCode browse 20.95 s vs llama.cpp 9.67 s (Strata's Metal cache drops the system prompt at the title call).</p><p style="margin-top:8px"><b>Done when:</b> chk_llm_macstu.py shows <code>strata</code> on 8102, tool smoke ≥4/5, decode near the vendor's band (~95 tok/s with MTP), a llama.cpp row for the same GGUF, and the Event 1/3/4 docs updated with no live-state claims.</p></div>
+
+</div>
+</body>
+</html>

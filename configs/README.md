@@ -20,10 +20,11 @@ Client config files for connecting to the Mac Studio M3 Ultra. Templates live un
 | **qwen-asr** | — (no port, Python API only) | Speech-to-text sidecar — `qwen-asr` package in `~/qwen-asr-env/`, transformers + MPS backend. `qwen-asr-serve` daemon is CUDA-only and not usable on Apple Silicon; clients call `Qwen3ASRModel.transcribe(audio=…)` in-process. No client templates ship in `configs/clients/` for this server (no chat client speaks audio). See [`docs/servers/qwen-asr/summary.md`](../docs/servers/qwen-asr/summary.md) | `Qwen/Qwen3-ASR-1.7B` bf16 (4.7 GB) | Not needed |
 | **vmlx-swift-lm** | **1337** | MLX-Swift engine via Osaurus macOS cask. Only Mac Studio runtime that natively supports Zyphra ZAYA1 (top-1 CCA + MoE), Hunyuan v3 (Hy3), and the MiniMax-M2.7 JANGTQ kernel optimization. Built-in tool/reasoning parsers (no flags). Independent of port 8000. See [`docs/servers/vmlx-swift-lm/summary.md`](../docs/servers/vmlx-swift-lm/summary.md) | `JANGQ-AI/ZAYA1-8B-JANGTQ4` (8.4B / 760M-active, 4.65 GiB) | Not needed |
 | **ds4** | **8101** | DwarfStar 4 standalone native engine (pure C + Metal) — only Apple-Silicon path for DeepSeek-V4-Flash's `deepseek4` architecture (unmerged upstream; vLLM/SGLang CUDA-only). Native DSML ↔ OpenAI/Anthropic/Responses tool-call mapping with exact-DSML replay. GGUF-locked to `antirez/deepseek-v4-gguf`. Independent of port 8000. See [`docs/servers/ds4/summary.md`](../docs/servers/ds4/summary.md) | `antirez/deepseek-v4-gguf` IQ2XXS-imatrix (284B/13B-active, 81 GB) | Not needed |
+| **strata** | **8102** | Strata model-specific Metal engine (C++ + Python server) — only lab path for Qwen3.8-Flash-Next (`qwen4exp`, 125B MoE). ISTA-DASLab IQ3_S stays resident (~57 GB RSS); MTP `--spec 2` self-drafting; OpenAI + Anthropic + Responses with server-side Qwen XML → `tool_calls`. One request at a time. Provisional sidecar — see [`docs/servers/strata/summary.md`](../docs/servers/strata/summary.md). | `ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` IQ3_S (125B MoE, 83.6 GB) | Not needed |
 | **litert-lm** | **9379** | Google LiteRT-LM edge runtime v0.12.0 — alpha OpenAI HTTP server, CPU/XNNPACK only (GPU broken on Apple Silicon). No `tools` param, no GET /v1/models, max ~3K context. Provisional evaluation. See [`docs/servers/litert-lm/summary.md`](../docs/servers/litert-lm/summary.md) | `litert-community/gemma-4-E4B-it-litert-lm` (~4B effective, 3.66 GB) | Not needed |
 | **sglang** | **30000** | SGLang source install with Apple-Silicon / MLX backend. Provisional OpenAI-compatible sidecar for models needing SGLang parser support. MiniCPM5 uses `--tool-call-parser minicpm5`; use No Think mode for the local tool harness. See [`docs/servers/sglang/summary.md`](../docs/servers/sglang/summary.md) | `openbmb/MiniCPM5-1B` HF checkpoint (not GGUF) | Not needed |
 
-Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio (1234), ollama (11434), dflash-mlx (8098), llama-cpp-turboquant (8099), llama-cpp-mtp (8100), vmlx-swift-lm / Osaurus (1337), ds4 (8101), litert-lm (9379), sglang (30000), and qwen-asr (no port) each occupy their own slot** and can coexist with whichever port-8000 server is up — though the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time to avoid cross-contaminated benchmarks. For what's actually live right now run [`../scripts/chk_llm_macstu.py`](../scripts/chk_llm_macstu.py).
+Only one server can occupy port 8000 at a time (vllm-mlx, mlx-openai-server / mlx-lm server, oMLX, vmlx). **lm-studio (1234), ollama (11434), dflash-mlx (8098), llama-cpp-turboquant (8099), llama-cpp-mtp (8100), vmlx-swift-lm / Osaurus (1337), ds4 (8101), strata (8102), litert-lm (9379), sglang (30000), and qwen-asr (no port) each occupy their own slot** and can coexist with whichever port-8000 server is up — though the experimentation-lab framing in [`CLAUDE.md`](../CLAUDE.md#project) means we usually run only one model at a time to avoid cross-contaminated benchmarks. For what's actually live right now run [`../scripts/chk_llm_macstu.py`](../scripts/chk_llm_macstu.py).
 
 ### Why vllm-mlx is Primary
 
@@ -165,6 +166,17 @@ Speaks **OpenAI-compatible** API on port **8098** (NOT 8000). No API key require
 
 Speaks **OpenAI + Anthropic + Responses** APIs on port **8101**. No API key. Default bind is `127.0.0.1` — LAN clients require `--host 0.0.0.0` (`--cors` only adds CORS headers, does not rebind). Tool calling is native DSML ↔ OpenAI mapping with an exact-sampled-DSML replay map (no parser flags). Thinking is on by default at "high"; `model=deepseek-chat` / `think=false` selects non-reasoning. Engine is pure C + Metal (`make`, no cmake, no Python, no patches); GGUF-locked to `antirez/deepseek-v4-gguf`. Full server runbook: [`docs/servers/ds4/summary.md`](../docs/servers/ds4/summary.md).
 
+### `clients/strata/` -- Strata Qwen3.8-Flash-Next Engine (Port 8102)
+
+| File | Copy to | Used by |
+|------|---------|---------|
+| `opencode.json` | `~/.config/opencode/opencode.json` | OpenCode |
+| `claude-code-settings.json` | `~/.claude/settings.json` (merge `env`) | Claude Code (native Anthropic API, base URL without `/v1`) |
+
+**Model:** `qwen3.8-flash-next-iq3_s` — `ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` IQ3_S (54.8 GB + 28.8 GB n-gram shard, Apache-2.0) of `Qwen/Qwen3.8-Flash-Next` (125B MoE, GGUF arch `qwen4exp`). OpenClaw, Pi and qwen-code templates are deferred while this server type is provisional.
+
+Speaks **OpenAI + Anthropic + Responses** on port **8102**. No API key (`not-needed`). Without a key the server answers only Host names listed in `STRATA_ALLOWED_HOSTS` (or `allowed_hosts` in `~/Strata/strata-iq3_s.json`); others get `403 ... (DNS rebinding protection)`. Tool calls are parsed server-side from Qwen XML (no parser flag). Full runbook: [`docs/servers/strata/summary.md`](../docs/servers/strata/summary.md).
+
 ### `clients/sglang/` -- SGLang MLX Sidecar (Port 30000)
 
 | File | Copy to | Used by |
@@ -247,4 +259,14 @@ cd ~/ds4 && nohup ./ds4-server --host 0.0.0.0 --port 8101 \
   --ctx 65536 --kv-disk-dir /tmp/ds4-kv --kv-disk-space-mb 8192 \
   --trace /tmp/ds4-trace.txt > /tmp/ds4-server.log 2>&1 &
 # Stop: pkill -f 'ds4-server'
+
+# Switch to strata (port 8102 — independent of port 8000; only Qwen3.8-Flash-Next path).
+# First-time: git clone --branch v0.2.6 --depth 1 https://github.com/Niko1221/Strata.git ~/Strata
+#             && cd ~/Strata && ./setup.sh --model IQ3_S --context 65536 --port 8102 --host 0.0.0.0 \
+#                --vision no --no-browser --no-start --yes   (83.6 GB download)
+# IQ3_S stays resident with ~4.5 GB headroom — stop every other model server first.
+cd ~/Strata && STRATA_ALLOWED_HOSTS=<MAC_STUDIO_IP>,macstudio,<TAILSCALE_HOST> \
+  nohup .venv/bin/python serve/server.py --engine strata --config strata-iq3_s.json --port 8102 \
+  > /tmp/strata.log 2>&1 &
+# Stop: pkill -f 'serve/server.py --engine strata'
 ```

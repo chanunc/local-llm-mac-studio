@@ -20,9 +20,10 @@ MacBook / Linux / WSL  ──── LAN ────>  Mac Studio M3 Ultra (96GB
                                          qwen-asr (speech→text, no port — Python API)
                                          comfyui (image-gen, sidecar) :8188
                                          ds4 / DwarfStar 4 (DeepSeek-V4-Flash, sidecar) :8101
+                                         strata (Qwen3.8-Flash-Next 125B MoE, sidecar) :8102
                                          litert-lm (Gemma 4 E4B, sidecar) :9379
                                          sglang (MiniCPM5 parser, sidecar) :30000
-                                         OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus; Responses for ds4)
+                                         OpenAI + Anthropic API (+ Ollama for vmlx + Osaurus; Responses for ds4 + strata)
 ```
 
 ## 🗂️ Repository Map
@@ -72,7 +73,7 @@ See [`scripts/README.md`](scripts/README.md#disk-reclaim) for the full flag set 
 
 ### 🚀 Start a Server
 
-Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, Ollama `:11434`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, sglang `:30000`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
+Port-8000 servers are mutually exclusive — stop the current one before starting another. Sidecars run on their own ports and coexist: lm-studio `:1234`, Ollama `:11434`, ChindaMT mlx-lm `:8080`, dflash-mlx `:8098`, llama-cpp-turboquant `:8099`, llama-cpp-mtp `:8100`, ds4 / DwarfStar 4 `:8101`, strata `:8102`, Osaurus `:1337`, comfyui `:8188`, litert-lm `:9379`, sglang `:30000`, qwen-asr (no port). Each panel below carries the launch command(s) and the matching stop command.
 
 <details>
 <summary>⚡ <strong>lm-studio</strong> (:1234) — Huihui Gemma 4 26B-A4B launch recipe + other on-disk models + stop</summary>
@@ -522,6 +523,31 @@ tail -f /tmp/ds4-server.log                                                     
 </details>
 
 <details>
+<summary>🟡 <strong>strata</strong> (:8102, sidecar) — Qwen3.8-Flash-Next 125B MoE + stop</summary>
+
+```bash
+# strata — model-specific Metal engine for Qwen3.8-Flash-Next (GGUF arch qwen4exp) on
+# port 8102. Setup's default port 8080 collides with mlx-lm ChindaMT. Built from source:
+# git clone --branch v0.2.6 --depth 1 https://github.com/Niko1221/Strata.git ~/Strata &&
+# cd ~/Strata && ./setup.sh --model IQ3_S --context 65536 --port 8102 --host 0.0.0.0 \
+#   --vision no --no-browser --no-start --yes      (83.6 GB download; IQ3_S stays resident)
+# --engine strata is REQUIRED (server.py defaults to a mock engine). Without an API key,
+# LAN clients get 403 (DNS-rebinding guard) unless STRATA_ALLOWED_HOSTS lists their Host.
+# See docs/servers/strata/summary.md and docs/models/per-model/model-summary-qwen-3-8-flash-next.md
+cd ~/Strata && STRATA_ALLOWED_HOSTS=<MAC_STUDIO_IP>,macstudio,<TAILSCALE_HOST> \
+  nohup .venv/bin/python serve/server.py --engine strata --config strata-iq3_s.json --port 8102 \
+  > /tmp/strata.log 2>&1 &
+
+pkill -f 'serve/server.py --engine strata'                                        # stop strata
+
+# health + logs:
+curl -s http://<MAC_STUDIO_IP>:8102/v1/models | python3 -m json.tool             # health (port 8102; model id qwen3.8-flash-next-iq3_s)
+tail -f /tmp/strata.log ~/Strata/strata-iq3_s.log                                 # server + engine logs (port 8102)
+```
+
+</details>
+
+<details>
 <summary>🟢 <strong>qwen-asr</strong> (no port, sidecar) — speech→text, in-process Python API (no daemon)</summary>
 
 ```bash
@@ -684,12 +710,13 @@ The four port-8000 servers are **mutually exclusive** (one at a time); `lm-studi
 | **[qwen-asr](docs/servers/qwen-asr/summary.md)** | — | 🟢 19× realtime | Python only | Speech → text (`Qwen3-ASR-1.7B`, 30 langs + 22 Chinese dialects) |
 | **[comfyui](docs/servers/comfyui/summary.md)** | 8188 | 🟢 18 s/img | Web UI only | Image generation (`SeeSee21/Z-Anime`; no OpenAI image shim) |
 | **[ds4](docs/servers/ds4/summary.md)** | 8101 | 🟢 25–35 tok/s | OpenAI + Anthropic + Responses | DeepSeek-V4-Flash 284B/13B-active `deepseek4` MoE (only Apple-Silicon path; native DSML tool calling) |
+| **[strata](docs/servers/strata/summary.md)** | 8102 | 🟡 66–74 tok/s | OpenAI + Anthropic + Responses | Qwen3.8-Flash-Next 125B MoE (`qwen4exp`) on its own Metal engine with MTP — 1.8× llama.cpp decode, but loses the OpenCode loop to llama.cpp (prompt cache keeps only the live session) |
 | **[litert-lm](docs/servers/litert-lm/summary.md)** | 9379 | 🔴 13.85 tok/s | OpenAI (alpha) | Google LiteRT-LM edge runtime — Gemma 4 E4B (~4B, CPU/XNNPACK). No tool calling. Evaluation only. |
 | **[sglang](docs/servers/sglang/summary.md)** | 30000 | 🟢 246→85 tok/s | OpenAI | SGLang MLX sidecar — MiniCPM5 `minicpm5` parser path; HF checkpoint only, GGUF unsupported locally |
 
 </details>
 
-All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), `litert-lm`, `sglang`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
+All servers except `lm-studio`, `dflash-mlx`, `llama-cpp-turboquant`, `llama-cpp-mtp`, `qwen-asr`, `comfyui`, `ds4` (GGUF-locked DeepSeek-V4-Flash engine), `strata` (Qwen3.8-Flash-Next-only engine), `litert-lm`, `sglang`, and `vmlx-swift-lm` (its JANG/JANGTQ support is native, not via patch) support [JANG](https://jangq.ai/) mixed-precision models via patches:
 [vllm-mlx](docs/servers/vllm-mlx/jang-patch.md) ·
 [oMLX](docs/servers/omlx/jang-fork.md) ·
 [mlx-openai-server](docs/servers/mlx-openai-server/jang-patch.md) ·
@@ -777,6 +804,7 @@ All models fit in **96GB unified memory**.
 | [Qwen3.5-122B-A10B JANG 2S](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-122b-a10b-jang-2s) | MoE 122B/10B | 35 | 200K+ | Compact 122B, instant load |
 | [Qwen3.5-35B-A3B JANG 4K](docs/models/per-model/model-summary-qwen-3-5.md#qwen35-35b-a3b-jang-4-bit-mixed-precision) | MoE 35B/3B | 19 | 262K | Fast small MoE *(removed from disk 2026-05-05)* |
 | [Qwen-AgentWorld-35B-A3B UD-Q6_K](docs/models/per-model/model-summary-qwen-3-5.md#qwen-agentworld-35b-a3b-ud-q6_k) | MoE 35B/3B | 27.3 | 131K served (262K train) | Language world model / environment simulator on `llama-cpp-mainline`; no MTP flags, smoke 4/5, browse 22.52 s / search 39.47 s |
+| [Qwen3.8-Flash-Next GSQ-RCO IQ3_S](docs/models/per-model/model-summary-qwen-3-8-flash-next.md) | MoE 125B (48 × 512 experts, top-10, `qwen4exp`) | 83.6 | 65K (262K model max) | First lab path for Qwen3.8-Flash-Next (`strata` :8102, ISTA-DASLab Apache-2.0 GGUF) — 74 → 66 tok/s @ 512 → 60K with MTP (1.8× llama.cpp master on the same GGUF), cold prefill ~750–790 tok/s, smoke 5/5, browse 20.95 s / search 24.94 s (llama.cpp: 9.67 s / 14.84 s) |
 | Qwen3.6-35B-A3B JANGTQ2-CRACK | MoE 35B/3B + VL | 11.6 | 262K | Fastest CRACK, quality-impaired (vmlx only) |
 | [TrevorJS Gemma 4 26B A4B Uncensored Q8_0](docs/models/uncen-model/gemma4-26b-a4b-trevorjs-uncen-benchmark.md) | MoE 26B/4B active | 25 | 65K | Prior lm-studio main (2026-05-03) — EGA abliteration, 87.6 tok/s, browse 2.93 s 🥈 (no scaffolding needed), search 7.35 s 🥇, 8/10 compliance — uncensored search speed leader |
 | [unsloth Qwen3.6-35B-A3B UD-Q6_K](docs/models/benchmarks/model-benchmark-tool-call.md#results-unsloth-qwen36-35b-a3b-ud-q6) | MoE 35B/3B | 29.31 | 65K | Prior production main (2026-05-07) — sparse MoE GGUF + Dynamic 2.0 imatrix, decode 44–71 tok/s, browse 4.92 s, search 12.08 s, think-on |
@@ -836,6 +864,7 @@ Full results: [Agent Tool-Call](docs/models/benchmarks/model-benchmark-tool-call
 - **lm-studio** — Standard MLX / GGUF only (no JANG/JANGTQ/`bailing_hybrid`). Closed-source MLX runtime. `lms get` re-downloads from HuggingFace into `~/.lmstudio/models/` even when present in `~/.cache/huggingface/` (no dedup), and custom HauhauCS `K_P` quants currently mis-resolve through the LM Studio catalog path, so import the exact GGUF with `lms import -L` after direct Hub download. Model IDs are lowercased and org-prefix-stripped on load (`mlx-community/Qwen3.6-27B-6bit` → `qwen3.6-27b`), but `lms load --identifier ...` can pin a stable API name. Default `lms server start` binds to `127.0.0.1`; LAN clients need `--bind 0.0.0.0`. First-time install needs one GUI launch to bootstrap `~/.lmstudio/bin/lms`. [Bench](docs/models/benchmarks/model-benchmark-tool-call.md#server-comparison-lm-studio-vs-vllm-mlx-same-model-file-2026-04-30)
 - **comfyui** — Image-generation diffusion runtime, not a chat / agent server. No OpenAI `/v1/images/generations` API — clients can't trigger generations programmatically (web UI only at `:8188`). No JANG / JANGTQ / `bailing_hybrid` support (LLM concepts; doesn't apply to S3-DiT diffusion). Default attention backend errors on MPS — always launch with `--use-pytorch-cross-attention`. AIO checkpoint reload between Distill and Base BF16 variants takes ~25 s warm-up each swap (~19 GiB to MPS). Native MLX would beat MPS by an estimated 2–3× but Z-Anime has no MLX upload. [Runbook](docs/servers/comfyui/summary.md)
 - **ds4 (DwarfStar 4)** — Single-model standalone engine for DeepSeek-V4-Flash only (the `deepseek4` arch is unmerged in upstream `llama.cpp`; vLLM/SGLang are CUDA-only; the persadian IQ1_S-XL GGUF's only engine, `arishma108/llama.cpp feat/v4-port-cuda`, has no Metal backend). GGUF-locked to `antirez/deepseek-v4-gguf` — only `q2-imatrix` (81 GB) fits a 96 GB-class machine (`q4-imatrix` 153 GB, batiai Q3–Q8 135–302 GB do not). Default bind is `127.0.0.1`; LAN clients need `--host 0.0.0.0` (`--cors` does not rebind). Cold 32 K prefill ≈ 38 s (disk-KV cuts the warm hit to 6.8 s). Single graph worker, no batching. Alpha-quality engine (days old, GPT-5.5-assisted) — behaviour may change across `git pull`. **Never run the CPU path** (`make cpu` / `--cpu`) — documented macOS VM bug kernel-panics the machine. No JANG/JANGTQ/`bailing_hybrid`/MLX. [Runbook](docs/servers/ds4/summary.md)
+- **strata** — Model-specific engine: on Apple Silicon it runs only Qwen3.8-Flash-Next (its Qwen3.6 and DeepSeek V4.1 support is CUDA/HIP only). One request at a time (`--parallel` not ported to Metal). On v0.2.6 Metal the prompt cache keeps only the live session, so any intervening request (OpenCode's title call) makes the next session re-read its ~12K-token system prompt (~15.6 s). Resident IQ3_S leaves ~4.5 GB under the engine's 72.2 GB cap: run nothing else beside it. No JANG/JANGTQ/`bailing_hybrid`. LAN needs `STRATA_ALLOWED_HOSTS` or an API key. [Runbook](docs/servers/strata/summary.md)
 - **sglang** — Provisional source install at `~/sglang` with Python 3.11 venv `~/sglang/sglang-mps` and `SGLANG_USE_MLX=1`. OpenAI-compatible sidecar on port `30000`, currently validated for `openbmb/MiniCPM5-1B` with `--tool-call-parser minicpm5`. The exact Q8_0 GGUF does **not** work on SGLang's Apple/MLX backend because the MLX runner expects a model directory with `config.json`; use the HF checkpoint path. MiniCPM5 needs No Think mode (`chat_template_kwargs={"enable_thinking":false}`) for the local API tool harness. OpenCode browse passed; search had one 300 s timeout in 3 measured runs. [Runbook](docs/servers/sglang/summary.md)
 
 **Model compatibility:**
